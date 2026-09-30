@@ -1,3 +1,4 @@
+import { cn } from "../class-name/index.js";
 import { type ReactNode, useEffect } from "../import.js";
 
 export interface SidebarProps {
@@ -16,7 +17,8 @@ export interface SidebarProps {
   readonly className?: string;
 }
 
-// A column that stays put while the page scrolls, and a drawer below the breakpoint.
+// A column that stays put while the page scrolls, and below 64rem a drawer over the page:
+// the width at which a sidebar, an article and an outline stop fitting side by side.
 export function Sidebar({
   label,
   header,
@@ -41,18 +43,34 @@ export function Sidebar({
     <>
       <aside
         aria-label={label}
-        className={["ui-sidebar", open ? "ui-sidebar--open" : null, className]
-          .filter(Boolean)
-          .join(" ")}
+        className={cn(
+          "ui-sidebar sticky top-0 flex h-dvh w-70 shrink-0 flex-col border-border border-r bg-bg text-fg",
+          "max-lg:invisible max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:w-[min(20rem,85vw)] max-lg:-translate-x-full max-lg:shadow-lg max-lg:transition-[translate,visibility]",
+          open && "ui-sidebar--open max-lg:visible max-lg:translate-x-0",
+          className,
+        )}
       >
-        {header ? <div className="ui-sidebar__header">{header}</div> : null}
-        <div className="ui-sidebar__body">{children}</div>
-        {footer ? <div className="ui-sidebar__footer">{footer}</div> : null}
+        {header ? (
+          <div className="ui-sidebar__header flex flex-col gap-3 px-4 pt-4 pb-2">{header}</div>
+        ) : null}
+        {
+          // The only part that scrolls, so the search field and the footer never leave the screen.
+        }
+        <div className="ui-sidebar__body min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-4">
+          {children}
+        </div>
+        {footer ? (
+          <div className="ui-sidebar__footer flex items-center justify-between gap-2 border-border border-t px-4 py-3">
+            {footer}
+          </div>
+        ) : null}
       </aside>
       {open ? (
+        // The page dimmed with --bg rather than black: in a dark theme a light scrim would
+        // read as a panel rather than as a shade.
         <button
           type="button"
-          className="ui-sidebar__backdrop"
+          className="ui-sidebar__backdrop fixed inset-0 z-39 hidden cursor-pointer border-0 bg-[color-mix(in_oklch,var(--bg)_60%,transparent)] p-0 max-lg:block"
           aria-label={closeLabel}
           onClick={() => onOpenChange?.(false)}
         />
