@@ -74,8 +74,9 @@ const fail = (why) => {
 // A probe or a shutdown that never answers would otherwise hold a CI job for hours.
 let running;
 setTimeout(() => {
-  running?.kill("SIGKILL");
-  fail(`did not finish within ${(3 * TIMEOUT_MS) / 1000}s`);
+  running?.child.kill("SIGKILL");
+  const tail = running?.output().trim().split("\n").slice(-40).join("\n") ?? "";
+  fail(`did not finish within ${(3 * TIMEOUT_MS) / 1000}s${tail ? `, last output:\n${tail}` : ""}`);
 }, 3 * TIMEOUT_MS).unref();
 
 // The line, not the socket, even for the web app: unlike the smoke suite this script
@@ -89,7 +90,7 @@ const booted = await bootApp({
 }).catch((error) => fail(error.message));
 
 const { child } = booted;
-running = child;
+running = booted;
 console.log(`✓ ${name}: booted`);
 
 // A request that completes, with a body, from the built bundle. `T-032` was a server
