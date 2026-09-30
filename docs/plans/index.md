@@ -7,5 +7,6 @@ description: Live plans for the lite kit. Finished plans move to archive/ with a
 
 | Plan | Status |
 |---|---|
-| [`LITE-KIT-PLAN.md`](./LITE-KIT-PLAN.md) | Written 2026-09-30, not started. Start at `LT0.1`. |
+| [`HANDOFF.md`](./HANDOFF.md) | **Start here.** Where the build stopped and how to pick it up. |
+| [`LITE-KIT-PLAN.md`](./LITE-KIT-PLAN.md) | In progress: Phase 0 and `LT1.1` done; next is `LT1.2`. |
 | [`BACKLOG.md`](./BACKLOG.md) | The open ledger. Empty. |
