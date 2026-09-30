@@ -135,6 +135,7 @@ export {
 
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────
 export {
+  AlertDialog,
   type BadgeTone,
   Button,
   type ButtonVariant,
@@ -147,6 +148,7 @@ export {
   CodeList,
   cn,
   DataTable,
+  Dialog,
   EmptyState,
   Field,
   type FontKey,
@@ -154,6 +156,7 @@ export {
   Icon,
   Input,
   type LinkAttributes,
+  Menu,
   type ModeKey,
   type ModePreference,
   ModeRegistry,
@@ -162,9 +165,12 @@ export {
   readerClassName,
   Select,
   StatusBadge,
+  Textarea,
   type ThemeKey,
   ThemeRegistry,
   ThemeScope,
+  ThemeToggle,
+  Tooltip,
 } from "@loadbearing/ui";
 
 // ── @tanstack/react-query ────────────────────────────────────────────────────
