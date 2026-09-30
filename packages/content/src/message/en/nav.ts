@@ -23,7 +23,6 @@ export const nav = {
   "nav.documents": "Documents",
   "nav.notifications": "Notifications",
   "nav.analytics": "Activity",
-  "nav.widgets": "Dashboard cards",
   "nav.platform": "Platform",
   "nav.docs": "Docs",
 

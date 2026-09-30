@@ -139,7 +139,7 @@ describe("the fixture harness", () => {
   it("reports every assertion, and none of them fails on a clean tree", () => {
     const results = run();
 
-    expect(results).toHaveLength(31);
+    expect(results).toHaveLength(30);
     for (const { name, status } of results) {
       expect(status, `${name} failed on the base fixture`).not.toBe("✗");
     }
@@ -1296,77 +1296,23 @@ describe("29 — the four shard readers run one algorithm", () => {
   });
 });
 
-describe("30 — every inline widget is placed by a literal key", () => {
-  const NAME = "every inline widget is placed by a literal key";
-
-  // One zone widget, which its zone places, and one inline widget, which only a literal
-  // `<Widget>` can.
-  const tree = (placement) => ({
-    "packages/permissions/package.json": PKG("permissions"),
-    "packages/permissions/src/widget/index.ts":
-      'import { memberWidgets } from "./member.widgets.js";\n' +
-      "export const WIDGETS = { ...memberWidgets } as const;\n",
-    "packages/permissions/src/widget/member.widgets.ts":
-      "export const memberWidgets = {\n" +
-      '  "member.count": { zone: "dashboard.main", permission: "member.read", order: 20 },\n' +
-      '  "notification.bell": { permission: "notification.inbox.read" },\n' +
-      "} as const;\n",
-    "apps/web/package.json": PKG("web"),
-    "apps/web/src/route/layout.tsx": placement,
-  });
-
-  const PLACED = 'export const Header = () => <Widget widget="notification.bell"><b /></Widget>;\n';
-
-  it("accepts an inline widget placed by its literal key", () => {
-    passes(run(tree(PLACED)), NAME);
-  });
-
-  it("catches an inline widget nothing places", () => {
-    fails(run(tree("export const Header = () => <b />;\n")), NAME, "notification.bell");
-  });
-
-  // A key from an expression proves nothing, and inside a loop over runtime data it places
-  // whatever the data says.
-  it("catches a key read from an expression", () => {
-    fails(
-      run(tree("export const Header = ({ key }) => <Widget widget={key}><b /></Widget>;\n")),
-      NAME,
-      "place a widget by its literal key",
-    );
-  });
-
-  // A zone widget is placed by its zone, and a comment naming a key places nothing.
-  it("needs no <Widget> for a zone widget, and does not count a comment", () => {
-    passes(run(tree(`// <Widget widget="member.count">\n${PLACED}`)), NAME);
-    fails(
-      run(tree('// <Widget widget="notification.bell">\nexport const Header = () => <b />;\n')),
-      NAME,
-      "notification.bell",
-    );
-  });
-
-  it("skips a tree with no widget barrel", () => {
-    expect(entry(run(), NAME).status).toBe("○");
-  });
-});
-
 describe("31 — every flag is live", () => {
   const NAME = "every flag is live";
 
   const flags = (entries) => ({
     "packages/permissions/package.json": PKG("permissions"),
     "packages/permissions/src/flag/index.ts":
-      'import { widgetFlags } from "./widget.flags.js";\n' +
-      "export const FLAGS = { ...widgetFlags } as const;\n",
-    "packages/permissions/src/flag/widget.flags.ts": `export const widgetFlags = {${entries}} as const;\n`,
+      'import { exampleFlags } from "./example.flags.js";\n' +
+      "export const FLAGS = { ...exampleFlags } as const;\n",
+    "packages/permissions/src/flag/example.flags.ts": `export const exampleFlags = {${entries}} as const;\n`,
   });
 
   const flag = (expiresOn) =>
-    `"widget.dismissal": { owner: "sami", expiresOn: "${expiresOn}", description: "Hide a card" },`;
+    `"example.rollout": { owner: "sami", expiresOn: "${expiresOn}", description: "An example" },`;
 
   const reader = {
-    "packages/application/src/widget/update.use-case.ts":
-      'export const check = (flags) => flags.assertOn("widget.dismissal");\n',
+    "packages/application/src/example/update.use-case.ts":
+      'export const check = (flags) => flags.assertOn("example.rollout");\n',
   };
 
   it("accepts a flag in date that code reads", () => {
@@ -1382,7 +1328,7 @@ describe("31 — every flag is live", () => {
     fails(
       run({
         ...flags(flag("2999-12-31")),
-        "packages/application/src/widget/update.use-case.ts": '// "widget.dismissal"\n',
+        "packages/application/src/example/update.use-case.ts": '// "example.rollout"\n',
       }),
       NAME,
       "no code outside the flag fragments reads it",

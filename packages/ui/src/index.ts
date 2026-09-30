@@ -58,4 +58,3 @@ export {
 } from "./theme/index.js";
 export { ThemeToggle, type ThemeToggleProps } from "./theme-toggle/index.js";
 export { Toc, type TocItem, type TocProps } from "./toc/index.js";
-export { Zone, type ZoneItem, type ZoneProps } from "./zone/index.js";

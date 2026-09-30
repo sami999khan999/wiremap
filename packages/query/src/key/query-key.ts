@@ -43,12 +43,6 @@ export class QueryKeys {
     grants: (spaceId: string) => ["doc", "grant", spaceId] as const,
   };
 
-  public static readonly widget = {
-    all: () => ["widget"] as const,
-    preferences: () => ["widget", "preferences"] as const,
-    preferencesOf: (userId: string) => ["widget", "preferences", userId] as const,
-  };
-
   public static readonly notification = {
     all: () => ["notification"] as const,
     // The cursor is *not* in the key. It lives in the page data, and a key that carried

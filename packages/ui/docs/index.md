@@ -67,8 +67,7 @@ packages/ui/
     ├── sidebar/…              → Sidebar
     ├── status-badge/…         → StatusBadge, BadgeTone
     ├── theme-toggle/…         → ThemeToggle
-    ├── toc/…                  → Toc
-    └── zone/…                 → Zone, ZoneItem
+    └── toc/…                  → Toc
 ```
 
 One folder per exported component, which is the third folder shape in the repository —
@@ -164,25 +163,6 @@ runs whether or not the button was ever rendered.
 > name. "Goal" is a tier in the authorization model here, not an entity `<Can>` knows about — and
 > renaming the prop would hide the pass-through behind a word nobody can grep for. Doc 22's
 > domain-noun gate excludes `src/can/can.tsx` for exactly this, and nothing else.
-
-## `<Zone>` takes items, not children
-
-```tsx
-<Zone label="Dashboard" items={[{ key: "member.count", title: "Members", content: <Count /> }]} />
-```
-
-A zone is where a page puts units side by side: a labelled region, and one card per item with a
-title and an optional action in its header. It knows nothing about who may see a unit or why one is
-missing. That is decided before the items reach it.
-
-**`items` rather than `children` is the point.** A child list would accept anything, including a
-`<Can>` dropped in beside the units, which is the one shape the visibility rules forbid: `<Can>`
-gates an affordance *inside* a unit, never a unit. With `items`, that shape cannot be written, and
-no lint rule has to catch it.
-
-No items renders `empty` inside the same labelled region, or nothing when there is no `empty` — never
-an empty grid, which reads as broken. The grid is `auto-fill` on the space tokens, one column on a
-phone, and colours come only through the twelve names.
 
 ## Five rules for every component here
 

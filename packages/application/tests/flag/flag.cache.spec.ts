@@ -1,11 +1,12 @@
 import { Identifiers, type OrganizationId, type UserId } from "@loadbearing/contracts";
 import { type AppError, NotFoundError } from "@loadbearing/errors";
 import { CapabilitySet } from "@loadbearing/permissions";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FlagCache } from "../../src/flag/flag.cache.js";
 import { type FlagRecord, FlagRepository } from "../../src/flag/flag.repository.js";
 import type { CacheStore } from "../../src/port/index.js";
 import { Principal } from "../../src/primitive/principal.js";
+import { declareExampleFlag, EXAMPLE_FLAG } from "../support/example-flag.js";
 
 const TARGETED = Identifiers.organizationId.parse("018f8c00-0000-7000-8000-000000000010");
 const OTHER = Identifiers.organizationId.parse("018f8c00-0000-7000-8000-000000000020");
@@ -68,7 +69,7 @@ class JsonCacheStore implements CacheStore {
 }
 
 const row = (overrides: Partial<FlagRecord>): FlagRecord => ({
-  key: "widget.dismissal",
+  key: EXAMPLE_FLAG,
   isEnabled: false,
   targets: [],
   updatedAt: null,
@@ -78,20 +79,23 @@ const row = (overrides: Partial<FlagRecord>): FlagRecord => ({
 const principal = (organizationId: OrganizationId) =>
   new Principal(organizationId, USER, CapabilitySet.empty());
 
+beforeEach(declareExampleFlag);
+afterEach(() => vi.restoreAllMocks());
+
 describe("FlagCache", () => {
   it("is on for every org when the deployment switch is on", async () => {
     const cache = new FlagCache(new StubFlags([row({ isEnabled: true })]), new JsonCacheStore());
 
-    expect(await cache.onFor(TARGETED)).toEqual(["widget.dismissal"]);
-    expect(await cache.isOn(OTHER, "widget.dismissal")).toBe(true);
+    expect(await cache.onFor(TARGETED)).toEqual([EXAMPLE_FLAG]);
+    expect(await cache.isOn(OTHER, EXAMPLE_FLAG)).toBe(true);
   });
 
   it("is on only for a targeted org while the switch is off", async () => {
     const targets = [{ organizationId: TARGETED, slug: "targeted" }];
     const cache = new FlagCache(new StubFlags([row({ targets })]), new JsonCacheStore());
 
-    expect(await cache.isOn(TARGETED, "widget.dismissal")).toBe(true);
-    expect(await cache.isOn(OTHER, "widget.dismissal")).toBe(false);
+    expect(await cache.isOn(TARGETED, EXAMPLE_FLAG)).toBe(true);
+    expect(await cache.isOn(OTHER, EXAMPLE_FLAG)).toBe(false);
   });
 
   it("is off when there is no row at all", async () => {
@@ -129,17 +133,17 @@ describe("FlagCache", () => {
   it("throws NOT_FOUND for an off flag, and the error names no flag", async () => {
     const cache = new FlagCache(new StubFlags([]), new JsonCacheStore());
 
-    const error = await cache.assertOn(principal(TARGETED), "widget.dismissal").catch((e) => e);
+    const error = await cache.assertOn(principal(TARGETED), EXAMPLE_FLAG).catch((e) => e);
 
     expect(error).toBeInstanceOf(NotFoundError);
     expect((error as AppError).code).toBe("NOT_FOUND");
-    expect(JSON.stringify((error as AppError).toJSON())).not.toContain("widget.dismissal");
-    expect(JSON.stringify((error as AppError).toJSON())).not.toContain("dismissal");
+    expect(JSON.stringify((error as AppError).toJSON())).not.toContain(EXAMPLE_FLAG);
+    expect(JSON.stringify((error as AppError).toJSON())).not.toContain("rollout");
   });
 
   it("passes an on flag without a throw", async () => {
     const cache = new FlagCache(new StubFlags([row({ isEnabled: true })]), new JsonCacheStore());
 
-    await expect(cache.assertOn(principal(TARGETED), "widget.dismissal")).resolves.toBeUndefined();
+    await expect(cache.assertOn(principal(TARGETED), EXAMPLE_FLAG)).resolves.toBeUndefined();
   });
 });

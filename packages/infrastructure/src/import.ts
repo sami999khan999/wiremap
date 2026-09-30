@@ -194,8 +194,6 @@ export {
   type UnreadQuery,
   type UserReader,
   type VectorStore,
-  type WidgetPreferenceRepository,
-  type WidgetPreferences,
 } from "@loadbearing/application";
 
 // ── @loadbearing/content ─────────────────────────────────────────────────────

@@ -104,7 +104,6 @@ export type {
   UpdateDocSpaceInput,
   UpdateNotificationPreferenceInput,
   UpdateRoleInput,
-  WidgetPreferenceUpdateInput,
 } from "@loadbearing/contracts";
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────

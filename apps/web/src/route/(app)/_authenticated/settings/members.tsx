@@ -14,7 +14,7 @@ import { RouteGuard } from "~/route/-guard.js";
 
 // `member` for this page's own copy; `role` because the invite form's role picker reads
 // `RoleQueries.list`, and a role name arriving with no namespace loaded renders raw.
-const MESSAGES = ["member", "role", "widget"] as const satisfies readonly ClientNamespace[];
+const MESSAGES = ["member", "role"] as const satisfies readonly ClientNamespace[];
 
 // A uuid or nothing: anything else is dropped rather than sent to the server as a lookup.
 const Search = z.object({ member: z.uuid().optional().catch(undefined) });

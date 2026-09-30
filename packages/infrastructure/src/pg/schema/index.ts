@@ -13,4 +13,3 @@ export * from "./platform.schema.js";
 export * from "./rbac.schema.js";
 export * from "./shard.schema.js";
 export * from "./vector.schema.js";
-export * from "./widget.schema.js";

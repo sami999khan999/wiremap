@@ -15,30 +15,37 @@ state of the tree and the traps that cost time.
 |---|---|
 | `43bc2a6` | Phase 0: the big kit at `3fafa78c`, renamed, ports on `2xxxx`, docs adapted |
 | `7f88b41` | `LT1.1`: messaging removed from every layer |
+| after `25cd0b0` | `LT1.2`: widgets and zones removed from every layer; the dashboard is static |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT1.2` widgets and zones, `LT1.3` platform pages, `LT1.4` analytics, `LT1.5`
+**Next, in order:** `LT1.3` platform pages, `LT1.4` analytics, `LT1.5`
 permission catalog, `LT1.6` the docs sweep, then Phase 2.
 
-**Nothing is pushed.** There is no remote yet; the repository exists only on this machine.
+**The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
-## What is verified at `7f88b41`
+## What is verified after `LT1.2`
 
-- Typecheck clean in every package; `pnpm lint` clean.
-- Tests, per package: application 406, infrastructure 361 (one known failure, below), query 64,
-  web 65, worker 95, permissions 82, contracts 58, composition 70, feature 191, auth 71, ui 109,
-  and every other package green. The drop from Phase 0 is messaging's own specs.
-- `check:architecture`: 30 of 31. **The red one is expected** — "every partitioned table is on the
-  allowlist" reads migration `0023`, which still creates `conversations`, `conversation_members`
-  and `messages`. `LT2.8` regenerates the baseline and clears it. Do not add an exemption.
+Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:migrate` and `db:seed`.
+
+- Typecheck clean in every package; `pnpm lint` clean apart from one warning that was already
+  there (an unused import in `feature/src/rbac/effective-permissions.inspector.tsx`).
+  `check:contrast`, `deps:check` and `repo:check` green.
+- Tests, per package: application 399, infrastructure 357 (one known failure, below), query 64,
+  web 65, worker 95, permissions 69, contracts 58, composition 70, feature 172, auth 71, ui 103,
+  tooling 140, and every other package green. The drop since `7f88b41` is the widget, zone and
+  dashboard specs.
+- `check:architecture`: 29 of 30. §30 left with widgets and §31 kept its number. **The red one is
+  expected** — "every partitioned table is on the allowlist" reads migrations `0023` (the three
+  messaging tables) and `0047` (`widget_preferences`). `LT2.8` regenerates the baseline and clears
+  it. Do not add an exemption.
 
 ### Known failures that are not defects
 
 1. `packages/infrastructure/tests/cold/pg-partition-archive.gateway.spec.ts` needs a signed-up user
    on a fresh database. It leaves with retention in `LT2.3`.
-2. `tooling/scripts` ends with `Timeout calling "onTaskUpdate"` although all 145 tests pass. The big
-   kit does the same at the cut commit. `BACKLOG.md` `BL.1`.
+2. `tooling/scripts` ends with `Timeout calling "onTaskUpdate"` although every test passes. The big
+   kit does the same at the cut commit. `BACKLOG.md` `BL.1`. It did not appear on the Linux run.
 
 ## Decisions taken since the plan was written
 
@@ -50,11 +57,17 @@ permission catalog, `LT1.6` the docs sweep, then Phase 2.
   messaging remain in `packages/*/docs`, `docs/setup` and `docs/infra`; the heaviest are
   `packages/infrastructure/docs/reference/partitions.md`, `packages/api-server/docs/reference/router.md`
   and `packages/infrastructure/docs/reference/notification-recipients.md`.
+  `LT1.2` adds widget prose to the sweep: the §30 rows in `docs/opinions/index.md` and
+  `docs/opinions/visibility.md`, "thirty-one" in `docs/setup/26-hygiene-and-ci.md` (and its §30
+  section), the `widget.tsx` line in `docs/setup/28-folder-structure.md`, the `widget_preferences`
+  sentence in `partitions.md`, and `packages/permissions/docs/reference/flag-registry.md`.
+- **A flag spec declares its own flag.** Lite has none, so `application/tests/support/example-flag.ts`
+  stubs `FlagRegistry.instance` with `example.rollout`. `FlagRegistry` itself stays the big kit's file.
 
 ## Picking it up
 
 ```bash
-cd E:/draft/starter_kit/loadbearing_tanstack_start_lite
+cd loadbearing_mini                       # wherever the clone lives
 cp .env.example .env                      # then set ALLOY_PORT=22345 — see the traps
 pnpm install
 pnpm infra:up

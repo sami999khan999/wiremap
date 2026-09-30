@@ -1,20 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { FlagRegistry } from "../../src/registry/flag-registry.js";
-import { WidgetRegistry } from "../../src/registry/widget-registry.js";
 
 const flags = FlagRegistry.instance;
 
 describe("FlagRegistry", () => {
-  it("knows a declared flag and nothing inherited", () => {
-    expect(flags.isKnown("widget.dismissal")).toBe(true);
-    expect(flags.isKnown("widget.nonexistent")).toBe(false);
+  it("knows nothing inherited", () => {
+    expect(flags.isKnown("example.rollout")).toBe(false);
     expect(flags.isKnown("constructor")).toBe(false);
   });
 
   // A database row can name a flag the code deleted: the platform list shows it as orphaned.
   it("answers undefined for an unknown flag rather than throwing", () => {
     expect(flags.meta("retired.flag")).toBeUndefined();
-    expect(flags.meta("widget.dismissal")?.owner).toBe("sami");
   });
 
   it("gives every flag an owner, a description and a real calendar date", () => {
@@ -30,24 +27,9 @@ describe("FlagRegistry", () => {
     }
   });
 
-  // Derived, never declared: exactly the flags some widget names reach the browser.
-  it("treats a flag as client-gating exactly when a widget names it", () => {
-    const named = new Set(
-      WidgetRegistry.instance.all().flatMap((key) => {
-        const flag = WidgetRegistry.instance.meta(key)?.flag;
-        return flag ? [flag] : [];
-      }),
-    );
-
-    for (const key of flags.all()) {
-      expect(flags.isClientGating(key)).toBe(named.has(key));
-    }
-    expect(flags.clientGating()).toEqual(flags.all().filter((key) => named.has(key)));
-  });
-
-  // `AX9.6`: the hidden-card tray names it, and that alone is what makes it client-gating.
-  it("makes widget.dismissal client-gating once a widget names it", () => {
-    expect(flags.isClientGating("widget.dismissal")).toBe(true);
-    expect(flags.clientGating()).toEqual(["widget.dismissal"]);
+  // Lite has no widgets, and a widget naming a flag is the only thing that sends it to a browser.
+  it("sends no flag to the browser", () => {
+    for (const key of flags.all()) expect(flags.isClientGating(key)).toBe(false);
+    expect(flags.clientGating()).toEqual([]);
   });
 });

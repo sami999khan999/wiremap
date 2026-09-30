@@ -33,7 +33,6 @@ describe("PermissionRegistry", () => {
       "ai",
       "analytics",
       "platform",
-      "widget",
       "doc",
     ]);
 

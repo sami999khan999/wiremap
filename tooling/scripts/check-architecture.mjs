@@ -1747,57 +1747,8 @@ assert("the four shard readers run one algorithm", (failures) => {
   }
 });
 
-// ── 30 — every inline widget is placed by a literal key ─────────────────
-//
-// A zone widget is placed by its zone. An inline one has no zone, so the only proof it is
-// on a page at all is `<Widget widget="<key>">` written somewhere. A key read from a
-// variable proves nothing, and in a loop over runtime data it places whatever the data says.
-
-// `feature` and the apps: `ui` cannot name a widget, and the rest render nothing.
-function widgetPlacementFiles() {
-  const dirs = [join(ROOT, "packages/feature/src")];
-  const apps = join(ROOT, "apps");
-  if (existsSync(apps)) {
-    for (const name of readdirSync(apps)) dirs.push(join(apps, name, "src"));
-  }
-  return dirs.flatMap((dir) => walk(dir, [".tsx", ".ts"]));
-}
-
-assert("every inline widget is placed by a literal key", (failures) => {
-  const declared = spreadFragments(join(ROOT, "packages/permissions/src/widget"));
-  if (!declared) return "packages/permissions has no widget barrel yet";
-
-  const inline = new Set();
-  for (const fragment of declared.fragments) {
-    if (!existsSync(fragment)) {
-      failures.push(`${rel(declared.barrel)}: spreads a fragment that is not on disk`);
-      continue;
-    }
-    const source = withoutComments(readFileSync(fragment, "utf8"));
-    for (const [, key, body] of source.matchAll(/"([a-z0-9._-]+)":\s*\{([^}]*)\}/g)) {
-      if (!/\bzone:/.test(body ?? "")) inline.add(key);
-    }
-  }
-
-  const placed = new Set();
-  for (const file of widgetPlacementFiles()) {
-    const source = withoutComments(readFileSync(file, "utf8"));
-    for (const [tag] of source.matchAll(/<Widget\b[^>]*>/g)) {
-      const literal = /\bwidget="([^"]+)"/.exec(tag);
-      if (literal?.[1]) placed.add(literal[1]);
-      else if (/\bwidget=\{/.test(tag)) {
-        failures.push(
-          `${rel(file)}:${lineOf(source, tag)}: \`widget={…}\` — place a widget by its literal key`,
-        );
-      }
-    }
-  }
-
-  for (const key of [...inline].sort()) {
-    if (!placed.has(key))
-      failures.push(`${key}: an inline widget no \`<Widget widget="${key}">\` places`);
-  }
-});
+// ── 30 — absent in lite: it checked widget placement, and widgets left with LT1.2.
+// docs/scale/widgets.md restores it with them.
 
 // ── 31 — every flag is live ────────────────────────────────────────────────
 //

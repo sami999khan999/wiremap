@@ -1,7 +1,7 @@
 import { Identifiers, type OrganizationId, type UserId } from "@loadbearing/contracts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@loadbearing/errors";
 import { CapabilitySet, type PermissionKey } from "@loadbearing/permissions";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FlagCache } from "../../src/flag/flag.cache.js";
 import { type FlagRecord, FlagRepository } from "../../src/flag/flag.repository.js";
 import { ListFlagsUseCase } from "../../src/platform/list-flags.use-case.js";
@@ -12,6 +12,7 @@ import { UpdateFlagTargetUseCase } from "../../src/platform/update-flag-target.u
 import type { ActivityLogger, UnitOfWork } from "../../src/port/index.js";
 import { Authorizer } from "../../src/primitive/authorizer.js";
 import { Principal } from "../../src/primitive/principal.js";
+import { declareExampleFlag, EXAMPLE_FLAG } from "../support/example-flag.js";
 
 const PLATFORM = Identifiers.organizationId.parse("018f8c00-0000-7000-8000-000000000001");
 const TENANT = Identifiers.organizationId.parse("018f8c00-0000-7000-8000-000000000010");
@@ -112,14 +113,17 @@ const actor = (platform: readonly PermissionKey[]) =>
 
 const admin = actor(["platform.flag.read", "platform.flag.manage"]);
 
+beforeEach(declareExampleFlag);
+afterEach(() => vi.restoreAllMocks());
+
 describe("ListFlagsUseCase", () => {
   it("lists every declared flag with its owner, off when it has no row", async () => {
     const { list } = harness();
 
-    const [dismissal] = await list.execute(admin);
+    const [declared] = await list.execute(admin);
 
-    expect(dismissal).toMatchObject({
-      key: "widget.dismissal",
+    expect(declared).toMatchObject({
+      key: EXAMPLE_FLAG,
       owner: "sami",
       isEnabled: false,
       targets: [],
@@ -147,11 +151,11 @@ describe("UpdateFlagUseCase", () => {
   it("switches a flag, audits it in the tier, and invalidates after the write", async () => {
     const { update, flags, recorded, invalidations } = harness();
 
-    await update.execute(admin, { key: "widget.dismissal", enabled: true });
+    await update.execute(admin, { key: EXAMPLE_FLAG, enabled: true });
 
-    expect(flags.rows.get("widget.dismissal")?.isEnabled).toBe(true);
+    expect(flags.rows.get(EXAMPLE_FLAG)?.isEnabled).toBe(true);
     expect(recorded).toEqual([
-      { organizationId: PLATFORM, action: "flag.enabled", payload: { key: "widget.dismissal" } },
+      { organizationId: PLATFORM, action: "flag.enabled", payload: { key: EXAMPLE_FLAG } },
     ]);
     expect(invalidations()).toBe(1);
   });
@@ -182,7 +186,7 @@ describe("UpdateFlagUseCase", () => {
     const { update, recorded } = harness();
 
     await expect(
-      update.execute(actor(["platform.flag.read"]), { key: "widget.dismissal", enabled: true }),
+      update.execute(actor(["platform.flag.read"]), { key: EXAMPLE_FLAG, enabled: true }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     expect(recorded).toEqual([]);
   });
@@ -192,13 +196,13 @@ describe("UpdateFlagTargetUseCase", () => {
   it("turns a flag on for one org named by slug, and off again", async () => {
     const { target, flags, recorded } = harness();
 
-    await target.execute(admin, { key: "widget.dismissal", organization: " acme ", enabled: true });
-    expect(flags.rows.get("widget.dismissal")?.targets).toEqual([
+    await target.execute(admin, { key: EXAMPLE_FLAG, organization: " acme ", enabled: true });
+    expect(flags.rows.get(EXAMPLE_FLAG)?.targets).toEqual([
       { organizationId: TENANT, slug: "acme" },
     ]);
 
-    await target.execute(admin, { key: "widget.dismissal", organization: TENANT, enabled: false });
-    expect(flags.rows.get("widget.dismissal")?.targets).toEqual([]);
+    await target.execute(admin, { key: EXAMPLE_FLAG, organization: TENANT, enabled: false });
+    expect(flags.rows.get(EXAMPLE_FLAG)?.targets).toEqual([]);
 
     expect(recorded.map((entry) => entry.action)).toEqual([
       "flag.organization.added",
@@ -211,7 +215,7 @@ describe("UpdateFlagTargetUseCase", () => {
     const { target } = harness();
 
     await expect(
-      target.execute(admin, { key: "widget.dismissal", organization: "nobody", enabled: true }),
+      target.execute(admin, { key: EXAMPLE_FLAG, organization: "nobody", enabled: true }),
     ).rejects.toBeInstanceOf(NotFoundError);
     await expect(
       target.execute(admin, { key: "retired.flag", organization: "acme", enabled: true }),

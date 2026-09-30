@@ -41,4 +41,3 @@ export { PgTenantRetentionPolicyRepository } from "./pg-tenant-retention-policy.
 export { PgTenantStorageReader } from "./pg-tenant-storage.reader.js";
 export { PgUserReader } from "./pg-user.reader.js";
 export { PgVectorStore } from "./pg-vector.store.js";
-export { PgWidgetPreferenceRepository } from "./pg-widget-preference.repository.js";

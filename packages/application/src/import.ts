@@ -97,12 +97,10 @@ export {
 export {
   CapabilitySet,
   CORE_MODULE,
-  type DismissibleWidgetKey,
   EntitlementMask,
   type FlagKey,
   FlagRegistry,
   type PermissionKey,
   PermissionRegistry,
   type ScopedSetDto,
-  WidgetRegistry,
 } from "@loadbearing/permissions";

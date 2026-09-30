@@ -18,7 +18,6 @@ export const nav: NamespaceBundle<"nav"> = {
   "nav.documents": "নথি",
   "nav.notifications": "বিজ্ঞপ্তি",
   "nav.analytics": "কার্যকলাপ",
-  "nav.widgets": "ড্যাশবোর্ড কার্ড",
   "nav.platform": "প্ল্যাটফর্ম",
   "nav.docs": "ডক",
 

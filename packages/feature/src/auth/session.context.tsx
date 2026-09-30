@@ -53,7 +53,7 @@ export interface SessionProviderProps {
   // which is the safe reading: the platform module stays hidden.
   readonly isPlatformOrganization?: boolean;
   // The on-set of client-gating flags. Defaulted to none, so a caller not yet updated
-  // renders every flagged widget hidden, which is the side a rollout starts from.
+  // renders every flagged affordance hidden, which is the side a rollout starts from.
   readonly flags?: readonly FlagKey[];
   readonly children: ReactNode;
 }

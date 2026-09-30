@@ -15,11 +15,4 @@ export const corePermissions = {
     module: "core",
     label: "Receive real-time updates",
   },
-  // Hiding a card on your own dashboard. Everyone's, because it changes nothing anyone may
-  // do: a hidden card's data is still one route away.
-  "core.widget.customize": {
-    scope: "org",
-    module: "core",
-    label: "Hide cards on your own dashboard",
-  },
 } as const satisfies Record<string, PermissionMeta>;

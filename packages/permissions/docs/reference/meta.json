@@ -8,7 +8,6 @@
     "module-registry",
     "routes",
     "entitlement-mask",
-    "flag-registry",
-    "widget-registry"
+    "flag-registry"
   ]
 }

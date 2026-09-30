@@ -33,4 +33,18 @@ upstream:apps/web/src/route/(app)/_authenticated/settings/widgets.tsx
 **Migrations to read:** `0047_widget_preferences`, `0048_widget_grants`.
 
 **Also restore** the `check-architecture` assertion that every inline widget is placed by its
-literal key, which lite removed along with the feature.
+literal key, which lite removed along with the feature. It is §30, and the fixture harness's count
+of assertions goes back from 30 to 31.
+
+**And the pieces outside those folders**, which lite removed or rewrote in `LT1.2`:
+
+- the `widget` module's gate, route and permission (`widget.default.manage`, also in the admin
+  seed), `core.widget.customize` in `core.permissions.ts`, and the `widget.dismissal` flag;
+- the `widget` content namespace in en and bn, `WIDGET_COPY` and `ZONE_COPY`, and the nav entry;
+- `widget_preferences` in `PartitionedTable.ALL`, the query keys, the api-client getter and the
+  `widget` router in `apps/web`;
+- the `<Widget widget="notification.bell">` around the bell (lite uses `<Can>`), the
+  `WidgetInspector` in the member access panel, and the dashboard route, which lite made static;
+- the client-gating set in `FlagRegistry`, which lite leaves empty.
+
+`TenantMembershipReader` stayed in lite with nothing reading it, so it needs no port.

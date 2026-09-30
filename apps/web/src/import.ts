@@ -53,9 +53,7 @@ export {
   CreateApiKeyForm,
   CreateOrganizationForm,
   CreateRoleForm,
-  DashboardZone,
   DeleteTenantPanel,
-  DISMISSAL,
   DocEditorForm,
   DocGrantPanel,
   DocNavTree,
@@ -75,6 +73,7 @@ export {
   InviteMemberForm,
   LinkedAccountList,
   MemberAccessPanel,
+  MemberCount,
   MemberList,
   MessageProvider,
   ModuleNav,
@@ -90,7 +89,6 @@ export {
   ProjectionGapsPanel,
   ProjectionPolicyForm,
   ProjectionSwitchPanel,
-  prefetchDashboard,
   ReplicaSwitchPanel,
   ResetPasswordForm,
   RestorePartitionPanel,
@@ -116,9 +114,6 @@ export {
   useMessages,
   useSession,
   VerifyEmailNotice,
-  Widget,
-  WidgetDefaultForm,
-  widgetFacts,
 } from "@loadbearing/feature";
 
 // ── @loadbearing/permissions ─────────────────────────────────────────────────
@@ -131,7 +126,6 @@ export {
   FlagRegistry,
   type PermissionKey,
   ROUTES,
-  WidgetRegistry,
 } from "@loadbearing/permissions";
 
 // ── @loadbearing/query ───────────────────────────────────────────────────────
@@ -148,7 +142,6 @@ export {
   RoleQueries,
   useApiClient,
   useAppQuery,
-  WidgetQueries,
 } from "@loadbearing/query";
 
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────
@@ -159,6 +152,8 @@ export {
   Callout,
   type CalloutTone,
   Can,
+  Card,
+  CardGrid,
   CodeList,
   DataTable,
   EmptyState,
@@ -176,7 +171,6 @@ export {
   StatusBadge,
   type ThemeKey,
   ThemeRegistry,
-  Zone,
 } from "@loadbearing/ui";
 
 // ── @loadbearing/ui — stylesheets ────────────────────────────────────────────

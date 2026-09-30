@@ -6,18 +6,3 @@ export {
   PermissionRegistry,
   type PermissionScope,
 } from "./permission-registry.js";
-export {
-  type DismissibleWidgetKey,
-  type InlineWidgetKey,
-  type InlineWidgetMeta,
-  type WidgetFacts,
-  type WidgetKey,
-  type WidgetMeta,
-  type WidgetPolicy,
-  WidgetRegistry,
-  type WidgetVisibility,
-  ZONES,
-  type ZoneKey,
-  type ZoneWidgetKey,
-  type ZoneWidgetMeta,
-} from "./widget-registry.js";

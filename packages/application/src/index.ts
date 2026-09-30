@@ -428,14 +428,3 @@ export {
   EventSubscriber,
   SubscriberRegistry,
 } from "./subscriber/index.js";
-export {
-  type GetWidgetPreferencesInput,
-  GetWidgetPreferencesUseCase,
-  type UpdateWidgetDefaultInput,
-  UpdateWidgetDefaultUseCase,
-  type UpdateWidgetPreferenceInput,
-  UpdateWidgetPreferenceUseCase,
-  WidgetPreferenceRepository,
-  type WidgetPreferences,
-  WidgetRules,
-} from "./widget/index.js";

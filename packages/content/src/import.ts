@@ -11,8 +11,8 @@ export type { ErrorCode, ErrorEnvelope, FieldViolation } from "@loadbearing/erro
 
 // ── @loadbearing/permissions ──────────────────────────────────────────
 // Key types only: content titles the security surface and never defines it, and the two
-// symbols that would let it are banned in ESLint. `WIDGET_COPY` is total over `WidgetKey`.
-export type { ModuleKey, WidgetKey, ZoneKey } from "@loadbearing/permissions";
+// symbols that would let it are banned in ESLint.
+export type { ModuleKey } from "@loadbearing/permissions";
 
 // ── zod ───────────────────────────────────────────────────────────────
 export { z } from "zod";

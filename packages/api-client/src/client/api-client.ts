@@ -116,10 +116,6 @@ export class ApiClient {
     return this.rpc.analytics;
   }
 
-  public get widget(): AppClient["widget"] {
-    return this.rpc.widget;
-  }
-
   public get docSpace(): AppClient["docSpace"] {
     return this.rpc.docSpace;
   }

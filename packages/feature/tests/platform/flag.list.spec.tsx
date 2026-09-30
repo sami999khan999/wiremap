@@ -7,7 +7,7 @@ import { FlagList } from "../../src/platform/flag.list.js";
 import { renderWithFakes } from "../support/render-with-fakes.js";
 
 const DECLARED: FlagDto = {
-  key: "widget.dismissal",
+  key: "example.rollout",
   owner: "sami",
   expiresOn: "2999-12-31",
   description: "Lets a user hide a card",
@@ -71,7 +71,7 @@ describe("FlagList", () => {
   it("shows owner and expiry from code, and the organizations from the database", async () => {
     await renderList([DECLARED], platform("platform.flag.read"));
 
-    expect(await screen.findByText("widget.dismissal")).toBeTruthy();
+    expect(await screen.findByText("example.rollout")).toBeTruthy();
     expect(screen.getByText("sami")).toBeTruthy();
     expect(screen.getByText("2999-12-31")).toBeTruthy();
     expect(screen.getByText("acme")).toBeTruthy();
@@ -93,7 +93,7 @@ describe("FlagList", () => {
   it("offers no switch to a caller who may only read", async () => {
     await renderList([DECLARED], platform("platform.flag.read"));
 
-    await screen.findByText("widget.dismissal");
+    await screen.findByText("example.rollout");
     expect(screen.queryByRole("button", { name: "Turn on for everyone" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Turn on for this organization" })).toBeNull();
   });
@@ -122,18 +122,18 @@ describe("FlagList", () => {
 
     await waitFor(() => expect(calls).toHaveLength(3));
     expect(calls).toEqual([
-      { procedure: "updateFlag", input: { key: "widget.dismissal", enabled: true } },
+      { procedure: "updateFlag", input: { key: "example.rollout", enabled: true } },
       {
         procedure: "updateFlagTarget",
         input: {
-          key: "widget.dismissal",
+          key: "example.rollout",
           organization: "00000000-0000-7000-8000-0000000000a1",
           enabled: false,
         },
       },
       {
         procedure: "updateFlagTarget",
-        input: { key: "widget.dismissal", organization: "globex", enabled: true },
+        input: { key: "example.rollout", organization: "globex", enabled: true },
       },
     ]);
   });

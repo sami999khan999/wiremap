@@ -25,7 +25,6 @@ export const CLIENT_CATALOG: Readonly<
     notification: async () => (await import("./en/notification.js")).notification,
     analytics: async () => (await import("./en/analytics.js")).analytics,
     platform: async () => (await import("./en/platform.js")).platform,
-    widget: async () => (await import("./en/widget.js")).widget,
     doc: async () => (await import("./en/doc.js")).doc,
   },
   bn: {
@@ -42,7 +41,6 @@ export const CLIENT_CATALOG: Readonly<
     notification: async () => (await import("./bn/notification.js")).notification,
     analytics: async () => (await import("./bn/analytics.js")).analytics,
     platform: async () => (await import("./bn/platform.js")).platform,
-    widget: async () => (await import("./bn/widget.js")).widget,
     doc: async () => (await import("./bn/doc.js")).doc,
   },
 };

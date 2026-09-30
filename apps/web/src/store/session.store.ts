@@ -11,8 +11,8 @@ export interface SessionSnapshot {
   // Not about the user, and it rides here anyway: `Env` is server-only, and this is the
   // one payload the root route already awaits on every request.
   readonly googleEnabled: boolean;
-  // The on-set of client-gating flags only — the ones a widget names. A server-only
-  // flag's name never rides here. See docs/reference/server-functions.md.
+  // The on-set of client-gating flags only. A server-only flag's name never rides here,
+  // and in lite every flag is server-only. See docs/reference/server-functions.md.
   readonly flags: readonly FlagKey[];
 }
 

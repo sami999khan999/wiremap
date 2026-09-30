@@ -22,7 +22,6 @@ import {
   type ThemeKey,
   ThemeRegistry,
   useState,
-  Zone,
 } from "~/import.js";
 
 // The one surface that renders every theme against every primitive, so an unreadable
@@ -320,40 +319,6 @@ function KitchenSink() {
           title="Nothing here yet"
           description="An empty state is an invitation to act."
           action={<Button>Do the thing</Button>}
-        />
-      </Section>
-
-      <Section title="Zone">
-        <Zone
-          label="A sample zone"
-          items={[
-            {
-              key: "count",
-              title: "A count",
-              content: <p style={{ margin: 0, fontSize: "var(--text-2xl)" }}>42</p>,
-            },
-            {
-              key: "status",
-              title: "With an action",
-              content: <StatusBadge tone="success">Healthy</StatusBadge>,
-              action: <Button variant="ghost">Hide</Button>,
-            },
-            {
-              key: "text",
-              title: "A longer unit",
-              content: (
-                <p style={{ margin: 0, color: "var(--fg-muted)" }}>
-                  Units sit side by side, as many to a row as fit, and stack on a phone.
-                </p>
-              ),
-            },
-          ]}
-        />
-        <div style={gap} />
-        <Zone
-          label="An empty zone"
-          items={[]}
-          empty={<EmptyState title="Nothing in this zone" description="Every unit was hidden." />}
         />
       </Section>
     </main>

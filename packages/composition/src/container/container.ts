@@ -62,7 +62,6 @@ import {
   GetNotificationPreferencesUseCase,
   GetOrganizationEntitlementUseCase,
   GetPlatformPolicyUseCase,
-  GetWidgetPreferencesUseCase,
   GrantPermissionOverrideUseCase,
   GrantPermissionUseCase,
   IndexDocumentUseCase,
@@ -157,7 +156,6 @@ import {
   PgTenantStorageReader,
   PgUnitOfWork,
   PgVectorStore,
-  PgWidgetPreferenceRepository,
   type PlatformPolicyRepository,
   type PlatformReader,
   PreviewDocPageUseCase,
@@ -237,8 +235,6 @@ import {
   UpdateRetentionPolicyUseCase,
   UpdateRoleUseCase,
   UpdateTenantRetentionUseCase,
-  UpdateWidgetDefaultUseCase,
-  UpdateWidgetPreferenceUseCase,
   UploadDocImageUseCase,
   type UserId,
   type VectorStore,
@@ -530,13 +526,6 @@ export class Container {
   // Whether a flag is on for an org. Read by `fetchSession` on every document request,
   // and by a use-case before its permission check when a flag guards it.
   public readonly flags: FlagCache;
-  // Hiding a dashboard card: one person's, or the org's for everyone. Behind
-  // `widget.dismissal`, which each use-case asks before its permission.
-  public readonly widget: {
-    readonly preferences: GetWidgetPreferencesUseCase;
-    readonly updatePreference: UpdateWidgetPreferenceUseCase;
-    readonly updateDefault: UpdateWidgetDefaultUseCase;
-  };
   // Docs, the platform's public and granted spaces included: those are the platform
   // organization's own rows, so one slice serves both. See docs/reference/container.md.
   public readonly doc: {
@@ -1108,30 +1097,6 @@ export class Container {
     // The directory's own lookup, shared by every screen that takes an id or a slug.
     const tenantLookup = new PgShardMapReader(this.cluster, this.transactions, this.shards);
     this.flags = new FlagCache(flagRepository, this.cache);
-    const widgetPreferences = new PgWidgetPreferenceRepository(
-      this.cluster,
-      this.transactions,
-      this.shards,
-    );
-    this.widget = {
-      preferences: new GetWidgetPreferencesUseCase(
-        this.authorizer,
-        widgetPreferences,
-        this.tenantMemberships,
-      ),
-      updatePreference: new UpdateWidgetPreferenceUseCase(
-        this.authorizer,
-        this.flags,
-        widgetPreferences,
-      ),
-      updateDefault: new UpdateWidgetDefaultUseCase(
-        this.authorizer,
-        this.flags,
-        widgetPreferences,
-        this.activity,
-        this.routedUnitOfWork,
-      ),
-    };
     this.doc = this.buildDoc();
     this.retentionPolicies = new PgRetentionPolicyRepository(
       this.cluster,

@@ -1,6 +1,8 @@
-import { CapabilitySet } from "@loadbearing/permissions";
+import { CapabilitySet, type FlagKey } from "@loadbearing/permissions";
 import { describe, expect, it } from "vitest";
 import { type SessionSnapshot, SessionStore } from "../../src/store/session.store.js";
+
+const EXAMPLE_FLAG = "example.rollout" as FlagKey;
 
 const OWNER: SessionSnapshot = {
   user: {
@@ -34,14 +36,14 @@ function counting(snapshot: SessionSnapshot) {
 
 describe("SessionStore", () => {
   // The on-set crosses SSR with the rest, and an unresolved store holds none: a flagged
-  // widget renders hidden until the server says otherwise.
+  // affordance renders hidden until the server says otherwise. Lite declares no flag.
   it("carries the flag on-set across the SSR boundary, and starts with none", () => {
     const store = new SessionStore();
     expect(store.flags).toEqual([]);
 
-    store.restore({ ...OWNER, flags: ["widget.dismissal"] });
-    expect(store.flags).toEqual(["widget.dismissal"]);
-    expect(store.dehydrate().flags).toEqual(["widget.dismissal"]);
+    store.restore({ ...OWNER, flags: [EXAMPLE_FLAG] });
+    expect(store.flags).toEqual([EXAMPLE_FLAG]);
+    expect(store.dehydrate().flags).toEqual([EXAMPLE_FLAG]);
   });
 
   // The security page picks the wizard or the panel from this field, and it used to be

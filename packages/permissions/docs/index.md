@@ -155,22 +155,13 @@ nothing was deleted.
 ### [`FlagRegistry`](reference/flag-registry.md) — what is switched on
 
 ```ts
-FlagRegistry.instance.clientGating();   // the flags a widget names — the only ones sent to a browser
+FlagRegistry.instance.clientGating();   // the flags sent to a browser — none in lite
 ```
 
-Every flag is declared in code with an owner and an expiry date, and switched in Postgres.
-Client-gating is derived from the widgets, never declared, so a server-only flag's name cannot
-reach the session payload by someone forgetting a field.
-
-### [`WidgetRegistry`](reference/widget-registry.md) — what a screen shows
-
-```ts
-WidgetRegistry.instance.visibilityOf("member.count", facts); // "visible" | "denied" | …
-```
-
-Every card and inline element that can be absent for its own reason, with its zone, its order, its
-permission and its policy. `visibilityOf` answers with the broadest cause, as pure data, so a zone
-resolves during SSR and a spec can say what a role sees without rendering anything.
+Every flag is declared in code with an owner and an expiry date, and switched in Postgres. Lite
+declares none. In the big kit, client-gating is derived from the widgets that name a flag. Lite has
+no widgets, so every flag stays server-only until [widgets](../../../docs/scale/widgets.md) are
+ported back.
 
 ---
 
@@ -249,7 +240,7 @@ reach that branch rather than leaving rule 3 unverified until a slice adds a goa
 
 ## See also
 
-- [PermissionRegistry](reference/permission-registry.md) · [CapabilitySet](reference/capability-set.md) · [The platform scope](reference/platform-scope.md) · [ModuleRegistry](reference/module-registry.md) · [ROUTES](reference/routes.md) · [EntitlementMask](reference/entitlement-mask.md) · [FlagRegistry](reference/flag-registry.md) · [WidgetRegistry](reference/widget-registry.md)
+- [PermissionRegistry](reference/permission-registry.md) · [CapabilitySet](reference/capability-set.md) · [The platform scope](reference/platform-scope.md) · [ModuleRegistry](reference/module-registry.md) · [ROUTES](reference/routes.md) · [EntitlementMask](reference/entitlement-mask.md) · [FlagRegistry](reference/flag-registry.md)
 - [Visibility](../../../docs/opinions/visibility.md) — the four mechanisms and the order they resolve in
 - [Build order · 08 · permissions](../../../docs/setup/08-permissions-package.md)
 - [`@loadbearing/core`](../../core/docs/index.md) — the layer below

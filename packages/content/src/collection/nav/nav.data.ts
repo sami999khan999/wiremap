@@ -18,7 +18,6 @@ const ITEMS = [
   { module: "document", labelKey: "nav.documents", icon: "check", order: 40 },
   { module: "notification", labelKey: "nav.notifications", icon: "bell", order: 50 },
   { module: "analytics", labelKey: "nav.analytics", icon: "check", order: 70 },
-  { module: "widget", labelKey: "nav.widgets", icon: "check", order: 80 },
   { module: "doc", labelKey: "nav.docs", icon: "book", order: 85 },
   // Last, and invisible to everyone but a platform admin: `ModuleRegistry.isVisible`
   // calls `can()`, and a tenant's wildcard does not reach the platform scope.

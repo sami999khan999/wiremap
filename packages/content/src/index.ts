@@ -20,8 +20,6 @@ export {
   SHELL_NAMESPACES,
   type ShellMessageKey,
   type ShellNamespace,
-  WIDGET_COPY,
-  ZONE_COPY,
 } from "./message/index.js";
 export { type Locale, Locales } from "./primitive/index.js";
 export { ContentSource, StaticContentSource } from "./source/index.js";

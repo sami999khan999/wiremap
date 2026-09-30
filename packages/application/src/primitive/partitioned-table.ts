@@ -3,7 +3,6 @@ const OUTBOX_EVENT = "outbox_event";
 const NOTIFICATIONS = "notifications";
 const NOTIFICATION_PREFERENCES = "notification_preferences";
 const DOCUMENT_CHUNKS = "document_chunks";
-const WIDGET_PREFERENCES = "widget_preferences";
 const DOC_SPACES = "doc_spaces";
 const DOC_PAGES = "doc_pages";
 const DOC_REVISION = "doc_revision";
@@ -64,13 +63,6 @@ const ALL = Object.freeze([
   }),
   Object.freeze({
     name: DOCUMENT_CHUNKS,
-    tenantKey: "organization_id",
-    column: null,
-    retentionMonths: null,
-  }),
-  // Which cards a person hid. It grows with the members, not the calendar: no month level.
-  Object.freeze({
-    name: WIDGET_PREFERENCES,
     tenantKey: "organization_id",
     column: null,
     retentionMonths: null,
@@ -138,7 +130,6 @@ export class PartitionedTable {
   public static readonly NOTIFICATIONS = NOTIFICATIONS;
   public static readonly NOTIFICATION_PREFERENCES = NOTIFICATION_PREFERENCES;
   public static readonly DOCUMENT_CHUNKS = DOCUMENT_CHUNKS;
-  public static readonly WIDGET_PREFERENCES = WIDGET_PREFERENCES;
   public static readonly DOC_SPACES = DOC_SPACES;
   public static readonly DOC_PAGES = DOC_PAGES;
   public static readonly DOC_REVISION = DOC_REVISION;

@@ -232,9 +232,3 @@ export {
   RoleProcedures,
   type UpdateRoleInput,
 } from "./role/index.js";
-export {
-  WidgetContract,
-  type WidgetPreferencesDto,
-  type WidgetPreferenceUpdateInput,
-  WidgetProcedures,
-} from "./widget/index.js";

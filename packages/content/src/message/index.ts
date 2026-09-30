@@ -15,4 +15,3 @@ export {
   type ShellMessageKey,
   type ShellNamespace,
 } from "./namespace.js";
-export { WIDGET_COPY, ZONE_COPY } from "./widget-copy.js";

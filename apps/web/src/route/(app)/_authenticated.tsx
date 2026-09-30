@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouter } from "@tanstack
 import { Endpoint } from "~/endpoint.js";
 import {
   AuthClient,
+  Can,
   CapabilitySet,
   type ClientNamespace,
   ModuleNav,
@@ -16,9 +17,6 @@ import {
   useCapabilities,
   useMemo,
   useMessages,
-  Widget,
-  WidgetRegistry,
-  widgetFacts,
 } from "~/import.js";
 import { Pending } from "~/route/-boundary.js";
 import { RouteGuard } from "~/route/-guard.js";
@@ -38,16 +36,11 @@ export const Route = createFileRoute("/(app)/_authenticated")({
   // The menu is content, so it is loaded like content. Both in parallel: neither
   // depends on the other and the header needs both before it renders.
   loader: async ({ context }) => {
-    // The registry's answer for the same widget `<Widget>` renders below, so a member who
-    // cannot see the bell issues no count query rather than one the procedure refuses.
-    const bell = WidgetRegistry.instance.visibilityOf(
-      "notification.bell",
-      widgetFacts(CapabilitySet.from(context.capabilities), context.flags),
-    );
-    const counted =
-      bell === "visible"
-        ? context.queryClient.ensureQueryData(NotificationQueries.unreadCount(context.api))
-        : Promise.resolve(null);
+    // The same key the `<Can>` around the bell asks below, so a member who cannot see it
+    // issues no count query rather than one the procedure refuses.
+    const counted = CapabilitySet.from(context.capabilities).can("notification.inbox.read")
+      ? context.queryClient.ensureQueryData(NotificationQueries.unreadCount(context.api))
+      : Promise.resolve(null);
 
     // The logo goes through `ContentSource.media()` rather than importing the file:
     // content records hold `"brand.logo"`, never a path, so a CDN is one adapter.
@@ -110,11 +103,10 @@ function AuthenticatedLayout() {
           onCreate={() => void navigate({ to: "/organization/new" })}
         />
         {
-          // An inline widget, not a `<Can>`: the registry names its permission, and the
-          // literal key is what `check-architecture` §30 finds to prove it is placed.
-          <Widget widget="notification.bell">
+          // An affordance, so `<Can>`: the inbox route and its procedures are the gate.
+          <Can permission="notification.inbox.read" capabilities={capabilities}>
             <NotificationBell href={ROUTES.notification.inbox} />
-          </Widget>
+          </Can>
         }
         {
           // Ungated on purpose: your own account and security pages need no capability,

@@ -10,7 +10,6 @@ import { NotificationRouter } from "./notification.router.js";
 import { OverrideRouter } from "./override.router.js";
 import { PlatformRouter } from "./platform.router.js";
 import { RoleRouter } from "./role.router.js";
-import { WidgetRouter } from "./widget.router.js";
 
 // The merge point, mirroring `contract` from `@loadbearing/contracts` exactly — a
 // mismatch is a type error. One line per slice: `task: TaskRouter.all`.
@@ -24,7 +23,6 @@ export const appRouter = {
   platform: PlatformRouter.all,
   analytics: AnalyticsRouter.all,
   override: OverrideRouter.all,
-  widget: WidgetRouter.all,
   docSpace: DocSpaceRouter.all,
   docPage: DocPageRouter.all,
   docGrant: DocGrantRouter.all,

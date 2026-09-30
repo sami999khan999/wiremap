@@ -9,7 +9,6 @@ import { OverrideProcedures } from "../override/index.js";
 import { PlatformProcedures } from "../platform/index.js";
 import { RealtimeProcedures } from "../realtime/index.js";
 import { RoleProcedures } from "../role/index.js";
-import { WidgetProcedures } from "../widget/index.js";
 
 // The merge point for every slice's procedures, and registering one here binds three
 // files to the same commit: its permissions, its procedure map, and its `apps/web` router.
@@ -23,7 +22,6 @@ export const contract = {
   platform: PlatformProcedures.all,
   analytics: AnalyticsProcedures.all,
   override: OverrideProcedures.all,
-  widget: WidgetProcedures.all,
   docSpace: DocSpaceProcedures.all,
   docPage: DocPageProcedures.all,
   docGrant: DocGrantProcedures.all,

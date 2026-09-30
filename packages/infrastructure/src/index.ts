@@ -64,7 +64,6 @@ export {
   type PgUnitOfWorkConfig,
   PgUserReader,
   PgVectorStore,
-  PgWidgetPreferenceRepository,
   type PlacedShard,
   type ReplicaHealth,
   type ShardConfig,
