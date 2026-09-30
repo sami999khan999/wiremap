@@ -186,7 +186,7 @@ export class Database {
 > transaction pooler is in front: it is sent as a startup parameter, pgBouncer drops it, and
 > `SHOW statement_timeout` reads `0`. Migration `0022` puts a role-level floor back and
 > `PgUnitOfWork` raises it per transaction with `SET LOCAL`. See
-> [`docs/infra/reference/pgbouncer.md`](../infra/reference/pgbouncer.md).
+> [`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
 
 ---
 
@@ -570,7 +570,7 @@ the migrator and leaves the application unlimited, silently.
 
 **It does not take effect on connections that are already open.** After deploying it, run
 `RECONNECT` on the pgBouncer console; a restart would work too and would also kill the worker.
-[`docs/infra/reference/pgbouncer.md`](../infra/reference/pgbouncer.md) has both.
+[`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md) has both.
 
 ---
 

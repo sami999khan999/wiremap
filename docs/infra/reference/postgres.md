@@ -93,7 +93,7 @@ pnpm infra:reset
 
 | Consumer | Reaches it at | For |
 |---|---|---|
-| `apps/web`, `apps/worker` (host) | `localhost:26432` | everything, via `DATABASE_URL` — **through [pgBouncer](pgbouncer.md)** |
+| `apps/web`, `apps/worker` (host) | `localhost:26432` | everything, via `DATABASE_URL` — **through [pgBouncer](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md)** |
 | `migrate.ts`, `seed.ts`, `drizzle-kit` (host) | `localhost:25432` | DDL, via `DATABASE_DIRECT_URL` |
 | `migrate.ts`, `partitions.ts`, under the `sharded` profile | `localhost:25433` | the same DDL on node 1, via `DATABASE_SHARD_1_DIRECT_URL` |
 | `PgPartitionArchiveGateway` | `localhost:25432` | `DETACH … CONCURRENTLY` and a month-long stream |
@@ -104,7 +104,7 @@ nothing.
 
 Connections are pooled per process at `DATABASE_POOL_MAX` (10 by default,
 [13](../../setup/13-infrastructure-postgres.md)) — but they are no longer counted against
-`max_connections`, because [pgBouncer](pgbouncer.md) is in front of them. What replicas cost now is
+`max_connections`, because [pgBouncer](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md) is in front of them. What replicas cost now is
 pgBouncer *client* slots (`MAX_CLIENT_CONN`, 1000); what Postgres sees is `DEFAULT_POOL_SIZE` (20).
 That is the whole reason the pooler is in the core stack rather than filed as a later move.
 

@@ -8,7 +8,7 @@ import {
 import { Database, type DatabaseConfig } from "./database.js";
 
 // One physical Postgres, pooled twice: through the pooler for everything, and directly
-// for the DDL a transaction pooler cannot carry. See docs/infra/reference/pgbouncer.md.
+// for the DDL a transaction pooler cannot carry. See docs/scale/pgbouncer.md.
 export interface ShardConfig {
   readonly pooled: DatabaseConfig;
   readonly direct: DatabaseConfig;

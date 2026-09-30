@@ -261,7 +261,7 @@ export interface HealthReport {
   // Not a failure, and not something to open a connection in order to report on.
   readonly realtime: boolean | null;
   // This process's own pool, and only that: a client waiting inside pgBouncer reads as
-  // `waiting: 0` here. See docs/infra/reference/pgbouncer.md.
+  // `waiting: 0` here. See docs/scale/pgbouncer.md.
   readonly pool: DatabaseStats;
 }
 
@@ -598,7 +598,7 @@ export class Container {
     this.storagePolicy = new S3StoragePolicyGateway(config.storage);
 
     // The *direct* pool, not the shared one: a month-sized detach and stream needs a
-    // budget the 30 s role floor will not give it. See docs/infra/reference/pgbouncer.md.
+    // budget the 30 s role floor will not give it. See docs/scale/pgbouncer.md.
     this.partitionArchive = new PgPartitionArchiveGateway(
       this.cluster,
       this.transactions,

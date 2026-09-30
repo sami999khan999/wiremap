@@ -6,5 +6,5 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 --
 -- This file is a docker-entrypoint-initdb.d script, so it runs on a **first boot only**.
 -- A machine with an existing pgdata volume needs this statement by hand, or the flag is
--- on and the view is absent. See docs/infra/reference/pgbouncer.md.
+-- on and the view is absent. See docs/scale/pgbouncer.md.
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;

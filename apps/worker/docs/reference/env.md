@@ -115,7 +115,7 @@ the whole of its Redis round trips.
 `DATABASE_STATEMENT_TIMEOUT_MS` defaults to 120 s here against the web app's 30 s, and that is the
 one field the two schemas deliberately disagree about. Through pgBouncer it reaches the server as a
 `SET LOCAL` inside `PgUnitOfWork.run`, never as a startup parameter — see
-[`docs/infra/reference/pgbouncer.md`](../../../../docs/infra/reference/pgbouncer.md).
+[`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
 
 ## The two realtime numbers are per process
 

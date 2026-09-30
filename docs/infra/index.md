@@ -29,7 +29,7 @@ on a VPS, and the order to move them to managed services in when one box stops f
 |---|---|---|
 | `docker-compose.yml` | `docker compose` | [compose](reference/compose.md) |
 | `postgres.init.sql` | Postgres, on first boot only | [postgres](reference/postgres.md) |
-| *(no file)* | pgBouncer, from compose env | [pgbouncer](reference/pgbouncer.md) |
+| *(no file)* | pgBouncer, from compose env | [pgbouncer](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md) |
 | `loki.config.yml` | Loki, at startup | [loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md) |
 | `alloy.config.alloy` | Alloy, at startup | [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
 | `logs/` | Alloy, tailed continuously | [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |

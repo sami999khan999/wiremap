@@ -168,7 +168,7 @@ waiting on do not want the same ceiling.
 **Through the pooler, that variable is not what enforces the timeout.** `pg` sends it as a startup
 parameter, pgBouncer drops it, and `SHOW statement_timeout` reads `0`. Migration `0022`'s role
 setting is the floor, and `PgUnitOfWork` raises it per transaction with `SET LOCAL`. The full
-mechanism is in [`docs/infra/reference/pgbouncer.md`](../../../../docs/infra/reference/pgbouncer.md).
+mechanism is in [`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
 
 ## The two realtime numbers are per process
 

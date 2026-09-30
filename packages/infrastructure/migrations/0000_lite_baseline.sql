@@ -518,7 +518,7 @@ CREATE INDEX "document_chunks_embedding_idx" ON "document_chunks" USING hnsw ("e
 -- resolved at read time, so it has no `plan_permissions` rows.
 INSERT INTO "plans" ("key", "name", "description", "is_unlimited", "is_system") VALUES ('unlimited', 'Unlimited', 'Every tenant permission, including ones added by later deploys.', true, true);--> statement-breakpoint
 -- Hand-written: the timeout floor that survives a transaction pooler, on the role this runs
--- as, which must be the role the application connects as. See docs/infra/reference/pgbouncer.md.
+-- as, which must be the role the application connects as. See docs/scale/pgbouncer.md.
 ALTER ROLE CURRENT_USER SET statement_timeout = '30s';--> statement-breakpoint
 -- The forgotten-`await` guard: a transaction left open holds a connection for every other client.
 ALTER ROLE CURRENT_USER SET idle_in_transaction_session_timeout = '60s';--> statement-breakpoint

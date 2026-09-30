@@ -1,6 +1,11 @@
-# loadbearing
+# loadbearing lite
 
-pnpm workspaces · TanStack Start + oRPC · standalone worker · Postgres + pgvector · Redis (cache + queue) · S3 · stdout to Loki · ClickHouse behind a driver flag
+pnpm workspaces · TanStack Start + oRPC · standalone worker · Postgres + pgvector · one Redis (cache + queue) · S3 · logs to stdout
+
+**The big kit, `loadbearing`, with its running scale stores removed and every seam kept.** Same
+packages, same `@loadbearing/*` scope, same rules. [`UPSTREAM.md`](UPSTREAM.md) records the commit it
+was cut from and what was taken out, and [`docs/scale/`](docs/scale/index.md) is the way back to
+each piece when a project outgrows this one.
 
 ## Running it locally
 
@@ -23,9 +28,8 @@ There is **one env file**, the `.env` at the root, and both halves of a port liv
     POSTGRES_PORT=25432
     DATABASE_URL=postgres://ratchet:ratchet@localhost:25432/ratchet
 
-`POSTGRES_PORT` `PGBOUNCER_PORT` `REDIS_CACHE_PORT` `REDIS_QUEUE_PORT` `S3_PORT`
-`MINIO_CONSOLE_PORT` `SMTP_PORT` `MAILPIT_UI_PORT` `LOKI_PORT` `ALLOY_PORT` `CLICKHOUSE_HTTP_PORT`
-`CLICKHOUSE_NATIVE_PORT` and `WEB_PORT` are the full set, each documented in `.env.example`.
+`POSTGRES_PORT` `REDIS_PORT` `S3_PORT` `MINIO_CONSOLE_PORT` `SMTP_PORT` `MAILPIT_UI_PORT` and
+`WEB_PORT` are the full set, each documented in `.env.example`.
 `check:architecture` §27 fails the build if a `*_PORT` and the URL beside it ever disagree, which
 is the failure that otherwise reads as a connection refused and names nothing.
 
@@ -33,13 +37,17 @@ For the web app, `WEB_PORT` is the one to change: `apps/web/vite.config.ts` read
 `APP_BASE_URL`, `AUTH_URL` and `AUTH_TRUSTED_ORIGINS` must all name it — Better Auth signs cookies
 against the second and the CORS layer reads the third. §27 checks all three.
 
-**3 · Infrastructure.** Postgres + pgvector, two Redis instances (cache and queue, deliberately
-separate), MinIO, Mailpit, and the Loki/Alloy log pipeline. ClickHouse sits behind
-`pnpm infra:up:analytics` and is not started by default. See
+**3 · Infrastructure.** Five containers: Postgres + pgvector, one Redis (`noeviction`, because it
+holds the queue as well as the cache), MinIO with its one-shot bucket init, and Mailpit. See
 [docs/setup/11](docs/setup/11-local-infrastructure.md).
 
     pnpm infra:up
-    docker compose -f infra/docker-compose.yml --profile "*" ps   # all healthy before continuing
+    node tooling/scripts/compose.mjs ps   # all healthy before continuing
+
+Also set a real `AUTH_SECRET` in `.env` (`openssl rand -hex 32`): the template's `change-me` is too
+short for the web app's schema. Search needs no key by default: `EMBEDDING_PROVIDER=none` is
+Postgres full-text search, and `openai` or `gemini` switch it to embeddings —
+[reference/embedding](packages/infrastructure/docs/reference/embedding.md).
 
 **4 · Database.**
 
@@ -61,7 +69,6 @@ the root `.env` themselves.
 | Web app | http://localhost:23000 |
 | Mailpit — catches every outgoing mail | http://localhost:28025 |
 | MinIO console | http://localhost:29001 |
-| Loki API | http://localhost:23100 |
 | Readiness probe | http://localhost:23000/api/health |
 | Drizzle Studio | `pnpm db:studio` |
 
@@ -100,12 +107,12 @@ same decision.
 | `ECONNREFUSED` from `db:migrate` | Postgres not healthy yet, or something else holds 5432 |
 | Signed up, but the shell still renders signed-out | no membership: under `bootstrap`, `BOOTSTRAP_ORGANIZATION_SLUG` is unset or `db:seed` never ran; under `invite`, there is no invitation for the address |
 
-**Two stores are wired but off.** ClickHouse (`AnalyticsReader`, `AnalyticsProjector`) and Loki's read
-side (`LogReader`) have working adapters, a projection consumer, and a nightly reconciliation — and
-the container builds none of them unless `CLICKHOUSE_URL` / `LOKI_URL` are set. *The seam being
-implemented* and *the store being started* are separate decisions, and only the second costs anything
-to be wrong about. See
-[reference/clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md).
+**What lite leaves out, and keeps ready.** No pgBouncer, replica, second Redis, ClickHouse, Loki,
+cold tier or extra shard node runs here, and messaging, widgets and the analytics screens are not
+built. The seams under them stay: every table is partitioned by tenant, every repository declares
+its shard placement, and `DATABASE_URL` is written as if a pooler sat in front. *The seam being
+built* and *the store being started* are separate decisions, and only the second costs anything to
+be wrong about. Each store comes back by its page in [`docs/scale/`](docs/scale/index.md).
 
 ## Documentation
 
@@ -124,5 +131,9 @@ to be wrong about. See
   for what to call a thing, where to put it, and which store owns it.
 - **`packages/*/docs/`** — one reference set per package: what it is for, and why each export is
   shaped the way it is.
-- **[`docs/infra/`](docs/infra/index.md)** — the running stack: what each container is for, how the
-  log pipeline works, and what to check when it is wrong.
+- **[`docs/infra/`](docs/infra/index.md)** — the running stack: what each container is for, and what
+  to check when it is wrong.
+- **[`docs/scale/`](docs/scale/index.md)** — what lite removed, when a project needs each piece back,
+  and how to port it from the big kit. [`back-ports.md`](docs/scale/back-ports.md) lists what lite
+  added that the big kit still owes.
+- **[`docs/plans/`](docs/plans/index.md)** — the live plan, the handoff, and the test runs still owed.

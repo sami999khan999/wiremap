@@ -576,7 +576,7 @@ second URL, and every session-level `SET` in the codebase becomes a bug. Doing i
 connections costs one compose service and one migration; doing it at a hundred costs an audit.
 The trigger for the *next* move is now observable rather than guessed at —
 `database.pool.saturated` on this side of the pooler, `SHOW POOLS` on the other. See
-[`docs/infra/reference/pgbouncer.md`](../infra/reference/pgbouncer.md).
+[`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
 
 ### On ClickHouse specifically
 

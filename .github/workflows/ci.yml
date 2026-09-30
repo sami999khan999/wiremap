@@ -23,15 +23,10 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U ratchet"
           --health-interval 5s --health-timeout 5s --health-retries 10
-      redis-cache:
+      # One instance, as in the lite stack: the cache and the queue share it by URL.
+      redis:
         image: redis:7-alpine
         ports: ["6379:6379"]
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-      redis-queue:
-        image: redis:7-alpine
-        ports: ["6380:6379"]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 5s --health-timeout 5s --health-retries 10
@@ -39,7 +34,7 @@ jobs:
     env:
       DATABASE_URL: postgres://ratchet:ratchet@localhost:5432/ratchet
       REDIS_CACHE_URL: redis://localhost:6379
-      REDIS_QUEUE_URL: redis://localhost:6380
+      REDIS_QUEUE_URL: redis://localhost:6379
       # Read by every `env.ts` like any other config, so a missing one is a startup
       # crash.
       APP: ci

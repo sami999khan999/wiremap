@@ -28,11 +28,12 @@ state of the tree and the traps that cost time.
 | `0e82b69` | `LT2.7`: verified, no code change |
 | `0f3cc37` | `LT2.8`: the migrations squashed into `0000_lite_baseline.sql`; `check-architecture` 30 of 30 |
 | `6dad856` | `LT3`: the `owner` doc audience |
-| after `6dad856` | `LT4`: search without OpenAI — `none`, `openai` or `gemini` |
+| `b77ec46` | `LT4`: search without OpenAI — `none`, `openai` or `gemini` |
+| after `b77ec46` | `LT5`: CI on one Redis, the README, `docs/infra` trimmed, the check-architecture change log |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, `LT2.7`, `LT2.8`, Phases 3 and 4, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, `LT2.7`, `LT2.8`, Phases 3, 4 and 5, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** Phase 5 (tooling, CI), then `LT1.6` the docs sweep — code first, at the owner's request.
+**Next, in order:** `LT1.6` the docs sweep, the only item left; then the owed runs in [`TESTS.md`](TESTS.md) and a first push.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 

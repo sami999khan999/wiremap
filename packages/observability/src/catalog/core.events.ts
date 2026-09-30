@@ -18,7 +18,7 @@ export const coreEvents = {
   "queue.schedule.registered": { level: "info" },
 
   // `saturated` is the pool's own queue, and it is blind to a pooler in front: a wait
-  // inside pgBouncer reads as zero here. See docs/infra/reference/pgbouncer.md.
+  // inside pgBouncer reads as zero here. See docs/scale/pgbouncer.md.
   "database.pool.saturated": { level: "warn" },
   // An idle connection whose socket died — a restarted pooler, a failover. Warn, not
   // error: `pg` opens another, and the alternative to catching it is the process exiting.
