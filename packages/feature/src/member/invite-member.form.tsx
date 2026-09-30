@@ -6,10 +6,10 @@ import {
   Field,
   type FormEvent,
   Input,
-  inputClassName,
   MemberMutations,
   type RoleDto,
   RoleQueries,
+  Select,
   useApiClient,
   useAppQuery,
   useState,
@@ -78,21 +78,15 @@ export function InviteMemberForm() {
         {
           // A native select styled as an input: the design system has no select yet.
         }
-        <select
+        <Select
           id="invite-role"
-          className={inputClassName()}
+          label={t("member.invite.role")}
           value={selectedRole}
-          onChange={(event) => setRoleId(event.target.value)}
+          onValueChange={setRoleId}
           disabled={roles.isPending}
-          // `disabled` alone removes it from the tab order and says nothing about why.
           aria-busy={roles.isPending}
-        >
-          {options.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name}
-            </option>
-          ))}
-        </select>
+          options={options.map((role) => ({ value: role.id, label: role.name }))}
+        />
       </Field>
 
       {invite.isSuccess ? (

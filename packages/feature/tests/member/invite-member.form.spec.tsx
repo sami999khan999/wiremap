@@ -4,6 +4,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { InviteMemberForm } from "../../src/member/invite-member.form.js";
 import { capabilitiesWith, renderWithFakes } from "../support/render-with-fakes.js";
+import { choose } from "../support/select.js";
 
 const role = (id: string, key: string, name: string): RoleDto => ({
   id: id as RoleDto["id"],
@@ -41,13 +42,16 @@ const render = async (
 const type = (value: string) =>
   fireEvent.change(screen.getByLabelText("Email address"), { target: { value } });
 
+// The trigger is named after the chosen role, which is what a reader hears.
+const roleNamed = (name: string) => screen.getByRole("combobox", { name: `Role: ${name}` });
+
 const submit = () => fireEvent.click(screen.getByRole("button", { name: "Send invitation" }));
 
 describe("InviteMemberForm", () => {
   it("defaults to member rather than the wildcard role", async () => {
     const { invite } = await render();
 
-    await waitFor(() => expect(screen.getByRole("combobox")).toHaveProperty("value", MEMBER.id));
+    await waitFor(() => expect(roleNamed("Member")).toBeDefined());
 
     type("new@example.test");
     submit();
@@ -62,16 +66,16 @@ describe("InviteMemberForm", () => {
   it("clears both fields after a successful invitation", async () => {
     const { invite } = await render();
 
-    await waitFor(() => expect(screen.getByRole("combobox")).toHaveProperty("value", MEMBER.id));
+    await waitFor(() => expect(roleNamed("Member")).toBeDefined());
 
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: ADMIN.id } });
+    await choose(roleNamed("Member"), "Admin");
     type("new@example.test");
     submit();
 
     await waitFor(() => expect(invite).toHaveBeenCalled());
 
     expect(screen.getByLabelText("Email address")).toHaveProperty("value", "");
-    await waitFor(() => expect(screen.getByRole("combobox")).toHaveProperty("value", MEMBER.id));
+    await waitFor(() => expect(roleNamed("Member")).toBeDefined());
   });
 
   // The other half: the select paints the options it has, and the form must submit what
@@ -79,7 +83,7 @@ describe("InviteMemberForm", () => {
   it("submits an option that is actually on offer", async () => {
     const { invite } = await render([ADMIN]);
 
-    await waitFor(() => expect(screen.getByRole("combobox")).toHaveProperty("value", ADMIN.id));
+    await waitFor(() => expect(roleNamed("Admin")).toBeDefined());
 
     type("new@example.test");
     submit();

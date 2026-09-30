@@ -27,7 +27,7 @@ function PublicDocHome() {
 
   return (
     <main id="main" className={readerClassName.content}>
-      <div className="ui-stack">
+      <div className="ui-stack flex flex-col gap-3">
         <nav className={readerClassName.actions}>
           <Link to="/">{t("doc.back.home")}</Link>
         </nav>

@@ -1,6 +1,7 @@
 import { useMessages } from "../i18n/index.js";
 import {
   type CapabilitySet,
+  dataTableClassName,
   type PermissionKey,
   PermissionRegistry,
   type PermissionScope,
@@ -55,12 +56,16 @@ export function PermissionMatrix({
   if (subjects.length === 0 || permissions.length === 0) return <p>{t("state.empty")}</p>;
 
   return (
-    <table className="ui-data-table">
+    <table className={dataTableClassName.table}>
       <thead>
         <tr>
-          <th scope="col" aria-label={rbac("role.column.permission")} />
+          <th
+            scope="col"
+            aria-label={rbac("role.column.permission")}
+            className={dataTableClassName.header}
+          />
           {subjects.map((subject) => (
-            <th key={subject.id} scope="col">
+            <th key={subject.id} scope="col" className={dataTableClassName.header}>
               {subject.label}
             </th>
           ))}
@@ -75,14 +80,18 @@ export function PermissionMatrix({
                 // `scope="row"`, or a screen reader reads every cell as a bare "yes"
                 // or "no" with no permission attached.
               }
-              <th scope="row">
+              <th scope="row" className={dataTableClassName.header}>
                 <code>{permission}</code>
                 {outside ? <small> {rbac("role.blocked")}</small> : null}
               </th>
               {subjects.map((subject) => {
                 const allowed = subject.capabilities.can(permission, goalId);
                 return (
-                  <td key={subject.id} data-allowed={allowed ? "true" : "false"}>
+                  <td
+                    key={subject.id}
+                    data-allowed={allowed ? "true" : "false"}
+                    className={dataTableClassName.cell}
+                  >
                     {onToggle && subject.editable ? (
                       <input
                         type="checkbox"

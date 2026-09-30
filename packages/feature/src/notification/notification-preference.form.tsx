@@ -11,8 +11,8 @@ import {
   useAppQuery,
 } from "../import.js";
 
-// Three buttons per cell rather than a `<select>`: `ui` has no select primitive, and
-// three options is a choice a person can see rather than open.
+// Three buttons per cell rather than a `Select`: three options is a choice a person can
+// see rather than open, and each one saves on its own.
 const MODES = ["immediate", "digest", "off"] as const;
 
 export function NotificationPreferenceForm() {

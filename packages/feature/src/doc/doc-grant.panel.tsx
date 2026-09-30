@@ -12,8 +12,8 @@ import {
   type FormEvent,
   fieldClassName,
   Input,
-  inputClassName,
   readerClassName,
+  Select,
   StatusBadge,
   useApiClient,
   useAppQuery,
@@ -66,12 +66,12 @@ export function DocGrantPanel({ spaceId }: DocGrantPanelProps) {
   };
 
   return (
-    <section className="ui-stack" aria-labelledby={`doc-grants-${spaceId}`}>
+    <section className="ui-stack flex flex-col gap-3" aria-labelledby={`doc-grants-${spaceId}`}>
       <h3 id={`doc-grants-${spaceId}`}>{t("doc.grant.title")}</h3>
       <p className={fieldClassName.hint}>{t("doc.grant.description")}</p>
 
       {items.length === 0 ? <p>{t("doc.grant.none")}</p> : null}
-      <ul className="ui-stack">
+      <ul className="ui-stack flex flex-col gap-3">
         {items.map((grant) => {
           const expired = grant.expiresAt !== null && grant.expiresAt.getTime() <= now;
           return (
@@ -101,20 +101,18 @@ export function DocGrantPanel({ spaceId }: DocGrantPanelProps) {
         })}
       </ul>
 
-      <form onSubmit={submit} noValidate className="ui-stack">
+      <form onSubmit={submit} noValidate className="ui-stack flex flex-col gap-3">
         <Field label={t("doc.grant.kind")} htmlFor={`doc-grant-kind-${spaceId}`}>
-          <select
+          <Select
             id={`doc-grant-kind-${spaceId}`}
-            className={inputClassName()}
+            label={t("doc.grant.kind")}
             value={kind}
-            onChange={(event) => setKind(event.target.value as DocGrantKind)}
-          >
-            {KINDS.map((option) => (
-              <option key={option} value={option}>
-                {t(`doc.grant.kind.${option}`)}
-              </option>
-            ))}
-          </select>
+            onValueChange={(next) => setKind(next as DocGrantKind)}
+            options={KINDS.map((option) => ({
+              value: option,
+              label: t(`doc.grant.kind.${option}`),
+            }))}
+          />
         </Field>
         <Field
           label={t("doc.grant.target")}

@@ -11,10 +11,10 @@ import {
   fieldClassName,
   IconRegistry,
   Input,
-  inputClassName,
   Prose,
   type ReactNode,
   readerClassName,
+  Select,
   StatusBadge,
   Textarea,
   useApiClient,
@@ -164,7 +164,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
   const failure = save.error ?? publish.error ?? preview.error ?? upload.error;
 
   return (
-    <form onSubmit={submit} noValidate className="ui-stack">
+    <form onSubmit={submit} noValidate className="ui-stack flex flex-col gap-3">
       <div className={readerClassName.actions}>
         <StatusBadge
           tone={status === "published" ? "success" : status === "changed" ? "warning" : "neutral"}
@@ -193,19 +193,16 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
         />
       </Field>
       <Field label={t("doc.page.icon")} htmlFor="doc-icon">
-        <select
+        <Select
           id="doc-icon"
-          className={inputClassName()}
+          label={t("doc.page.icon")}
           value={icon}
-          onChange={(event) => edit(setIcon)(event.target.value)}
-        >
-          <option value="">{t("doc.space.iconNone")}</option>
-          {IconRegistry.all().map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
+          onValueChange={edit(setIcon)}
+          options={[
+            { value: "", label: t("doc.space.iconNone") },
+            ...IconRegistry.all().map((name) => ({ value: name, label: name, icon: name })),
+          ]}
+        />
       </Field>
 
       {draft.kind === "link" ? (

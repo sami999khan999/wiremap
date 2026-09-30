@@ -136,7 +136,7 @@ export function DocReaderPanel({
               </>
             }
           >
-            <ul className="ui-stack">
+            <ul className="ui-stack flex flex-col gap-3">
               {markdownHref ? (
                 <li>
                   <a href={markdownHref} target="_blank" rel="noreferrer">

@@ -1,5 +1,5 @@
 import type { OrganizationClient } from "@loadbearing/api-client";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { OrganizationSwitcher } from "../../src/organization/organization-switcher.js";
 import { capabilitiesWith, renderWithFakes, TEST_USER } from "../support/render-with-fakes.js";
@@ -32,7 +32,20 @@ const render = async (switchTo: () => Promise<unknown>, over = user) => {
   return { onSwitched, onCreate };
 };
 
-const select = () => screen.getByLabelText("Organization") as HTMLSelectElement;
+const select = () => screen.getByRole("combobox", { name: /^Organization/ });
+
+// Opens the list and presses an option, the way a pointer does: Base UI selects on the
+// click that ends the press, a tick after the list has opened.
+const pick = async (name: string) => {
+  fireEvent.click(select());
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  const option = screen.getByRole("option", { name });
+  for (const type of ["pointerDown", "mouseDown", "pointerUp", "mouseUp", "click"] as const) {
+    fireEvent[type](option);
+  }
+};
 
 describe("OrganizationSwitcher", () => {
   // Off the session snapshot rather than a query: `fetchSession` already carries every
@@ -40,15 +53,21 @@ describe("OrganizationSwitcher", () => {
   it("lists every membership and selects the active one", async () => {
     await render(vi.fn());
 
-    expect([...select().options].map((option) => option.textContent)).toEqual(["Acme", "Beta"]);
-    expect(select().value).toBe(TEST_USER.activeOrganizationId);
+    expect(select().getAttribute("aria-label")).toBe("Organization: Acme");
+    fireEvent.click(select());
+    await waitFor(() =>
+      expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+        "Acme",
+        "Beta",
+      ]),
+    );
   });
 
   it("switches to the tenant that was picked and calls back once it lands", async () => {
     const switchTo = vi.fn().mockResolvedValue({ organizationId: SECOND.id });
     const { onSwitched } = await render(switchTo);
 
-    fireEvent.change(select(), { target: { value: SECOND.id } });
+    await pick("Beta");
 
     await waitFor(() => {
       expect(switchTo).toHaveBeenCalledWith(SECOND.id);
@@ -68,10 +87,10 @@ describe("OrganizationSwitcher", () => {
     );
     const { onSwitched } = await render(switchTo);
 
-    fireEvent.change(select(), { target: { value: SECOND.id } });
+    await pick("Beta");
 
     await waitFor(() => {
-      expect(select().disabled).toBe(true);
+      expect(select().hasAttribute("data-disabled")).toBe(true);
     });
     expect(select().getAttribute("aria-busy")).toBe("true");
     expect(onSwitched).not.toHaveBeenCalled();

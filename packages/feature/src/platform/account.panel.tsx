@@ -13,11 +13,11 @@ import {
   EmptyState,
   Field,
   Input,
-  inputClassName,
   type PermissionKey,
   PermissionRegistry,
   PlatformMutations,
   PlatformQueries,
+  Select,
   StatusBadge,
   type TableColumn,
   useApiClient,
@@ -227,32 +227,25 @@ export function AccountPanel() {
               }}
             >
               <Field label={t("platform.account.deny.organization")} htmlFor="deny-organization">
-                <select
+                <Select
                   id="deny-organization"
-                  className={inputClassName()}
+                  label={t("platform.account.deny.organization")}
                   value={target}
-                  onChange={(event) => setOrganizationId(event.target.value)}
-                >
-                  {memberships.map((row) => (
-                    <option key={row.organizationId} value={row.organizationId}>
-                      {row.name}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setOrganizationId}
+                  options={memberships.map((row) => ({
+                    value: row.organizationId,
+                    label: row.name,
+                  }))}
+                />
               </Field>
               <Field label={t("platform.account.column.permission")} htmlFor="deny-permission">
-                <select
+                <Select
                   id="deny-permission"
-                  className={inputClassName()}
+                  label={t("platform.account.column.permission")}
                   value={permission}
-                  onChange={(event) => setPermission(event.target.value)}
-                >
-                  {DENIABLE.map((key) => (
-                    <option key={key} value={key}>
-                      {key}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setPermission}
+                  options={DENIABLE.map((key) => ({ value: key, label: key }))}
+                />
               </Field>
               <Field label={t("platform.account.column.reason")} htmlFor="deny-reason">
                 <Input

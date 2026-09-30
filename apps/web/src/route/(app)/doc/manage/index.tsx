@@ -42,7 +42,7 @@ function DocManage() {
 
   return (
     <main id="main" className={readerClassName.content}>
-      <div className="ui-stack">
+      <div className="ui-stack flex flex-col gap-3">
         <nav className={readerClassName.actions}>
           <Link to="/doc">{t("doc.home.title")}</Link>
         </nav>
@@ -51,11 +51,11 @@ function DocManage() {
           <p className={readerClassName.description}>{t("doc.manage.description")}</p>
         </header>
 
-        <section className="ui-stack" aria-labelledby="doc-spaces">
+        <section className="ui-stack flex flex-col gap-3" aria-labelledby="doc-spaces">
           <h2 id="doc-spaces">{t("doc.manage.spaces")}</h2>
           {items.length === 0 ? <p>{t("doc.manage.empty")}</p> : null}
           {items.map((space) => (
-            <details key={space.id} className="ui-stack">
+            <details key={space.id} className="ui-stack flex flex-col gap-3">
               <summary>
                 <strong>{space.title}</strong>{" "}
                 <StatusBadge tone={space.audience === "members" ? "neutral" : "accent"}>
@@ -82,7 +82,7 @@ function DocManage() {
         </section>
 
         {manage ? (
-          <section className="ui-stack" aria-labelledby="doc-new-space">
+          <section className="ui-stack flex flex-col gap-3" aria-labelledby="doc-new-space">
             <h2 id="doc-new-space">{t("doc.manage.new")}</h2>
             <DocSpaceForm platform={platform} />
           </section>

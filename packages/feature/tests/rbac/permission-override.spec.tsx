@@ -6,6 +6,7 @@ import { EffectivePermissionsInspector } from "../../src/rbac/effective-permissi
 import { PermissionOverrideForm } from "../../src/rbac/permission-override.form.js";
 import { PermissionOverrideList } from "../../src/rbac/permission-override.list.js";
 import { capabilitiesWith, renderWithFakes } from "../support/render-with-fakes.js";
+import { choose } from "../support/select.js";
 
 const USER = "00000000-0000-7000-8000-0000000000b1";
 
@@ -86,9 +87,7 @@ describe("PermissionOverrideForm", () => {
 
     const submit = screen.getByRole<HTMLButtonElement>("button", { name: "Add exception" });
     expect(submit.disabled).toBe(true);
-    fireEvent.change(screen.getByLabelText("Permission"), {
-      target: { value: "apikey.read" },
-    });
+    await choose(screen.getByRole("combobox", { name: /^Permission/ }), "apikey.read");
     fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "covering" } });
     fireEvent.click(submit);
 
@@ -114,7 +113,7 @@ describe("PermissionOverrideForm", () => {
       client,
     );
 
-    fireEvent.change(screen.getByLabelText("Effect"), { target: { value: "deny" } });
+    await choose(screen.getByRole("combobox", { name: /^Effect/ }), "Deny, permanently");
     expect(screen.queryByLabelText("Until (at most 90 days; leave empty for 30)")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Add exception" }));
 

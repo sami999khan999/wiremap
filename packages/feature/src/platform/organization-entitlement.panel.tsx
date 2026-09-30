@@ -11,11 +11,11 @@ import {
   EmptyState,
   Field,
   Input,
-  inputClassName,
   type PermissionKey,
   PermissionRegistry,
   PlatformMutations,
   PlatformQueries,
+  Select,
   type TableColumn,
   useApiClient,
   useAppQuery,
@@ -143,19 +143,17 @@ export function OrganizationEntitlementPanel() {
           </ul>
 
           <Field label={t("platform.entitlement.plan")} htmlFor="entitlement-plan">
-            <select
+            <Select
               id="entitlement-plan"
-              className={inputClassName()}
+              label={t("platform.entitlement.plan")}
               value={planKey || data.planKey}
               disabled={!canManage}
-              onChange={(event) => setPlanKey(event.target.value)}
-            >
-              {(plans.data?.items ?? []).map((plan) => (
-                <option key={plan.key} value={plan.key}>
-                  {plan.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={setPlanKey}
+              options={(plans.data?.items ?? []).map((plan) => ({
+                value: plan.key,
+                label: plan.name,
+              }))}
+            />
           </Field>
           {canManage ? (
             <Button
@@ -198,31 +196,25 @@ export function OrganizationEntitlementPanel() {
                 label={t("platform.entitlement.column.permission")}
                 htmlFor="adjust-permission"
               >
-                <select
+                <Select
                   id="adjust-permission"
-                  className={inputClassName()}
+                  label={t("platform.entitlement.column.permission")}
                   value={permission}
-                  onChange={(event) => setPermission(event.target.value)}
-                >
-                  {ADJUSTABLE.map((key) => (
-                    <option key={key} value={key}>
-                      {key}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setPermission}
+                  options={ADJUSTABLE.map((key) => ({ value: key, label: key }))}
+                />
               </Field>
               <Field label={t("platform.entitlement.adjust.effect")} htmlFor="adjust-effect">
-                <select
+                <Select
                   id="adjust-effect"
-                  className={inputClassName()}
+                  label={t("platform.entitlement.adjust.effect")}
                   value={effect}
-                  onChange={(event) =>
-                    setEffect(event.target.value === "remove" ? "remove" : "add")
-                  }
-                >
-                  <option value="add">{t("platform.entitlement.effect.add")}</option>
-                  <option value="remove">{t("platform.entitlement.effect.remove")}</option>
-                </select>
+                  onValueChange={(next) => setEffect(next === "remove" ? "remove" : "add")}
+                  options={[
+                    { value: "add", label: t("platform.entitlement.effect.add") },
+                    { value: "remove", label: t("platform.entitlement.effect.remove") },
+                  ]}
+                />
               </Field>
               <Field label={t("platform.entitlement.adjust.reason")} htmlFor="adjust-reason">
                 <Input

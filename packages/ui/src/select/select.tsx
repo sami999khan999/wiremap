@@ -20,7 +20,8 @@ export interface SelectProps {
   // The control's accessible name, spoken before the selected option's label.
   readonly label: string;
   readonly options: readonly SelectOption[];
-  readonly value?: string;
+  // `null` is controlled with nothing chosen; `undefined` leaves the value to the select.
+  readonly value?: string | null;
   readonly defaultValue?: string;
   readonly onValueChange?: (value: string) => void;
   // Set, and a hidden input carries the value, so a form reads it like a native select.
@@ -36,6 +37,8 @@ export interface SelectProps {
   // Written by an enclosing `Field`, which clones them onto its one control.
   readonly "aria-describedby"?: string;
   readonly "aria-invalid"?: true;
+  // For a list still loading: `disabled` alone says nothing about why.
+  readonly "aria-busy"?: boolean;
 }
 
 const TRIGGER: Readonly<Record<SelectVariant, string>> = Object.freeze({

@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { inputClassName, type Locale, Locales, useMessages } from "~/import.js";
+import { type Locale, Locales, Select, useMessages } from "~/import.js";
 import type { AppearanceStore } from "~/store/appearance.store.js";
 
 export interface LocaleSwitcherProps {
@@ -27,26 +27,13 @@ export function LocaleSwitcher({ appearance, current }: LocaleSwitcherProps) {
   };
 
   return (
-    <label>
-      {t("locale.label")}
-      {
-        // A native select styled as an input: the design system has no select yet.
-      }
-      <select
-        className={inputClassName()}
-        value={current}
-        onChange={(event) => choose(event.target.value as Locale)}
-      >
-        {Locales.ALL.map((locale) => (
-          <option key={locale} value={locale}>
-            {
-              // The endonym, never a translated name: it is what a reader who cannot
-              // read the current locale is scanning for.
-              Locales.label(locale)
-            }
-          </option>
-        ))}
-      </select>
-    </label>
+    // The endonym, never a translated name: it is what a reader who cannot read the
+    // current locale is scanning for.
+    <Select
+      label={t("locale.label")}
+      value={current}
+      onValueChange={(next) => choose(next as Locale)}
+      options={Locales.ALL.map((locale) => ({ value: locale, label: Locales.label(locale) }))}
+    />
   );
 }

@@ -16,9 +16,9 @@ import {
   type FormEvent,
   Icon,
   Input,
-  inputClassName,
   type ReactNode,
   readerClassName,
+  Select,
   StatusBadge,
   useApiClient,
   useAppQuery,
@@ -135,7 +135,7 @@ export function DocPageTreeList({
     const list = children.get(parent) ?? [];
     if (list.length === 0) return null;
     return (
-      <ul className="ui-stack">
+      <ul className="ui-stack flex flex-col gap-3">
         {list.map((node) => (
           <li key={node.id}>
             <div className={readerClassName.actions}>
@@ -206,27 +206,25 @@ export function DocPageTreeList({
   const failure = create.error ?? move.error ?? remove.error;
 
   return (
-    <div className="ui-stack">
+    <div className="ui-stack flex flex-col gap-3">
       {items.length === 0 && !tree.isPending ? (
         <EmptyState icon="file" title={t("doc.tree.empty")} />
       ) : null}
       {branch(null)}
       {failure ? <Callout tone="danger">{describe(failure)?.message}</Callout> : null}
 
-      <form onSubmit={submit} noValidate className="ui-stack">
+      <form onSubmit={submit} noValidate className="ui-stack flex flex-col gap-3">
         <Field label={t("doc.page.kind")} htmlFor="doc-new-kind">
-          <select
+          <Select
             id="doc-new-kind"
-            className={inputClassName()}
+            label={t("doc.page.kind")}
             value={kind}
-            onChange={(event) => setKind(event.target.value as DocPageKind)}
-          >
-            {KINDS.map((option) => (
-              <option key={option} value={option}>
-                {t(`doc.page.kind.${option}`)}
-              </option>
-            ))}
-          </select>
+            onValueChange={(next) => setKind(next as DocPageKind)}
+            options={KINDS.map((option) => ({
+              value: option,
+              label: t(`doc.page.kind.${option}`),
+            }))}
+          />
         </Field>
         <Field label={t("doc.page.title")} htmlFor="doc-new-title">
           <Input
@@ -247,23 +245,21 @@ export function DocPageTreeList({
           </Field>
         ) : null}
         <Field label={t("doc.tree.add")} htmlFor="doc-new-parent">
-          <select
+          <Select
             id="doc-new-parent"
-            className={inputClassName()}
+            label={t("doc.tree.add")}
             value={parentId ?? ""}
-            onChange={(event) =>
-              setParentId(event.target.value === "" ? null : (event.target.value as DocPageId))
-            }
-          >
-            <option value="">—</option>
-            {items
-              .filter((item) => item.kind !== "link")
-              .map((item) => (
-                <option key={item.id} value={item.id}>
-                  {t("doc.tree.addUnder", { title: item.title })}
-                </option>
-              ))}
-          </select>
+            onValueChange={(next) => setParentId(next === "" ? null : (next as DocPageId))}
+            options={[
+              { value: "", label: "—" },
+              ...items
+                .filter((item) => item.kind !== "link")
+                .map((item) => ({
+                  value: item.id,
+                  label: t("doc.tree.addUnder", { title: item.title }),
+                })),
+            ]}
+          />
         </Field>
         <Button
           type="submit"

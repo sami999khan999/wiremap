@@ -51,6 +51,14 @@ function DataTableSkeleton({ rows = 5, columns = 3 }: DataTableSkeletonProps) {
 // The alignment the column declares, read back from the attribute the cell already carries.
 const CELL = "border-border border-b px-4 py-3 text-start data-[align=end]:text-end";
 
+// For a table this component does not render, such as a permission matrix of checkboxes.
+export const dataTableClassName = Object.freeze({
+  table:
+    "ui-data-table w-full border-collapse overflow-hidden rounded-lg border border-border bg-surface text-sm [&_tr:last-child_td]:border-b-0",
+  header: cn(CELL, "bg-muted font-semibold text-fg-muted text-xs uppercase tracking-[0.02em]"),
+  cell: CELL,
+});
+
 function DataTableRoot<TRow extends TableRow>({
   columns,
   rows,
@@ -59,12 +67,7 @@ function DataTableRoot<TRow extends TableRow>({
   className,
 }: DataTableProps<TRow>) {
   return (
-    <table
-      className={cn(
-        "ui-data-table w-full border-collapse overflow-hidden rounded-lg border border-border bg-surface text-sm [&_tr:last-child_td]:border-b-0",
-        className,
-      )}
-    >
+    <table className={cn(dataTableClassName.table, className)}>
       {caption ? (
         <caption className="ui-data-table__caption px-4 py-3 text-start text-fg-muted text-xs">
           {caption}
@@ -77,10 +80,7 @@ function DataTableRoot<TRow extends TableRow>({
               key={column.key}
               scope="col"
               data-align={column.align ?? "start"}
-              className={cn(
-                CELL,
-                "bg-muted font-semibold text-fg-muted text-xs uppercase tracking-[0.02em]",
-              )}
+              className={dataTableClassName.header}
             >
               {column.header}
             </th>

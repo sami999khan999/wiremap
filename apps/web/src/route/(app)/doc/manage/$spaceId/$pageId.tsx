@@ -53,7 +53,7 @@ function DocEdit() {
 
   return (
     <main id="main" className={cn(readerClassName.content, readerClassName.contentAside)}>
-      <div className="ui-stack">
+      <div className="ui-stack flex flex-col gap-3">
         <nav className={readerClassName.actions}>
           <Link to="/doc/manage/$spaceId" params={{ spaceId: page.spaceId }}>
             {t("doc.editor.back")}

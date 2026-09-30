@@ -32,7 +32,7 @@ export function DocRevisionList({ pageId, draftVersion, onRestored }: DocRevisio
   const items = revisions.data?.items ?? [];
 
   return (
-    <section className="ui-stack" aria-labelledby="doc-revisions">
+    <section className="ui-stack flex flex-col gap-3" aria-labelledby="doc-revisions">
       <h2
         id="doc-revisions"
         className="ui-toc__title m-0 mb-3 flex items-center gap-2 text-fg-muted"
@@ -40,7 +40,7 @@ export function DocRevisionList({ pageId, draftVersion, onRestored }: DocRevisio
         {t("doc.revision.title")}
       </h2>
       {items.length === 0 ? <p className={fieldClassName.hint}>{t("doc.revision.none")}</p> : null}
-      <ol className="ui-stack">
+      <ol className="ui-stack flex flex-col gap-3">
         {items.map((revision) => (
           <li key={revision.revisionNo}>
             <strong>{t("doc.revision.item", { revision: revision.revisionNo })}</strong>

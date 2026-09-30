@@ -3,9 +3,9 @@ import { useMessages } from "../i18n/index.js";
 import {
   Button,
   fieldClassName,
-  inputClassName,
   type OrganizationClient,
   OrganizationMutations,
+  Select,
 } from "../import.js";
 
 export interface OrganizationSwitcherProps {
@@ -31,28 +31,23 @@ export function OrganizationSwitcher({
   if (!user) return null;
 
   return (
-    <span className="ui-organization-switcher">
+    <span className="ui-organization-switcher inline-flex items-center gap-2">
       <label className={fieldClassName.label} htmlFor="organization-switcher">
         {t("nav.organization")}
-      </label>{" "}
-      {
-        // A native select styled as an input, as the invite form's role picker is.
-      }
-      <select
+      </label>
+      <Select
         id="organization-switcher"
-        className={inputClassName()}
+        label={t("nav.organization")}
         value={user.activeOrganizationId}
         disabled={switchTo.isPending}
         // `disabled` alone removes it from the tab order and says nothing about why.
         aria-busy={switchTo.isPending}
-        onChange={(event) => switchTo.mutate({ organizationId: event.target.value })}
-      >
-        {user.organizations.map((candidate) => (
-          <option key={candidate.id} value={candidate.id}>
-            {candidate.name}
-          </option>
-        ))}
-      </select>{" "}
+        onValueChange={(organizationId) => switchTo.mutate({ organizationId })}
+        options={user.organizations.map((candidate) => ({
+          value: candidate.id,
+          label: candidate.name,
+        }))}
+      />
       <Button variant="ghost" onClick={onCreate}>
         {t("nav.organizationNew")}
       </Button>
