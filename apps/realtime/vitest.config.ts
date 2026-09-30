@@ -5,7 +5,7 @@ import { defineConfig } from "vitest/config";
 const ENV = {
   DATABASE_URL: "postgres://test:test@localhost:25432/test",
   REDIS_CACHE_URL: "redis://localhost:26379",
-  REDIS_QUEUE_URL: "redis://localhost:26380",
+  REDIS_QUEUE_URL: "redis://localhost:26379",
 
   S3_ENDPOINT: "http://localhost:29000",
   S3_REGION: "us-east-1",

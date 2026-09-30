@@ -156,16 +156,13 @@ describe("the pooled connection path", () => {
         sql`select id from organizations limit 1`,
       )
     ).rows;
-    const [actor] = (
-      await pooled.database.client.execute<{ id: string }>(sql`select id from users limit 1`)
-    ).rows;
-    if (!org || !actor) throw new Error("run `pnpm db:seed` first");
+    if (!org) throw new Error("run `pnpm db:seed` first");
 
     const name = `probe.pooled.${Date.now()}`;
     for (let index = 0; index < 20; index += 1) {
       await pooled.database.client.execute(sql`
         insert into outbox_event (id, organization_id, actor_id, name, payload, occurred_at)
-        values (gen_random_uuid(), ${org.id}::uuid, ${actor.id}::uuid, ${name}, '{}'::jsonb, now())
+        values (gen_random_uuid(), ${org.id}::uuid, gen_random_uuid(), ${name}, '{}'::jsonb, now())
       `);
     }
 

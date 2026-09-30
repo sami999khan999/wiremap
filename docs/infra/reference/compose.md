@@ -102,7 +102,7 @@ string, so the image's own entrypoint then finds a data directory and starts a s
 than running `initdb`. To re-clone, remove the `pgreplicadata` volume and start it again.
 
 **The primary needed one line for it.** The image's `pg_hba.conf` allows replication from
-localhost only. `infra/pg_hba.conf` restates the image's rules and adds `host replication all all
+localhost only. `upstream:infra/pg_hba.conf` restates the image's rules and adds `host replication all all
 scram-sha-256`, and the primary is started with `hba_file` pointing at it. Mounted rather than
 written into the volume, so an existing volume gets the rule too.
 

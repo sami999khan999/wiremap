@@ -1542,11 +1542,10 @@ assert("every script above `src/` is in its package's tsconfig", (failures) => {
 // documents an optional key by showing it commented, and the port beside it is real.
 const PORT_PAIRS = [
   ["POSTGRES_PORT", "DATABASE_DIRECT_URL"],
-  ["PGBOUNCER_PORT", "DATABASE_URL"],
-  ["POSTGRES_REPLICA_PORT", "DATABASE_REPLICA_URL"],
-  ["REDIS_CACHE_PORT", "REDIS_CACHE_URL"],
-  ["REDIS_QUEUE_PORT", "REDIS_QUEUE_URL"],
-  ["REDIS_CACHE_PORT", "REDIS_REALTIME_URL"],
+  ["POSTGRES_PORT", "DATABASE_URL"],
+  ["REDIS_PORT", "REDIS_CACHE_URL"],
+  ["REDIS_PORT", "REDIS_QUEUE_URL"],
+  ["REDIS_PORT", "REDIS_REALTIME_URL"],
   ["SMTP_PORT", "SMTP_URL"],
   ["S3_PORT", "S3_ENDPOINT"],
   // Three URLs restate the web port, and a sign-in that fails because they disagree

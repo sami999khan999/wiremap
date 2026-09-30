@@ -21,8 +21,6 @@ services:
         "max_connections=200",
         "-c",
         "max_locks_per_transaction=1024",
-        "-c",
-        "hba_file=/etc/postgresql/pg_hba.conf",
       ]
     environment:
       POSTGRES_USER: ratchet
@@ -32,123 +30,15 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres.init.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
-      # The image's rules plus `replication` from the network, for `postgres-replica`.
-      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ratchet -d ratchet"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  # Transaction mode: a server connection is held for the length of a transaction and no
-  # longer, which is what lets many app connections share few Postgres ones.
-  pgbouncer:
-    image: edoburu/pgbouncer:v1.24.1-p1
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: ratchet
-      DB_PASSWORD: ratchet
-      DB_NAME: ratchet
-      POOL_MODE: transaction
-      AUTH_TYPE: scram-sha-256
-      MAX_CLIENT_CONN: "1000"
-      DEFAULT_POOL_SIZE: "20"
-      MIN_POOL_SIZE: "0"
-      RESERVE_POOL_SIZE: "5"
-      SERVER_RESET_QUERY: DISCARD ALL
-      # Without `statement_timeout` here pgBouncer refuses every connection this app
-      # makes: `pg` sends it at startup. Ignored means dropped — migration 0022 is the
-      # replacement floor. See docs/infra/reference/pgbouncer.md.
-      IGNORE_STARTUP_PARAMETERS: statement_timeout,lock_timeout,idle_in_transaction_session_timeout,extra_float_digits
-      # So `RECONNECT` and `SHOW POOLS` can be issued against the `pgbouncer` database.
-      ADMIN_USERS: ratchet
-    # 5432 inside the container, not 6432: this image's own `listen_port` is the Postgres
-    # default, and a healthcheck on 6432 would report unhealthy forever.
-    ports: ["${PGBOUNCER_PORT:-26432}:5432"]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ratchet"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  # Node 0's streaming standby, behind the `replica` profile — `24.3`. Cloned from the
-  # primary on an empty volume, then read-only for as long as it runs.
-  postgres-replica:
-    image: pgvector/pgvector:pg17
-    restart: unless-stopped
-    profiles: ["replica"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGPASSWORD: ratchet
-      PGDATA: /var/lib/postgresql/data
-    # `pg_basebackup -R` writes `standby.signal` and the connection, so the image's own
-    # entrypoint finds a data directory and starts a standby rather than running initdb.
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        set -e
-        if [ ! -s "$$PGDATA/PG_VERSION" ]; then
-          mkdir -p "$$PGDATA" && chown postgres "$$PGDATA" && chmod 0700 "$$PGDATA"
-          gosu postgres pg_basebackup -h postgres -U ratchet -D "$$PGDATA" -R -X stream -c fast
-        fi
-        exec docker-entrypoint.sh "$$@"
-      - postgres-replica
-    # A hot standby refuses to start below the primary's `max_connections` and
-    # `max_locks_per_transaction`, so it carries the same settings.
-    command:
-      [
-        "postgres",
-        "-c",
-        "shared_preload_libraries=pg_stat_statements",
-        "-c",
-        "track_io_timing=on",
-        "-c",
-        "max_connections=200",
-        "-c",
-        "max_locks_per_transaction=1024",
-        "-c",
-        "hot_standby_feedback=on",
-      ]
-    ports: ["${POSTGRES_REPLICA_PORT:-25434}:5432"]
-    volumes:
-      - pgreplicadata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ratchet -d ratchet"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
-
-  redis-cache:
-    image: redis:7-alpine
-    restart: unless-stopped
-    # `--maxmemory` is what makes the policy reachable: the default is 0, meaning no
-    # ceiling, so `allkeys-lru` never evicts and the container is OOM-killed instead.
-    command:
-      [
-        "redis-server",
-        "--save",
-        "",
-        "--maxmemory",
-        "${REDIS_CACHE_MAXMEMORY:-256mb}",
-        "--maxmemory-policy",
-        "allkeys-lru",
-      ]
-    ports: ["${REDIS_CACHE_PORT:-26379}:6379"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  redis-queue:
+  # One instance for the cache, the queue and realtime. It holds BullMQ's jobs, so it is
+  # durable and never evicts: every cache key carries a TTL instead. See data.md.
+  redis:
     image: redis:7-alpine
     restart: unless-stopped
     command:
@@ -159,9 +49,9 @@ services:
         "--maxmemory-policy",
         "noeviction",
       ]
-    ports: ["${REDIS_QUEUE_PORT:-26380}:6379"]
+    ports: ["${REDIS_PORT:-26379}:6379"]
     volumes:
-      - redisqueuedata:/data
+      - redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -217,6 +107,5 @@ services:
 
 volumes:
   pgdata:
-  pgreplicadata:
-  redisqueuedata:
+  redisdata:
   miniodata:

@@ -22,15 +22,16 @@ state of the tree and the traps that cost time.
 | `ad78a30` | `LT2.1`: the tenant-move machinery removed, the shard seam kept |
 | `a6f3d27` | `LT2.2`: verified, no code change |
 | `9ee1ccd` | `LT2.3`: calendar retention and the cold tier removed, the delete archive kept |
-| after `9ee1ccd` | `LT2.4`: Loki, Alloy and the log reader removed |
+| `aa41dba` | `LT2.4`: Loki, Alloy and the log reader removed |
+| after `aa41dba` | `LT2.5`: compose down to five containers, one Redis, no pooler |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT2.5` compose, then the rest of Phase 2; `LT1.6`, the docs sweep, after it.
+**Next, in order:** `LT2.6` env, `LT2.7` worker, `LT2.8` the migration baseline; `LT1.6`, the docs sweep, after it.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
-## What is verified after `LT2.4`
+## What is verified after `LT2.5`
 
 Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:migrate` and `db:seed`.
 
@@ -43,6 +44,7 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
   dashboard specs, then the specs of the four platform pages' use-cases and the shard-map panel,
   then the analytics consumer, ClickHouse, replay-reader and activity-trend specs, then the
   relocate and reclaim specs, then the retention, restore and cold-reader specs.
+- `pnpm smoke` 25 passed, 1 skipped; `boot-smoke.mjs` boots worker, web and realtime.
 - `check:architecture`: 29 of 30. §30 left with widgets and §31 kept its number. **The red one is
   expected** — "every partitioned table is on the allowlist" reads migrations `0023` (the three
   messaging tables) and `0047` (`widget_preferences`). `LT2.8` regenerates the baseline and clears
@@ -71,9 +73,7 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
   the dropped storage page to `platform/accounts.tsx`.
 - **The tenant Activity page left with analytics** (`LT1.4`): it read only ClickHouse. Lite has
   no activity view until analytics is ported back.
-- **Compose is partly trimmed already**: `LT1.4` removed the `clickhouse` service, `LT2.1` the
-  `sharded` profile and `LT2.4` Loki and Alloy. pgbouncer and the second Redis still start with
-  `infra:up`; they go in `LT2.5`.
+- **Compose is the lite stack** since `LT2.5`: five containers, one Redis, no pooler.
 - **A tenant delete keeps its 30-day archive; archived notifications went** (decided
   2026-10-01, recorded under `LT2.3`).
 - **A permission key leaves with its last procedure**, not in `LT1.5`: §28 fails on a key nothing
@@ -115,6 +115,13 @@ CI= node tooling/scripts/check-architecture.mjs
 
 ## Traps that cost time
 
+- **`.env.example` ships `AUTH_SECRET=change-me`**, which the web app's schema refuses (it wants
+  32 characters), so `/` answers 500. Put `openssl rand -hex 32` in the local `.env`.
+- **`boot-smoke.mjs` reads no `.env`**: CI passes the environment. Locally it is
+  `node --env-file=.env tooling/scripts/boot-smoke.mjs <worker|web|realtime>`, after each app's
+  build. `pnpm smoke` does read `.env`.
+- **Recreating the stack after `LT2.5`** needs `node tooling/scripts/compose.mjs up -d
+  --remove-orphans`: the old `redis-cache` container holds port 26379, which `redis` now wants.
 - **Docker Desktop hung once mid-run**: `docker ps` never returned and Postgres accepted connections
   without answering, which surfaced as test timeouts everywhere. Restart Docker, `pnpm infra:up`,
   rerun. The composition health specs time out the same way.

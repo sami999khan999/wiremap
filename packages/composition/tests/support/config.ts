@@ -6,7 +6,7 @@ import type { ContainerConfig } from "../../src/container/container.config.js";
 // `Container.health()` dials all three, so a literal here hangs on whatever holds the
 // old port. The fallback is what a checkout with no `.env` gets.
 const REDIS_CACHE_URL = process.env.REDIS_CACHE_URL ?? "redis://localhost:26379";
-const REDIS_QUEUE_URL = process.env.REDIS_QUEUE_URL ?? "redis://localhost:26380";
+const REDIS_QUEUE_URL = process.env.REDIS_QUEUE_URL ?? "redis://localhost:26379";
 
 export const DATABASE_URL =
   process.env.DATABASE_DIRECT_URL ??

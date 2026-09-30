@@ -36,7 +36,6 @@
     "check:comments": "node tooling/scripts/comment-density.mjs",
     "check:contrast": "node tooling/scripts/check-contrast.mjs",
     "infra:up": "node tooling/scripts/compose.mjs up -d",
-    "infra:up:replica": "node tooling/scripts/compose.mjs --profile replica up -d",
     "infra:core": "node tooling/scripts/compose.mjs up -d",
     "infra:down": "node tooling/scripts/compose.mjs --profile \"*\" down",
     "infra:reset": "node tooling/scripts/compose.mjs --profile \"*\" down -v",

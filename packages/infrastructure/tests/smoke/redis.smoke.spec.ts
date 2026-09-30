@@ -361,16 +361,19 @@ describe("RedisConnection's realtime role", () => {
   });
 
   // The queue instance stands in for a third one: pub/sub ignores the database index, so
-  // a `/1` on the cache URL would prove nothing about which server a frame reached.
-  it("is its own connection, to its own instance, when one is configured", async () => {
-    const connection = new RedisConnection({ ...stack.redis, realtimeUrl: stack.redis.queueUrl });
-    try {
-      expect(connection.realtimeClient()).not.toBe(connection.client());
-      expect(await connection.healthy("realtime")).toBe(true);
-    } finally {
-      await connection.close();
-    }
-  });
+  // a `/1` on the cache URL would prove nothing. Lite runs one instance, so it skips.
+  it.skipIf(stack.redis.queueUrl === stack.redis.cacheUrl)(
+    "is its own connection, to its own instance, when one is configured",
+    async () => {
+      const connection = new RedisConnection({ ...stack.redis, realtimeUrl: stack.redis.queueUrl });
+      try {
+        expect(connection.realtimeClient()).not.toBe(connection.client());
+        expect(await connection.healthy("realtime")).toBe(true);
+      } finally {
+        await connection.close();
+      }
+    },
+  );
 
   // A stream's `finally` runs after shutdown has closed Redis, and must not reopen it.
   it("refuses to open a connection once closed", async () => {
