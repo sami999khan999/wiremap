@@ -162,16 +162,17 @@ fact with a schema and a `published_at`; a log event code is a diagnostic that m
 [Vocabulary](../../../docs/opinions/vocabulary.md) keeps them apart, and a spec asserts every event
 name here is past tense.
 
-## `ActivityActions` is the third of them, and the reason is a row
+## `ActivityActions` is the third of them, and the reason is the type
 
-Same shape again: fragments in `catalog/`, merged, read through a registry class. What makes it
-worth a third catalog rather than a widened second is that `projection_policy` holds **one row per
-action** — whether it reaches ClickHouse and for how long — so an action with no entry is an action
-with no policy, and `ActivityLogger.record` taking `ActivityAction` is what makes that impossible.
+Same shape again: fragments in `catalog/`, merged, read through a registry class.
+`ActivityLogger.record` takes `ActivityAction`, the key union, rather than a `string`. So an audit
+action cannot be written without an entry beside the others, and a typo does not compile.
 
 A fragment entry carries a `label` and not a schema, which is the whole difference from
 `.events.ts`. A subscriber parses an event payload; nothing parses an audit payload, because the
-audit trail is read by people. The label is what the projection screen renders beside the toggle.
+audit trail is read by people. In the big kit the label is what the analytics projection screen
+renders beside each action's toggle. Lite has no such screen, so nothing reads `all()` today; the
+entries stay because the type needs them. See [`docs/scale/analytics.md`](../../../docs/scale/analytics.md).
 
 One call site may emit two actions — `set-member-active.use-case.ts` picks between
 `member.deactivated` and `member.reactivated` on the value it is writing — and both are entries.

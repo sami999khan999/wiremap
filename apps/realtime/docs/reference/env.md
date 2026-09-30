@@ -22,10 +22,10 @@ stream answers `UNAUTHORIZED` — which the browser, correctly, does not retry.
 
 `REALTIME_MAX_STREAMS_PER_USER` and `REALTIME_STREAM_MAX_AGE_SECONDS` are read here and, for one
 release, by the web app too: it still mounts the stream router so tabs opened before the deploy keep
-working. The cap is per process and counts every stream a person opens — their own and each room's.
+working. The cap is per process and counts every stream a person opens.
 
 **Five is sized for hundreds of streams, not thousands.** Each open stream is revalidated every
-minute, one query for the user stream and two for a room (`CR.4`). That is about 170 queries a
+minute, one membership query each (`CR.4`). That is about 170 queries a
 second at 10 000 streams. A check still out when the next minute comes is skipped rather than
 stacked, so a slow pool delays revocation instead of growing its queue. One query per tick for
 every stream is `RV.4`'s open half. Until it lands, raise the pool with the stream count.

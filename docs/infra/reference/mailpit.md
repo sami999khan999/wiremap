@@ -9,8 +9,8 @@ description: The SMTP sink — every outbound mail is caught and displayed, none
 mailpit:
   image: axllent/mailpit:latest
   ports:
-    - "${SMTP_PORT:-1025}:1025"      # SMTP — what the worker dials
-    - "${MAILPIT_UI_PORT:-8025}:8025" # web UI — what you read
+    - "${SMTP_PORT:-21025}:1025"     # SMTP — what the worker dials
+    - "${MAILPIT_UI_PORT:-28025}:8025" # web UI — what you read
   healthcheck:
     test: ["CMD", "/mailpit", "readyz"]
 ```
@@ -67,7 +67,8 @@ The image ships neither `wget` nor `curl`, so the usual `CMD curl -f …` probe 
 
 | Symptom | Usually |
 |---|---|
-| Worker logs `ECONNREFUSED :1025` | Container not up, or `SMTP_URL` points at the container port from the host |
-| Mail sends, UI is empty | Two Mailpits — check nothing else owns 1025 |
+| Worker logs `ECONNREFUSED :21025` | Container not up — `pnpm infra:up` |
+| Worker logs `ECONNREFUSED :1025` | `SMTP_URL` points at the container port from the host — use `21025` |
+| Mail sends, UI is empty | Two Mailpits — check nothing else owns 21025 |
 | `unhealthy`, but mail arrives | The healthcheck was changed to `curl`; see above |
 | Inbox empty after a restart | Working as designed — no volume, memory only |

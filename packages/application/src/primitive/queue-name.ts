@@ -15,8 +15,8 @@ export class QueueName {
 
   public static readonly EMBEDDING = EMBEDDING;
   public static readonly NOTIFICATION = NOTIFICATION;
-  // Its own concern because it is allowed to fall behind — nobody waits on a
-  // dashboard row, and its depth is the health signal for the derived store.
+  // Its own concern because it is allowed to fall behind: nobody waits on a runway
+  // partition or a sweep, so it must never queue ahead of mail.
   public static readonly MAINTENANCE = MAINTENANCE;
   // Its own concern because a provider's rate limit is a property of this queue and of
   // nothing else: one limiter here beats a sleep in every caller.

@@ -88,9 +88,12 @@ in.
 A use-case behind a feature flag asks two questions, in this order:
 
 ```ts
-await this.flags.assertOn(actor, "widget.dismissal"); // NOT_FOUND when off
-this.authorizer.assert(actor, "core.widget.customize"); // FORBIDDEN when not held
+await this.flags.assertOn(actor, flag); // NOT_FOUND when off
+this.authorizer.assert(actor, permission); // FORBIDDEN when not held
 ```
+
+Lite declares no flags, so no use-case asks the first question yet. The rule is for the first
+flag that lands.
 
 **The flag goes first because it is the broader answer.** A flag that is off means the feature does
 not exist yet for this org. Answering `FORBIDDEN` would tell the caller that an endpoint exists and

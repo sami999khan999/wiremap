@@ -6,12 +6,12 @@ description: The stream process. It holds every open browser stream and nothing 
 # `@loadbearing/realtime`
 
 **This app answers one question: who holds the open line to every browser tab?** Not the web app.
-Every tab keeps one or two server-sent-event streams open for as long as it is open; held in the
+Every tab keeps one server-sent-event stream open for as long as it is open; held in the
 process that also renders pages, a busy hour or a deploy's reconnect wave competes with every click.
 Here, it competes with nothing.
 
-It holds no business logic, and no router of its own. The two streams — `realtime.stream` for the
-user's channel, `realtime.conversation` for one room — come from `@loadbearing/api-server`, the same
+It holds no business logic, and no router of its own. The one stream — `realtime.stream`, the
+user's channel — comes from `@loadbearing/api-server`, the same
 code and the same `authed` chain the web app mounts. What is this app's own is the HTTP listener,
 the probe and the shutdown.
 
@@ -28,10 +28,10 @@ apps/realtime/src/
 
 ## How a frame reaches a tab
 
-The worker and the web app publish to Redis — a new message, a notification, a typing signal. This
+The worker and the web app publish to Redis — a notification, a membership change. This
 process subscribes, once per channel with a reader, and writes each frame down the streams on it.
-Nothing here writes to Postgres, and the only reads are the principal and a room's membership, once
-per stream opened. Its pool is five connections for that reason.
+Nothing here writes to Postgres, and the only reads are the principal, once per stream opened, and
+the membership check each stream repeats every minute. Its pool is five connections for that reason.
 
 ## How the browser reaches it
 

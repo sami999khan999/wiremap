@@ -159,7 +159,7 @@ repository permitted to carry a message. Moving it here cost nothing and removed
 | Area | State |
 | --- | --- |
 | `locale.ts`, `translator.ts` | ✅ final |
-| `message/en/*`, `message/bn/*` — `common`, `error`, `nav`, `auth`, `account`, `role`, `member`, `organization`, `apikey`, `document`, `messaging`, `notification`, `platform`, `email` | ✅ fourteen namespaces per locale |
+| `message/en/*`, `message/bn/*` — `common`, `error`, `nav`, `auth`, `account`, `role`, `member`, `organization`, `apikey`, `document`, `doc`, `notification`, `platform`, `email` | ✅ fourteen namespaces per locale |
 | `message/namespace.ts` | ✅ fourteen namespaces; `email` is `ServerNamespace`, outside `ClientNamespace` |
 | `message/catalog.ts` | ✅ twenty-six cells, total over `Locale × ClientNamespace` |
 | `message/error-copy.ts` | ✅ final |

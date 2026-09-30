@@ -1,6 +1,6 @@
 ---
 title: "@loadbearing/worker"
-description: The background process. Three consumers, five schedules, one container — and a single recurring failure it is shaped to prevent: work that stops quietly and looks exactly like work that is running.
+description: The background process. Five consumers, seven schedules, one container — and a single recurring failure it is shaped to prevent: work that stops quietly and looks exactly like work that is running.
 ---
 
 # `@loadbearing/worker`
@@ -33,27 +33,32 @@ apps/worker/
 │   ├── bootstrap/
 │   │   ├── index.ts
 │   │   ├── worker-bootstrap.ts       → WorkerBootstrap
-│   │   └── system-principal.ts       → SystemPrincipal
+│   │   ├── system-principal.ts       → SystemPrincipal
+│   │   └── with-shard.ts             → withShard
 │   ├── consumer/
 │   │   ├── index.ts
-│   │   ├── analytics.consumer.ts     → AnalyticsConsumer   (project · reconcile)
-│   │   ├── embedding.consumer.ts     → EmbeddingConsumer
+│   │   ├── embedding.consumer.ts     → EmbeddingConsumer   (index · reembed)
 │   │   ├── mail.consumer.ts          → MailConsumer        (send)
 │   │   ├── outbox.consumer.ts        → OutboxConsumer      (drain · deliver)
-│   │   └── maintenance.consumer.ts   → MaintenanceConsumer (sweep · partitions · archive)
+│   │   ├── notification.consumer.ts  → NotificationConsumer (digest-fanout · digest)
+│   │   └── maintenance.consumer.ts   → MaintenanceConsumer (cleanup · partitions · retention ·
+│   │                                   orphans · spares · tenant-export · tenant-delete)
 │   ├── schedule/
 │   │   ├── index.ts
-│   │   ├── archive.schedule.ts       04:00 on the first
 │   │   ├── cleanup.schedule.ts       03:00 daily
+│   │   ├── digest.schedule.ts        07:00 daily
+│   │   ├── orphans.schedule.ts       04:00 daily
 │   │   ├── outbox-drain.schedule.ts  every second
-│   │   ├── partitions.schedule.ts    02:00 on the first
-│   │   ├── projection.schedule.ts    every five minutes
-│   │   └── reconcile.schedule.ts     05:00 daily
+│   │   ├── partitions.schedule.ts    02:00 on the first, and once at boot
+│   │   ├── retention.schedule.ts     03:30 daily
+│   │   └── spares.schedule.ts        every five minutes
 └── tests/
     ├── bootstrap/system-principal.spec.ts
+    ├── bootstrap/worker-bootstrap.spec.ts
     ├── consumer/mail.consumer.spec.ts
-    ├── consumer/outbox.consumer.spec.ts
-    └── consumer/maintenance.consumer.spec.ts
+    ├── consumer/maintenance.consumer.spec.ts
+    ├── consumer/notification.consumer.spec.ts
+    └── consumer/outbox.consumer.spec.ts
 ```
 
 ---
@@ -81,17 +86,17 @@ authorization after somebody renamed a permission.
 The actor id is a fixed, reserved uuid rather than the organization's own: an actor column holding a
 tenant id reads as a user.
 
-## The three consumers and five schedules
+## The five consumers and seven schedules
 
 See [`reference/consumers.md`](reference/consumers.md) and
 [`reference/schedules.md`](reference/schedules.md).
 
 ## Reference
 
-- [The consumers](reference/consumers.md) — why each is serial, why `handle()` is public, and why
-  `EmbeddingConsumer` catches nothing.
+- [The consumers](reference/consumers.md) — why maintenance is serial, why `handle()` is public, and
+  why `EmbeddingConsumer` catches nothing.
 - [The schedules](reference/schedules.md) — the fixed job ids that make registration idempotent, the
-  clock order, and why none of them retries.
+  clock order, and why only the digest retries.
 - [Subscribers](reference/subscribers.md) — the contract every outbox subscriber keeps, and why
   they live in `application` rather than beside the consumer that calls them.
 - [Shutdown](reference/shutdown.md) — what `stop()` drains, the race that bounds it, and the order

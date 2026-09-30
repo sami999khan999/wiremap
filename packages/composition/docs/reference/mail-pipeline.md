@@ -91,8 +91,8 @@ Three log lines, and they are the answer to "was it sent":
 deliberately does not carry.
 
 **None of the three carries a recipient.** An address is the highest-cardinality field this system
-holds, and a log platform is not where it belongs — `event_code` is a Loki label and the catalog is
-its cardinality budget.
+holds, and a log platform is not where it belongs — `event` is the field a log store indexes as a
+label, and the catalog is its cardinality budget.
 
 `mail.delivery.sent` carries the message id because that is the thing a provider webhook would later
 correlate against. It is the whole reason `EmailSender.send` returns a receipt rather than `void`,

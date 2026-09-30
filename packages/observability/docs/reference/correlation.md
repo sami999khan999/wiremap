@@ -45,9 +45,9 @@ that arrived over the same network, and for a while adopted it verbatim. One rul
 the pair that drifts, and the dependency direction settles which one holds it — `observability`
 imports `errors`, never the reverse.
 
-**Unbounded per request is also why `traceId` must never become a log label.** A Loki label creates
-one stream per distinct value, so labelling the trace id means one stream per request. It stays in
-the body and is reached with `| json | traceId="…"` after the selector has narrowed the streams. The
+**Unbounded per request is also why `traceId` must never become a log label.** A label in a log store
+like Loki creates one stream per distinct value, so labelling the trace id means one stream per
+request. It stays in the body and is reached with `| json | traceId="…"` after the selector has narrowed the streams. The
 legal label set is `app`, `env`, `level`, `event_code` and nothing else — see
 [Data and scale](../../../../docs/opinions/data-and-scale.md).
 

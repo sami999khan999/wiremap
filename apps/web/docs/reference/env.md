@@ -33,24 +33,21 @@ carries a refinement at all.
 There is deliberately no default for the slug. Unset means no enrolment, which is the production
 posture.
 
-**`CLICKHOUSE_URL` with the credential defaults left alone** is the second, and it is the same shape
-of failure one layer down. The compose container is `ratchet/ratchet`; the defaults below are
-ClickHouse's own `default/default`, which cannot authenticate against it. Without the rule the
-projection fails on its first run with a vendor auth error, five minutes after boot, in the worker's
-log rather than the one someone is watching.
+**An `EMBEDDING_PROVIDER` other than `none` with no `EMBEDDING_API_KEY`** is the second, and it is the
+same shape of failure one layer down. Without the rule the first document indexed fails with a
+vendor auth error, in the worker's log rather than the one someone is watching. See
+[embedding](../../../../packages/infrastructure/docs/reference/embedding.md).
 
 ## Values whose absence is the decision
 
 | Variable | Absent means |
 |---|---|
 | `GOOGLE_CLIENT_ID` / `_SECRET` | Google sign-in is off. A half-filled pair would be rejected at Google's consent screen, which no log line here can explain — so the container builds a provider only when both are present |
-| `CLICKHOUSE_URL` | ClickHouse stays stopped. Present, the projection runs and the reconciliation reports — and nothing reads the store back, because there is no analytics reader; see [12](../../../../docs/setup/12-application-package.md). Setting it makes `CLICKHOUSE_DATABASE` and `CLICKHOUSE_USER` required |
-| `LOKI_URL` | No `LogReader`. Logs are still written to stdout and still shipped by Alloy; reading them is `docker compose logs`, which stays the break-glass path regardless |
+| `DATABASE_REPLICA_URL` | Every read goes to the primary. Present, reads move onto the standby only while `platform_policy.replica_reads_enabled` is on — see [`docs/scale/read-replica.md`](../../../../docs/scale/read-replica.md) |
+| `REDIS_REALTIME_URL` | Live frames share the cache instance — see [`docs/scale/split-redis.md`](../../../../docs/scale/split-redis.md) |
 
-The ClickHouse credentials default to ClickHouse's own out-of-the-box database and user. A default
-naming the project would be a credential baked into shipped code, and would keep pointing at the old
-name after a rename — which is why the cross-field rule above refuses those defaults when
-`CLICKHOUSE_URL` is set, rather than the defaults being changed to match compose.
+Logs have no variable of their own beyond level and format: they are JSON lines on stdout. Shipping
+them somewhere is [`docs/scale/logs.md`](../../../../docs/scale/logs.md).
 
 ## Values with a cap rather than a default
 
@@ -136,7 +133,7 @@ nothing should hand it one.
 ## The shard block, and the two rules that make it safe
 
 `DATABASE_SHARD_<n>_URL` names every node after node 0, with an optional
-`DATABASE_SHARD_<n>_DIRECT_URL` beside each. Absent is one node, which is every deployment until
+`DATABASE_SHARD_<n>_DIRECT_URL` and `DATABASE_SHARD_<n>_REPLICA_URL` beside each. Absent is one node, which is every deployment until
 the split — `DATABASE_URL` is node 0 and also the catalog.
 
 **Two rules, both enforced at boot rather than discovered later.** The indexes must be contiguous
@@ -150,11 +147,13 @@ There is no range or key configuration here, and that is the design.
 variables and a placement decision — not a config file two processes have to agree about. See
 [sharding](../../../../packages/infrastructure/docs/reference/sharding.md).
 
-## The six database variables, and which of them the pooler can see
+## The six database variables, and which of them a pooler would see
 
-`DATABASE_URL` goes through pgBouncer in transaction mode. `DATABASE_DIRECT_URL` goes past it, and
-is what migrations, the seed, `drizzle-kit` and the activity archive use; it defaults to
-`DATABASE_URL`, which is correct only while nothing is pooling.
+Lite ships no pooler: `DATABASE_URL` points straight at Postgres. The code is written as if
+pgBouncer sat in front in transaction mode, so adding one is config — see
+[`docs/scale/pgbouncer.md`](../../../../docs/scale/pgbouncer.md). `DATABASE_DIRECT_URL` is the one
+that would go past it, and is what migrations, the seed, `drizzle-kit` and the archive's DDL use; it
+defaults to `DATABASE_URL`, which is correct only while nothing is pooling.
 
 `DATABASE_POOL_MAX`, `DATABASE_POOL_IDLE_TIMEOUT_MS` and `DATABASE_POOL_CONNECT_TIMEOUT_MS` are
 this process's own `pg.Pool`, per replica rather than per cluster. The connect timeout is the one
@@ -165,10 +164,10 @@ OS default, which is longer than every timeout in front of it.
 disagree about — 30 s here, 120 s there. A request a browser is waiting on and a batch nobody is
 waiting on do not want the same ceiling.
 
-**Through the pooler, that variable is not what enforces the timeout.** `pg` sends it as a startup
-parameter, pgBouncer drops it, and `SHOW statement_timeout` reads `0`. Migration `0022`'s role
-setting is the floor, and `PgUnitOfWork` raises it per transaction with `SET LOCAL`. The full
-mechanism is in [`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
+**Through a pooler, that variable is not what enforces the timeout.** `pg` sends it as a startup
+parameter, pgBouncer drops it, and `SHOW statement_timeout` reads `0`. The baseline migration's role
+setting (`0000_lite_baseline.sql`, 30 s) is the floor, and `PgUnitOfWork` raises it per transaction
+with `SET LOCAL`. The full mechanism is in [`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
 
 ## The two realtime numbers are per process
 

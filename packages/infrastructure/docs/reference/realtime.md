@@ -64,8 +64,8 @@ The publisher writes every `event` frame twice, in one `MULTI`: `XADD` to the ch
 `realtime:log:<channel>` behind the client's key prefix (`app:realtime:log:…` on the wire; ioredis
 prefixes keys and never pub/sub channels), a Redis Stream trimmed to about two hundred entries
 and expiring an hour after its last write — then `PUBLISH`. Logged first, so a frame a client has seen is always a
-frame the log holds. Typing frames are neither logged nor given an SSE id, so they are never the
-point a client resumes from.
+frame the log holds. Only `event` frames are logged and given an SSE id, so nothing else is ever
+the point a client resumes from.
 
 On a resume the router passes `lastEventId` as `after`. The subscriber attaches to the channel
 **first**, so nothing published while it reads is lost, then reads the log with `XRANGE` on a
@@ -82,9 +82,9 @@ state in the sense `data.md` means: losing it costs a refetch and nothing else.
 ## The cap counts user channels only
 
 `maxStreamsPerUser` counts concurrent streams per **user** channel, which `RealtimeChannels.isUser`
-identifies. A conversation channel is one channel with many readers, and counting it the same way
-would cap the room rather than the person — a cap that gets stricter the more popular the
-conversation is.
+identifies. Lite has only user channels. A shared channel, once one exists, has many readers, and
+counting it the same way would cap the room rather than the person — a cap that gets stricter the
+more popular the room is.
 
 It is a per-process count, not a per-cluster one. A shared counter would cost a round trip on
 every stream open, and the failure this exists to prevent is one runaway tab, which is local by

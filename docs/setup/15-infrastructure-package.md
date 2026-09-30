@@ -1,11 +1,10 @@
 # 15 · `@loadbearing/infrastructure` — the non-Postgres adapters
 
-> Redis caching, S3 file storage, the BullMQ queue publisher, the embedding provider, and the two
-> opt-in stores: ClickHouse and Loki. Server-only.
+> Redis caching, S3 file storage, the BullMQ queue publisher, the embedding providers, and the SMTP
+> sender. Server-only.
 
 **Delivers:** `RedisCacheStore`, `S3StorageGateway`, `BullMqQueuePublisher`, `RedisConnection`, the
-embedding provider from [14](14-vector-store.md), `ClickHouseAnalyticsProjector`, and
-`LokiLogReader`.
+embedding providers from [14](14-vector-store.md), and `SmtpEmailSender`.
 
 **Prerequisite:** [14 · Vector Storage](14-vector-store.md)
 
@@ -30,38 +29,27 @@ nothing.
 
 | Thing | Where | Why |
 |---|---|---|
-| Redis, S3, BullMQ, the embedding provider | **here** | A client, and a port each satisfies |
-| **ClickHouse** | **here** | `AnalyticsProjector` — write-only; the read seam is deliberately absent, see [12](12-application-package.md) |
+| Redis, S3, BullMQ, the embedding providers | **here** | A client, and a port each satisfies |
 | **Postgres** | **here**, in `src/pg/` | Folded in from the separate database package — see [13](13-infrastructure-postgres.md) |
 | **SMTP** | **here**, in `src/smtp/` | `EmailSender`. SMTP rather than a provider's HTTP API, so a vendor swap is a URL |
-| **Loki** | **here, the read side only** | `LogReader`. Nothing in `packages/` writes to it |
-| **Alloy** | **nowhere in `packages/`** | A separate process that tails stdout. No client, no port |
+| **Markdown** | **here**, in `src/unified/` | `UnifiedMarkdownRenderer`, behind the `MarkdownRenderer` port |
+| **Logs** | **nowhere in `packages/`** | `JsonLogger` writes JSON to stdout. Nothing in the code ships or reads it |
 
-**The Loki row is the one worth understanding**, because it is two different answers in one line and
-"we use Loki, so the Loki thing goes in the infrastructure package" is a reasonable-sounding sentence
-that would undo half a deliberate design.
+**The logs row is the one worth understanding.** It is the only external concern with no folder here.
 
 **The write path has no seam, because it has no dependency.** `JsonLogger` writes structured JSON to
-stdout and has never heard of Loki. Alloy — a *separate process* — tails that stdout and ships it.
-There is no library to install on that side, which is precisely what makes swapping the log platform
-a config change instead of a migration ([Data and scale](../opinions/data-and-scale.md)).
+stdout and has never heard of a log platform. Whatever collects stdout is a *separate process*, and
+lite runs none. There is no library to install on that side, which is precisely what makes adding a
+log platform a config change instead of a migration ([Data and scale](../opinions/data-and-scale.md)).
 
-**The read path has one, because reading back is a query against an HTTP API.** `LokiLogReader`
-implements `LogReader`, is built only when `LOKI_URL` is set, and exists for the operator surface that
-knows what an organization is — the one thing a generic log console cannot know. It is `fetch` against
-`query_range`; there is still no library.
+The moment `@loadbearing/observability` imports a log platform's client, three things break at once:
+the package gains a runtime dependency it has spent its whole design avoiding, the log platform stops
+being swappable, and a browser bundle acquires a server-only import. A read side, when one is wanted,
+is an adapter in this package behind a port, so `observability` never needs one. The way back is
+[Logs](../scale/logs.md).
 
-The moment `@loadbearing/observability` imports a Loki client, three things break at once: the
-package gains a runtime dependency it has spent its whole design avoiding, the log platform stops
-being swappable, and a browser bundle acquires a server-only import. **That constraint is on
-`observability`, and this package is where the read adapter goes precisely so `observability` never
-needs one.** The containers live in `infra/docker-compose.yml` ([11](11-local-infrastructure.md)) as
-[Tier 0](../opinions/dependencies.md) — provided by the deployment, reached over a protocol the code
-was going to speak anyway.
-
-**Smell:** a `*.dashboard.json`, or a `loki` / `@clickhouse/client` entry in any `package.json`. Both
-adapters here are `fetch` against a documented HTTP API, for the same reason
-`OpenAiEmbeddingProvider` is: one dependency fewer, and a stable request shape.
+**Smell:** an SDK where `fetch` would do. `OpenAiEmbeddingProvider` and `GeminiEmbeddingProvider` are
+both `fetch` against a documented HTTP API: one dependency fewer, and a stable request shape.
 
 ```
 packages/infrastructure/src/
@@ -71,10 +59,15 @@ packages/infrastructure/src/
 ├── redis/
 │   ├── index.ts
 │   ├── redis.connection.ts               → RedisConnection
-│   └── redis-cache.store.ts              → RedisCacheStore
+│   ├── redis-cache.store.ts              → RedisCacheStore
+│   ├── redis-rate-limit.store.ts         → RedisRateLimitStore
+│   ├── redis-realtime.publisher.ts       → RedisRealtimePublisher
+│   └── redis-realtime.subscriber.ts      → RedisRealtimeSubscriber
 ├── s3/
 │   ├── index.ts
+│   ├── s3-client.factory.ts              → S3ClientFactory
 │   ├── s3-storage.gateway.ts             → S3StorageGateway
+│   ├── s3-storage-policy.gateway.ts      → S3StoragePolicyGateway
 │   └── storage-key.ts                    → StorageKey
 ├── bullmq/
 │   ├── index.ts
@@ -82,34 +75,34 @@ packages/infrastructure/src/
 ├── openai/
 │   ├── index.ts
 │   └── openai-embedding.provider.ts      → OpenAiEmbeddingProvider
-├── clickhouse/                           ← opt-in: built only when configured
+├── gemini/
 │   ├── index.ts
-│   ├── clickhouse.connection.ts          → ClickHouseConnection
-│   └── clickhouse-analytics.projector.ts → ClickHouseAnalyticsProjector
-├── loki/                                 ← opt-in: built only when LOKI_URL is set
-│   ├── index.ts
-│   └── loki-log.reader.ts                → LokiLogReader
+│   └── gemini-embedding.provider.ts      → GeminiEmbeddingProvider
 ├── smtp/
 │   ├── index.ts
-│   └── smtp-email.sender.ts               → SmtpEmailSender  ← behind the EmailSender port
-└── smoke/
-    └── index.ts                          ← the wiring check, run against live containers
+│   └── smtp-email.sender.ts              → SmtpEmailSender  ← behind the EmailSender port
+└── unified/
+    ├── index.ts
+    └── unified-markdown.renderer.ts      → UnifiedMarkdownRenderer
 ```
+
+The wiring check against live containers is `tests/smoke/`, not a folder in `src/` — Step 15.6.
 
 **One folder per external system, and the system is the only subject.** `ls src/` answers "what does
 this package depend on?" in one line. The filenames already led with the technology
 ([Files](../opinions/files.md)); the folders agree with them.
 
-The folders used to name the *seam* — `cache/`, `storage/`, `queue/`, `embedding/`, `analytics/` — and
-that broke the first time a port got a second implementation. `pg/analytics/` beside `clickhouse/`
-reads as two different things; `pg/repository/pg-analytics.reader.ts` beside
-`clickhouse/clickhouse-analytics.reader.ts` reads as what it is. **One axis, and it is the vendor.**
+The folders used to name the *seam* — `cache/`, `storage/`, `queue/`, `embedding/` — and that broke
+the first time a port got a second implementation. An `embedding/` folder holding both an OpenAI and
+a Gemini adapter says nothing about what to delete when one vendor goes. `openai/` beside `gemini/`
+reads as what it is. **One axis, and it is the vendor.**
 
 > [!NOTE]
-> **A folder here means the seam is implemented, not that the store is running.** `clickhouse/` and
-> `loki/` are behind opt-in compose profiles, and `Container` builds neither unless its config block
-> is present. Those are two separate decisions and only the second one costs anything to be wrong
-> about — see [reference/clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md).
+> **A folder here means the seam is implemented, not that the store is running.** `Container` builds
+> an embedding provider only when `EMBEDDING_PROVIDER` names one; set to `none`, search is Postgres
+> full-text and neither `openai/` nor `gemini/` is constructed. The stores lite does not run at all —
+> ClickHouse and Loki — have no folder here. Each comes back with its adapter from
+> [`docs/scale/`](../scale/index.md).
 
 **`packages/infrastructure/src/index.ts`**
 
@@ -119,16 +112,27 @@ import { ServerOnly } from "./import.js";
 ServerOnly.assert("@loadbearing/infrastructure");
 
 export { BullMqQueuePublisher } from "./bullmq/index.js";
-export {
-  ClickHouseAnalyticsProjector,
-  type ClickHouseConfig,
-  ClickHouseConnection,
-} from "./clickhouse/index.js";
-export { type LokiConfig, LokiLogReader } from "./loki/index.js";
+export { type GeminiEmbeddingConfig, GeminiEmbeddingProvider } from "./gemini/index.js";
 export { type OpenAiEmbeddingConfig, OpenAiEmbeddingProvider } from "./openai/index.js";
-export { /* Database, BaseRepository, every Pg* adapter */ } from "./pg/index.js";
-export { RedisCacheStore, type RedisConfig, RedisConnection, type RedisRole } from "./redis/index.js";
-export { type S3Config, S3StorageGateway, StorageKey } from "./s3/index.js";
+export { /* Database, DatabaseCluster, BaseRepository, every Pg* adapter */ } from "./pg/index.js";
+export {
+  RedisCacheStore,
+  type RedisConfig,
+  RedisConnection,
+  RedisRateLimitStore,
+  type RedisRealtimeConfig,
+  RedisRealtimePublisher,
+  RedisRealtimeSubscriber,
+  type RedisRole,
+} from "./redis/index.js";
+export {
+  type S3Config,
+  S3StorageGateway,
+  S3StoragePolicyGateway,
+  StorageKey,
+} from "./s3/index.js";
+export { type SmtpConfig, SmtpEmailSender } from "./smtp/index.js";
+export { UnifiedMarkdownRenderer } from "./unified/index.js";
 ```
 
 Read that list against `container.ts` ([17](17-composition-container.md)) and every name lines up with
@@ -139,27 +143,35 @@ knowing both an abstract port and the concrete class behind it.
 
 ## Step 15.1 — `RedisConnection`
 
-Redis is doing three jobs — cache, session secondary store, and BullMQ backing store — and they do not have the same durability requirements. **Two instances, and one class owns which is which.**
+Redis is doing four jobs — cache, session secondary store, BullMQ backing store, and realtime pub/sub — and they do not have the same durability requirements. **Lite runs one instance for all of them, and still gives the code two URLs.** One class owns which consumer gets which.
 
 **`packages/infrastructure/src/redis/redis.connection.ts`**
 
 ```ts
-import { Redis, type RedisOptions } from "ioredis";
+import { Redis, type RedisOptions } from "../import.js";
 
 export interface RedisConfig {
   // Evicts under pressure. Everything on it rebuilds from Postgres.
   readonly cacheUrl: string;
   // Never evicts. A queued job is derived from nothing.
   readonly queueUrl: string;
+  // Live frames. Absent, or equal to the cache's, and they ride the cache instance with no
+  // extra socket; set apart, sessions and permissions stop sharing a CPU with fan-out.
+  readonly realtimeUrl?: string;
+  // Deliberately not the project name: a literal here survives a rename and comes back as
+  // a cache that reads nothing, so the real value is a deployment decision.
   readonly keyPrefix?: string;
 }
 
-// Which instance a consumer is asking about. `healthy()` takes it rather than handing
-// out a client, so `Container` never names `Redis` ([17](17-composition-container.md)).
-export type RedisRole = "cache" | "queue";
+// Which instance a consumer is asking about. The health check takes it rather than
+// exposing the clients, so `Container` never names `Redis` (17).
+export type RedisRole = "cache" | "queue" | "subscriber" | "realtime";
 
+// Two instances, one class. Which connection a consumer gets is a property of what
+// it is doing, not a wiring decision two same-typed arguments could get backwards.
 export class RedisConnection {
   private readonly clients = new Map<RedisRole, Redis>();
+  private closed = false;
 
   public constructor(private readonly config: RedisConfig) {}
 
@@ -168,57 +180,107 @@ export class RedisConnection {
     return this.resolve("cache");
   }
 
-  // BullMQ requires `maxRetriesPerRequest: null` and its own key namespace.
-  // Sharing a prefixed client with the cache corrupts queue keys.
+  // `maxRetriesPerRequest: null` is not optional — BullMQ's blocking commands sit
+  // open indefinitely and ioredis's default retry limit kills them silently.
   public queueClient(): Redis {
     return this.resolve("queue");
+  }
+
+  // Where live frames are published. The cache client itself unless a separate instance
+  // is configured, so the default opens nothing new.
+  public realtimeClient(): Redis {
+    return this.separateRealtime() ? this.resolve("realtime") : this.client();
+  }
+
+  // A connection in subscriber mode can run nothing else, which is why this is a role
+  // rather than a second use of `client()`. A process that never streams never opens it.
+  public subscriberClient(): Redis {
+    return this.resolve("subscriber");
+  }
+
+  // Whether a role has ever been resolved, without resolving it. Health reports `null`
+  // for a connection this process never opened, and asking would be opening it.
+  public opened(role: RedisRole): boolean {
+    return this.clients.has(role);
   }
 
   // PING on the instance callers actually hold. Opening a second connection to answer
   // this would report on a socket nothing else uses — green while the cache is down.
   public async healthy(role: RedisRole): Promise<boolean> {
     try {
-      return (await this.resolve(role).ping()) === "PONG";
+      const reply: unknown = await this.resolve(role).ping();
+      // A connection in subscriber mode answers `["pong", ""]`, not the simple string —
+      // and that connection is the one this check exists for.
+      return Array.isArray(reply) ? reply[0] === "pong" : reply === "PONG";
     } catch {
       return false;
     }
   }
 
-  // One client per role, memoised. Without this, `client()` called twice is two TCP
-  // connections, and the second one is invisible until the connection count is the symptom.
+  // One client per role, memoised. `client()` called twice is two TCP connections
+  // otherwise, and the second one is invisible until the pool count is the symptom.
   private resolve(role: RedisRole): Redis {
     const existing = this.clients.get(role);
     if (existing) return existing;
+    // After `close()`, a late caller — a stream's `finally` detaching — would otherwise
+    // open a fresh socket that holds a stopping process open.
+    if (this.closed) throw new Error(`Redis is closed; refusing to open the ${role} connection`);
 
-    const created =
-      role === "cache"
-        ? this.create(this.config.cacheUrl, { keyPrefix: this.config.keyPrefix ?? "ratchet:" })
-        : this.create(this.config.queueUrl, {
-            maxRetriesPerRequest: null,
-            enableReadyCheck: false,
-          });
+    const created = this.build(role);
 
     this.clients.set(role, created);
     return created;
   }
 
+  // The subscriber dials the realtime instance, which is the cache's unless one is set.
+  // Neither `PUBLISH` nor `SUBSCRIBE` declares a key; `SPUBLISH` does — see realtime.md.
+  private build(role: RedisRole): Redis {
+    const prefix = this.config.keyPrefix ?? "app:";
+
+    if (role === "queue") {
+      return this.create(this.config.queueUrl, {
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+      });
+    }
+
+    const realtimeUrl = this.config.realtimeUrl ?? this.config.cacheUrl;
+
+    if (role === "subscriber") {
+      // Auto-pipelining batches commands issued in one tick, and a subscriber issues
+      // almost none: the traffic it carries is pushed, not requested.
+      return this.create(realtimeUrl, { keyPrefix: prefix, enableAutoPipelining: false });
+    }
+
+    if (role === "realtime") return this.create(realtimeUrl, { keyPrefix: prefix });
+
+    return this.create(this.config.cacheUrl, { keyPrefix: prefix });
+  }
+
   private create(url: string, options: RedisOptions): Redis {
     return new Redis(url, {
       lazyConnect: false,
+      // Batches commands issued in the same tick into one round trip.
       enableAutoPipelining: true,
       retryStrategy: (attempt) => Math.min(attempt * 200, 5_000),
       ...options,
     });
   }
 
+  private separateRealtime(): boolean {
+    const { realtimeUrl, cacheUrl } = this.config;
+    return realtimeUrl !== undefined && realtimeUrl !== cacheUrl;
+  }
+
   public async close(): Promise<void> {
-    await Promise.all([...this.clients.values()].map((c) => c.quit()));
+    this.closed = true;
+    await Promise.all([...this.clients.values()].map((client) => client.quit()));
     this.clients.clear();
   }
 }
 ```
 
-**`healthy(role)` takes the role rather than handing out a `Redis`, and that is what keeps `ioredis` confined to this package.** `Container.healthy()` ([17](17-composition-container.md)) checks Postgres and *both* Redis instances; if it had to reach a client to ping it, `packages/composition` would import `ioredis` and the vendor-confinement grep at the top of this document would stop returning nothing.
+**`healthy(role)` takes the role rather than handing out a `Redis`, and that is what keeps `ioredis` confined to this package.** `Container.healthy()` ([17](17-composition-container.md)) checks Postgres and *both* Redis roles, cache and queue; if it had to reach a client to ping it, `packages/composition` would import `ioredis` and the vendor-confinement grep at the top of this document would stop returning nothing.
 
 **One client per role, memoised, and the memoisation is load-bearing for the health check.** An earlier draft created a fresh connection on every `client()` call, which meant a health check pinged a socket that nothing else was using — reporting green while the connection the cache store actually held was down. It also meant two consumers were two connections, silently.
 
@@ -228,11 +290,13 @@ export class RedisConnection {
 
 **`enableAutoPipelining: true`** batches commands issued in the same tick into one round trip. On the capability-cache path — several `get` calls while building a principal — that is a real latency saving for one line.
 
-**Two URLs, not one, in every environment.** The cache instance runs `allkeys-lru`; the queue instance runs `noeviction` with AOF. Locally they are two containers ([11](11-local-infrastructure.md)), because a split that exists only in production is a code path first exercised on deployment day.
+**Two URLs, not one, in every environment — even while they are equal.** Lite's one instance runs `noeviction` with AOF ([11](11-local-infrastructure.md)), and `REDIS_CACHE_URL` and `REDIS_QUEUE_URL` both point at it. Because of that one instance, the cache does not rely on eviction: every key carries a TTL. The two names are the seam. Moving the cache to its own `allkeys-lru` instance is an `.env` change, with no code change — see [Split Redis](../scale/split-redis.md).
 
-The reason it is one class taking two URLs rather than two classes: **which connection a consumer gets should be a property of what it is doing, not a wiring decision made in the container.** `RedisCacheStore` asks for `client()`, `BullMqQueuePublisher` asks for `queueClient()`, and neither can accidentally receive the other. Passing two bare `Redis` instances into `Container` puts that choice at a call site where the two arguments have the same type and swapping them compiles.
+**The realtime URL is optional.** Unset, live frames ride the cache instance and `realtimeClient()` opens nothing new. The subscriber is its own role because a connection in subscriber mode can run no other command. See [reference/realtime](../../packages/infrastructure/docs/reference/realtime.md).
 
-> **This is a correctness boundary, not tuning.** Anything reached through `client()` can vanish under memory pressure — so it must be a cache in front of a durable store, never the store. Better Auth's secondary storage sits on this connection ([16](16-auth-package.md)), which is exactly why sessions stay in Postgres and Redis is only a read-through in front of them.
+The reason it is one class taking the URLs rather than two classes: **which connection a consumer gets should be a property of what it is doing, not a wiring decision made in the container.** `RedisCacheStore` asks for `client()`, `BullMqQueuePublisher` asks for `queueClient()`, and neither can accidentally receive the other. Passing two bare `Redis` instances into `Container` puts that choice at a call site where the two arguments have the same type and swapping them compiles.
+
+> **This is a correctness boundary, not tuning.** Anything reached through `client()` can vanish — by TTL today, and by eviction once the cache has its own instance — so it must be a cache in front of a durable store, never the store. Better Auth's secondary storage sits on this connection ([16](16-auth-package.md)), which is exactly why sessions stay in Postgres and Redis is only a read-through in front of them.
 
 ---
 
@@ -471,14 +535,13 @@ The gateway supports both, and which one a feature uses is a domain decision:
 ```ts
 const EMBEDDING = "embedding";
 const NOTIFICATION = "notification";
-const ANALYTICS = "analytics";
 const MAINTENANCE = "maintenance";
 const MAIL = "mail";
 const EVENT = "event";
 
 // Frozen at module load rather than left as a `static readonly`: the keyword freezes the
 // binding and not the array, which is the shape `docs/ai/rules/classes.md` bans.
-const ALL = Object.freeze([EMBEDDING, NOTIFICATION, ANALYTICS, MAINTENANCE, MAIL, EVENT] as const);
+const ALL = Object.freeze([EMBEDDING, NOTIFICATION, MAINTENANCE, MAIL, EVENT] as const);
 
 // A handful of queues by concern, not one per job type. A queue is a concurrency
 // and priority boundary: embedding is slow and rate-limited, notifications bursty.
@@ -487,9 +550,6 @@ export class QueueName {
 
   public static readonly EMBEDDING = EMBEDDING;
   public static readonly NOTIFICATION = NOTIFICATION;
-  // Its own concern because it is allowed to fall behind — nobody waits on a
-  // dashboard row, and its depth is the health signal for the derived store.
-  public static readonly ANALYTICS = ANALYTICS;
   public static readonly MAINTENANCE = MAINTENANCE;
   // Its own concern because a provider's rate limit is a property of this queue and of
   // nothing else: one limiter here beats a sleep in every caller.
@@ -517,7 +577,9 @@ export class QueueName {
 
 **`MAIL` is its own concern because a provider's rate limit belongs to it and to nothing else.** Every managed sender caps messages per second, and the only place that cap can be expressed once is a BullMQ `limiter` on the worker consuming this queue. Sharing a queue with anything else would either throttle that other work or leak the cap into every caller as a sleep. It is also the queue whose jobs carry no state of their own: there is no delivery table, so retries, backoff and duplicate suppression by job id are the whole error model.
 
-**`ANALYTICS` is its own concern because it is allowed to fall behind.** Projecting domain events into snapshot tables is the one workload here where lag is acceptable and throughput matters more than latency — nobody is waiting on a dashboard row. Sharing a queue with notifications would let a backlog of projections delay something a user is actually waiting for. It is also the queue whose depth is the health signal for the derived store: a consumer that died on Tuesday shows up here before it shows up in a wrong quarterly number ([Data and scale](../opinions/data-and-scale.md) §2).
+> **There is no `ANALYTICS` queue in lite.** The big kit projects domain events into an analytics
+> store on its own queue, because that work may fall behind and nothing else should wait on it. It
+> comes back with the store — see [Analytics](../scale/analytics.md).
 
 **`packages/infrastructure/src/bullmq/bullmq-queue.publisher.ts`**
 
@@ -579,90 +641,31 @@ export class BullMqQueuePublisher extends QueuePublisher {
 
 ---
 
-## Step 15.5 — The two opt-in stores
-
-Both are `fetch` against a documented HTTP API. No `@clickhouse/client`, no Loki SDK — the same
-choice `OpenAiEmbeddingProvider` makes, and for the same reasons: the request shape is stable, the
-dependency count stays where it is, and both stores stay [Tier 0](../opinions/dependencies.md)
-dependencies reached over a protocol this runtime already speaks.
-
-### `src/clickhouse/` — the derived analytics store
-
-Three files, and the split between them is a guard rather than an organisational preference.
-
-| Class | Port | Reachable from |
-|---|---|---|
-| `ClickHouseConnection` | — | the projector below |
-| `ClickHouseAnalyticsProjector` | `AnalyticsProjector` | the worker, only |
-
-**A single class with both would put `project()` on the object a dashboard query holds.** *Nothing
-writes to ClickHouse except the projection* is the first of the two guards that keep the store
-derived, and a merged port makes it unenforceable.
-
-Three things `ClickHouseConnection` does that are easy to get wrong by hand:
-
-- **Server-side bound parameters, never interpolation.** ClickHouse reads `{name:Type}` placeholders
-  out of `param_*` query-string entries. The analytics store holds every tenant's rows in one table,
-  so an injected predicate here is a cross-tenant read. **An array parameter is the exception**: it
-  goes over as a literal, so its elements are escaped — a scalar is never quoted and needs none.
-- **Table names qualified against the configured database.** ClickHouse resolves an unqualified name
-  against the session default, which is `default` — the same trap the init script documents, and the
-  reason a table can look missing while it exists.
-- **`DateTime64(3)` is `YYYY-MM-DD HH:MM:SS.mmm`.** An ISO string's `T` and `Z` are rejected.
-
-The full mechanics — the checkpoint, the keyset, the `ReplacingMergeTree` dedup, the reconciliation —
-are in [reference/clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md).
-
-### `src/loki/` — the read side of the diagnostic stream
-
-One file, one method that matters, and a type that refuses to express a bad query:
-
-```ts
-interface LogQuery {
-  from: Date; to: Date;
-  app?: string; env?: string; level?: string; eventCode?: string;   // the four labels
-  contains?: string;                                                // the line body
-  limit?: number;
-}
-```
-
-**A label creates one stream per distinct value.** `user_id` at 100k users means 100k streams and Loki
-falls over — the most common way a Loki deployment fails, and entirely avoidable. Here the avoidance
-is not a convention: `LogQuery` has no field that could produce one. High-cardinality fields go in
-`contains`, which becomes a line filter applied *after* the selector has narrowed the streams.
-
-Details in [reference/loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/loki.md).
-
----
-
-## Step 15.6 — Barrels
+## Step 15.5 — Barrels
 
 ```ts
 // packages/infrastructure/src/redis/index.ts
-export { RedisCacheStore } from "./redis-cache.store.js";
 export { type RedisConfig, RedisConnection, type RedisRole } from "./redis.connection.js";
+export { RedisCacheStore } from "./redis-cache.store.js";
+export { RedisRateLimitStore } from "./redis-rate-limit.store.js";
+export { RedisRealtimePublisher } from "./redis-realtime.publisher.js";
+export {
+  type RedisRealtimeConfig,
+  RedisRealtimeSubscriber,
+} from "./redis-realtime.subscriber.js";
 ```
 
 ```ts
 // packages/infrastructure/src/s3/index.ts
+export { S3ClientFactory } from "./s3-client.factory.js";
 export { type S3Config, S3StorageGateway } from "./s3-storage.gateway.js";
+export { S3StoragePolicyGateway } from "./s3-storage-policy.gateway.js";
 export { StorageKey } from "./storage-key.js";
 ```
 
 ```ts
 // packages/infrastructure/src/bullmq/index.ts
 export { BullMqQueuePublisher } from "./bullmq-queue.publisher.js";
-```
-
-```ts
-// packages/infrastructure/src/clickhouse/index.ts
-export { ClickHouseAnalyticsProjector } from "./clickhouse-analytics.projector.js";
-export { type ClickHouseConfig, ClickHouseConnection } from "./clickhouse.connection.js";
-```
-
-```ts
-// packages/infrastructure/src/loki/index.ts
-export { type LokiConfig, LokiLogReader } from "./loki-log.reader.js";
 ```
 
 ```ts
@@ -673,11 +676,19 @@ export {
 } from "./openai-embedding.provider.js";
 ```
 
+```ts
+// packages/infrastructure/src/gemini/index.ts
+export {
+  type GeminiEmbeddingConfig,
+  GeminiEmbeddingProvider,
+} from "./gemini-embedding.provider.js";
+```
+
 Folder barrels name their exports for the same reason root barrels do — and here it buys something concrete: a vendor adapter can keep its private helpers exported for a sibling file without those helpers becoming part of `@loadbearing/infrastructure`.
 
 ---
 
-## Step 15.7 — A smoke suite
+## Step 15.6 — A smoke suite
 
 Not a unit test — these classes are adapters, and testing an adapter against a fake tests the fake.
 `packages/infrastructure/tests/smoke/` exercises every one of them against the running containers,
@@ -690,44 +701,38 @@ pnpm smoke
 
 It runs under its own config, `vitest.smoke.config.ts`, and the default `vitest run` excludes
 `tests/smoke/**`. The split is what lets the rest of the suite need only Postgres while this half
-needs S3, Loki and both Redis instances — and it is why `pnpm test` on a laptop with nothing running
+needs S3 and Redis — and it is why `pnpm test` on a laptop with nothing running
 still tells you something. The smoke config loads the repository root `.env`, runs the files
 serially, and allows thirty seconds a test: two suites racing on the same bucket and the same queue
 key is a flake that only reproduces on a fast machine.
 
-**The two opt-in stores skip with a named reason rather than silently.** `describe.skipIf` on
-`LOKI_URL` and `CLICKHOUSE_URL`, so a stack without them reports `skipped` in the summary — a suite
-that silently contains no tests is indistinguishable from one that ran.
+**What lite does not run skips with a named reason rather than silently.** `describe.skipIf` on
+`DATABASE_REPLICA_URL` and `DATABASE_SHARD_1_URL`, so a one-node stack reports the replica and
+two-node suites as `skipped` in the summary. The realtime test that needs a second Redis instance
+skips while `REDIS_QUEUE_URL` equals `REDIS_CACHE_URL`, which in lite it does. A suite that silently
+contains no tests is indistinguishable from one that ran.
 
-**This is the only exercised path three ports have.** `StorageGateway.presignUpload` and
+**This is the only exercised path two ports have.** `StorageGateway.presignUpload` and
 `presignDownload` are used by the browser and by nothing in this repository, so a URL that is wrong
 is wrong in a browser and nowhere else: the suite signs one of each and actually fetches and PUTs
 through them. `QueuePublisher.publish` is the port's whole write surface, and the job is read back
 through BullMQ's own `getJob` rather than off a Redis key — the key layout is theirs to change, and
-a spec that pins it fails on an upgrade that broke nothing. `LogReader.query` runs a real
-`query_range` and asserts the shape of every entry it parses, and deliberately nothing about a
-particular line: that would make the check depend on something having been logged recently, which is
-a flaky test rather than a wiring check.
-
-The ClickHouse probe inserts **the same row twice** and expects to read back one. That is not a
-formality: the projection consumer's idempotency rests entirely on `ReplacingMergeTree` collapsing a
-redelivered batch, and an `ENGINE = MergeTree` typo in the init script stays invisible until a
-redelivery doubles a quarter's numbers.
+a spec that pins it fails on an upgrade that broke nothing.
 
 The storage probe asserts the read-back *after* `deletePrefix` and after `delete`. Without those
 lines the prune reported success while deleting nothing — `SCAN` returns fully-prefixed keys, and
 passing them straight to `unlink` prefixes them a second time.
 
 **The `compose` CI job runs it** ([26](26-hygiene-and-ci.md)), against the containers
-`infra/docker-compose.yml` actually starts, which is the only place `LOKI_URL` is set.
+`infra/docker-compose.yml` actually starts.
 
 ---
 
 ## ✅ Gate
 
 `pnpm smoke` passes against a booted stack: a cache round-trip and its prune, a storage
-round-trip, both presigned URLs actually used, a published job read back, and Loki answering a
-query — with ClickHouse skipped by name unless `CLICKHOUSE_URL` is set.
+round-trip, both presigned URLs actually used, and a published job read back — with the replica
+and two-node suites skipped by name unless their URLs are set.
 
 ```bash
 grep -rn "ioredis\|@aws-sdk\|bullmq" packages --include=*.ts | grep -v "packages/infrastructure"

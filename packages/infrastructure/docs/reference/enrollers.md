@@ -109,7 +109,7 @@ this package. `PgPersonalOrganizationEnroller` takes that shape rather than the 
 ### Warm spares: the founder claims a tenant that already has its partitions
 
 Since `PF.3`, a signup pays no partition DDL. The worker's `spares` job runs every five minutes and
-tops `spare_tenants` up to twenty. Each spare is a tenant id whose sixteen partitions exist on node 0
+tops `spare_tenants` up to twenty. Each spare is a tenant id whose seventeen partitions exist on node 0
 and whose `organizations` row does not. Each is made in one transaction, row and partitions
 together, so a crash never leaves partitions that nothing names.
 

@@ -52,8 +52,8 @@ export interface ContainerConfig {
     readonly shards?: readonly { readonly url: string; readonly directUrl: string }[];
   };
   readonly redis: {
-    // Two instances, different durability. Neither is optional: a missing
-    // queueUrl silently puts jobs on the instance that evicts them.
+    // Two names, one instance in lite. Neither is optional: splitting cache from
+    // queue later must be an `.env` change, never a code change.
     readonly cacheUrl: string;
     readonly queueUrl: string;
   };
@@ -73,15 +73,17 @@ export interface ContainerConfig {
     readonly cookieCacheMaxAgeSeconds: number;
     readonly requireEmailVerification: boolean;
   };
+  // `none` is lexical search over the chunk text, with no outbound call.
   readonly embedding: {
-    readonly apiKey: string;
-    readonly model: string;
+    readonly provider: "none" | "openai" | "gemini";
+    readonly apiKey?: string;
+    readonly model?: string;
     readonly dimensions: number;
   };
   readonly logging: {
     readonly level: LogLevel;
-    // Human-shaped output for a terminal. Never true in production — Alloy wants
-    // one JSON object per line and nothing else.
+    // Human-shaped output for a terminal. Never true in production — a collector
+    // wants one JSON object per line and nothing else.
     readonly pretty: boolean;
     // Two of the four log labels. Low-cardinality by construction.
     readonly app: string;
@@ -215,7 +217,13 @@ export class Container {
 
     // ── the two swap points ──
     this.vectors = new PgVectorStore(this.database, this.transactions);
-    this.embeddings = new OpenAiEmbeddingProvider(config.embedding);
+    // A sketch. The real file picks `none`, `openai` or `gemini` in `buildSearchMode`,
+    // and `none` builds no provider: search is lexical (14).
+    this.embeddings = new OpenAiEmbeddingProvider({
+      apiKey: config.embedding.apiKey ?? "",
+      model: config.embedding.model ?? "text-embedding-3-small",
+      dimensions: config.embedding.dimensions,
+    });
 
     // No argument until `SERVER_CATALOG` exists — the constructor already defaults to
     // the client catalog, and a server catalog identical to it would enforce nothing (20).
@@ -252,8 +260,8 @@ export class Container {
     // );
   }
 
-  // Postgres and both Redis instances. A cache that is down degrades; a queue
-  // that is down silently stops accepting work, which is worth knowing about.
+  // Postgres and both Redis roles, one instance in lite. A cache that is down degrades;
+  // a queue that is down silently stops accepting work.
   public async healthy(): Promise<boolean> {
     const [database, cache, queue] = await Promise.all([
       this.database.isHealthy(),
@@ -283,11 +291,11 @@ export class Container {
 
 **The logger's `app` and `env` are bound fields, not options.** `JsonLoggerOptions` declares `level`, `pretty`, `sink`, `bound`, `clock` and `random` — and nothing else. Spreading `config.logging` into it would compile, because excess-property checking does not apply to a variable, and both values would be silently dropped: no error, no label, and a log platform that cannot tell `web` from `worker`.
 
-Binding them puts `app` and `env` on every line, which is what lets the Alloy pipeline read all four labels out of the JSON body rather than inferring two of them from container metadata that differs between Compose, Kubernetes, and a host-run `pnpm dev` ([11](11-local-infrastructure.md)). The application knows what it is; the orchestrator's name for the process is incidental.
+Binding them puts `app` and `env` on every line. A log collector can then read all four labels out of the JSON body, rather than inferring two of them from container metadata that differs between Compose, Kubernetes, and a host-run `pnpm dev`. Lite runs no collector and logs to stdout only; [Logs](../scale/logs.md) adds one. The application knows what it is; the orchestrator's name for the process is incidental.
 
 **4. `dispose()` closes in reverse construction order.** Queues before the Redis connections before Postgres. Closing Redis while BullMQ still holds blocking connections produces a hang on shutdown that looks like a deadlock, because it is one.
 
-`RedisConnection.close()` quits both instances, which is why they sit behind one object rather than as two fields on the container. Two fields is two things to remember at every shutdown path, and the one that gets forgotten is the queue — where an unclean close means in-flight jobs are redelivered rather than completed.
+`RedisConnection.close()` quits both connections, which is why they sit behind one object rather than as two fields on the container. In lite both dial the same instance; they are still two connections. Two fields is two things to remember at every shutdown path, and the one that gets forgotten is the queue — where an unclean close means in-flight jobs are redelivered rather than completed.
 
 **One Postgres close, and it is last.** The container holds a `DatabaseCluster` rather than a bare
 `Database`, and the cluster owns every pool it built — node 0's included. `await this.cluster.close()`

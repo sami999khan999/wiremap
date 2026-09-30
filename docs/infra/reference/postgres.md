@@ -26,9 +26,8 @@ Using the official `postgres` image and installing pgvector yourself works, and 
 an image on every developer machine and every CI runner.
 
 **Postgres 17 rather than 16** for the improved `VACUUM` memory behaviour, which matters on the
-activity log more than anywhere else — though the real answer for that table is monthly partitioning
-and a retention policy, which [13](../../setup/13-infrastructure-postgres.md) sets up in the first
-migration.
+activity log more than anywhere else — though the real answer for that table is partitioning,
+which [13](../../setup/13-infrastructure-postgres.md) sets up in the first migration.
 
 ---
 
@@ -93,48 +92,52 @@ pnpm infra:reset
 
 | Consumer | Reaches it at | For |
 |---|---|---|
-| `apps/web`, `apps/worker` (host) | `localhost:26432` | everything, via `DATABASE_URL` — **through [pgBouncer](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md)** |
+| `apps/web`, `apps/worker` (host) | `localhost:25432` | everything, via `DATABASE_URL` |
 | `migrate.ts`, `seed.ts`, `drizzle-kit` (host) | `localhost:25432` | DDL, via `DATABASE_DIRECT_URL` |
-| `migrate.ts`, `partitions.ts`, under the `sharded` profile | `localhost:25433` | the same DDL on node 1, via `DATABASE_SHARD_1_DIRECT_URL` |
 | `PgPartitionArchiveGateway` | `localhost:25432` | `DETACH … CONCURRENTLY` and a month-long stream |
 
 **Two different hostnames for one database**, and the difference is which side of the bridge network
 the client is on. A container using `localhost:25432` would reach *its own* loopback and find
 nothing.
 
-Connections are pooled per process at `DATABASE_POOL_MAX` (10 by default,
-[13](../../setup/13-infrastructure-postgres.md)) — but they are no longer counted against
-`max_connections`, because [pgBouncer](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md) is in front of them. What replicas cost now is
-pgBouncer *client* slots (`MAX_CLIENT_CONN`, 1000); what Postgres sees is `DEFAULT_POOL_SIZE` (20).
-That is the whole reason the pooler is in the core stack rather than filed as a later move.
+**Two URLs, one server.** `DATABASE_URL` and `DATABASE_DIRECT_URL` are the same address in lite.
+There is no pooler. The direct URL is kept as a name so adding one later is an `.env` and compose
+change, not a code change — [pgbouncer](../../scale/pgbouncer.md).
+
+**The code is already written for a transaction pooler.** It sets nothing per session. The timeout
+floor — `statement_timeout`, `idle_in_transaction_session_timeout`, `lock_timeout` — is an
+`ALTER ROLE` in the baseline migration, so it holds with or without a pooler in the way.
+
+Connections are pooled per process at `DATABASE_POOL_MAX` (20 in `.env.example`,
+[13](../../setup/13-infrastructure-postgres.md)). With no pooler, each one is a real backend.
+Count your processes against `max_connections`.
 
 `max_connections` is 200 here, set by the compose `command` alongside
-`shared_preload_libraries=pg_stat_statements` and `track_io_timing=on`. Size it as
-`DEFAULT_POOL_SIZE × databases × pooler instances`, plus headroom for superusers and
-`RESERVE_POOL_SIZE`.
+`shared_preload_libraries=pg_stat_statements`, `track_io_timing=on` and
+`max_locks_per_transaction=1024`. The locks setting is raised because every tenant is partitions:
+a statement the planner cannot prune by tenant locks every leaf
+([partitions](../../../packages/infrastructure/docs/reference/partitions.md)).
 
-**`DATABASE_DIRECT_URL` is this port, and it is not optional in a pooled deployment.** Migrations,
-the seed, `drizzle-kit` and the activity archive's `DETACH … CONCURRENTLY` need a connection with
-no pooler in it — and the timeout floor migration `0022` sets only reaches a session through the
-pooler once its server connections have been recycled with `RECONNECT`.
+**A volume migrated before the lite squash needs `pnpm infra:reset`.** The migrations are now
+`packages/infrastructure/migrations/0000_lite_baseline.sql` plus two small ones, and an old
+volume's history does not match them.
 
 ---
 
 ## One container is the catalog and node 0 at once
 
-There is one Postgres in the default stack and there is meant to be. The application reaches it
+There is one Postgres in the stack and there is meant to be. The application reaches it
 through a `DatabaseCluster` and a key, every table is `catalog`, `local` or `routed`, and every
 tenant's row in `shard_assignments` names node 0 — so the routing runs for real against one
-machine, which is what makes a second one two environment variables rather than a project.
+machine, which is what makes a second one environment variables rather than a project.
 
-`pnpm infra:up:sharded` starts `postgres-shard-1` and `pgbouncer-shard-1` on `:5433`/`:6433`, same
-image and same `postgres.init.sql`, on their own volume. That is for rehearsing the split and not
-for running one — `tests/smoke/sharded.smoke.spec.ts` is what it exists for. See
-[sharding](../../../packages/infrastructure/docs/reference/sharding.md) and
-[compose](compose.md).
+Lite runs no second node and no replica. `DATABASE_SHARD_<n>_URL` and `DATABASE_REPLICA_URL` are
+still read; unset, there is one node and every read goes to the primary. Adding either is
+[shard-nodes](../../scale/shard-nodes.md) or [read-replica](../../scale/read-replica.md). See also
+[sharding](../../../packages/infrastructure/docs/reference/sharding.md).
 
-**`pgvector` has to be on every node, which is why the shard shares the init script.** A routed
-table with an embedding column on a database with no extension fails at insert, not at boot.
+**`pgvector` has to be on every node, so a new node shares the init script.** A routed table with
+an embedding column on a database with no extension fails at insert, not at boot.
 
 ---
 

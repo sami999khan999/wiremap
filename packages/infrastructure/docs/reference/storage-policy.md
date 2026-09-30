@@ -5,8 +5,9 @@ description: Why a second gateway rather than a method on StorageGateway, why "n
 
 # `S3StoragePolicyGateway`
 
-`StorageGateway` moves objects. This moves the **bucket's own policy**: one lifecycle rule per
-retained table, saying how long an archived month lives in S3 before the bucket deletes it.
+`StorageGateway` moves objects. This moves the **bucket's own policy**: the lifecycle rules that say
+how long an object lives in S3 before the bucket deletes it. Lite writes one rule: objects under
+`export/` expire after seven days.
 
 ## Why it is a second port
 
@@ -24,30 +25,26 @@ write, and there is no merge — S3 offers neither.
 
 That decides the shape of everything above it:
 
-- `RetentionRules.lifecycleFor(rows)` takes **every** retention row and composes the whole
-  configuration, which is why `RetentionPolicyRepository.all()` exists and why the update use-case
-  re-reads all of them after it saves one.
-- The rules are **sorted by prefix**, so two runs over the same rows compare equal. Without that,
-  the daily job would see a difference whenever the row order changed and rewrite the bucket for
-  nothing.
+- `RetentionRules.lifecycleFor()` composes the **whole** configuration. In lite that is the one
+  `export/` rule; the big kit adds a rule per retained table here.
+- The rules are **sorted by prefix**, so two runs compare equal. Without that, the daily job would
+  see a difference whenever the order changed and rewrite the bucket for nothing.
 - An empty list **deletes** the configuration, with `DeleteBucketLifecycle` rather than a `Put` of
-  zero rules — S3 and MinIO both answer `InvalidArgument` to that. Deleting is the honest reading
-  of "no row names a cold window"; the alternative, leaving the last rule in place, is a bucket
-  expiring objects to a policy nobody can see any more.
+  zero rules — S3 and MinIO both answer `InvalidArgument` to that. Lite never sends one, since it
+  always composes the `export/` rule.
 
-## Two prefixes, and only one of them comes from a row
+## The `export/` rule
 
-`cold/<table>/` is composed per retention row. `export/` is not: it is a flat rule at seven days,
-present whether or not anyone has ever exported a tenant, because a lifecycle rule has to exist
-before the objects it governs do.
+`export/` is a flat rule at seven days, present whether or not anyone has ever exported a tenant,
+because a lifecycle rule has to exist before the objects it governs do. A fresh deployment's first
+`retention` run applies it, and every run after that applies nothing — the job converges, then
+stops.
 
-That is the one thing an empty `retention_policy` still writes. A fresh deployment's first
-`retention` run applies one rule and every run after it applies none — which is the same
-converge-then-stop behaviour the rest of this page describes, starting from one rather than zero.
+It is flat rather than per tenant because **a bucket takes at most a thousand lifecycle rules**,
+and one per customer is a ceiling with a date on it.
 
-The `export/` rule is flat rather than per tenant for the reason the cold rules are per table
-rather than per tenant-month: **a bucket takes at most a thousand lifecycle rules**, and one per
-customer is a ceiling with a date on it.
+`cold/` has no rule. A deleted tenant's archive is removed by the nightly sweep after thirty days —
+see [Cold storage](cold-storage.md).
 
 ## "No configuration" is an error, and treating it as one would never converge
 
@@ -67,56 +64,19 @@ this path rather than a rehearsal of it.
 ## A rule the app did not write is reported as absent
 
 `lifecycle()` drops any rule with no prefix filter, and any whose expiry is a *date* rather than a
-span of days. Both are legal S3 and neither is anything this system writes.
+span of days. Both are legal S3 and neither is anything this system writes. A transition is
+ignored: lite writes and compares none.
 
 Reporting them as absent rather than as rules means the next `applyLifecycle` removes them — which
-is correct: the bucket's configuration is derived from the rows, and a rule with no row behind it
-is drift by definition. A deployment that wants a hand-written rule on this bucket needs a row, or
-a different bucket.
-
-## Days, not months
-
-The policy is written in months and S3 counts days, so one of the two has to give.
-`RetentionRules.daysFor` rounds **up** — `Math.ceil(months × 30.44)` — because rounding down
-expires an object inside the window an operator asked for, and that is the direction that loses
-data. The screen says "about", which is the honest word for it.
-
-## A colder class, and only one that reads back at once — `25.3`
-
-An archived month is rarely read. So a bucket can move it to a cheaper, colder storage class
-after a while and still expire it on time. `S3_COLD_STORAGE_CLASS` and `S3_COLD_TRANSITION_DAYS`
-name the class and the days, both or neither. The gateway answers them as `coldTier()`, and
-`RetentionRules.lifecycleFor(rows, tier)` gives every `cold/<table>/` rule a `Transition` beside
-its `Expiration`.
-
-- **Never the `export/` rule.** An export is a download for seven days. One that must be
-  restored first is not a download.
-- **Never a transition on or after the expiry.** S3 rejects a rule whose transition is not
-  earlier than its expiration, and it rejects the whole configuration with it. So one short
-  cold window would take every other table's rule down. That table simply gets no transition.
-- **The transition is part of the comparison.** `RetentionRules.describe` spells a rule
-  `cold/messages/=366>COLD@30`, and the nightly job compares that. A bucket that lost its
-  transition by hand is drift, and the next run puts it back.
-
-**Only a class that `GetObject` reads at once.** `restore()` and the re-projection read a cold
-object directly. `GLACIER` and `DEEP_ARCHIVE` answer that with `InvalidObjectState` until an
-asynchronous restore, hours long, has run. So both apps refuse those two at boot and name the three
-that work: `STANDARD_IA`, `ONEZONE_IA`, `GLACIER_IR`. Supporting the other two means a restore
-flow that waits, which is a different feature from the one `restore()` provides.
-
-**MinIO has no classes, only remote tiers.** A transition on MinIO names a tier: another object
-store the object moves to, and that MinIO reads through transparently. The `cold-tier` compose
-profile runs a second MinIO and registers it as `COLD` — see
-[compose](../../../../docs/infra/reference/compose.md). MinIO checks the name, so a class nobody
-registered fails the write. `lifecycle.smoke.spec.ts` proves both: a transition to `COLD` is
-written and read back equal, and one to an unregistered name is refused.
+is correct: the bucket's configuration is derived from `RetentionRules`, and a rule it did not
+compose is drift by definition. A deployment that wants a hand-written rule on this bucket needs to
+add it to `RetentionRules`, or use a different bucket.
 
 ## What is not here
 
-**Classes that need a restore.** `GLACIER` and `DEEP_ARCHIVE`, for the reason above.
+**Per-table retention and a colder storage class.** The big kit composes a `cold/<table>/` rule per
+retention row, with an optional transition to a cheaper class. Both left with calendar retention;
+bringing them back is [Retention](../../../../docs/scale/retention.md).
 
 **Per-tenant expiry.** Lifecycle rules match a prefix and are capped at 1,000 per bucket, so a rule
-per tenant-month is not available at any tenant count worth having. The per-table rule is the
-**ceiling**, and a tenant that asked for something shorter is enforced by the worker's sweep. That
-split is decision D48, and it is the reason `cold/<table>/` is the prefix rather than
-`cold/<table>/<organization_id>/`.
+per tenant is not available at any tenant count worth having.

@@ -18,13 +18,6 @@ and resolves no credential; it constructs a `SystemPrincipal` from a named grant
 turns the environment into a `ContainerConfig`, and it is parsed before anything else in the process
 exists.
 
-## Concurrency: serial, and only one of the two is a dial
-
-| Variable | Default | Why |
-|---|---|---|
-| `WORKER_MAINTENANCE_CONCURRENCY` | 1 | Maintenance jobs take table-level locks and run nightly. Two overlapping buys nothing and can deadlock on the same partition |
-| `WORKER_PROJECTION_CONCURRENCY` | 1 | **Not a dial worth turning.** Two projection runs read the same checkpoint, project the same rows, and turn one batch into two — correctness rests on there being exactly one writer, not on the insert being idempotent |
-
 ## `WORKER_SHUTDOWN_TIMEOUT_MS`
 
 How long `worker.close()` is given to drain in-flight jobs before the process exits anyway.
@@ -49,7 +42,8 @@ Better Auth's own and exists only in the web app's schema.
 ## The shard block, and the two rules that make it safe
 
 `DATABASE_SHARD_<n>_URL` names every node after node 0, with an optional
-`DATABASE_SHARD_<n>_DIRECT_URL` beside each. Absent is one node, which is every deployment until
+`DATABASE_SHARD_<n>_DIRECT_URL` and `DATABASE_SHARD_<n>_REPLICA_URL` beside each. An empty replica
+value means no standby. Absent is one node, which is every deployment until
 the split — `DATABASE_URL` is node 0 and also the catalog.
 
 **Two rules, both enforced at boot rather than discovered later.** The indexes must be contiguous
@@ -68,54 +62,51 @@ variables and a placement decision — not a config file two processes have to a
 A driver plus the connection detail that driver needs. `Container` reads the driver and builds the
 class behind the port, so adopting a store is these variables and nothing else.
 
-The ClickHouse block is optional, and **its absence is what keeps ClickHouse stopped**. Present, the
-projection runs and the reconciliation reports; nothing reads the store back, because there is no
-analytics reader. There is no read driver to flip, and that is the point — a flag that moved reads
-the moment the pipeline started would cut a dashboard over to a store still backfilling. See
-[`composition/docs/reference/container.md`](../../../../packages/composition/docs/reference/container.md).
-
-**Setting `CLICKHOUSE_URL` makes `CLICKHOUSE_DATABASE` and `CLICKHOUSE_USER` required.** Both default
-to ClickHouse's own `default`, and the compose container is `ratchet` — so the defaults cannot reach
-the only ClickHouse this kit ships. The schema refuses them rather than letting the projection fail
-on its first run with a vendor auth error.
+`VECTOR_DRIVER` has one value today, `pgvector`. The embedding block picks who turns text into
+vectors: `EMBEDDING_PROVIDER` is `none`, `openai` or `gemini`, and `none` searches the chunk text and
+calls nobody. **A provider other than `none` makes `EMBEDDING_API_KEY` required.** The schema
+refuses the pair at boot rather than failing on the first document. See
+[`composition/docs/reference/container.md`](../../../../packages/composition/docs/reference/container.md)
+and [embedding](../../../../packages/infrastructure/docs/reference/embedding.md).
 
 ## Logging
 
-The same block the web app parses. A worker with no log output is a worker you cannot operate, and
-`LOG_PRETTY` must stay false anywhere Alloy is reading — it is a terminal format, and Alloy's JSON
-stage drops what it cannot parse.
+The same block the web app parses. A worker with no log output is a worker you cannot operate. Logs
+are JSON lines on stdout, and `LOG_PRETTY` must stay false anywhere something parses them — it is a
+terminal format. Shipping them somewhere is [`docs/scale/logs.md`](../../../../docs/scale/logs.md).
 
-## The four concurrency knobs are not one knob
+## The five concurrency knobs are not one knob
 
 Each is per worker *instance*, never global: four instances at concurrency 4 is sixteen in-flight
 jobs, every one of which may hold a Postgres connection.
 
 - `WORKER_EMBEDDING_CONCURRENCY` (4) — bounded by the embedding provider's rate limit and your pool.
 - `WORKER_MAINTENANCE_CONCURRENCY` (1) — serial, because these jobs take table-level locks.
-- `WORKER_ANALYTICS_CONCURRENCY` (1) — capped at 1 *by the schema*: correctness rests on one writer.
 - `WORKER_MAIL_CONCURRENCY` (4) — with `WORKER_MAIL_RATE_PER_MINUTE` (600) as the provider's cap,
   which is a BullMQ `limiter` on that queue rather than a sleep in every caller.
 - `WORKER_EVENT_CONCURRENCY` (8) — the highest, because deliveries are subscriber work and one
   event fans out to one job per subscriber. The drain itself runs at `priority: 1` ahead of them,
   so a delivery backlog cannot starve it.
+- `WORKER_NOTIFICATION_CONCURRENCY` (2) — the digest fan-out is one job a day, and each tenant's
+  digest waits on the mail queue, which has its own limiter.
 
 ## Count your processes, and now your concurrencies
 
 The five knobs above are per instance, and they are also drawn against one pool. `WorkerBootstrap`
-sums the concurrency of the consumers that actually **started** — not the six in the tree, because
-`AnalyticsConsumer` starts only with a ClickHouse config — and emits `worker.pool.oversubscribed`
-when the sum exceeds `DATABASE_POOL_MAX`. At the defaults that is 20 against 10, and the line fires
-on every boot until one of the two numbers moves.
+sums the concurrency of the consumers that actually **started**, leaving out mail — a send holds an
+SMTP socket, never a database connection — and emits `worker.pool.oversubscribed` when the sum
+exceeds `DATABASE_POOL_MAX`. At the defaults that is 15 against 20, so the line stays quiet until you
+raise a knob or lower the pool.
 
 It is a warning rather than an error because plenty of jobs hold no connection at all. But
 `WORKER_EVENT_CONCURRENCY` (8) counts fully: `PgOutboxGateway.drain` awaits its relay **inside**
-`unitOfWork.run`, so an in-flight batch pins a pool connection — and a pgBouncer server slot — for
-the whole of its Redis round trips.
+`unitOfWork.run`, so an in-flight batch pins a pool connection for
+the whole of its Redis round trips, and a pooler's server slot too once one sits in front.
 
 `DATABASE_STATEMENT_TIMEOUT_MS` defaults to 120 s here against the web app's 30 s, and that is the
-one field the two schemas deliberately disagree about. Through pgBouncer it reaches the server as a
-`SET LOCAL` inside `PgUnitOfWork.run`, never as a startup parameter — see
-[`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
+one field the two schemas deliberately disagree about. It reaches the server as a startup parameter
+and again as a `SET LOCAL` inside `PgUnitOfWork.run`. The second is the one that survives a pooler in
+transaction mode, which drops startup parameters — see [`docs/scale/pgbouncer.md`](../../../../docs/scale/pgbouncer.md).
 
 ## The two realtime numbers are per process
 

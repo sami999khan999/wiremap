@@ -32,7 +32,7 @@ packages/infrastructure/
     │   ├── rbac.schema.ts         → roles, role_permissions, memberships, …
     │   ├── auth.schema.ts         ← Better Auth CLI output, committed
     │   ├── activity.schema.ts     ← activity_log, partitioned monthly
-    │   ├── analytics.schema.ts    ← snapshot tables, fed by domain events
+    │   ├── archive.schema.ts      ← partition_archive, the index into S3 cold/
     │   └── vector.schema.ts       ← document_chunks — see 14
     ├── primitive/                 ← what every seam folder depends on
     │   ├── index.ts
@@ -46,7 +46,6 @@ packages/infrastructure/
     │   ├── index.ts
     │   ├── pg-activity.logger.ts          → PgActivityLogger
     │   ├── pg-partition-archive.gateway.ts → PgPartitionArchiveGateway
-    │   ├── pg-activity-replay.reader.ts   → PgActivityReplayReader
     │   ├── pg-api-key.repository.ts       → PgApiKeyRepository
     │   ├── pg-capability.repository.ts    → PgCapabilityRepository
     │   ├── pg-maintenance.gateway.ts      → PgMaintenanceGateway
@@ -57,18 +56,18 @@ packages/infrastructure/
 ```
 
 **One folder per external system, and the system is the only subject.** This whole tree lives under
-`packages/infrastructure/src/pg/`, beside `clickhouse/`, `loki/`, `redis/`, `s3/`, `bullmq/` and
-`openai/` ([15](15-infrastructure-package.md)).
+`packages/infrastructure/src/pg/`, beside `redis/`, `s3/`, `bullmq/`, `smtp/`, `openai/`,
+`gemini/` and `unified/` ([15](15-infrastructure-package.md)).
 
 **The adapters sit flat in `repository/` rather than in a folder per seam.** They were once
 `activity/`, `analytics/`, `rbac/`, `vector/` and `maintenance/`, each holding one or two files, and
 that was wrong twice over.
 
 A folder holding one file is a path, not a subject ([Simplicity](../opinions/simplicity.md)). And
-`pg/analytics/` beside `clickhouse/` reads as two different things, when what it actually is — now
-that ClickHouse has an implementation — is two implementations of one port. Flat, each file is
-`pg-<port>.ts` beside `clickhouse-<port>.ts` one directory over, and the technology stays the axis
-this package sorts on.
+a seam folder under `pg/` hides a second implementation. In the big kit, `pg/analytics/` beside
+`clickhouse/` read as two different things, when it was two implementations of one port. Flat,
+each file is `pg-<port>.ts`, a second vendor's is `<vendor>-<port>.ts` one directory over, and the
+technology stays the axis this package sorts on.
 
 **Schemas are the exception to the subject-folder rule** ([Folders](../opinions/folders.md)), and it
 is a tooling exception rather than a taste one: `drizzle.config.ts` needs one path that names every
@@ -93,7 +92,6 @@ export {
 export {
   PgPartitionArchiveGateway,
   PgActivityLogger,
-  PgActivityReplayReader,
   PgApiKeyRepository,
   PgCapabilityRepository,
   PgMaintenanceGateway,
@@ -176,16 +174,18 @@ export class Database {
 > unreachable Postgres holds a request for the OS default — longer than every timeout in front of
 > it. `application_name` goes on the pool so `pg_stat_activity` names the process holding a
 > connection; it is the one startup parameter a transaction pooler forwards rather than dropping.
+> Lite dials Postgres directly, and the code is still written as if a pooler sat in front.
 >
 > `pool.on("error")` is registered unconditionally. `pg` emits it on an **idle** client whose socket
-> died — a restarted pooler, a failover — where no caller is waiting and nothing else can catch it;
+> died — a restarted Postgres, a failover, a pooler once one is added — where no caller is waiting and nothing else can catch it;
 > `apps/worker` turns an uncaught exception into `exit(1)`, so the listener is the difference
 > between a reconnect and an outage.
 >
 > And `statement_timeout` stops being the guarantee this section says it is the moment a
 > transaction pooler is in front: it is sent as a startup parameter, pgBouncer drops it, and
-> `SHOW statement_timeout` reads `0`. Migration `0022` puts a role-level floor back and
-> `PgUnitOfWork` raises it per transaction with `SET LOCAL`. See
+> `SHOW statement_timeout` reads `0`. The baseline migration puts a role-level floor in place
+> (below), and `PgUnitOfWork` raises it per transaction with `SET LOCAL`. Adding the pooler is
+> [pgBouncer](../scale/pgbouncer.md). The big kit's own write-up is
 > [`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md).
 
 ---
@@ -345,7 +345,7 @@ The ordering consequence is worth stating plainly: **these tables reference `use
 
 The consequence that catches people is **`roles_key_uq`**. Keyed on `(key)` alone, two organizations cannot both have an `owner` role — the second insert fails with a unique violation and it looks like a seeding bug. Every unique index on a tenant-scoped table leads with `organization_id`, and the ones that do not — `memberships_uq`, `goal_members_uq` — are already unique on columns that are themselves tenant-scoped.
 
-**`partition_archive` leads with the tenant, and carries no foreign key to it.** It is the index a read of cold storage starts from — one row per tenant per table per retired month, with the object key, the row count, the bytes, a per-action breakdown and a `projected_at` that is null until the derived store has that month. Leading with `organization_id` is what lets one tenant's cold months be read, swept and totalled without touching another's, and is why it needs no `TENANT_EXEMPT` line. The missing foreign key is deliberate for the reason the audit trail gives about its actor: **the archive is what survives the tenant**, so a cascade would erase the record of what was kept. Deleting a tenant therefore has to sweep the objects itself. See [cold storage](../../packages/infrastructure/docs/reference/cold-storage.md).
+**`partition_archive` leads with the tenant, and carries no foreign key to it.** It is the index into cold storage — one row per tenant per table per archived month, with the object key, the row count, the bytes and a per-action breakdown. In lite only a tenant delete writes it: the deleted tenant's months go to S3 `cold/`, and the nightly `retention` job sweeps them 30 days later. `projected_at` is kept for the analytics store and stays null in lite. Leading with `organization_id` is what lets one tenant's cold months be read, swept and totalled without touching another's, and is why it needs no `TENANT_EXEMPT` line. The missing foreign key is deliberate for the reason the audit trail gives about its actor: **the archive is what survives the tenant**, so a cascade would erase the record of what was kept. Deleting a tenant therefore has to sweep the objects itself. See [cold storage](../../packages/infrastructure/docs/reference/cold-storage.md).
 
 **Postgres does not index foreign keys for you.** `roleId` on `memberships` and `goalMembers`, `goalId` on `goal_members` and `permission_overrides` — every one is a column something filters or joins on, and none of them is covered by the unique indexes above. An unindexed FK is also what makes deleting a role scan every membership row. The rule is mechanical: **every FK column gets an index, every filtered column gets an index**, and the review question is "which index serves this predicate" rather than "does this look slow".
 
@@ -358,10 +358,10 @@ The consequence that catches people is **`roles_key_uq`**. Keyed on `(key)` alon
 ```ts
 export * from "./activity.schema.js";
 export * from "./archive.schema.js";
-
-
 export * from "./rbac.schema.js";
 export * from "./vector.schema.js";
+// …one line per schema file
+
 ```
 
 One file that drizzle-kit points at, and one file to edit when a slice adds tables. Forgetting to add a slice here is the most common reason a new table does not appear in a generated migration.
@@ -392,9 +392,9 @@ export default defineConfig({
 
 > [!IMPORTANT]
 > **Every script in this section reads `DATABASE_DIRECT_URL ?? DATABASE_URL`, not `DATABASE_URL`.**
-> Once pgBouncer is in front (Phase 1 of `plans/archive/DB-SCALING-PLAN.md`), `DATABASE_URL` is the pooled
-> port. `drizzle-kit` introspects and `db:studio` holds a session open; migrations run DDL and
-> `0022` sets a role default. None of that belongs on a transaction pooler, and the fallback is
+> Lite has no pooler, so the two are the same URL today. Once pgBouncer is in front
+> ([pgBouncer](../scale/pgbouncer.md)), `DATABASE_URL` is the pooled port. `drizzle-kit` introspects
+> and `db:studio` holds a session open; migrations run DDL and the baseline sets a role default. None of that belongs on a transaction pooler, and the fallback is
 > what keeps a single-URL deployment working unchanged.
 
 > **The catalog, and it does not loop.** Every node runs the same schema, so `drizzle-kit` and
@@ -460,7 +460,7 @@ node -e "require('fs').writeFileSync('.env', 'DATABASE_URL=postgres://ratchet:ra
 ```bash
 pnpm db:generate
 ```
-> Writes `migrations/0000_<name>.sql` and `migrations/meta/`. **Read the SQL before applying it.** Drizzle-kit is good but it is a diffing tool, and reviewing generated DDL is a five-second habit that catches an accidental `DROP COLUMN` before it runs.
+> Writes the next `migrations/<nnnn>_<name>.sql` and updates `migrations/meta/`. Lite starts from one squashed baseline, `0000_lite_baseline.sql`, then `0001_doc_owner_audience.sql` and `0002_chunk_embedding_model.sql`. **Read the SQL before applying it.** Drizzle-kit is good but it is a diffing tool, and reviewing generated DDL is a five-second habit that catches an accidental `DROP COLUMN` before it runs.
 
 ### Hand-edit the partitioned tables, before you apply it
 
@@ -505,13 +505,13 @@ CREATE TABLE activity_log_2026_01 PARTITION OF activity_log
 
 **Create partitions ahead of time**, with a repeatable job on the maintenance queue ([25](25-worker-app.md)) or `pg_partman`. A month that arrives with no partition is an insert that fails, so the job runs monthly and creates several months out.
 
-**The platform tier's own tables are the other exemptions, and each one had to be argued for.** `retention_policy (store, table_name)` is global because a partition spans every tenant — per-tenant retention is `tenant_retention_policy`, which leads with the tenant and needs no exemption. `projection_policy (action)` is global because whether an action reaches the analytics store is one deployment-wide decision, and the consumer that reads it projects across every tenant in one pass. Each of them shares the same property: **an absent row is the code default**, so an empty table behaves exactly as the deploy before the table existed, and adding one is reversible by deleting it.
+**The platform tier's own table is the other exemption.** `platform_policy` is one row for the whole deployment. Its property is the one to copy: **an absent value is the code default**, so an empty table behaves exactly as the deploy before the table existed.
 
-**Decide retention at the same time, and know what it does here.** The usual shape is 12–24 months of detail in Postgres, aggregates kept forever in the analytics store, and older partitions detached to cold storage. Detaching a partition is instant; a `DELETE` over the same rows bloats the table and holds a lock. In this kit retention is **archive-then-drop**: every retired tenant-month is streamed to `cold/<table>/<yyyy>/<mm>/<organization_id>.ndjson.gz`, recorded in `partition_archive` and verified before the drop, `outbox_event` included. See [cold storage](../../packages/infrastructure/docs/reference/cold-storage.md).
+**Know what retention does here: nothing, yet.** Lite keeps every month partition and drops none. The usual shape is 12–24 months of detail in Postgres and older partitions archived to cold storage, because detaching a partition is instant while a `DELETE` over the same rows bloats the table and holds a lock. The archive path already exists for a tenant delete: each month is streamed to `cold/<table>/<yyyy>/<mm>/<organization_id>.ndjson.gz`, recorded in `partition_archive` and verified before the drop. A calendar retention pass is [Retention](../scale/retention.md). See [cold storage](../../packages/infrastructure/docs/reference/cold-storage.md).
 
-**Which tables are partitioned is a list, not a convention.** `PartitionedTable.ALL` in `packages/application/src/primitive/partitioned-table.ts` names them; `MaintenanceGateway.ensureMonthlyPartitions` and `dropMonthlyPartitionsBefore` take that union rather than a `string`, and the monthly schedule loops it. Two things fall out. Postgres accepts no bind parameter in DDL — not for the table and not for the range bounds — so the adapter interpolates, and a closed union is the only boundary there is. And a table partitioned in a migration but never added to the list quietly stops getting partitions the month that migration's own runway ends.
+**Which tables are partitioned is a list, not a convention.** `PartitionedTable.ALL` in `packages/application/src/primitive/partitioned-table.ts` names them; `MaintenanceGateway.ensureMonthlyPartitions` and `partitionsBefore` take that union rather than a `string`, and the monthly schedule loops it. Two things fall out. Postgres accepts no bind parameter in DDL — not for the table and not for the range bounds — so the adapter interpolates, and a closed union is the only boundary there is. And a table partitioned in a migration but never added to the list quietly stops getting partitions the month that migration's own runway ends.
 
-`outbox_event` is the second table on that list. It is partitioned by `occurred_at` for the same reason `activity_log` is, and its indexes are partial rather than plain: the drain reads `WHERE published_at IS NULL` and the retention sweep reads `WHERE published_at IS NOT NULL`, so neither index carries rows the other will look at. Nothing is unique over `published_at`, so the pair are ordinary indexes — a nullable column in a *unique* index is the different problem [`vocabulary.md`](../opinions/vocabulary.md) warns about.
+`outbox_event` is the second table on that list. It is partitioned by `occurred_at` for the same reason `activity_log` is, and its indexes are partial rather than plain: the drain reads `WHERE published_at IS NULL` and a retention sweep reads `WHERE published_at IS NOT NULL`, so neither index carries rows the other will look at. Nothing is unique over `published_at`, so the pair are ordinary indexes — a nullable column in a *unique* index is the different problem [`vocabulary.md`](../opinions/vocabulary.md) warns about.
 
 ### Writing a unique-index migration
 
@@ -556,20 +556,25 @@ pnpm db:studio
 ```
 > Opens a browser UI at `local.drizzle.studio` showing your tables.
 
-### A migration that changes no table: the role-settings migration
+### Statements that change no table: the role settings
 
-`0022_pooler_timeout_floor.sql` is hand-written and contains three `ALTER ROLE CURRENT_USER SET`
-statements and nothing else. It is worth knowing about for three reasons.
+The last lines of `0000_lite_baseline.sql` are hand-written: three `ALTER ROLE CURRENT_USER SET`
+statements, for `statement_timeout`, `idle_in_transaction_session_timeout` and `lock_timeout`. In the
+big kit they were their own migration,
+`upstream:packages/infrastructure/migrations/0022_pooler_timeout_floor.sql`. They are worth knowing
+about for three reasons.
 
-**It is the only enforcement of `statement_timeout` on a pooled connection.** The value `Database`
+**They are the only enforcement of `statement_timeout` on a pooled connection.** The value `Database`
 sends is a startup parameter; pgBouncer in transaction mode drops it, and the session reads `0`.
+Lite has no pooler, but the floor is there for the day it does.
 
 **`CURRENT_USER` is whoever ran `pnpm db:migrate`.** That role must be the role the application
 connects as. Splitting them — the ordinary shape once a deployment has a DBA — lands the floor on
 the migrator and leaves the application unlimited, silently.
 
-**It does not take effect on connections that are already open.** After deploying it, run
-`RECONNECT` on the pgBouncer console; a restart would work too and would also kill the worker.
+**A role setting does not take effect on connections that are already open.** After changing one,
+reconnect the pool: restart the processes in lite, or run `RECONNECT` on the pgBouncer console once
+there is one.
 [`upstream:docs/infra/reference/pgbouncer.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md) has both.
 
 ---
@@ -605,7 +610,7 @@ export abstract class BaseRepository {
 
 **Two things this base class exists to make unavoidable**, and both are cheap here and expensive everywhere else.
 
-**The tenant filter.** Every repository query narrows by `organization_id`; the base class is where that becomes a habit rather than a review comment. A method that cannot be scoped to a tenant — a genuine cross-tenant aggregate — does not belong in a repository at all, it belongs in the analytics store ([Data and scale](../opinions/data-and-scale.md) §4.1).
+**The tenant filter.** Every repository query narrows by `organization_id`; the base class is where that becomes a habit rather than a review comment. A method that cannot be scoped to a tenant — a genuine cross-tenant aggregate — does not belong in a repository at all. It waits for an analytics store, which lite does not run ([Analytics](../scale/analytics.md), [Data and scale](../opinions/data-and-scale.md) §4.1).
 
 **The transaction handle.** `db` resolves to the open transaction when there is one. Without that, `UnitOfWork.run()` opens a transaction that the repositories inside it never join — every call site *reads* as atomic and none of it *is*.
 

@@ -32,25 +32,35 @@ apps/worker/
 │   ├── bootstrap/                    ← what the process assembles before it starts working
 │   │   ├── index.ts
 │   │   ├── worker-bootstrap.ts       → WorkerBootstrap
-│   │   └── system-principal.ts       → SystemPrincipal
+│   │   ├── system-principal.ts       → SystemPrincipal
+│   │   └── with-shard.ts             → withShard
 │   ├── consumer/
 │   │   ├── index.ts
 │   │   ├── embedding.consumer.ts     → EmbeddingConsumer
 │   │   ├── mail.consumer.ts          → MailConsumer        (the only sender in the system)
 │   │   ├── maintenance.consumer.ts   → MaintenanceConsumer
-│   │   └── analytics.consumer.ts     → AnalyticsConsumer   (registered only when configured)
+│   │   ├── notification.consumer.ts  → NotificationConsumer
+│   │   └── outbox.consumer.ts        → OutboxConsumer
 │   └── schedule/
 │       ├── index.ts
 │       ├── cleanup.schedule.ts       → CleanupSchedule
+│       ├── digest.schedule.ts        → DigestSchedule
+│       ├── orphans.schedule.ts       → OrphansSchedule
+│       ├── outbox-drain.schedule.ts  → OutboxDrainSchedule
 │       ├── partitions.schedule.ts    → PartitionsSchedule
-│       ├── archive.schedule.ts       → ArchiveSchedule
-│       ├── projection.schedule.ts    → ProjectionSchedule  (analytics)
-│       └── reconcile.schedule.ts     → ReconcileSchedule   (analytics)
+│       ├── retention.schedule.ts     → RetentionSchedule
+│       └── spares.schedule.ts        → SparesSchedule
 └── tests/                            ← mirrors src/, never inside it
     ├── bootstrap/system-principal.spec.ts
+    ├── bootstrap/worker-bootstrap.spec.ts
     ├── consumer/mail.consumer.spec.ts
-    └── consumer/maintenance.consumer.spec.ts
+    ├── consumer/maintenance.consumer.spec.ts
+    ├── consumer/notification.consumer.spec.ts
+    └── consumer/outbox.consumer.spec.ts
 ```
+
+> The big kit also runs an analytics consumer and two analytics schedules. Lite has no analytics
+> store, so they are gone. [Analytics](../scale/analytics.md) brings them back.
 
 ---
 
@@ -128,18 +138,21 @@ pnpm add --filter @loadbearing/worker -D tsx@catalog: typescript@catalog: \
 
 **It parses the same `LOG_LEVEL` and `LOG_PRETTY` the web app does**, and returns the same `logging` block. A worker with no log output is a worker you cannot operate.
 
-**It parses a smaller schema.** The worker needs `DATABASE_URL`, both Redis URLs, the S3 block, the embedding block, and `SMTP_URL` / `EMAIL_FROM` — it is the process that sends the digest. It does **not** need `AUTH_SECRET`, `AUTH_URL`, or `AUTH_TRUSTED_ORIGINS`: it never issues or validates a session.
+**It parses a smaller schema.** The worker needs `DATABASE_URL`, both Redis URLs (in lite both point at the one Redis), the S3 block, the embedding block, and `SMTP_URL` / `EMAIL_FROM` — it is the process that sends the digest. It does **not** need `AUTH_SECRET`, `AUTH_URL`, or `AUTH_TRUSTED_ORIGINS`: it never issues or validates a session.
 
-**Four keys exist only here**, all defaulted, because each is an operational dial rather than a secret:
+**The `WORKER_*` keys exist only here**, all defaulted, because each is an operational dial rather than a secret:
 
 | Key | Default | What it decides |
 |---|---|---|
 | `WORKER_SHUTDOWN_TIMEOUT_MS` | `25000` | How long `stop()` waits for in-flight jobs before the race gives up. Under the platform's own SIGKILL timer, deliberately |
 | `WORKER_EMBEDDING_CONCURRENCY` | `4` | In-flight embedding jobs per instance |
 | `WORKER_MAINTENANCE_CONCURRENCY` | `1` | Serial by default: these jobs take table-level locks and deadlock on the same partition |
-| `WORKER_ANALYTICS_CONCURRENCY` | `1` | Capped at 1 in the schema, not by convention — the projection holds a keyset cursor and two runs would interleave batches |
+| `WORKER_MAIL_CONCURRENCY` | `4` | In-flight sends per instance |
+| `WORKER_MAIL_RATE_PER_MINUTE` | `600` | The mail queue's limiter — a provider's cap, set once |
+| `WORKER_EVENT_CONCURRENCY` | `8` | In-flight outbox jobs per instance |
+| `WORKER_NOTIFICATION_CONCURRENCY` | `2` | In-flight notification jobs, the digest fan-out among them |
 
-Two of the four are capped or defaulted to `1` for reasons that are silent when wrong: a second maintenance job deadlocks, a second projection run duplicates rows. Raising either needs the reason to have changed, not just the number.
+Maintenance defaults to `1` for a reason that is silent when wrong: a second maintenance job deadlocks. Raising it needs the reason to have changed, not just the number.
 
 **Do not share one `env.ts` between the two apps by extracting it to a package.** The whole point of the `process.env` rule is that each deployable declares exactly what it needs. A shared schema would force the worker to carry an `AUTH_SECRET` it never uses, which is one more secret in one more environment for no reason.
 
@@ -219,7 +232,7 @@ forgets it reaches a routed repository with no shard in scope, which throws.
 
 The passes with no tenant to derive a key from — the outbox drain, the partition runway, the
 digest fan-out — use `container.eachShard` instead and walk the nodes serially. Which loops which
-way, and why the projection is the exception, is in
+way is in
 [the consumers](../../apps/worker/docs/reference/consumers.md).
 
 ---
@@ -349,9 +362,8 @@ lookup rather than a second system. `users.locale` is where it comes from, which
 
 > [!NOTE]
 > `DigestComposer` used to live in a `notification/` folder beside `consumer/`, and was
-> constructed only by its own spec. It is deleted: the digest returns in Phase 3 of
-> [`plans/archive/COMMUNICATION-PLAN.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/plans/archive/COMMUNICATION-PLAN.md) as a real schedule with a real
-> consumer, and a class with no caller is worse documentation than its absence.
+> constructed only by its own spec. It is deleted. The digest now runs as `digest-daily`, a real
+> schedule with a real consumer, `NotificationConsumer`.
 
 > [!IMPORTANT]
 > **Rendering per recipient is cheap. Resolving permissions per recipient is not.**
@@ -414,18 +426,20 @@ Each one exists because something else in the architecture assumed it would.
 | Schedule | Queue | Pattern | Why it exists |
 |---|---|---|---|
 | `cleanup-daily` | maintenance | `0 3 * * *` | Expired sessions, stale verification rows, and lapsed invitations |
-| `partitions-monthly` | maintenance | `0 2 1 * *` | Creates the next few months of `activity_log` partitions |
-| `archive-monthly` | maintenance | `0 4 1 * *` | Detaches the month that aged out, ships it to S3, records it |
-| `analytics-projection` | analytics | `*/5 * * * *` | Replays `activity_log` into the derived store |
-| `analytics-reconcile` | analytics | `0 5 * * *` | Compares derived row counts against the activity log |
+| `partitions-monthly` | maintenance | `0 2 1 * *` | Creates the next few months of partitions for every month-partitioned table, on every node. Also run once at boot |
+| `retention-daily` | maintenance | `30 3 * * *` | Converges the bucket's `export/` lifecycle rule, and ends each deleted tenant's 30-day recovery window in `cold/` |
+| `orphans-daily` | maintenance | `0 4 * * *` | Names any tenant whose rows outlived its organization |
+| `spares-topup` | maintenance | every 5 min | Keeps the pool of pre-built spare tenants full |
+| `outbox-drain` | event | every 1 s | Relays committed outbox rows to their subscribers |
+| `digest-daily` | notification | `0 7 * * *` | Fans the daily digest out to every tenant |
 
-**The last two register only when `container.hasProjector` is true** — that is, only when
-`CLICKHOUSE_URL` is set. The rest always do.
+Every schedule registers on every boot. A schedule with no consumer accumulates jobs silently, which
+is what left `cleanup-daily` broken for a while — so each queue's consumer starts before its
+schedules register.
 
-That branch is the whole point. A schedule with no consumer accumulates jobs silently, which is what
-left `cleanup-daily` broken for a while. A consumer with no *store* is worse: it succeeds silently, so
-five minutes of nothing looks exactly like five minutes of work, and the first sign is a report that
-comes out wrong months later. **Absent beats no-op.**
+> Lite keeps every month. Nothing detaches, archives or drops an old partition, and there is no
+> analytics projection or reconcile. [Retention](../scale/retention.md) and
+> [Analytics](../scale/analytics.md) bring those back.
 
 **The invitation half of `cleanup-daily` is not housekeeping.** `invitations_email_uq` is on
 `(organization_id, email)`, so an invitation that lapsed last month keeps that address un-invitable
@@ -442,27 +456,6 @@ unindexed column scans every invitation in the deployment to find the few that l
 **A recovery sweep would reconcile against Postgres, never against BullMQ.** A queued job is the one thing in the system that is derived from nothing — a `FLUSHALL`, a crash between enqueue and persist, or a handler that swallowed an error all lose work with no trace. The sweep asks *which domain rows should have been processed and have not been*, which catches all three. It cannot ask BullMQ, because completed jobs age out after an hour and failures after a day ([15](15-infrastructure-package.md)), long before a nightly run.
 
 This is what makes rule 1 above load-bearing rather than good practice: **the sweep re-enqueues work that may well have already been done.** A handler that is not idempotent turns a recovery mechanism into a duplicate-notification incident.
-
-**`analytics-projection` is where the derived store comes from, and it holds no cursor of its own.**
-It asks the destination what its last row was, walks `activity_log` forward in keyset batches on
-`(occurred_at, id)`, and stops when a batch comes back short. A checkpoint kept beside the store — in
-Postgres, in Redis — can disagree with what actually landed, and the disagreement is silent.
-
-Batches are 5,000 rows and a run is capped at 20 of them. ClickHouse merges on write, so a thousand
-single-row inserts create a thousand parts the background merge never catches up with; the run cap
-bounds how long one job holds a Postgres connection, and the checkpoint means the next tick resumes
-exactly where this one stopped.
-
-**`analytics-reconcile` is how a dead consumer gets noticed.** The realistic failure for a derived
-store is not an outage — it is a projection that died quietly on a Tuesday and a quarterly report that
-looks wrong in March. It asks both stores for per-day row counts over the last week and diffs them;
-neither store reaches into the other, which is what keeps each adapter single-store. Today is excluded
-because it is still being written to, and a check that cries wolf daily is a check nobody reads.
-
-Drift is repaired by replaying, never by writing to the analytics store directly — that is what keeps
-it derived. It logs at **error**, one line per drifting day, because every number a dashboard has
-shown since that day is wrong and the replay only works while `activity_log` still covers the window.
-**The alert has a deadline attached.**
 
 > [!NOTE]
 > **The recovery sweep is the one schedule described here with no file**, which is why it is absent
@@ -498,6 +491,25 @@ export class WorkerBootstrap {
         .start(),
     );
 
+    // Unconditional: every mail in this system is a job, so a stopped worker is a
+    // sign-up whose verification link never arrives.
+    this.workers.push(
+      new MailConsumer(
+        this.container,
+        this.redis.queueClient(),
+        Env.mailConcurrency,
+        Env.mailRatePerMinute,
+      ).start(),
+    );
+
+    this.workers.push(
+      new OutboxConsumer(this.container, this.redis.queueClient(), Env.eventConcurrency).start(),
+    );
+    this.workers.push(
+      new NotificationConsumer(this.container, this.redis.queueClient(), Env.notificationConcurrency)
+        .start(),
+    );
+
     // Before the schedules register, so an entry that fires the instant it lands has
     // somewhere to run.
     this.workers.push(
@@ -505,22 +517,19 @@ export class WorkerBootstrap {
         .start(),
     );
 
-    // Without a ClickHouse config no consumer starts and no schedule registers.
-    if (this.container.hasProjector) {
-      this.workers.push(
-        new AnalyticsConsumer(this.container, this.redis.queueClient(), Env.analyticsConcurrency)
-          .start(),
-      );
-    }
+    // Once at boot, before the schedules: the monthly cron only helps a worker that was
+    // awake on the first.
+    await new PartitionsSchedule(this.container, this.redis.queueClient()).runOnce();
 
+    await new OutboxDrainSchedule(this.container, this.redis.queueClient()).register();
+    await new DigestSchedule(this.container, this.redis.queueClient()).register();
     await new PartitionsSchedule(this.container, this.redis.queueClient()).register();
     await new CleanupSchedule(this.container, this.redis.queueClient()).register();
-    await new ArchiveSchedule(this.container, this.redis.queueClient()).register();
+    await new RetentionSchedule(this.container, this.redis.queueClient()).register();
+    await new OrphansSchedule(this.container, this.redis.queueClient()).register();
+    await new SparesSchedule(this.container, this.redis.queueClient()).register();
 
-    if (this.container.hasProjector) {
-      await new ProjectionSchedule(this.container, this.redis.queueClient()).register();
-      await new ReconcileSchedule(this.container, this.redis.queueClient()).register();
-    }
+    this.warnIfOversubscribed();
 
     this.container.logger.emit("process.started", {
       service: "worker",
@@ -664,7 +673,7 @@ Then, from `psql` or a scratch script, enqueue a job and watch the log. A round 
 
 ## ✅ Gate
 
-- `pnpm dev:worker` boots and emits one line of JSON: `{"level":"info","event":"process.started","service":"worker","consumers":2}` — or `3` with `CLICKHOUSE_URL` set.
+- `pnpm dev:worker` boots and emits one line of JSON: `{"level":"info","event":"process.started","service":"worker","consumers":5}`.
 - `SIGTERM` emits `process.stopping` before draining, and `process.stopped` after.
 - `grep -rn "console\." apps/worker/src` returns nothing — Biome's `noConsole` ([05](05-lint-and-format.md)) fails the build otherwise.
 - Enqueuing an embedding job produces a row in `document_chunks`.

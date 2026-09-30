@@ -77,8 +77,8 @@ way an error.
 
 Forces the `override` keyword on every method redefining a base method. This codebase is
 built on abstract classes — `Clock`, `Result`, and every port in `application`:
-`VectorStore`, `AnalyticsReader`, `StorageGateway`, `CacheStore`, `QueuePublisher`,
-`SessionResolver`, `UnitOfWork`, `EventBus`, `ActivityLogger`, `EmbeddingProvider`.
+`VectorStore`, `StorageGateway`, `CacheStore`, `QueuePublisher`, `SessionResolver`,
+`UnitOfWork`, `DomainEventPublisher`, `ActivityLogger`, `EmbeddingProvider`.
 
 Without this flag, renaming a base method leaves every subclass silently no longer
 overriding anything — they just gain an unrelated method and the abstract one goes

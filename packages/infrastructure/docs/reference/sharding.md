@@ -12,7 +12,7 @@ finding out then which twenty use-cases assumed one.
 |---|---|---|
 | `ShardingStrategy` | `composition/src/shard/` | what a request is placed *by* |
 | `ShardResolver` | `pg/repository/pg-shard.resolver.ts` | which node that key lives on |
-| `ShardAssignmentRepository` | `pg/repository/` | the directory both read |
+| `shard_assignments` | `pg/schema/shard.schema.ts` | the directory both read |
 | `ShardScope` | `pg/transaction/shard-scope.ts` | which shard the ambient work belongs to |
 | `DatabaseCluster` | `pg/primitive/database-cluster.ts` | the pool for a node |
 | `TablePlacement` | `application/src/primitive/shard.ts` | which of the three a *table* is |
@@ -23,8 +23,8 @@ Decision D28 removed the virtual shard. A key resolves straight to a physical no
 `shard_assignments` is `(shard_key, node)` and nothing has to be told how many virtual buckets
 exist or rebalanced when that changes.
 
-The cost is that moving one tenant is moving one tenant's rows, with no batching of a thousand at
-a time. The benefit is that there is no second numbering scheme to keep in step, and the directory
+The cost is that moving one tenant would be moving one tenant's rows, with no batching of a
+thousand at a time. The benefit is that there is no second numbering scheme to keep in step, and the directory
 is legible: one row per customer, naming a machine.
 
 ## `keyOf` runs once per request, and so does `resolve`
@@ -39,8 +39,8 @@ per query, and the 183 call sites that read `this.db` never learned that shardin
 
 The cache is a read-through on `shard:key:<key>` with a **300-second** TTL —
 `CapabilityCache`'s shape and deliberately not its sixty seconds. A capability changes when
-somebody edits a role; a placement changes when somebody moves a tenant, which is a yearly event
-with an explicit `invalidate` attached to it.
+somebody edits a role; a placement changes only when a tenant is moved, which lite has no job for,
+and which carries an explicit `invalidate` when it happens.
 
 ## Three placements, and the tripwire between them
 
@@ -49,7 +49,8 @@ says which. Each repository **declares** its placement rather than deriving one,
 repository that guessed would guess wrong exactly once.
 
 - **catalog** — what a principal is built from before a key is known, plus RBAC, the two
-  tenant-less lookups, the archive index and the policy rows. Nineteen tables.
+  tenant-less lookups, the archive index, the policy rows, flags, entitlement and doc grants.
+Twenty-four tables.
 - **local** — present on every node, written in whichever transaction is open: `activity_log`
   and `outbox_event`.
 - **routed** — everything a tenant produces. It is the **default**, so a new slice's table needs
@@ -72,14 +73,11 @@ call sites in a test run and finding them in production.
 throws rather than becoming a savepoint. A catalog use-case calling a routed one inside its
 transaction is precisely the coupling a split cannot honour.
 
-## The one read that crossed, and how it was split
+## No read crosses a placement
 
-`PgNotificationRecipientReader.conversationMembers` joined routed `conversation_members` to
-catalog `users` and `memberships` in one statement. It is now two: the routed ids first, then the
-catalog resolve — see
-[notification recipients](notification-recipients.md).
-
-That was the only crossing in the repository, so `CROSS_PLACEMENT_KNOWN` in
+The big kit had one: a recipient read that joined a routed table to catalog `users` and
+`memberships`. It was split into two statements, then left with messaging — see
+[notification recipients](notification-recipients.md). So `CROSS_PLACEMENT_KNOWN` in
 `check-architecture` §22 is **empty**. An assertion with an exception set that is never emptied
 records a rule rather than guarding one.
 
@@ -105,8 +103,8 @@ in `partition_archive`, which is catalog. That is a genuine span, not an acciden
 returns the catalog pool's client rather than the open transaction's — that transaction is on the
 node being swept, and the index row does not live there.
 
-It is deliberately the only one. A routed repository reaching the catalog is what `22.10` split a
-reader to avoid, and the guard makes that call a throw rather than a review comment.
+It is deliberately the only one. A routed repository reaching the catalog is what the split
+reader above avoided, and the guard makes that call a throw rather than a review comment.
 
 ## `PgShardResolver` is not a `BaseRepository`, and takes thunks
 
@@ -120,8 +118,7 @@ is fully assembled.
 
 ## A missing directory row is an error, not node 0
 
-Every existing tenant was backfilled by migration `0031` and every new one gets a row from the
-founder. So a key with no row is a tenant nobody placed — a bug in the founder, not a state to
+Every tenant gets a row from the founder, in the same transaction as its `organizations` row. So a key with no row is a tenant nobody placed — a bug in the founder, not a state to
 recover from.
 
 Guessing zero would work today and put a tenant's rows on the wrong machine the day it does not.
@@ -132,155 +129,73 @@ Guessing zero would work today and put a tenant's rows on the wrong machine the 
 `shard_assignments.shard_key` is `text` with no foreign key, which is what lets a fork put a
 region code in it — and it means nothing cascades. `PgTenantRepository.delete` therefore does two
 statements: the directory row, then the organization. Without the first, the table grows with
-tenant churn forever and the move job scans rows nobody owns.
+tenant churn forever.
 
 It is the same reasoning `partition_archive` follows and the opposite conclusion, because the two
 have opposite lifetimes. A cold object outlives its tenant on purpose — thirty days of recovery
 window, swept by the nightly pass. A directory row for a tenant that no longer exists answers a
 question nobody can ask.
 
-## The directory has a screen, and it reads the directory rather than the cluster
+## The directory is read by id or slug
 
-`/platform/shards` is one row per physical node, behind `platform.shards.read`.
-`PgShardMapReader` counts `shard_assignments` grouped by `node`, and that is the whole of it —
-**no join to the cluster, and no join to `organizations` for the node list**.
+`PgShardMapReader.findByTerm` is the one read of the directory beside the resolver. The platform's
+tenant lookups — plan, entitlement, flag target — take an organization id **or** a slug and use it
+to find the tenant and its node.
 
-That is worth stating because the obvious alternative is wrong in two directions at once. Asking
-the cluster how many nodes it has reports what `DATABASE_SHARD_<n>_URL` was set to, which is a
-statement about this process's environment rather than about where tenants are. And joining
-`organizations` would hide the one row an operator most needs to see: a directory row whose
-tenant is gone. A node the deployment has just added has no row here at all, which is the honest
-answer — nothing is on it yet.
+It compares `organizations.id::text = $1`. Never `$1::uuid`: a slug cast to a uuid is a `22P02`
+from the database rather than the empty answer a typed search should get.
 
-The tenants **under** a node are a second query and it does not run until a node is expanded.
-Every node's tenants at once is the whole directory, which is the one read this screen must not
-make; the expansion is paginated and ordered by name then id, so an offset means the same thing
-on the second page as it did on the first.
+The big kit also had a `/platform/shards` screen that counted tenants per node. It left with the
+tenant move; see [Shard nodes](../../../../docs/scale/shard-nodes.md).
 
-**The move button is live only when there is somewhere to move to.** `Container.hasShardMoves`
-is `cluster.size > 1`, and the use-case turns it into `moves: "unavailable" | "available"` on the
-wire. On one node the button is disabled and the reason is printed beside it, because a screen
-that omitted the control would say nothing about what is missing. On two it opens a confirmation
-naming the freeze, with one button per other node — never a number typed into a field.
+## The write freeze, kept for a move
 
-The tenant lookup takes an organization id **or** a slug and compares
-`organizations.id::text = $1`. Never `$1::uuid`: a slug cast to a uuid is a `22P02` from the
-database rather than the empty answer a typed search should get.
+Lite has no tenant move. It kept the part a move needs from every write path, so porting one back
+needs no migration and no change to a repository — see
+[Shard nodes](../../../../docs/scale/shard-nodes.md).
 
-## The tenant move
-
-A move copies one tenant's rows to another node, then flips its directory row. **Between the
-copy and the flip the rows exist twice**, and a write that lands on the source in that window is
-lost the moment the flip points every reader at the target. Everything below exists to close
-that window.
-
-| Step | Where | What it does |
-|---|---|---|
-| request | `MoveTenantUseCase` | every guard, then a `tenant-move` job on `QueueName.MAINTENANCE` |
-| freeze | `beginMove` | sets `moving_to` in one `update … where`, then invalidates the cached placement |
-| quiesce | `PgTenantMoveGateway.quiesce` | waits out writers that placed themselves before the freeze |
-| prepare | `PgTenantMoveGateway.prepare` | the target's partitions, then its copy of the tenant's routed rows emptied |
-| copy | `PgTenantMoveGateway.copy` | pages of 500 by `id`, `to_jsonb` out and `jsonb_populate_recordset` in |
-| verify | `RelocateTenantUseCase` | counts both nodes; a target short of the source fails the move |
-| flip | `completeMove` | node, `moved_from` and `source_droppable_at` in one statement, then invalidate |
-| reclaim | `ReclaimMoveSourcesUseCase` | the nightly cleanup drops the source once the grace period ends |
-
-**The freeze is a refusal, not a queue.** While `moving_to` is set, `PgUnitOfWork.run` throws
-`ForbiddenError("shard.move.inFlight")` for any `routed` or `local` write, and reads keep
-answering from the source, which still holds every row. A catalog write is never refused: a move
-copies no catalog row, so it cannot lose one.
+**The freeze is a refusal, not a queue.** `shard_assignments.moving_to` non-null means the tenant is
+being moved. `PgShardResolver` answers `frozen: true` for it, and `PgUnitOfWork.run` throws
+`ForbiddenError("shard.move.inFlight")` for any `routed` or `local` write. Reads keep answering from
+the current node. A catalog write is never refused: a move copies no catalog row, so it cannot lose
+one. Nothing in lite sets `moving_to`.
 
 **So every routed write goes through `run`, including a single statement** (`CR.11`). The freeze is
 checked there and nowhere else — `BaseRepository.db` cannot tell a read from a write, and refusing
-reads would take the tenant down for the whole move. Six use-cases wrote a routed row with no
-transaction open: marking one notification or all of them read, a notification preference, a
-conversation's read position, `DeliverNotification`'s `saveMany` — the very job the recheck below
-was built for — and the audit row a document search writes. Each of those landed on the source
-during a move, and an *update* is invisible to the count check, so it was lost at the flip. They
-each open a unit of work now. A new routed write that does not is the same bug again.
+reads would take the tenant down for the whole move. A routed write with no unit of work would land
+on the source during a move, and an *update* is invisible to a count check, so it would be lost at
+the flip. A new routed write that skips `run` is that bug again.
 
-**The cached placement is dropped twice** (`CR.10`). `beginMove` invalidates it as it sets
-`moving_to`, but a read-through that read the row just *before* that commit can write
-`frozen: false` back just *after* the invalidation, for the cache's five minutes — long past the
-settle, so a request placed then writes to the source and the flip loses it. `quiesce` invalidates
-again once the settle is over: every read from then on sees `moving_to`.
-
-**The quiesce has two halves, because a request places itself once.** A request that resolved
-its placement a moment before the freeze still believes the tenant is writable. If it has already
-opened its transaction, the second half catches it: a `SHARE` lock on the tenant's partitions,
-which cannot be granted while any writer holds `ROW EXCLUSIVE`. If it has not opened one yet, the
-first half does: a settle of `moveSettleMs`, sixty seconds by default, before the lock is taken.
-
-**A job re-reads its placement at every transaction — `24.2b`.** The settle covers a request,
-which places itself once and finishes in seconds. It does not cover a worker job. A job placed on
-the tenant before the freeze can still be opening new transactions long after sixty seconds. A long
-notification fan-out is the realistic shape of it. Such a write would land on the source after its
-page was read. The count check catches a late *insert*, but not a late *update*. So `withShard`
+**A job re-reads its placement at every transaction — `24.2b`.** A request places itself once and
+finishes in seconds. A worker job can keep opening transactions for much longer. So `withShard`
 places a job with `recheck`, and `PgUnitOfWork.run` re-reads the placement each time it opens a
-transaction. If the tenant is frozen, or its node has changed, it throws
-`ForbiddenError("shard.move.inFlight")` and the job is retried. `beginMove` invalidates the cached
-placement, so the next transaction sees the freeze at once. A savepoint does not re-read. Neither
-does a catalog transaction, because a move copies no catalog row. A transaction already open is
-what the quiesce's `SHARE` lock waits out. The cost is one cached resolve per job transaction, a
-cache read in the same place a request already does one.
-
-**`prepare` mirrors the source's months, not the seed's runway.** The seed creates the current
-month and the next two. A tenant with a message from last year needs last year's partition on the
-target, or the insert has nowhere to land. `prepare` reads the source's month partitions out of
-`pg_inherits` and creates each one on the target with the same bounds.
-
-**A failed move is retried from nothing.** Any failure lifts the freeze and leaves the tenant
-where it was. `prepare` then empties the target's routed rows before the next copy, so the retry
-never keeps a stale copy of a row the tenant has since changed or deleted. That is also why
-`verify` can trust a target that holds *at least* the source's count.
+transaction. If the tenant is frozen, or its node has changed, it throws and the job is retried. A
+savepoint does not re-read, and neither does a catalog transaction. The cost is one cached resolve
+per job transaction.
 
 **A catalog transaction's audit row goes through the outbox for a tenant off node 0 — `24.2a`.**
 An invitation, a role change or an API key is a catalog transaction, and a catalog transaction is
-on node 0 whichever node the tenant is on. Written straight into `activity_log` there, a moved
-tenant's row would sit where its runway, its archive and the projection never look. So
+on node 0 whichever node the tenant is on. Written straight into `activity_log` there, a tenant on
+another node would have audit rows where its runway and its archive never look. So
 `PgActivityLogger` asks the directory where the tenant is. For a tenant off node 0 it publishes
-`activity.recorded` into node 0's outbox instead, in the same transaction, so the row is still saved
-with the action. The drain delivers it to `ActivityRelaySubscriber`, placed on the tenant, which
-writes it on the tenant's node with the event's id and time and `on conflict do nothing`. A tenant
-on node 0 is unchanged. **A placement already in scope for the tenant is the answer, and the
-resolver is asked only without one.** The founder depends on that. Its directory row is uncommitted
-when it writes `organization.created`, the resolver reads through its own pool, and on two nodes
-every sign-up failed with "No shard assignment" until the founder placed the audit on node 0
-itself. That ran from `24.2a` on 2026-09-24 until it was found by signing up on 2026-09-25. The row arrives about a second later; with the worker down it waits in the
-outbox and is never dropped. The projection reads 30 s behind, so it sees the row. If the drain was
-down longer than that, the nightly reconciliation reports the gap.
+`activity.recorded` into node 0's outbox instead, in the same transaction. The drain delivers it to
+`ActivityRelaySubscriber`, placed on the tenant, which writes it on the tenant's node with the
+event's id and time and `on conflict do nothing`. A tenant on node 0 is unchanged.
 
-**The two `local` tables are copied, never emptied, and dropped from node 0 only at reclaim.** Node
-0 holds the tenant's audit rows from before the move, so the copy carries them with `on conflict do
-nothing` and `prepare` does not empty them. A catalog write during the copy lands on node 0: before
-its page is read it is copied, and after, the count check catches it and the move is retried. The
-one gap is between the verify and the flip. The reclaim closes it, carrying every node-0 audit row
-newer than an hour before the flip before it drops node 0's partition. `outbox_event` has no tenant
-partition, and node 0's is never swept for the tenant: every catalog event for it is still written
-there. During the grace week, a month that ages out can be archived by both nodes to the same key.
-The rows are identical and the archive index upserts, so the second write replaces the first with
-the same content.
-
-**The way back is the grace period.** The flip stamps `moved_from` and `source_droppable_at`, and
-the source copy stays until then — seven days, or `platform_policy.move_grace_days` when an
-operator has set it. A move back to `moved_from` is allowed, and `prepare` empties the stale copy
-before refilling it. A move to a *third* node is refused with `sourcePending`: the flip would
-overwrite `moved_from`, the only column naming the old copy, and nothing would ever drop it.
-
-**Proved under load**, by `tests/smoke/tenant-move.smoke.spec.ts` with the `sharded` profile up.
-Four writers place themselves per write, the way a request does, and one straggler holds its
-transaction open for 1.5 s across the start of the move. Every acknowledged write is on the
-target afterwards. With `quiesce` made a no-op, the same spec loses the straggler on every run.
+**A placement already in scope for the tenant is the answer, and the resolver is asked only without
+one.** The founder depends on that. Its directory row is uncommitted when it writes
+`organization.created`, and the resolver reads through its own pool. On two nodes every sign-up
+failed with "No shard assignment" until the founder placed the audit on node 0 itself.
 
 ## What routing costs a request, measured
 
 ```bash
-pnpm infra:up:sharded          # plus the two DATABASE_SHARD_1_* lines in .env
+# a second Postgres, and DATABASE_SHARD_1_URL in .env naming it
 ROUTED_SCALE=1000 pnpm smoke
 ```
 
-`tests/smoke/routed.smoke.spec.ts`, averaged over a thousand resolutions against the two-node
-compose profile on one developer machine:
+`tests/smoke/routed.smoke.spec.ts`, averaged over a thousand resolutions against two nodes on one
+developer machine, measured in the big kit:
 
 | Path | Per call |
 |---|---|
@@ -306,7 +221,7 @@ open on every node at once.
 
 `24.1` dropped the keys that made a routed insert on node 1 fail, so the write half runs now.
 Eight tenants, four per node. Each write is the path a request takes: a placement read through the
-real Redis cache, then a routed transaction inserting one message. Each node's pool is 20, the
+real Redis cache, then a routed transaction inserting one notification. Each node's pool is 20, the
 shipped `DATABASE_POOL_MAX`. 1× is four writers at once and 10× is forty, 1 000 writes each,
 `ROUTED_SCALE=1000`:
 
@@ -375,26 +290,25 @@ the replica is chosen for. With the check removed, the first read misses the row
 
 **Three things decide whether a read goes there.** A replica must be configured for the node:
 `DATABASE_REPLICA_URL` for node 0, `DATABASE_SHARD_<n>_REPLICA_URL` for node n. The work must be
-placed with `replica: true`, which `withShard` passes from `platform_policy.replica_reads_enabled`,
-read once per run. And the repository must ask for it, through `BaseRepository.reader()` rather
+placed with `replica: true`. And the repository must ask for it, through `BaseRepository.reader()` rather
 than `db`. Inside a transaction `reader()` is the transaction, because a transaction reads its own
 writes.
 
-**What reads there today is the analytics projection**, `PgActivityReplayReader.since` and
-`dailyCounts`. It is the worker's biggest batch read, and it already tolerates reading 30 s
-behind. The web app reads nothing there. It opens the replica pool only for the status panel's
-lag, which is `now() - pg_last_xact_replay_timestamp()`, and zero when the replica has replayed
+**What reads there today is the public docs.** `apps/web/src/server/doc.fn.ts` places the
+platform's doc reads with `replica: true`, and `PgDocPageRepository.findPublished` and `search`,
+and `PgDocSpaceRepository.list` and `findBySlug`, read through `reader()`. The worker's `withShard`
+accepts the option, and no job passes it today. The status panel also opens the replica pool for
+its lag, which is `now() - pg_last_xact_replay_timestamp()`, and zero when the replica has replayed
 everything it has received. An idle primary sends nothing, so the timestamp alone would read as
 growing lag on a replica that is fully caught up.
 
-`pnpm infra:up:replica` starts node 0's standby. See
-[compose](../../../../docs/infra/reference/compose.md) for how it clones itself.
+Unset, `DATABASE_REPLICA_URL` means every read goes to the primary. Lite's compose file starts no
+standby; adding one is [Read replica](../../../../docs/scale/read-replica.md).
 
 ## Rehearsing the split
 
-`pnpm infra:up:sharded` starts a second Postgres and its pooler; uncomment the two
-`DATABASE_SHARD_1_*` lines in `.env.example` and `pnpm db:migrate` applies the same schema to
-both. `tests/smoke/sharded.smoke.spec.ts` is what runs against it — gated on
+Lite's compose file starts one Postgres. Start a second one yourself, set `DATABASE_SHARD_1_URL`,
+and `pnpm db:migrate` applies the same schema to both. `tests/smoke/sharded.smoke.spec.ts` is what runs against it — gated on
 `Stack.shard1`, provided by `vitest.smoke.config.ts`, because `check-architecture` §3 walks
 `tests/` for `process.env` and that injection is the only door.
 
@@ -402,7 +316,7 @@ It creates two tenants, writes their directory rows naming node 0 and node 1, an
 
 - each key resolves to the node its row names;
 - `shard_assignments` exists on the catalog and **not** on shard 1;
-- a message written under a tenant placed on node 0 lands on node 0 and on no other node;
+- a notification written under a tenant placed on node 0 lands on node 0 and on no other node;
 - a routed write under the tenant on node 1 lands on node 1, with no key reaching back to the
   catalog.
 
@@ -411,8 +325,8 @@ catalog, and a routed insert on node 1 failed with `23503` before it could land.
 dropped all ten, so the case inverted — and it still fails on the old schema, which is the point
 of keeping it.
 
-`tests/smoke/tenant-move.smoke.spec.ts` runs against the same profile and proves the move — see
-[The tenant move](#the-tenant-move).
+It also creates a month partition on the node the runway is walking, and drains a tenant's event
+from the outbox on the node it was written to.
 
 ## What is not built, and why it is not
 
@@ -422,5 +336,5 @@ what [Simplicity](../../../../docs/opinions/simplicity.md) names as ceremony. It
 at the split.
 
 **No second node in the default stack.** `DATABASE_SHARD_<n>_URL` is read and the cluster indexes
-what it finds, but `pnpm infra:up` starts one Postgres. The second is the `sharded` profile, and
-starting it is a rehearsal rather than a deployment — see above.
+what it finds, but `pnpm infra:up` starts one Postgres. A second is a rehearsal rather than a
+deployment — see above, and [Shard nodes](../../../../docs/scale/shard-nodes.md) for the real move.

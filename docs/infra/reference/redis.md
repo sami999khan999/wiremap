@@ -1,29 +1,28 @@
 ---
 title: redis
-description: Two instances with opposite durability guarantees, every flag explained, and why one container was the wrong answer.
+description: One instance for the cache, the queue and realtime — durable, never evicts — every flag explained, and why the cache and the queue keep separate URLs.
 ---
 
-# `redis-cache` and `redis-queue`
+# `redis`
 
-The same image twice, configured as opposites. This is the most-questioned pair in the stack and the
-one worth understanding before changing anything.
+One container holds three jobs: the cache, BullMQ's queue and live frames. It is configured for the
+job that cannot lose data, the queue.
 
-| | `redis-cache` | `redis-queue` |
-| --- | --- | --- |
-| **Inside the network** | `redis-cache:6379` | `redis-queue:6379` |
-| **From the host** | `localhost:26379` | `localhost:26380` |
-| **Eviction** | `allkeys-lru` | `noeviction` |
-| **Persistence** | none | AOF |
-| **Volume** | none | `redisqueuedata` |
-| **Holds** | capability cache, session cache | BullMQ jobs |
-| **If flushed** | a slow minute | **lost work** |
+| | `redis` |
+| --- | --- |
+| **Inside the network** | `redis:6379` |
+| **From the host** | `localhost:26379` (`REDIS_PORT`) |
+| **Eviction** | `noeviction` |
+| **Persistence** | AOF |
+| **Volume** | `redisdata` |
+| **Holds** | capability cache, session cache, BullMQ jobs, pub/sub frames |
+| **If flushed** | **lost work** — the queue goes with the cache |
 
-**Both listen on 6379 inside the network.** They are separate containers, so there is no collision —
-only the host mapping differs. `redis-queue:6380` from inside the network is wrong and will refuse.
+`REDIS_CACHE_URL` and `REDIS_QUEUE_URL` both point at it.
 
 ---
 
-## Why two
+## Why one, and why two URLs
 
 Redis does three jobs here and they are not equally disposable.
 
@@ -42,28 +41,20 @@ One instance forces one eviction policy onto both:
 - `noeviction` — the queue is safe, and a full cache starts returning errors on a path that should
   degrade gracefully.
 
-**The absence of a correct single answer is the tell that it was two concerns wearing one container.**
+**Lite picks `noeviction`, and the cache pays for it.** Every cache key carries a TTL, so stale
+entries expire on their own. A full instance is still an error rather than an eviction.
+
+**The two URLs stay separate anyway.** The code already dials the cache and the queue by different
+names. Splitting them onto two instances is two `.env` lines and a compose block —
+[split-redis](../../scale/split-redis.md). Do it once the cache wants `allkeys-lru`, or once
+flushing the cache without flushing the queue matters.
 
 ---
 
 ## The flags
 
 ```yaml
-redis-cache:
-  command: ["redis-server", "--save", "", "--maxmemory-policy", "allkeys-lru"]
-```
-
-**`--save ""`** disables RDB snapshotting entirely. An empty string is how Redis expresses "no save
-points" on the command line; omitting the flag leaves the image's defaults, which do periodic
-snapshots to disk. Snapshotting a cache is I/O spent on data that is worthless the moment it is
-stale.
-
-**`--maxmemory-policy allkeys-lru`** evicts the least-recently-used key of *any* kind when memory is
-tight. The `allkeys` prefix matters: `volatile-lru` only considers keys with a TTL, and a key written
-without one would then be immortal and the instance would fill anyway.
-
-```yaml
-redis-queue:
+redis:
   command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
 ```
 
@@ -88,7 +79,7 @@ filling a `noeviction` instance, which would then refuse every enqueue.
 
 ## How the application picks one
 
-`RedisConnection` takes both URLs and hands out the right client per job
+`RedisConnection` takes the URLs and hands out the right client per job
 ([15](../../setup/15-infrastructure-package.md)):
 
 ```ts
@@ -97,6 +88,8 @@ redis.queueClient()      // queueUrl    — maxRetriesPerRequest: null, for Bull
 redis.realtimeClient()   // realtimeUrl — live frames; the cache client itself when unset
 redis.subscriberClient() // realtimeUrl — subscriber mode, opened by the first stream
 ```
+
+Locally every URL names the one instance, so every client dials `localhost:26379`.
 
 **One class taking two URLs rather than two classes**, because which connection a consumer gets
 should be a property of what it is doing rather than a wiring decision. Passing two bare `Redis`
@@ -113,16 +106,16 @@ after a few minutes with no error.
 transparently, which is what you want for cache keys and what breaks BullMQ, whose key structure it
 manages itself.
 
-> **Anything reached through `CacheStore` is on the instance that evicts** — including Better Auth's
-> secondary storage. That is exactly why sessions stay in Postgres and Redis is only a read-through
-> in front of them. An evicted session must be a cache miss, never a sign-out.
+> **Sessions stay in Postgres, and Redis is only a read-through in front of them.** Lite's Redis
+> never evicts, but a TTL expires a cached session, and a split Redis would evict. Either way a
+> missing session must be a cache miss, never a sign-out.
 
-### A third instance for live frames, when fan-out gets heavy
+### A separate instance for live frames, when fan-out gets heavy
 
 `REDIS_REALTIME_URL` is optional. Unset, or equal to `REDIS_CACHE_URL`, live frames ride the cache
-instance and `realtimeClient()` **is** the cache client — no extra socket. Set it apart once a large
-room's fan-out competes with every request's session and permission reads: one message to a 25 000
-member room is 25 000 publishes, on the instance a sign-in is waiting on.
+instance and `realtimeClient()` **is** the cache client — no extra socket. Set it apart once fan-out
+competes with every request's session and permission reads. A wide fan-out is many publishes, on
+the instance a sign-in is waiting on.
 
 Pub/sub keeps nothing, so that instance needs no persistence and no eviction policy. What it does
 need is attention to `client-output-buffer-limit pubsub`: a subscriber that falls behind is
@@ -134,16 +127,10 @@ need is attention to `client-output-buffer-limit pubsub`: a subscriber that fall
 
 ```bash
 C="docker compose -f infra/docker-compose.yml"
-$C exec redis-cache redis-cli config get maxmemory-policy   # allkeys-lru
-$C exec redis-queue redis-cli config get maxmemory-policy   # noeviction
-$C exec redis-queue redis-cli config get appendonly         # yes
-$C exec redis-cache redis-cli config get save               # (empty)
+$C exec redis redis-cli config get maxmemory-policy   # noeviction
+$C exec redis redis-cli config get appendonly         # yes
 ```
 
-```bash
-# safe by construction — everything on the cache reads through to Postgres
-docker compose -f infra/docker-compose.yml exec redis-cache redis-cli flushall
-```
-
-The same command against `redis-queue` deletes work. The split is what makes it possible to clear one
-without the other, and the habit is worth forming locally where the cost is zero.
+**Do not `flushall` this instance with work pending.** The cache and the queue share it, so a flush
+deletes queued jobs too. Locally that costs nothing. Clearing only the cache needs the split —
+[split-redis](../../scale/split-redis.md).

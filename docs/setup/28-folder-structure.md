@@ -43,14 +43,11 @@ ratchet/
 │
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                             ← two jobs; postgres + two redis services
+│       └── ci.yml                             ← three jobs; postgres + one redis service
 │
 ├── infra/
-│   ├── docker-compose.yml                     ← 9 services, 2 profiles (observability, analytics)
+│   ├── docker-compose.yml                     ← 5 services, no profiles
 │   ├── postgres.init.sql                      ← extensions
-│   ├── loki.config.yml                        ← MinIO-backed, 30-day retention
-│   ├── alloy.config.alloy                     ← the four-label pipeline
-│   ├── logs/                                  (ignored)
 │   └── docs/                                  ← index.md + reference/, one page per file
 │
 ├── tooling/                                   ← 3 workspace packages, changed rarely
@@ -380,9 +377,9 @@ the split put one seam in two places.
 packages/infrastructure/
 ├── drizzle.config.ts
 ├── migrations/                        ← generated, committed, never pushed
-│   ├── 0000_*.sql                     ← hand-edited: PARTITION BY on the append-only tables
-│   ├── 0001_*.sql                     ← auth tables + the FKs, all schema-declared
-│   ├── 0002_*.sql
+│   ├── 0000_lite_baseline.sql         ← every table lite ships, PARTITION BY included
+│   ├── 0001_doc_owner_audience.sql
+│   ├── 0002_chunk_embedding_model.sql
 │   └── meta/
 └── src/
     ├── index.ts                              ← ServerOnly.assert() above every export
@@ -404,7 +401,6 @@ packages/infrastructure/
     │   │   ├── index.ts
     │   │   ├── pg-activity.logger.ts         → PgActivityLogger
     │   │   ├── pg-partition-archive.gateway.ts → PgPartitionArchiveGateway
-    │   │   ├── pg-activity-replay.reader.ts  → PgActivityReplayReader
     │   │   ├── pg-api-key.repository.ts      → PgApiKeyRepository
     │   │   ├── pg-capability.repository.ts   → PgCapabilityRepository
     │   │   ├── pg-maintenance.gateway.ts     → PgMaintenanceGateway
@@ -425,13 +421,10 @@ packages/infrastructure/
     ├── bullmq/
     │   ├── queue-name.ts                     → QueueName
     │   └── bullmq-queue.publisher.ts         → BullMqQueuePublisher
-    ├── openai/
+    ├── openai/                               ← built only when EMBEDDING_PROVIDER=openai
     │   └── openai-embedding.provider.ts      → OpenAiEmbeddingProvider
-    ├── clickhouse/                           ← opt-in: built only when configured
-    │   ├── clickhouse.connection.ts          → ClickHouseConnection
-    │   └── clickhouse-analytics.projector.ts → ClickHouseAnalyticsProjector
-    ├── loki/                                 ← opt-in: built only when LOKI_URL is set
-    │   └── loki-log.reader.ts                → LokiLogReader
+    ├── gemini/                               ← built only when EMBEDDING_PROVIDER=gemini
+    │   └── gemini-embedding.provider.ts      → GeminiEmbeddingProvider
     (tests/smoke/ is beside src/)              ← the wiring check, against live containers
 ```
 
@@ -444,8 +437,8 @@ are not:
 
 - **`pg/repository/` is flat.** It was once `activity/`, `analytics/`, `rbac/`, `vector/` and
   `maintenance/`, each holding one or two files. A folder holding one file is a path, not a subject
-  — and `pg/analytics/` beside `clickhouse/` reads as two different things, when what it is now that
-  ClickHouse has an implementation is two implementations of one port.
+  — and a vendor folder beside it, such as the big kit's `clickhouse/`, would read as two different
+  things when it is two implementations of one port.
 - **`pg/schema/` groups tables rather than putting each beside the repository that reads it.**
   drizzle-kit needs one barrel naming every table, and `check-architecture.mjs` asserts that barrel
   is complete — an incomplete one passes typecheck, lint, build and every test, and is noticed only
@@ -453,13 +446,13 @@ are not:
 
 **Every filename leads with its technology.** That is the second naming exemption:
 `redis-cache.store.ts`, not `cache-store.redis.ts`. You should be able to see what you would delete
-when you swap a vendor — and with the folders naming the vendor too, `rm -r src/clickhouse/` is the
+when you swap a vendor — and with the folders naming the vendor too, `rm -r src/gemini/` is the
 complete answer.
 
 **`grep -rn "PgVectorStore" packages/ apps/` must return hits in exactly two packages** — here, and
 `composition` (twice there: `src/import.ts` and `src/container/container.ts`, since every external
 symbol enters through the one outside surface). A third package naming it is what makes a vector-store
-swap expensive again. The same grep for `ClickHouseAnalyticsProjector` must answer identically.
+swap expensive again. The same grep for `GeminiEmbeddingProvider` must answer identically.
 
 ### `packages/auth`
 
@@ -715,14 +708,6 @@ packages/feature/src/
 │   ├── index.ts
 │   ├── permission-matrix.tsx          → PermissionMatrix
 │   └── effective-permissions.inspector.tsx
-├── widget/
-│   ├── index.ts
-│   ├── widget.tsx                     → Widget   (inline units, by literal key: §30)
-│   ├── use-widget-visibility.ts       → useWidgetVisibility
-│   └── widget-facts.ts                → widgetFacts
-├── dashboard/
-│   ├── index.ts
-│   └── dashboard-zone.tsx             → DashboardZone, prefetchDashboard   (never the map)
 └── <slice>/
     ├── index.ts
     └── <slice>-board.tsx              → <Slice>Board
@@ -880,14 +865,17 @@ apps/worker/
 │   │   ├── embedding.consumer.ts       → EmbeddingConsumer
 │   │   ├── mail.consumer.ts            → MailConsumer
 │   │   ├── maintenance.consumer.ts     → MaintenanceConsumer
-│   │   └── analytics.consumer.ts       → AnalyticsConsumer   (only when configured)
+│   │   ├── notification.consumer.ts    → NotificationConsumer
+│   │   └── outbox.consumer.ts          → OutboxConsumer
 │   └── schedule/                       ← every one carries a fixed jobId
 │       ├── index.ts
 │       ├── cleanup.schedule.ts         → CleanupSchedule
+│       ├── digest.schedule.ts          → DigestSchedule
+│       ├── orphans.schedule.ts         → OrphansSchedule
+│       ├── outbox-drain.schedule.ts    → OutboxDrainSchedule
 │       ├── partitions.schedule.ts      → PartitionsSchedule
-│       ├── archive.schedule.ts         → ArchiveSchedule
-│       ├── projection.schedule.ts      → ProjectionSchedule  (analytics)
-│       └── reconcile.schedule.ts       → ReconcileSchedule   (analytics)
+│       ├── spares.schedule.ts          → SparesSchedule
+│       └── retention.schedule.ts       → RetentionSchedule  (tenant-delete archive sweep)
 └── tests/                              ← mirrors src/, never inside it
     ├── bootstrap/system-principal.spec.ts
     ├── consumer/maintenance.consumer.spec.ts

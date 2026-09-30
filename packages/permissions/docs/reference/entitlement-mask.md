@@ -13,7 +13,7 @@ before `CapabilitySet.from` ever sees them, and it deletes nothing.
 ```ts
 const mask = EntitlementMask.from({
   plan: ["member.read", "member.invite"], // or "all"
-  added: ["analytics.activity.read"],     // a trial is an expiring add
+  added: ["ai.embedding.read"],           // a trial is an expiring add
   removed: [],
   disabledModules: [],                    // the deployment-wide kill switch
 });

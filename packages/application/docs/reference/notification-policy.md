@@ -25,17 +25,17 @@ tenant would otherwise write a hundred rows per joiner, which is the write ampli
 **`member.role.changed` emails immediately.** What somebody may do just changed, and it is the one
 thing they cannot discover by looking.
 
-## `conversationMembers` costs two queries, and the other audiences cost one
+## Every audience costs one query
 
-The audience a row names is resolved by `NotificationRecipientReader`, and three of the four are
-a single statement. `conversationMembers` is two, because `conversation_members` is routed and
-`users` and `memberships` are catalog — see
+The audience a row names is resolved by `NotificationRecipientReader`. There are three: `none`,
+`subject` and `organizationMembers`. Each one resolves in a single statement against the catalog
+tables `users` and `memberships` — see
 [the recipient reader](../../../infrastructure/docs/reference/notification-recipients.md).
 
-That matters when writing a new policy row: an audience is resolved once per event, so the
-difference is one extra round trip per delivery rather than per recipient. What would not be
-acceptable is an audience whose resolution is one query *per* recipient, and no row here asks
-for one.
+That matters when writing a new policy row: an audience is resolved once per event, so it costs one
+round trip per delivery rather than per recipient. What would not be acceptable is an audience whose
+resolution is one query *per* recipient, and no row here asks for one. An audience whose ids live on
+a routed table reads them there first and resolves them here: two statements, never one join.
 
 ## The subscriber's `events` list *is* this table's keys
 

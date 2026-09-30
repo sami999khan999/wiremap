@@ -1,5 +1,5 @@
 {
   "title": "observability",
-  "description": "Logger, the closed EventCode union, and the trace id — one diagnostic stream to stdout and on to Loki, kept strictly apart from the ActivityLogger audit trail",
+  "description": "Logger, the closed EventCode union, and the trace id — one diagnostic stream as JSON to stdout, kept strictly apart from the ActivityLogger audit trail",
   "pages": ["index", "reference"]
 }

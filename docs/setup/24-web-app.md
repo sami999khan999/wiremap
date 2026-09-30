@@ -278,9 +278,12 @@ const Schema = z.object({
     .default("true")
     .transform((v) => v === "true"),
 
-  EMBEDDING_MODEL: z.string().min(1),
-  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive(),
-  OPENAI_API_KEY: z.string().default(""),
+  // `none` searches the chunk text and calls nobody. `openai` and `gemini` embed and need
+  // the key; the shipped schema refuses a provider with no key at boot.
+  EMBEDDING_PROVIDER: z.enum(["none", "openai", "gemini"]).default("none"),
+  EMBEDDING_API_KEY: z.string().min(1).optional(),
+  EMBEDDING_MODEL: z.string().min(1).optional(),
+  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
 
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   LOG_PRETTY: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
@@ -334,9 +337,10 @@ export class Env {
         requireEmailVerification: e.AUTH_REQUIRE_EMAIL_VERIFICATION,
       },
       embedding: {
-        apiKey: e.OPENAI_API_KEY,
-        model: e.EMBEDDING_MODEL,
+        provider: e.EMBEDDING_PROVIDER,
         dimensions: e.EMBEDDING_DIMENSIONS,
+        ...(e.EMBEDDING_API_KEY ? { apiKey: e.EMBEDDING_API_KEY } : {}),
+        ...(e.EMBEDDING_MODEL ? { model: e.EMBEDDING_MODEL } : {}),
       },
       logging: { level: e.LOG_LEVEL, pretty: e.LOG_PRETTY, app: e.APP, env: e.ENV },
     } as const;
@@ -421,9 +425,9 @@ import { Env } from "~/env.js";
 export const container = new Container(Env.containerConfig());
 ```
 
-Module scope means one connection pool, two Redis connections, and one Better Auth instance for the process lifetime. Constructing per request would open a pool per request, which exhausts Postgres in about four seconds under load.
+Module scope means one connection pool, one set of Redis connections, and one Better Auth instance for the process lifetime. Constructing per request would open a pool per request, which exhausts Postgres in about four seconds under load.
 
-Count those pools across replicas rather than per process. Forty web instances at ten connections each is four hundred against a `max_connections` that defaults to a hundred, which is the point pgBouncer in transaction mode stops being optional ([Data and scale](../opinions/data-and-scale.md) §5).
+Count those pools across instances rather than per process. Forty web instances at ten connections each is four hundred against a `max_connections` that defaults to a hundred. Lite connects straight to Postgres, so that sum is the limit you hit. The code is already safe behind a transaction-mode pooler, and [pgBouncer](../scale/pgbouncer.md) is how to add one ([Data and scale](../opinions/data-and-scale.md) §5).
 
 ---
 
@@ -737,18 +741,19 @@ export const Route = createFileRoute("/api/health")({
 
 **Readiness, not liveness**, and the difference decides what the platform does with the answer. A 503
 means *do not send me traffic yet* — a rolling deploy holds the new instance out of the pool until
-Postgres and both Redis instances answer. A liveness probe returning 503 gets the container killed
+Postgres and Redis answer. A liveness probe returning 503 gets the container killed
 instead, which is the wrong response to a database that is still starting.
 
 **`cache-control: no-store` is not boilerplate.** A cached readiness answer keeps reporting healthy
 for its TTL after the thing it describes has stopped, which is precisely the window a load balancer
 uses to route traffic into a broken instance.
 
-**`container.health()` checks Postgres, both Redis instances and ClickHouse in parallel**, and
-ClickHouse answers `null` rather than `true` when it is not configured — it is not healthy and not
-degraded, it is not running one, and `healthy` is `analytics !== false`. Loki is absent from the list
-on purpose: logs are lossy by design ([Data and scale](../opinions/data-and-scale.md)), so a
-collector being down is not a reason to drain an instance that is serving requests correctly.
+**`container.health()` checks every Postgres node and the cache and queue Redis roles in parallel.**
+In lite both roles are one Redis, so it is asked twice. `analytics` is always `null`: lite runs no
+analytics store, which is neither healthy nor degraded ([Analytics](../scale/analytics.md) brings one
+back). No log collector is in the list either: logs are lossy by design
+([Data and scale](../opinions/data-and-scale.md)), so a collector being down would not be a reason
+to drain an instance that is serving requests correctly.
 
 > [!WARNING]
 > **A route `beforeLoad` does not protect an API route.** These are the paths into `src/server/`, and
@@ -1180,7 +1185,7 @@ passed while the app was broken.**
 - `curl -s -o /dev/null -w '%{http_code}' http://localhost:23000/api/health` returns `200` with the
   stack up and `503` with Postgres stopped — anonymously, in both cases, and with `cache-control:
   no-store` on the response. Its body names `database`, `cache`, `queue` and `analytics`, and
-  `analytics` is `null` rather than `false` when `CLICKHOUSE_URL` is unset.
+  `analytics` is `null`, because lite runs no analytics store.
 - An SSR page load produces **zero** requests to your own `/api/rpc` — check the server access log; it should be silent during SSR.
 - Removing a permission from a role removes the nav item **and** the call returns `FORBIDDEN`.
 - Importing `@loadbearing/infrastructure` from a component is a Biome error; importing it from `src/server/**` is fine.

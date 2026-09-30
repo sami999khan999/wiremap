@@ -20,7 +20,7 @@ export class RedisRealtimePublisher implements RealtimePublisher {
   public async publish(channel: RealtimeChannel, message: RealtimeMessage): Promise<void> {
     const payload = JSON.stringify(message);
     try {
-      // A typing frame is stale in seconds and is never replayed, so it is never logged.
+      // A resync frame carries no event to replay, so it is never logged.
       if (message.kind !== "event") {
         await this.redis.publish(channel, payload);
         return;

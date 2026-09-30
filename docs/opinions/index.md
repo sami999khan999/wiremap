@@ -94,7 +94,7 @@ See [Comments](comments.md).
 | The schema barrel names every `*.schema.ts` | `check-architecture.mjs` §11 |
 | Every page on this index is cited by a `docs/ai/rules/` file | `check-architecture.mjs` §12 |
 | Every folder under `docs/` has an `index.md` | `check-architecture.mjs` §13 |
-| Every inline widget is placed by a literal key | `check-architecture.mjs` §30 |
+| Every inline widget is placed by a literal key | the big kit's §30; returns with widgets, see [`docs/scale/widgets.md`](../scale/widgets.md) |
 | No flag outlives its expiry, and none goes unread | `check-architecture.mjs` §31 |
 | No `lazy()` in `feature` or `apps/web` | ESLint `no-restricted-syntax` |
 | One range per dependency across packages | `syncpack lint` |

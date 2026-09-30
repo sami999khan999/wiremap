@@ -73,10 +73,10 @@ Walked top to bottom, in the order the tree in [28](28-folder-structure.md) list
 
 ### `infra/`
 
-- **Holds descriptions of running services**: `docker-compose.yml`, the Postgres init SQL that creates extensions, Loki's storage and retention config, Alloy's log pipeline, and ClickHouse's schema.
+- **Holds descriptions of running services**: `docker-compose.yml`, and the Postgres init SQL that creates extensions.
 - **Is development-shaped.** It is not your production deployment; it is the local approximation of it. The mapping table in [11](11-local-infrastructure.md) says which managed service replaces each container.
 - **Never holds** application code of any kind. Nothing in `packages/` or `apps/` imports anything from here — these are [Tier 0](../opinions/dependencies.md) dependencies, provided by the deployment and reached over a protocol the code was going to speak anyway.
-- **Two profiles.** `observability` is on by default because the diagnostic stream is live; `analytics` is opt-in because [Data and scale](../opinions/data-and-scale.md) says not to *run* ClickHouse yet. Its adapters are written either way — the seam being implemented and the store being started are two separate decisions.
+- **No profiles in lite.** Five containers run, and all of them start with `pnpm infra:up`. A store ported back from [`docs/scale/`](../scale/index.md), such as [Logs](../scale/logs.md), may come with a profile of its own. The seam being implemented and the store being started are two separate decisions ([Data and scale](../opinions/data-and-scale.md)).
 - **Documented in [`docs/infra/`](../infra/index.md)** — one reference page per file and the service it configures.
 - **Smell:** a `.ts` file, or a `LOKI_URL` in `.env.example` — the moment application code names the log platform, the platform stops being swappable by config.
 
@@ -178,7 +178,7 @@ Walked top to bottom, in the order the tree in [28](28-folder-structure.md) list
 ## 1.9 Inside `packages/application`
 
 - **`error/`** — the domain error hierarchy. Each carries a `code` string, which is the *only* thing the transport layer maps. No HTTP status codes anywhere in this folder.
-- **`port/`** — abstract classes for cross-cutting infrastructure: cache, storage, queue, vector store, analytics, embeddings, sessions, activity, email, maintenance, logs, unit of work. One file per capability, all abstract, zero implementations — and every one bound in `Container`.
+- **`port/`** — abstract classes for cross-cutting infrastructure: cache, storage, queue, vector store, embeddings, sessions, activity, email, maintenance, outbox, sharding, unit of work. One file per capability, all abstract, zero implementations — and every one bound in `Container`.
 - **`<slice>/`** — one folder per feature slice, holding that slice's use-cases, its policies, **and its repository port**.
 - **Repository ports live in the slice, not in `port/`.** `port/` is for capabilities the whole system shares; `TaskRepository` is meaningful only next to the use-cases that need it. Putting it in `port/` would make that folder grow by one file per feature forever.
 - **Every use-case has one public method, `execute(principal, input)`**, following load → authorize → work → persist.
@@ -199,7 +199,7 @@ The Postgres side gets its own section because it is the largest folder in the p
 - **`migrate/` and `seed/`** — scripts, not module code. Neither is exported from a barrel, both are exempt from `noConsole`, and the seed is idempotent: the owner role's grants come from `PermissionRegistry.all()` so they cannot fall behind the catalog.
 - **The tables are grouped by subject and the adapters are not**, and the asymmetry is deliberate: two tools require one entry naming every table, and nothing requires one naming every repository. A slice's files therefore land in two directories — `schema/lead.schema.ts` and `repository/pg-lead.repository.ts` — so a `CODEOWNERS` line per team needs both globs. `activity_log` is partitioned by month and written inside the caller's transaction, which is what makes an audit row and its state change commit together ([13](13-infrastructure-postgres.md)).
 - **Repositories fetch and persist. They never decide.** A `capabilities.can()` call in this package means an authorization decision escaped the use-case.
-- **Every repository declares one placement, and `catalog` / `local` / `routed` is the whole vocabulary.** The word names where a table lives, not what it holds: `catalog` is what a principal is built from before a key is known, `local` is present on every node, `routed` is everything a tenant produces and is the default. One repository, one placement — a CI assertion, and the reason `PgNotificationRecipientReader` takes a `ConversationRepository` rather than joining across the line.
+- **Every repository declares one placement, and `catalog` / `local` / `routed` is the whole vocabulary.** The word names where a table lives, not what it holds: `catalog` is what a principal is built from before a key is known, `local` is present on every node, `routed` is everything a tenant produces and is the default. One repository, one placement — a CI assertion, and the reason a recipient list whose ids live on a routed table reads them there first and resolves them through `PgNotificationRecipientReader`, rather than joining across the line.
 - **"Shard" is a physical node and nothing else.** There is no virtual shard, no bucket, no range: `shard_assignments` maps one key to one node. A `shardKey` is opaque text, and `node` is a number.
 - **Scoping by `organization_id` is not deciding.** The tenant filter is the boundary permissions are evaluated *inside*, not a permission check, so it belongs here — inherited from `BaseRepository` rather than written per method. A repository query with no tenant predicate is the bug; a repository asking `can()` is the other bug.
 - **Smell:** a permission check, or a non-Postgres concern inside `pg/`.
@@ -208,15 +208,15 @@ The Postgres side gets its own section because it is the largest folder in the p
 
 ## 1.11 Inside `packages/infrastructure`
 
-- **`redis/`** — the connections. **Two instances, not one**: the cache evicts under pressure and everything on it rebuilds from Postgres; the queue never evicts, because a queued job is derived from nothing. One class owns which is which, and they are configured differently besides (`maxRetriesPerRequest: null` for BullMQ, a key prefix only for the cache).
+- **`redis/`** — the connections. **Two connections, one instance in lite.** Both URLs point at one Redis under `noeviction`, because a queued job is derived from nothing and must never be evicted. So every cache key carries a TTL. One class still owns which connection is which, and they are configured differently besides (`maxRetriesPerRequest: null` for BullMQ, a key prefix only for the cache). Splitting them is an `.env` change — [Split Redis](../scale/split-redis.md).
 - **`pg/`** — Postgres and Drizzle, covered in §1.10 above. The one folder here with sub-structure.
 - **`s3/`** — `S3StorageGateway` and `StorageKey`. The gateway never takes a bucket in a method signature; the bucket is configuration.
 - **`bullmq/`** — `QueueName` (a closed union) and `BullMqQueuePublisher`.
-- **`openai/`** — `OpenAiEmbeddingProvider`.
+- **`openai/` and `gemini/`** — `OpenAiEmbeddingProvider` and `GeminiEmbeddingProvider`. Neither is built under `EMBEDDING_PROVIDER=none`, where search is lexical.
 - **`smtp/`** — `SmtpEmailSender`, behind the `EmailSender` port. SMTP rather than a provider's HTTP API, so swapping vendors is a URL rather than a new adapter.
-- **`clickhouse/` and `loki/`** — adapters for services behind an opt-in compose profile. A folder here says the seam is implemented, not that the container is started.
+- **`unified/`** — `UnifiedMarkdownRenderer`, behind the `MarkdownRenderer` port.
 - **One folder per external system this package speaks to**, named after the technology, so `ls src/` answers the question “what does this depend on?”. That is what makes a vendor swap visibly local: you delete `s3.storage-gateway.ts` and write `azure.storage-gateway.ts`, and `s3/index.ts` is the only other file that changes.
-- **A system nothing reaches from code gets no folder.** Alloy is real infrastructure and has no home here: it is a separate process that tails stdout, and nothing in `packages/` addresses it. It lives in `infra/` alone. **Loki is the instructive near-miss** — the write path still has no client, but `LokiLogReader` reads back over `query_range`, so `src/loki/` exists and holds a reader and no writer ([15](15-infrastructure-package.md)).
+- **A system nothing reaches from code gets no folder.** A log collector is real infrastructure and would have no home here: it tails stdout, and nothing in `packages/` addresses it. Lite runs none. The big kit's Loki was the near-miss — a reader over `query_range` gave it a folder with no writer. [Logs](../scale/logs.md) has both.
 - **Smell:** a folder for something that is not an npm dependency.
 - **Contains no business logic.** These are adapters: translate a port call into a vendor call, translate the response back.
 - **Smell:** a domain noun in a method name, or one folder reaching into another's files.
@@ -397,7 +397,7 @@ packages/application/src/task/overdue-lock.policy.ts        OverdueLockPolicy
 packages/infrastructure/src/pg/schema/task.schema.ts        tasks.reactivated_at
 packages/infrastructure/src/pg/repository/pg-task.repository.ts
                                                             PgTaskRepository
-packages/infrastructure/migrations/0004_task_reactivation.sql
+packages/infrastructure/migrations/0003_task_reactivation.sql
                                                             ← + seeds the permission row
 
 packages/query/src/task/task.mutations.ts                   TaskMutations.reactivate()
@@ -505,7 +505,7 @@ apps/worker  consumer/embedding.consumer.ts
         │  SystemPrincipal.forOrganization(orgId)   ← three named grants, never a wildcard
         ▼
 application  IndexTaskUseCase.execute(systemPrincipal, …)
-        │  → EmbeddingProvider (port) → infrastructure  OpenAiEmbeddingProvider
+        │  → EmbeddingProvider (port) → infrastructure  OpenAi… or GeminiEmbeddingProvider
         │  → VectorStore       (port) → infrastructure  PgVectorStore
         ▼  row in task_embeddings
 ```

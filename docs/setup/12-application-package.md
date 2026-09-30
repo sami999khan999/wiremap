@@ -395,7 +395,10 @@ export interface DocumentChunk {
   readonly sourceId: string;
   readonly goalId: string | null;
   readonly content: string;
-  readonly embedding: readonly number[];
+  // Null when the deployment runs no provider: the chunk is still searchable by text.
+  readonly embedding: readonly number[] | null;
+  // The model that wrote `embedding`, null with it.
+  readonly embeddingModel: string | null;
   readonly metadata: Readonly<Record<string, unknown>>;
 }
 
@@ -421,22 +424,44 @@ export abstract class VectorStore {
   // `goalIds` is the caller's permitted scope. It is a required parameter so the
   // permission filter runs on the input set, before retrieval — not on results.
   // `organizationId` is the boundary that scope is computed inside.
+  // Only chunks `model` wrote are compared.
   public abstract search(
     organizationId: OrganizationId,
     embedding: readonly number[],
+    model: string,
     goalIds: readonly string[],
     limit: number,
   ): Promise<readonly SearchHit[]>;
+
+  // The same shape and the same scope rule, ranked by full-text search over the chunk
+  // text. What `EMBEDDING_PROVIDER=none` searches with.
+  public abstract searchText(
+    organizationId: OrganizationId,
+    query: string,
+    goalIds: readonly string[],
+    limit: number,
+  ): Promise<readonly SearchHit[]>;
+
+  // sourceOf, stale and saveEmbeddings: the index version check and the re-embed pass.
 }
 ```
 
 ```ts
 // packages/application/src/port/embedding.provider.ts
+export type EmbeddingPurpose = "document" | "query";
+
 export abstract class EmbeddingProvider {
   public abstract readonly dimensions: number;
-  public abstract embed(texts: readonly string[]): Promise<readonly (readonly number[])[]>;
+  // Recorded on every chunk it embeds, so vectors from two models are never compared.
+  public abstract readonly model: string;
+  public abstract embed(
+    texts: readonly string[],
+    purpose?: EmbeddingPurpose,
+  ): Promise<readonly (readonly number[])[]>;
 }
 ```
+
+`purpose` is there for Gemini, which embeds a query and a document differently. OpenAI ignores it. Which provider runs, or none, is `EMBEDDING_PROVIDER` — see [14](14-vector-store.md).
 
 **`VectorStore` is declared here, not beside its implementation.** This is the departure flagged in [00](00-README.md). The architecture docs place it in the database package, which works only while the implementation is Postgres — and the stated requirement is to move to a dedicated vector database later without rewrites. A use-case cannot import an adapter package, so the abstraction has to live where every other port lives. `PgVectorStore` still lives in `packages/infrastructure/src/pg/repository/`; see [14](14-vector-store.md).
 
@@ -445,20 +470,20 @@ export abstract class EmbeddingProvider {
 ```ts
 const orgId = actor.organizationId;
 const goalIds = actor.capabilities.goalsWith("document.read", await goals.idsForOrg(orgId));
-const hits = await this.vectors.search(orgId, embedding, goalIds, 20);
+const hits = await this.vectors.search(orgId, embedding, provider.model, goalIds, 20);
 ```
 
 `goalsWith()` takes the candidate set for the same reason `search()` does — a `CapabilitySet` knows only the goals its own DTO names, so a wildcard holder or an org-level grantee would otherwise resolve to `[]` and silently retrieve org-wide chunks only ([08](08-permissions-package.md)).
 
 ### The port that is not here: `AnalyticsReader`
 
-The kit shipped one, and it was deleted. It declared `goalRiskScores` and `reliabilityTrend`, had a Postgres implementation over two rollup tables and a ClickHouse implementation over the projected event stream, and an `ANALYTICS_DRIVER` flag chose between them. **Nothing called any of it** — no use-case, no procedure, no screen.
+Lite has no analytics store, so it has no analytics port. The big kit had no reader either. It shipped one once, with a Postgres and a ClickHouse implementation behind an `ANALYTICS_DRIVER` flag, and deleted it. **Nothing called any of it** — no use-case, no procedure, no screen.
 
 That is worth a paragraph rather than a silent absence, because the argument for building it early was a good one and still turned out wrong. A column store *does* become necessary at a volume this kit will not reach for years, and by then every call site *would* have to change — but a port nothing calls has no call sites, so the retrofit it was protecting against did not exist. Meanwhile the shape was a guess: two queries and two table layouts, invented with no dashboard to check them against and kept in step by hand across two adapters.
 
-**The write half survives, and it is the half that earns its place.** `AnalyticsProjector` ([15](15-infrastructure-package.md)) has a consumer, a checkpoint and a nightly reconciliation; `CLICKHOUSE_URL` turns it on. The store fills and proves itself while nothing reads it, which is the state you want to be in before writing a reader.
+The big kit keeps only the write half, a projector into ClickHouse. It comes back with the store, from [Analytics](../scale/analytics.md).
 
-When a dashboard needs one, one decision is already made: **`goalIds` is a required parameter, for exactly the reason it is on `VectorStore.search()`.** An analytics store does not know what a `CapabilitySet` is, so the permitted scope has to arrive already resolved. There is no join back to `goal_members` from ClickHouse. And **nothing writes through such a port** — a write method is the moment a derived store stops being derived ([Data and scale](../opinions/data-and-scale.md) §2).
+When a dashboard needs a reader, one decision is already made: **`goalIds` is a required parameter, for exactly the reason it is on `VectorStore.search()`.** An analytics store does not know what a `CapabilitySet` is, so the permitted scope has to arrive already resolved. And **nothing writes through such a port** — a write method is the moment a derived store stops being derived ([Data and scale](../opinions/data-and-scale.md) §2).
 
 > See [Simplicity](../opinions/simplicity.md) — this is the counter-example that section is built around.
 

@@ -14,7 +14,7 @@
 |---|---|---|
 | Node | 24.x | Active LTS until April 2028, so it outlives the first two years of the project. oRPC is ESM-only, and 24 gives native `require()` of ESM, which matters if you add NestJS later. |
 | pnpm | 11.21+ | Catalogs, `allowBuilds`, and supply-chain defaults that are on rather than opt-in. Requires Node 22+, which you already have. |
-| Docker | any current | Postgres + pgvector, two Redis instances, MinIO, and the Loki/Alloy observability stack all run as containers. Nothing is installed natively. |
+| Docker | any current | Postgres + pgvector, one Redis instance, MinIO, and Mailpit all run as containers. Nothing is installed natively. |
 | Git | 2.34+ | `core.longpaths`, and hooks via `core.hooksPath`. |
 
 Install pnpm once by any means you like; the repo pins the version itself from there on. Do **not** build the setup on Corepack — it is bundled with Node 24 but was removed from Node 25 and every release after, so anything depending on it breaks the moment you move to 26 in October.

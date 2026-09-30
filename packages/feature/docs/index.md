@@ -1,6 +1,6 @@
 ---
 title: "@loadbearing/feature"
-description: Components that fetch and mutate — the auth screens, the message provider, the session guard. Mountable under any routing shell, because navigation arrives as a prop.
+description: Components that fetch and mutate — the auth screens, the message provider, the member, doc and platform panels. Mountable under any routing shell, because navigation arrives as a prop.
 ---
 
 # `@loadbearing/feature`
@@ -13,7 +13,7 @@ rather than discouraged.
 `await client.task.list()` inside a component; it works, and now there is an uncached read that no
 invalidation will ever touch.
 
-**No router.** Navigation arrives as an `onNavigate` prop or an `href`. That is what lets the Tauri
+**No router.** Navigation arrives as a callback prop such as `onSuccess`, or as an `href`. That is what lets the Tauri
 shell mount these components under a different routing shell.
 
 | | |
@@ -28,17 +28,18 @@ shell mount these components under a different routing shell.
 packages/feature/src/
 ├── index.ts                                → "use client" on line 1
 ├── import.ts                               → the two bans, made visible
-├── i18n/message.context.tsx                → MessageProvider, useMessages
+├── i18n/message.context.tsx                → MessageProvider, useMessages, useTranslator
+├── error/use-error-message.ts              → useErrorMessage
+├── nav/module-nav.tsx                      → ModuleNav
 ├── auth/
-│   ├── session.context.tsx                 → SessionProvider, useSession, useCapabilities
-│   ├── session.guard.tsx                   → SessionGuard
+│   ├── session.context.tsx                 → SessionProvider, useSession, useCapabilities, useFlags
 │   ├── sign-in.form.tsx                    → SignInForm
 │   ├── sign-up.form.tsx                    → SignUpForm
 │   ├── sign-out.button.tsx                 → SignOutButton
 │   ├── social-sign-in.tsx                  → SocialSignIn
 │   ├── forgot-password.form.tsx            → ForgotPasswordForm
 │   ├── reset-password.form.tsx             → ResetPasswordForm
-│   ├── password-pair.tsx                   → the shared confirm-and-strength control
+│   ├── password-pair.tsx                   → PasswordPair, passwordPairReady
 │   ├── two-factor.form.tsx                 → TwoFactorForm
 │   └── verify-email.notice.tsx             → VerifyEmailNotice
 ├── account/
@@ -53,25 +54,32 @@ packages/feature/src/
 │   ├── create-organization.form.tsx        → CreateOrganizationForm
 │   ├── organization-switcher.tsx           → OrganizationSwitcher
 │   └── invitation-accept.tsx               → InvitationAccept, InvitationPreview
-├── member/
-│   ├── member-list.tsx                     → MemberList
-│   ├── invite-member.form.tsx              → InviteMemberForm
-│   └── invitation-list.tsx                 → InvitationList
+├── member/                                 → MemberList, MemberCount, MemberAccessPanel,
+│                                             InviteMemberForm, InvitationList
+├── apikey/                                 → ApiKeyList, CreateApiKeyForm, useApiKeyFailure
+├── notification/                           → NotificationBell, NotificationPeek, NotificationList,
+│                                             NotificationPreferenceForm
+├── document/                               → DocumentSearch, IndexDocumentForm
+├── doc/                                    → the doc spaces: editor, reader, tree, search, grants
 ├── platform/
 │   ├── platform-status.panel.tsx           → PlatformStatusPanel
-│   ├── projection-gaps.panel.tsx           → ProjectionGapsPanel
-│   ├── projection-policy.form.tsx          → ProjectionPolicyForm
-│   ├── projection-switch.panel.tsx         → ProjectionSwitchPanel
-│   ├── retention-policy.form.tsx           → RetentionPolicyForm
-│   ├── retention-preview.notice.tsx        → RetentionPreviewNotice
-│   ├── restore-partition.panel.tsx         → RestorePartitionPanel
-│   ├── tenant-retention.form.tsx           → TenantRetentionForm
-│   └── tenant-storage.list.tsx             → TenantStorageList
+│   ├── replica-switch.panel.tsx            → ReplicaSwitchPanel
+│   ├── tenant-export.panel.tsx             → TenantExportPanel
+│   ├── delete-tenant.panel.tsx             → DeleteTenantPanel
+│   ├── account.panel.tsx                   → AccountPanel
+│   ├── flag.list.tsx                       → FlagList
+│   ├── module-switch.panel.tsx             → ModuleSwitchPanel
+│   ├── organization-entitlement.panel.tsx  → OrganizationEntitlementPanel
+│   ├── plan.form.tsx                       → PlanForm
+│   └── plan.list.tsx                       → PlanList
 └── rbac/
     ├── permission-matrix.tsx               → PermissionMatrix, MatrixSubject
     ├── role-matrix.tsx                     → RoleMatrix
     ├── role-list.tsx                       → RoleList
     ├── create-role.form.tsx                → CreateRoleForm
+    ├── permission-override.form.tsx        → PermissionOverrideForm
+    ├── permission-override.list.tsx        → PermissionOverrideList
+    ├── capabilities-from-wire.ts           → capabilitiesFromWire
     ├── use-role-failure.ts                 → useRoleFailure
     └── effective-permissions.inspector.tsx → EffectivePermissionsInspector
 ```
@@ -126,35 +134,17 @@ test asserts.
 every downstream memo. And capabilities default to nothing, never to permissive — a signed-out user
 gets `CapabilitySet.empty()`, which denies everything. There is no loading state that grants access.
 
-## `SessionGuard` is the weakest of four surfaces
+## `<Can>` is the weakest of four surfaces
 
 | | Surface | Where |
 | --- | --- | --- |
 | 1 | `Authorizer.assert()` in the use-case — **the real gate** | [`application`](../../application/docs/index.md) |
 | 2 | `principalMiddleware` in the oRPC handler | `apps/web` |
 | 3 | the route guard — stops the page rendering | `apps/web` |
-| 4 | `<Can>`, `<Widget>` and `SessionGuard` — hide affordances that would fail | here and `ui` |
+| 4 | `<Can>` — hide affordances that would fail | `ui` |
 
 Removing a permission from a role must remove the nav item **and** return `FORBIDDEN`. Both, every
 time. UI-only is security theatre; API-only is a screen full of buttons that error.
-
-**The redirect is a callback, not a `<Navigate>`.** That is the router ban in practice: `apps/web`
-passes `() => navigate({ to: "/sign-in" })`, the desktop shell passes its own. The component knows
-*that* it should redirect, never *how* — and a spec asserts the callback fires and the children do
-not render.
-
-## A card on the dashboard is the registry's, never the page's
-
-`DashboardZone` asks `WidgetRegistry` which widgets `dashboard.main` holds and which of them this
-session may see, then renders only those. A hidden card is **not mounted**, so its query is never
-issued — hiding is not `display: none`. `prefetchDashboard` runs the same visibility for the route's
-loader, so nothing is fetched ahead of a render that would not use it.
-
-`DASHBOARD_WIDGETS`, the map from key to component, is typed total over the zone and is **not
-exported**: nothing outside can render a card without asking the registry first. Its titles come
-from `WIDGET_COPY` in `content`, total over every widget, so a widget without a title does not
-compile. `<Widget>` is the inline form, for a unit outside any zone; its permission is the
-registry's, which is why it takes no permission prop.
 
 ## Two things worth copying from `SignInForm`
 

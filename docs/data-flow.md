@@ -1,6 +1,6 @@
 ---
 title: How data flows
-description: One request followed from arrival to years later — which store it touches, in what order, and why each store exists. The narrative companion to the data ownership rules.
+description: One request followed from arrival to months later — which store it touches, in what order, and why each store exists. The narrative companion to the data ownership rules.
 ---
 
 # How data flows
@@ -42,49 +42,50 @@ because the worker and server-rendered pages skip the edge entirely.
 The transaction commits, the response goes back, and the user sees a confirmation. **That is the
 entire synchronous path.** Everything else happens after they have stopped looking.
 
-Meanwhile log lines went to standard output and on to the log store. Those are allowed to be lost.
+Meanwhile log lines went to standard output. Lite keeps no log store, so they live as long as the
+terminal or the platform's log buffer does. Those are allowed to be lost.
 They describe how the system behaved, not what happened to the business.
 
 ## After the response
 
 **About a second later** the worker sweeps the outbox, finds the unpublished row, and hands it to
-whatever subscribed. A subscriber decides an email is due and puts a job on Redis. This is a
-different Redis instance from the permission cache, and the separation is the point. Losing a cached
-permission costs a rebuild. Losing a queued email costs an email.
+whatever subscribed. A subscriber decides an email is due and puts a job on Redis. In lite this is
+the same Redis instance as the permission cache, reached by a second name. Losing a cached
+permission costs a rebuild. Losing a queued email costs an email. So the instance never evicts,
+and every cache key carries an expiry instead. Splitting the two is an `.env` change
+([Split Redis](scale/split-redis.md)).
 
-**About five minutes later** the audit rows get copied into ClickHouse, which is a database built
-for counting millions of rows quickly. It asks ClickHouse itself where it left off rather than
-keeping a bookmark somewhere else, because a bookmark can disagree with reality and this cannot.
-ClickHouse is purely a copy. Delete the whole thing and it can be rebuilt by replaying.
+**Overnight** two jobs run. One deletes expired sessions, tokens and invitations. The other keeps
+the S3 bucket's expiry rules as they should be, and ends the recovery window of any tenant deleted
+thirty days ago.
 
-**Overnight** two jobs run. One deletes expired sessions, tokens and invitations. The other counts
-yesterday's audit rows on both sides and compares them. Silence means the copy is honest.
+The big kit also copies audit rows into ClickHouse every five minutes, for counting. Lite does not.
+[Analytics](scale/analytics.md) brings it back.
 
 ## Over months and years
 
-**On the first of each month** the partition job runs. It creates next month's partitions ahead of
-time, then handles the old ones.
+**On the first of each month** the partition job runs. It creates the coming months' partitions
+ahead of time. That is all it does. Lite never drops a month, so old rows stay in Postgres.
 
-It never simply deletes. It detaches the old month, streams it out to S3 as one compressed file per
-tenant, checks that what landed matches what left, records where it went, and only then drops it.
-Data moves somewhere cheaper. It does not get destroyed.
+**When a tenant is deleted**, its rows are not simply thrown away. They are streamed out to S3 under
+`cold/`, one compressed file per table and month, and checked against what left. Only then are the tenant's
+partitions dropped. The files stay for thirty days, which is the window to change your mind. The
+nightly job then removes them.
 
-After that the file sits in S3 until its own expiry, and the copy in ClickHouse sits there until
-its own, which is much longer than Postgres keeps anything. If someone needs an archived month back,
-an administrator can restore it.
+The big kit also archives each old month to S3 and drops it from Postgres. That comes back with
+[Retention](scale/retention.md).
 
 ```
 request ──▶ Redis cache ──▶ Postgres  ── one transaction ──▶ response
                               │  the fact, the audit row, the message
                               │
-                   ┌──────────┴──────────┐
-              Redis queue           ClickHouse          the copies
-                   │                                    for jobs and
-                 email                                  for counting
+                         Redis queue          the copy for jobs
                               │
-                          after months
+                            email
                               │
-                             S3         compressed, per tenant
+                     on tenant delete
+                              │
+                         S3 cold/       compressed, kept 30 days
 ```
 
 ## The timing, in one place
@@ -93,21 +94,19 @@ request ──▶ Redis cache ──▶ Postgres  ── one transaction ──�
 |---|---|
 | Immediately | Permissions cached for 60 seconds |
 | Every second | Outbox drained, jobs queued |
-| Every 5 minutes | Audit rows copied to ClickHouse |
-| Nightly | Expired rows swept, the two copies compared |
-| Monthly | New partitions created, old ones archived then dropped |
-| About 13 months | A month leaves Postgres for S3 |
-| 5 years | The ClickHouse copy expires |
+| Nightly | Expired rows swept, bucket expiry rules checked, deleted tenants past 30 days removed |
+| Monthly | New partitions created; nothing dropped |
+| 30 days after a tenant delete | Its archive in S3 is removed |
 
 ## Why a table is really many tables
 
-Three tables are split by month, so one name is a parent and the rows live in monthly children
+Four tables are split by month, so one name is a parent and the rows live in monthly children
 underneath it. The application never names a child. It writes to the parent, and Postgres routes
 the row by its date column.
 
 This buys two things. A query narrowed to a date range skips the months it cannot match. And
-deleting a month is one instant catalog edit rather than a row-by-row delete that leaves the table
-the same size afterwards.
+deleting a month, once retention is ported back, is one instant catalog edit rather than a row-by-row
+delete that leaves the table the same size afterwards.
 
 It costs one thing. Children do not create themselves, so next month's must exist before its first
 row arrives. The monthly job keeps two spare months ahead, which is why a worker can miss a run
@@ -116,7 +115,7 @@ without anything breaking.
 ## The shape to remember
 
 One store holds the truth and answers questions about right now. Everything else is either a copy
-made for speed, a queue made for work, or a cheap shelf for things too old to keep close. The
+made for speed, a queue made for work, or a cheap shelf for a deleted tenant's data. The
 copies can all be rebuilt, and that is what makes them safe to lose.
 
 ## Where each piece lives
@@ -124,14 +123,12 @@ copies can all be rebuilt, and that is what makes them safe to lose.
 | Piece | File |
 |---|---|
 | The permission check every use-case runs | `packages/application/src/primitive/authorizer.ts` |
-| Which tables are split by month, and for how long | `packages/application/src/primitive/partitioned-table.ts` |
+| Which tables are split by month | `packages/application/src/primitive/partitioned-table.ts` |
 | The outbox sweep and the email path | `apps/worker/src/consumer/outbox.consumer.ts` |
-| The copy into ClickHouse and the nightly comparison | `upstream:apps/worker/src/consumer/analytics.consumer.ts` |
-| Partition creation, expiry sweeps, and the archive | `apps/worker/src/consumer/maintenance.consumer.ts` |
-| Writing a month out to S3 | `packages/infrastructure/src/pg/repository/pg-partition-archive.gateway.ts` |
-| The ClickHouse table and its expiry | `upstream:packages/infrastructure/clickhouse-migrations/0000_activity_events.sql` |
+| Partition creation, expiry sweeps, and the tenant-delete sweep | `apps/worker/src/consumer/maintenance.consumer.ts` |
+| Writing a tenant out to S3 | `packages/infrastructure/src/pg/repository/pg-partition-archive.gateway.ts` |
+| The copy into ClickHouse, in the big kit | `upstream:apps/worker/src/consumer/analytics.consumer.ts` |
 
 The positions behind all of this are in [`docs/opinions/data-and-scale.md`](opinions/data-and-scale.md).
-What is planned and not yet built is in [`docs/plans/BACKLOG.md`](plans/BACKLOG.md). The
-messaging, email and notification features are its §11, built on the communication performance
-plan that makes them one system rather than eight features.
+What is planned and not yet built is in [`docs/plans/BACKLOG.md`](plans/BACKLOG.md). What lite
+removed, and how to bring each piece back, is in [`docs/scale/`](scale/index.md).

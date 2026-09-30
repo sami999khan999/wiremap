@@ -49,7 +49,7 @@ be English whatever the reader's locale, and the callout's tone already says wha
 
 `highlight.js` ships its types with `/// <reference lib="dom" />`. Imported anywhere, that puts
 the DOM's `ReadableStream` and `BufferSource` over Node's in the **whole package**. It showed up
-as two unrelated type errors, in the ClickHouse connection and the S3 gateway.
+as two unrelated type errors, one of them in the S3 gateway.
 
 This package is Node-only, and a DOM global typechecking here is a bug waiting to be written. So
 `tsconfig.json` maps `highlight.js` to `highlight-js.d.ts` at the package root, which declares the

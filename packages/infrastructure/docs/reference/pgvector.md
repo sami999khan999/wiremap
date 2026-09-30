@@ -82,9 +82,18 @@ helper with a fallback.
 const distance = cosineDistance(documentChunks.embedding, [...embedding]);
 const similarity = sql<number>`1 - (${distance})`;
 …
-.where(and(eq(documentChunks.organizationId, organizationId), scope, lt(distance, MAX_DISTANCE)))
+.where(and(
+  eq(documentChunks.organizationId, organizationId),
+  scope,
+  eq(documentChunks.embeddingModel, model),
+  lt(distance, MAX_DISTANCE),
+))
 .orderBy(asc(distance))
 ```
+
+`search` compares only chunks the given `model` wrote: another model's vector is a point in another
+space. `searchText` is the same shape and scope ranked by full-text search instead, for
+`EMBEDDING_PROVIDER=none`. Both are in [Embedding](embedding.md).
 
 **pgvector serves an HNSW index only for an ascending order on the operator itself** —
 `ORDER BY embedding <=> $1 ASC`. Ordering by `desc(1 - distance)`, which is what this store did until

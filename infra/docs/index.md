@@ -1,6 +1,6 @@
 ---
 title: infra
-description: Nine containers the application dials and nothing imports — what this directory holds, what each service publishes, and the two conditions a new one has to clear.
+description: Five containers the application dials and nothing imports — what this directory holds, what each service publishes, and the two conditions a new one has to clear.
 ---
 
 # `infra/`
@@ -26,11 +26,8 @@ fakes. A filesystem stand-in for S3 means the S3 code path is first executed on 
 
 ```
 infra/
-├── docker-compose.yml      → nine services, three profiles, one bridge network
+├── docker-compose.yml      → five services, no profiles, one bridge network
 ├── postgres.init.sql       → vector, pg_trgm, uuid-ossp — run on first boot only
-├── loki.config.yml         → single-binary Loki, chunks and index into MinIO
-├── alloy.config.alloy      → docker stdout + infra/logs/ → Loki, four labels
-├── logs/                   → what Alloy tails; .gitkeep only
 └── docs/                   → this page
 ```
 
@@ -52,10 +49,10 @@ becomes a permanent one. MinIO is here rather than a filesystem adapter precisel
 it: the AWS SDK talks to MinIO unchanged, so the code path exercised in development is the code path
 that runs in production.
 
-A log platform that only *receives* stdout clears both and still gets no folder in
-`packages/infrastructure/src/` — until something reads back from it over an API, which is why
-`loki/` exists there and holds a reader and no writer
-([Folders](../../docs/opinions/folders.md)).
+A log platform that only *receives* stdout would clear both and still get no folder in
+`packages/infrastructure/src/`. A folder appears there only once something reads back from it over
+an API ([Folders](../../docs/opinions/folders.md)). Lite runs no log platform — logs are JSON on
+stdout. Adding one is [logs](../../docs/scale/logs.md).
 
 ---
 
@@ -64,53 +61,44 @@ A log platform that only *receives* stdout clears both and still gets no folder 
 The surface is a host address and a protocol. Everything else about a service — how it is
 configured, what breaks, what to check — is its reference page.
 
-| Service | From the host | Spoken by | Profile |
-|---|---|---|---|
-| [postgres](../../docs/infra/reference/postgres.md) | `localhost:25432` | `drizzle-orm` + `pg` | always |
-| [redis-cache](../../docs/infra/reference/redis.md) | `localhost:26379` | `CacheStore` | always |
-| [redis-queue](../../docs/infra/reference/redis.md) | `localhost:26380` | `QueuePublisher`, BullMQ | always |
-| [mailpit](../../docs/infra/reference/mailpit.md) | `localhost:21025`, UI `:8025` | `SmtpEmailSender` | always |
-| [minio](../../docs/infra/reference/minio.md) | `localhost:29000`, console `:9001` | `StorageGateway`, AWS SDK | always |
-| [minio-init](../../docs/infra/reference/minio.md) | — | nothing; creates buckets and exits | always |
-| [loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md) | `localhost:23100` | `LokiLogReader`, when `LOKI_URL` is set | `observability` |
-| [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) | `localhost:12345` | nothing — it reads, it is not called | `observability` |
-| [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md) | `localhost:28123`, native `:9002` | the worker's projector, when `CLICKHOUSE_URL` is set | `analytics` |
+| Service | From the host | Spoken by |
+|---|---|---|
+| [postgres](../../docs/infra/reference/postgres.md) | `localhost:25432` | `drizzle-orm` + `pg` |
+| [redis](../../docs/infra/reference/redis.md) | `localhost:26379` | `CacheStore`, `QueuePublisher`, BullMQ |
+| [mailpit](../../docs/infra/reference/mailpit.md) | `localhost:21025`, UI `:28025` | `SmtpEmailSender` |
+| [minio](../../docs/infra/reference/minio.md) | `localhost:29000`, console `:29001` | `StorageGateway`, AWS SDK |
+| [minio-init](../../docs/infra/reference/minio.md) | — | nothing; creates the bucket and exits |
 
-Three of those rows are worth a sentence, because each looks like a mistake:
+Two of those rows are worth a sentence, because each looks like a mistake:
 
-- **Two Redis containers**, and they differ only in the host port — a cache you can flush at any
-  moment and a queue whose loss is data loss have opposite operational rules. [Data and
+- **One Redis for the cache and the queue.** A cache you can flush and a queue whose loss is data
+  loss have opposite rules. The queue's rules win: `noeviction` and durable AOF, with a TTL on every
+  cache key. The two URLs stay separate, so splitting later is an `.env` change —
+  [split-redis](../../docs/scale/split-redis.md). [Data and
   scale](../../docs/opinions/data-and-scale.md) is why.
-- **`minio-init` reads `exited (0)`, and that is success.** It is a one-shot that creates both
-  buckets; without it the first upload fails with `NoSuchBucket` and everyone goes looking for a
-  code bug.
-- **Nothing dials Alloy.** It reads the Docker socket and `logs/`, so the log platform is swappable
-  by deleting a container rather than by editing application code.
-
-**Starting a container and feeding it are separate switches.** `pnpm infra:up:analytics` runs
-ClickHouse; `CLICKHOUSE_URL` in `.env` is what makes the application build a projector. A folder in
-`packages/infrastructure/src/` means the seam is implemented, not that the store is running.
+- **`minio-init` reads `exited (0)`, and that is success.** It is a one-shot that creates the
+  `ratchet` bucket; without it the first upload fails with `NoSuchBucket` and everyone goes looking
+  for a code bug.
 
 ---
 
 ## Running it
 
 ```bash
-pnpm infra:up              # the four stores + observability     ← the normal command
-pnpm infra:core            # the four stores only
-pnpm infra:up:analytics    # the above, plus ClickHouse
+pnpm infra:up              # all five services   ← the normal command
+pnpm infra:core            # the same thing — kept as an alias
 pnpm infra:down            # stop everything, keep volumes
 pnpm infra:reset           # stop everything, destroy volumes
 ```
 
-`down`, `reset` and `logs` pass `--profile "*"`, because compose only acts on profiles it was
-given — without it a reset leaves ClickHouse running.
+There are no profiles. `down`, `reset` and `logs` still pass `--profile "*"`, so a profiled service
+added later is not left running by a reset.
 
 ```bash
 docker compose -f infra/docker-compose.yml ps
 ```
 
-Seven `healthy`, `minio-init` `exited (0)`, no `clickhouse`. What to do when that is not what you
+`postgres`, `redis` and `mailpit` `healthy`, `minio` `running`, `minio-init` `exited (0)`. What to do when that is not what you
 see is [`docs/infra/`](../../docs/infra/index.md#checking-the-whole-stack).
 
 ---
@@ -119,10 +107,11 @@ see is [`docs/infra/`](../../docs/infra/index.md#checking-the-whole-stack).
 
 - [`docs/infra/`](../../docs/infra/index.md) — the stack reference: how the services reach each
   other, what flows where, and the per-file pages this page links to.
-  [deployment](../../docs/infra/deployment.md) is the same nine services on a rented box.
+  [deployment](../../docs/infra/deployment.md) is the same services on a rented box.
 - [Build order · 11 · Local Infrastructure](../../docs/setup/11-local-infrastructure.md) — how it
   was built, and why each choice was made.
 - [`@loadbearing/infrastructure`](../../packages/infrastructure/docs/index.md) — the adapters that
   dial these ports, one folder per vendor.
-- [Data and scale](../../docs/opinions/data-and-scale.md) — which store owns what, and why
-  ClickHouse is written but not started.
+- [Data and scale](../../docs/opinions/data-and-scale.md) — which store owns what.
+- [`docs/scale/`](../../docs/scale/index.md) — porting back what lite cut: a pooler, a replica,
+  split Redis, shard nodes, logs, analytics.

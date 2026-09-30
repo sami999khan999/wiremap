@@ -1,8 +1,8 @@
 # Starter Kit — Build Order
 
-> The reusable foundation every project on this architecture starts from. Postgres + Drizzle, two Redis instances, S3, Better Auth, pgvector behind a swappable seam, and the fifteen-package layout from the architecture docs — with **no product features in it**.
+> The reusable foundation every project on this architecture starts from. Postgres + Drizzle, one Redis instance under two names, S3, Better Auth, pgvector behind a swappable seam, and the fifteen-package layout from the architecture docs — with **no product features in it**.
 
-**Stack:** pnpm workspaces (no Turborepo) · TanStack Start + oRPC · standalone worker · Postgres 17 + pgvector · Redis (cache + queue, separate) · S3 (MinIO locally) · Better Auth · stdout → Alloy → Loki
+**Stack:** pnpm workspaces (no Turborepo) · TanStack Start + oRPC · standalone worker · Postgres 17 + pgvector · Redis (cache + queue, one instance) · S3 (MinIO locally) · Better Auth · logs to stdout
 **Paradigm:** strictly object-oriented everywhere except React components and hooks.
 
 ---
@@ -13,7 +13,7 @@ Work through them **in order**. Each one ends with a **✅ Gate** — a concrete
 
 Nothing here creates a feature. When you finish [27](27-verification-and-first-feature.md) you have a repo that boots, authenticates, stores files, caches, embeds, enforces permissions, records an audit trail inside the transaction, and is tenant-scoped from the first migration — and contains zero business logic. Feature 01 is then the first thing you write on top.
 
-**Where each fact lives is decided before you start.** [Data and scale](../opinions/data-and-scale.md) settles which store owns which stream, what is derived, and what has to exist from day one — `organization_id`, partitioning, the two Redis instances. Several steps below exist in the shape they do because of it; read it once before [11](11-local-infrastructure.md).
+**Where each fact lives is decided before you start.** [Data and scale](../opinions/data-and-scale.md) settles which store owns which stream, what is derived, and what has to exist from day one — `organization_id`, partitioning, the two Redis URLs. Several steps below exist in the shape they do because of it; read it once before [11](11-local-infrastructure.md).
 
 | Symbol | Meaning |
 |---|---|
@@ -50,7 +50,7 @@ Nothing here creates a feature. When you finish [27](27-verification-and-first-f
 
 | # | File | Delivers |
 |---|---|---|
-| 11 | [Local Infrastructure](11-local-infrastructure.md) | Postgres + pgvector, **two** Redis instances, MinIO and its buckets, and the Loki/Alloy log pipeline |
+| 11 | [Local Infrastructure](11-local-infrastructure.md) | Postgres + pgvector, **one** Redis instance with two URLs, MinIO and its buckets, and Mailpit |
 | 12 | [`@loadbearing/application`](12-application-package.md) | `Principal`, `Authorizer`, **all sixteen ports** — zero framework imports |
 | 13 | [`@loadbearing/infrastructure` — Postgres](13-infrastructure-postgres.md) | Drizzle, tenant-scoped repositories, partitioned migrations, seeds |
 | 14 | [Vector Storage](14-vector-store.md) | `VectorStore` port + `PgVectorStore`, sized so Qdrant is a one-line swap |
@@ -109,7 +109,7 @@ continually — every rule for what to call a thing and where to put it, one pag
 
 ## The fifteen packages, in one paragraph
 
-`core` holds primitives. `observability` holds the diagnostic stream — closed event codes, levels decided by a catalog, structured JSON to stdout and on to Loki, thirty days, lossy by design — kept strictly apart from the audit trail, and nothing in `application` may reach it. `permissions` decides who may do what. `errors` defines how a failure is shaped, serialised, and named — every runtime throws and reconstructs the same class, and it carries no prose, because `content` owns every word a user reads. `contracts` defines what data looks like and what it knows about itself. `application` holds every operation the product can perform plus the abstract ports it needs, with no framework anywhere. `infrastructure` implements every one of those ports against a real system: Postgres and the analytics snapshots in `src/pg/`, S3, the queue, the mail transport, and both Redis connections — the cache one evicts, the queue one must not. `auth` owns identity and turns any credential into a `Principal`. `composition` wires all of it together. `asset` holds every binary the product ships. `content` holds every user-visible string. `api-client` reaches the server, `query` caches what comes back, `ui` renders it, and `feature` assembles those into screens. The apps are thin adapters that read configuration, mount a transport, and compose components.
+`core` holds primitives. `observability` holds the diagnostic stream — closed event codes, levels decided by a catalog, structured JSON to stdout, lossy by design — kept strictly apart from the audit trail, and nothing in `application` may reach it. `permissions` decides who may do what. `errors` defines how a failure is shaped, serialised, and named — every runtime throws and reconstructs the same class, and it carries no prose, because `content` owns every word a user reads. `contracts` defines what data looks like and what it knows about itself. `application` holds every operation the product can perform plus the abstract ports it needs, with no framework anywhere. `infrastructure` implements every one of those ports against a real system: Postgres in `src/pg/`, S3, the queue, the mail transport, the embedding providers, and both Redis connections — one instance in lite, under `noeviction`, because the queue must not lose a job. `auth` owns identity and turns any credential into a `Principal`. `composition` wires all of it together. `asset` holds every binary the product ships. `content` holds every user-visible string. `api-client` reaches the server, `query` caches what comes back, `ui` renders it, and `feature` assembles those into screens. The apps are thin adapters that read configuration, mount a transport, and compose components.
 
 ---
 
@@ -117,11 +117,11 @@ continually — every rule for what to call a thing and where to put it, one pag
 
 All three are called out again where they happen. Read them now so they aren't a surprise.
 
-**1. `packages/infrastructure` holds every adapter, Postgres included.** An earlier draft split them — a `db` package for Postgres, `infrastructure` for the rest — and the split put one seam in two places: `PgVectorStore` on one side, and every remote-store adapter on the other. They were folded together in this direction rather than the other because the name has to stay honest: an S3 client in a package called `db` would be a lie, but Postgres genuinely is infrastructure. The package is organised by vendor — `pg/`, `redis/`, `s3/`, `bullmq/`, `openai/`, `clickhouse/`, `loki/`, `smtp/` — so `rm -r src/clickhouse/` is the complete answer to a swap.
+**1. `packages/infrastructure` holds every adapter, Postgres included.** An earlier draft split them — a `db` package for Postgres, `infrastructure` for the rest — and the split put one seam in two places: `PgVectorStore` on one side, and every remote-store adapter on the other. They were folded together in this direction rather than the other because the name has to stay honest: an S3 client in a package called `db` would be a lie, but Postgres genuinely is infrastructure. The package is organised by vendor — `pg/`, `redis/`, `s3/`, `bullmq/`, `openai/`, `gemini/`, `unified/`, `smtp/` — so `rm -r src/gemini/` is the complete answer to a swap.
 
 **2. `VectorStore` is declared in `application/port/`, not beside its implementation.** The architecture docs put the abstract class in the database package. That works only while the implementation is Postgres. Your requirement is to move to a dedicated vector database later without rewrites, and a use-case cannot depend on an adapter package — so the abstraction has to sit where every other port sits. `PgVectorStore` still lives in `packages/infrastructure/src/pg/repository/`. See [14](14-vector-store.md).
 
-**3. There is no `AnalyticsReader`, and there was.** It was the same shape as departure 2, on the same argument — aggregate reads move to a column store eventually, so build the seam first — and it turned out to be the case where that argument fails. A port nothing calls has no call sites to protect, so the retrofit it was insuring against did not exist, while the interface was a guess maintained across two adapters. It was deleted; `AnalyticsProjector`, the half with a consumer, stayed. See [Data and scale](../opinions/data-and-scale.md) §4.3 and [Simplicity](../opinions/simplicity.md).
+**3. There is no analytics store, and no seam for one.** The big kit kept `AnalyticsProjector`, the half of the analytics port with a consumer, and deleted `AnalyticsReader`, the half nothing called. Lite removes both, with ClickHouse. A cross-tenant aggregate waits for that store rather than being written against Postgres. [Analytics](../scale/analytics.md) brings it back; [Data and scale](../opinions/data-and-scale.md) §4.3 has the argument.
 
 ---
 
@@ -146,20 +146,16 @@ Every package is `@loadbearing/*` so these documents line up with the architectu
 - `noExternal: [/^@loadbearing\//]` in `apps/web/vite.config.ts`
 - the `@loadbearing/*` entries in `noRestrictedImports` in `tooling/eslint-config/src/index.js` and in `tooling/biome-config/src/base.json`
 - `name: ratchet` and the credentials in `infra/docker-compose.yml`
-- the `com.docker.compose.project=ratchet` filter in `upstream:infra/alloy.config.alloy` — it must match the
-  compose project name, or Alloy silently collects nothing
 
-**Then the three defaults that are baked into shipped code rather than into local config**, none of
+**Then the two defaults that are baked into shipped code rather than into local config**, none of
 which a find-and-replace on `@loadbearing/` will reach:
 
 - `advanced.cookiePrefix` in `packages/auth/src/factory/auth.factory.ts` — user-visible in the browser, and
   changing it later invalidates every cookie already issued
 - the `keyPrefix` default in `packages/infrastructure/src/redis/redis.connection.ts` — a stale one is
   a cache that reads nothing, with no error anywhere
-- `CLICKHOUSE_DATABASE` and `CLICKHOUSE_USER` in both `env.ts` schemas — they default to ClickHouse's
-  own `default`, so a real deployment sets them in `.env` either way
 
-All three ship generic on purpose. If you replace them with your own name, they belong on this list
+Both ship generic on purpose. If you replace them with your own name, they belong on this list
 for whoever renames next.
 
 Nothing else. Do it before the first commit, not after.

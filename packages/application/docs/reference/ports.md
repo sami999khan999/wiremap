@@ -1,6 +1,6 @@
 ---
 title: The ports
-description: One section per port whose reasoning outgrew a two-line comment — why three of them carry no Principal, why the analytics pair is split in two, and what each abstract method is refusing to offer.
+description: One section per port whose reasoning outgrew a two-line comment — why three of them carry no Principal, and what each abstract method is refusing to offer.
 ---
 
 # The ports
@@ -10,8 +10,7 @@ page carries the arguments; the port files themselves state constraints and stop
 
 ## Three ports carry no `Principal`, and that is the design
 
-`MaintenanceGateway`, `PartitionArchiveGateway`, `ActivityReplayReader` and `OutboxGateway` take no
-actor on any method. That is not a hole in the authorization story.
+`MaintenanceGateway`, `PartitionArchiveGateway` and `OutboxGateway` take no actor on any method. That is not a hole in the authorization story.
 
 Every *other* port reads or writes a tenant's rows, so `Authorizer.assert()` inside a use-case is
 the gate. Nothing these three touch belongs to a tenant: **an expired session is expired for
@@ -30,7 +29,9 @@ that table's own schema comment documents. This sweep is what makes that trade h
 `ensureMonthlyPartitions` runs several months ahead on purpose. **A partitioned table with no
 partition for the current date rejects every insert**, so the failure mode of running exactly one
 month ahead is a total write outage at midnight on the first. It returns the partitions it created,
-empty when they all already existed.
+empty when they all already existed. `ensureMonthlyPartitionsFor` does the same for a page of
+tenants in one read and one transaction, and `monthlyPartitionsAfter` is the runway check: it asks
+what *exists*, because a run that created nothing is healthy or starved alike.
 
 **The table is a `PartitionedTableName`, not a `string`, and that is not style.** Postgres accepts
 no bind parameters in DDL — not for the table, not even for the range bounds — so the adapter builds
@@ -39,51 +40,31 @@ standing between that and a table name arriving from somewhere else. The list is
 maintenance schedule loops, so a table partitioned by a later migration is covered by adding one
 entry rather than by editing the worker.
 
-`dropMonthlyPartitionsBefore` is the retention half, and it drops whole partitions rather than
-issuing a `DELETE`: dropping a partition is a catalog edit, while deleting a month of rows leaves a
-vacuum problem behind. It reads the children from the catalog instead of computing names from a date
-range, because a month created by hand is still a partition and still has to be found — and it
-leaves alone any child whose name it cannot parse, since this loop is holding a `drop table` and
-"I could not read the name" is not evidence the rows are expendable.
+**There is no method that drops a month.** Lite keeps every partition. The one drop is
+`dropTenantPartitions`, the whole tenant level for one organization, which only a tenant delete
+calls. `partitionsBefore` lists the months that delete archives first. Dropping months by age comes
+back with its archive — see [`docs/scale/retention.md`](../../../../docs/scale/retention.md).
 
 ### `PartitionArchiveGateway`
 
-Cold storage for **every** partitioned table, which is what makes retention stop meaning deletion.
-It is also the fourth prerequisite for adopting a derived analytics store, and the one the
-deployment doc omits: without a writer for `partition_archive`, replay past the Postgres retention
-window does not exist — which makes "no backups, because replay works" false rather than merely
-optimistic.
+Cold storage for a deleted tenant's rows, and the tenant export. Lite archives only on a delete,
+so the delete is recoverable for as long as the sweep waits.
 
 **Detach, upload, record, verify, drop — in that order, and the order is the point.** Dropping
 before verifying is unrecoverable loss. The unit is the tenant-month child, so `archive(table,
-period)` runs that sequence once per tenant that held rows in the month. The period is an ISO
-`YYYY-MM-DD` string naming the first of it: a third of the primary key of `partition_archive`, and
-the same string a replay is asked for.
+period, organizationId)` runs that sequence once per tenant-month. The recorded period is an ISO
+`YYYY-MM-DD` string naming the first of the month, a third of the primary key of
+`partition_archive`.
 
-`restore()` is on the port for one reason: **an archive nobody has restored is a deletion with
-extra steps.** It reads into a scratch table, never the live parent, because a re-attached month
-puts archived rows back in the hot database and leaves the retention job arguing with itself.
+`markTenantDeleted` stamps the tombstone the recovery window is measured from, and
+`sweepDeleted(before)` forgets every tenant deleted before it. `sweep()` removes one tenant's
+objects, then its rows: a crash leaves a row pointing at a deleted object, which is re-runnable.
+Objects outlive the tenant by design — the index carries no foreign key to `organizations`, so
+nothing cascades — and a GDPR-shaped hole created by cold storage is closed by cold storage.
 
-`sweep()` is here because objects outlive the tenant by design — the index carries no foreign key
-to `organizations`, so nothing cascades — and a GDPR-shaped hole created by cold storage is closed
-by cold storage. The long form is
+`exportTenant` reads live rows and never detaches: an export must not take the tenant's data
+offline while it runs. The long form is
 [`infrastructure/docs/reference/cold-storage.md`](../../../infrastructure/docs/reference/cold-storage.md).
-
-### `ActivityReplayReader`
-
-A separate port from `ActivityLogger` on purpose. `ActivityLogger` writes inside a transaction and
-is reachable from every use-case; this reads in bulk, carries no `Principal`, and is reachable only
-from the worker. **Merging them would put a cross-tenant scan on the port every use-case already
-holds.**
-
-`since()` is keyset pagination ordered by `(occurredAt, id)`, and returns fewer than `limit` rows
-exactly when it has caught up — which is what the consumer stops on. The cursor carries both halves
-or neither: **a cursor with only a timestamp cannot separate two rows written in the same
-microsecond**, so it either drops one or replays it forever.
-
-`ActivityRow` is deliberately not the domain event. A replay reads rows written long before the
-current event definitions existed. `subjectId` is lifted out of the payload bag because the derived
-store orders on it, and JSON extraction in an `ORDER BY` is what makes that slow.
 
 ## `ActivityLogger` stamps its own time
 
@@ -92,68 +73,13 @@ and reads the organization off `actor`. **A caller that could pass its own times
 that can backdate an audit row.** `action` is a dotted past-tense string mirroring the permission
 vocabulary — `task.reactivated`, `rbac.role.granted`.
 
-## The analytics pair is two ports, not one
+## The two shard ports, and why there is no third
 
-`AnalyticsProjector` is the write side of the derived store and **the only thing allowed to write to
-it**. That restriction is the whole design: the moment a use-case writes there directly, or a
-hand-run backfill invents a row, the store stops being rebuildable and has become a source of truth
-nobody decided to create.
-
-It has no read counterpart. One shipped — `AnalyticsReader`, with `goalRiskScores` and
-`reliabilityTrend` over two rollup tables in each store — and nothing ever called it, so the port,
-both implementations and the `ANALYTICS_DRIVER` flag that chose between them were deleted. When a
-dashboard needs one it stays a **separate** port for the reason the split existed: a reader is
-reachable from a request path and this is not, and a single port with both would put `project()` on
-the object a dashboard query holds.
-
-- `checkpoint()` reads where the last run stopped **from the derived store itself**, never from
-  somewhere beside it. A checkpoint stored elsewhere can disagree with what actually landed, and the
-  disagreement is silent; this cannot be wrong about its own rows.
-- `project()` is idempotent by construction — rows are keyed on the activity id, so a redelivered
-  batch overwrites rather than duplicates.
-- `dailyCounts()` is the derived half of the daily reconciliation, in the same shape the
-  authoritative half answers in, so the comparison is a diff rather than a query across two stores.
-  The realistic failure it catches is not an outage: it is a consumer that died quietly on a Tuesday
-  and was noticed a quarter later.
-
-Days are ISO `YYYY-MM-DD` strings, not `Date`s, because Postgres `date_trunc` and ClickHouse
-`toYYYYMM` return different shapes and each adapter normalises here. Two decisions carry over to a
-future reader: it stays read-only by construction, since a write method makes a derived store
-authoritative; and any permitted scope arrives as a resolved parameter, because an analytics store
-has no `CapabilitySet` and no join back to goal membership, least of all a remote one.
-
-## `ColdArchiveReader` has two methods for two callers, and one of them is a hole waiting
-
-`batches(entry, size)` reads a whole tenant-month a batch at a time, verified against the recorded
-checksum and count **before** the first batch is handed out. Its caller is the re-projection —
-machinery, reading everything. It was `rows(entry)` until `CR.16`, which returned the month whole:
-a large one OOMed the worker.
-
-`page(entry, userId, cursor, limit)` is the user-facing one, and the `userId` is why it is
-separate. **The object on disk holds the whole tenant.** There is no per-user object and no
-server-side filter; the filter is a line in the adapter. So the rule
-`ListNotificationsUseCase` already states — "there is no 'list someone else's': the permission
-grants you *your* notifications, and a userId input would be the hole" — is not a convention here,
-it is the only thing between one person and their colleagues' notifications. The use-case takes
-the tenant and the user off the principal, and a spec asserts both.
-
-The cursor is **opaque in the port** and a line ordinal inside the adapter, exactly as
-`KeysetCursor` is opaque and a `(timestamp, id)` pair inside `PgNotificationRepository`. Two
-cursor shapes, two encoders, neither known to the domain — widening one to cover both would make
-both harder to read for no caller's benefit.
-
-**The cost is stated rather than hidden:** every page turn reads and gunzips the whole
-tenant-month to serve one user's slice. At the ~8 MB a four-thousand-user month sits at that is
-fine; the plan names p95 over 500 ms as the trigger to give `notifications` a per-user object
-layout under the same prefix.
-
-## The three shard ports, and why there is no fourth
-
-`ShardingStrategy.keyOf(principal)` decides **what** a request is placed by, `ShardResolver`
-decides **where** that key lives, and `ShardAssignmentRepository` is the directory both read from.
-Three responsibilities, three ports, and the split is not ceremony: the first is the fork's swap
-point, the second is on the path of every routed query and therefore cached, and the third is a
-platform seam with no principal — like `MaintenanceGateway`, and for the same reason.
+`ShardingStrategy.keyOf(principal)` decides **what** a request is placed by, and `ShardResolver`
+decides **where** that key lives. Two responsibilities, two ports, and the split is not ceremony:
+the first is the fork's swap point, and the second is on the path of every routed query and
+therefore cached. The directory both read is the catalog table `shard_assignments`, written by the
+founder when a tenant is created.
 
 There is no `ShardPlacementPolicy`. Choosing which node a *new* tenant lands on is a decision
 nobody has to make while there is one node, and an interface with one implementation and no
@@ -165,24 +91,10 @@ query. A strategy called per query is one that has to be fast; called once, it c
 it needs.
 
 `resolve` returns a physical node index, not a virtual shard: decision D28 removed the level
-between the organization and the node, so the organization *is* the shard. A key with no
-directory row resolves to node 0, which is exactly what an unsharded deployment is — so the
-directory being empty is a working state rather than a broken one.
-
-## `LogReader` and the four labels
-
-`LogFilter` is closed on purpose. **The four labels are the only fields the log platform indexes**;
-everything else lives in the line body and is filtered after the selector has narrowed the streams.
-A `userId` promoted to a label creates one stream per user and is the single most common way a Loki
-deployment falls over — so the port does not offer the shape. `contains` is matched against the line
-body, and is where a trace id, a correlation id or an organization id belongs.
-
-The port is read-only and deliberately not on the write path: `JsonLogger` writes to stdout and has
-never heard of a log platform, which is what keeps it a Tier 0 dependency and the platform swap a
-config change. It exists for the operator surface — **the one reader that knows what an organization
-is**, which is the one thing a generic log console cannot know. It is absent from a container built
-without a log platform configured, because a reader that silently returns nothing is worse than one
-that is honestly not there.
+between the organization and the node, so the organization *is* the shard. `placementOf` returns
+the node and whether the tenant is frozen, in one cache entry, because `PgUnitOfWork.run` reads the
+freeze on every write. A key with no directory row is refused: `PgShardResolver` emits
+`shard.resolution.failed` and throws, since guessing node 0 would be wrong the day after a split.
 
 ## `EmailSender` has exactly one method
 
@@ -227,8 +139,7 @@ outbox table written in the same transaction is the only shape with neither hole
 already joins the ambient transaction — `PgActivityLogger` is the worked example.
 
 The audit row and the outbox row sit side by side in the same `run`, and they are not the same thing:
-**audit is the human fact, the outbox is the integration fact.** One has a retention policy and a
-reader in the UI; the other has a schema, a `published_at`, and subscribers.
+**audit is the human fact, the outbox is the integration fact.** One has a reader in the UI; the other has a schema, a `published_at`, and subscribers.
 
 ## `OutboxGateway` hands out claimed work, and marks it only on success
 
@@ -386,8 +297,11 @@ ambient one.
 | Port | The decision |
 |---|---|
 | `CacheStore.deletePrefix` | Invalidating a whole subject belongs here rather than at the call site: enumerating keys by hand pushes Redis semantics into the domain |
-| `CacheStore.setIfAbsent` | Returns whether it wrote, which is what makes it an idempotency claim rather than a write. One `SET … EX … NX`, evaluated on the server, so two replicas racing a key cannot both be told they won it. The send dedupe is its first caller — see [messaging](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/application/docs/reference/messaging.md) |
-| `EmbeddingProvider.embed` | Batched by construction — one round trip per call, never one per text. A single-string signature is the shape that turns a re-index into a thousand requests |
+| `CacheStore.setIfAbsent` | Returns whether it wrote, which is what makes it an idempotency claim rather than a write. One `SET … EX … NX`, evaluated on the server, so two replicas racing a key cannot both be told they won it. Nothing in lite calls it; the big kit's message send dedupe did — see [`docs/scale/messaging.md`](../../../../docs/scale/messaging.md) |
+| `EmbeddingProvider.embed` | Batched by construction — one round trip per call, never one per text. A single-string signature is the shape that turns a re-index into a thousand requests. The optional `purpose` says whether the text is a `document` or a `query`: Gemini embeds them differently, and OpenAI ignores it |
+| `EmbeddingProvider.model` | Recorded on every chunk it embeds, so vectors from two models are never compared |
 | `QueuePublisher` | The deduplication id is a domain rule ("enqueue OCR for this receipt, once"), not queue configuration |
 | `UnitOfWork` | The implementation must genuinely enrol the repositories running inside `work()`; one that does not is worse than none |
-| `VectorStore.search` | `goalIds` is required so the permission filter runs on the **input** set. Filtering results means the model already saw what the actor cannot |
+| `VectorStore.search` | `goalIds` is required so the permission filter runs on the **input** set. Filtering results means the model already saw what the actor cannot. It takes a `model` too, and compares only chunks that model wrote |
+| `VectorStore.searchText` | The same shape and scope rule, ranked by Postgres full-text search over the chunk text. What `EMBEDDING_PROVIDER=none` searches with, and it calls nobody |
+| `VectorStore.stale`, `saveEmbeddings` | The re-embed pass: chunks whose vector is missing or another model's, then new vectors for them with the text untouched. `ReembedChunksUseCase` is the caller |

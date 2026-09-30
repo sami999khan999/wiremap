@@ -15,7 +15,7 @@ export abstract class Logger {
   public threshold(): LogLevel;
 }
 
-export class JsonLogger extends Logger {}    // stdout → Alloy → Loki, the default
+export class JsonLogger extends Logger {}    // JSON lines to stdout, the default
 export class SilentLogger extends Logger {}  // TestContainer, and logging genuinely off
 ```
 

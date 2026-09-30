@@ -1,6 +1,6 @@
 ---
 title: "@loadbearing/observability"
-description: One diagnostic stream — closed event codes, levels decided by a catalog, structured fields to stdout and on to Loki. The other half of the split that keeps errors free of prose.
+description: One diagnostic stream — closed event codes, levels decided by a catalog, structured fields as JSON lines to stdout. The other half of the split that keeps errors free of prose.
 ---
 
 # `@loadbearing/observability`
@@ -11,14 +11,15 @@ for loss — and the fastest way to ruin both is to write them through one objec
 
 | | `ActivityLogger` | `Logger` |
 | --- | --- | --- |
-| **Sink** | Postgres, inside the transaction | stdout → Alloy → Loki |
+| **Sink** | Postgres, inside the transaction | stdout, one JSON line per event |
 | **Audience** | users, compliance | operators |
-| **Retention** | 12–24 months of detail, partitioned monthly | 30 days |
+| **Retention** | partitioned monthly, kept until the tenant is deleted | whatever your host keeps |
 | **Written by** | use-cases | adapters and edges |
 | **Losing a line** | a bug | fine |
 
-The other two streams are domain data and analytics; all four and the rule that separates them are
-in [Data and scale](../../../docs/opinions/data-and-scale.md).
+The other two streams are domain data and analytics, and lite runs no analytics store. All four,
+and the rule that separates them, are in [Data and scale](../../../docs/opinions/data-and-scale.md).
+Ageing old activity out is [`docs/scale/retention.md`](../../../docs/scale/retention.md).
 
 | | |
 | --- | --- |
@@ -53,7 +54,7 @@ packages/observability/
 │       └── redactor.ts          → Redactor
 └── tests/
     ├── primitive/ · catalog/
-    └── logger/  ← incl. wire-contract.spec.ts, the shape Alloy parses
+    └── logger/  ← incl. wire-contract.spec.ts, the shape a log shipper parses
 ```
 
 ---
@@ -98,14 +99,17 @@ A typo is a compile error. So is a field the event does not declare. See
 ## Reading the stream
 
 One JSON object per line, fields flat at the top level. A nested `fields` object would need a parsing
-rule per deployment; flat keys drop straight into Loki's `json` stage with no configuration.
+rule per deployment; flat keys drop straight into any JSON log pipeline with no configuration.
+
+Lite writes these lines to stdout and collects nothing. Bringing back the big kit's Alloy → Loki
+pipeline is [`docs/scale/logs.md`](../../../docs/scale/logs.md), and the app does not change.
 
 ```json
 {"level":"error","time":"2026-01-01T00:00:00.000Z","event":"error.raised","traceId":"0195…","code":"INTERNAL","cause":"Error: relation \"users\" does not exist","stack":"…"}
 ```
 
-**Four fields on that line are eligible to become labels**, and the pipeline reads all four out of
-the body: `level`, `event`, and the `app` / `env` that `Container` binds onto every line. Everything
+**Four fields on that line are eligible to become labels**, and a pipeline such as Loki's reads all
+four out of the body: `level`, `event`, and the `app` / `env` that `Container` binds onto every line. Everything
 else — `traceId`, `code`, and any id a slice adds — stays in the body and is reached with `| json`.
 
 Deriving `app` from a container name instead would give you pod names on Kubernetes and nothing at
@@ -113,7 +117,7 @@ all for a host-run `pnpm dev`. The application knows which application it is.
 
 `traceId` is bound by `child()` at the request or job boundary, so every line for one request shares
 it, and the same id is stamped onto the `ErrorEnvelope` the client receives. A user who says "it
-broke" can read back a string that finds the exact line:
+broke" can read back a string that finds the exact line. With Loki ported back:
 
 ```logql
 {app="web", level="error"} | json | traceId="0195…"
@@ -122,9 +126,9 @@ broke" can read back a string that finds the exact line:
 See [correlation](reference/correlation.md).
 
 > [!WARNING]
-> **Loki indexes labels, not fields.** The selector `{app="web", level="error"}` narrows the streams;
+> **A log store like Loki indexes labels, not fields.** The selector `{app="web", level="error"}` narrows the streams;
 > the `| json` stage parses the body afterwards. Making `traceId` a label to "speed that up" creates
-> one stream per request and is the single most common way a Loki deployment fails.
+> one stream per request and is the most common way such a deployment fails.
 >
 > The label set is closed: `app`, `env`, `level`, `event_code`. See
 > [Data and scale](../../../docs/opinions/data-and-scale.md).
@@ -154,8 +158,8 @@ allowed to call `console`, precisely so nothing else has to.
 frozen timestamp and a deterministic sampling draw — no stdout capture, no fake timers. `TestContainer`
 wires `SilentLogger`.
 
-**`wire-contract.spec.ts` is the one test that exists for something outside the workspace.** The
-Alloy pipeline in `upstream:infra/alloy.config.alloy` addresses `level` and `event` by bare name at the top
-level of each line, and no compiler spans both files. That spec pins the shape: rename the field,
+**`wire-contract.spec.ts` is the one test that exists for something outside the workspace.** Lite
+ships no pipeline, but the big kit's Alloy config (`upstream:infra/alloy.config.alloy`) addresses `level` and `event` by bare name at the top
+level of each line, and no compiler would span both files once it is ported back. That spec pins the shape: rename the field,
 nest it under `fields`, or turn on pretty-printing, and it fails here rather than producing
 unlabelled streams nobody notices until an incident.

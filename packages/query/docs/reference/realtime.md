@@ -11,26 +11,14 @@ invalidation. That is the whole of the client half, and each of the three nouns 
 ## Refetch, never patch from a payload
 
 A frame says *what changed*, not what it changed to. `RealtimeRoutes` maps an event name to the
-query keys to refetch and nothing else. A frame's `payload` carries ids, and ids only narrow
-**which** keys: `conversationId` turns "every conversation" into "the lists and this one", and
-`messageId` lets the client drop the second copy of a send.
+query keys to refetch and nothing else. Lite has two names, `member.changed` and
+`notification.created`. A frame's `payload` may carry ids that narrow **which** keys, never data to
+render; the two routes today ignore it and refetch their whole namespace.
 
 The alternative is tempting and wrong. A frame carrying enough to patch the cache carries a copy of
 the server's shaping rules: which fields the list returns, how it sorts, what the DTO omits. That
 copy drifts, and it drifts silently, because a patched cache looks right until the next refetch
 replaces it with something different.
-
-**Splicing a page the server just returned is not patching.** A send answers with
-`MessagingQueries.refreshNewest`: fetch the newest page once and splice it into page 0, replacing
-an optimistic row by its `clientId`. The server shaped every row in it. If the fresh page does not
-overlap the cached one, more than a page arrived and the cache starts again from the fresh page.
-What it replaces is refetching every loaded page, for every member, on every message.
-
-**And it runs at most once a second**, like `RealtimeRefetch` does for everything else: single
-flight, one trailing run, and the busy window held for the rest of the second. Measured in two
-Chrome tabs (`CP1.9`), twenty sends 110 ms apart cost each tab twenty `message.list` calls without
-the floor — each fetch finished just before the next frame, so the single flight never folded one
-in — and two with it, every message rendered. The first message of a burst still appears at once.
 
 It also means a frame needs no permission check on arrival. The refetch it triggers goes through the
 same procedure, the same `principalMiddleware` and the same permission as any other read, so a frame
@@ -39,12 +27,9 @@ about something you may not see produces a request that returns what you may see
 ## A burst is two refetches, not twenty
 
 `RealtimeRefetch` is single-flight per key with one trailing run, at least a second apart, and only
-for queries a screen is showing. A busy room sends frames faster than a page loads; the first frame
+for queries a screen is showing. A busy tenant sends frames faster than a page loads; the first frame
 refetches now, every frame that lands meanwhile collapses into one more refetch after it. One
 instance per stream, disposed with it.
-
-Every send arrives twice — the request's fast-path frame and the outbox's durable one — and
-`useConversationStream` remembers the last 256 `name:messageId` keys, so the second is dropped.
 
 ## The table is total, and the resync sweep is derived from it
 
@@ -88,7 +73,7 @@ holds a request open for the life of a render that has already finished.
 that retried itself would submit twice. The plugin only reconnects on a throw, and a stream that
 reaches its maximum age ends **cleanly**, so a tab left open went silent after thirty minutes.
 
-`RealtimeStream.run` is the one loop both streams use:
+`RealtimeStream.run` is the reconnect loop the stream uses:
 
 - **A clean end** — the server's maximum age, or its shutdown drain — reopens within a second,
   sending `lastEventId`, so the server replays what came after it, or answers `resync` when its log
@@ -104,9 +89,9 @@ same instant, which is a load test nobody scheduled.
 A stream that cannot open is not a rendered error. `connected` goes false, the loop keeps trying,
 and the tab keeps working on `staleTime`, which is exactly how it worked before any of this existed.
 
-## The streams are held by their own process
+## The stream is held by its own process
 
-Both streams are `realtime.*` procedures, and `ApiClient` sends that namespace to `/api/realtime`
+The stream is a `realtime.*` procedure, and `ApiClient` sends that namespace to `/api/realtime`
 — the stream process, `apps/realtime`, behind the web app's own origin. Nothing in this package
-knows that: the hooks call `client.realtime.stream` and `client.realtime.conversation`, and where
+knows that: the provider calls `client.realtime.stream`, and where
 the request goes is the transport's business. See `apps/realtime/docs/index.md`.

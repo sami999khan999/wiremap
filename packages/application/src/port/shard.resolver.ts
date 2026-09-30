@@ -18,7 +18,7 @@ export abstract class ShardResolver {
   // A key with no row is node 0, which is what an unsharded deployment is.
   public abstract resolve(key: ShardKey): Promise<number>;
 
-  // Called by the move job, and by nothing else. Without it a moved tenant keeps
-  // reading the node it left for as long as the cache holds.
+  // For a tenant move, which lite does not run: without it a moved tenant keeps reading
+  // the node it left for as long as the cache holds. See docs/scale/shard-nodes.md.
   public abstract invalidate(key: ShardKey): Promise<void>;
 }

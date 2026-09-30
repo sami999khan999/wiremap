@@ -83,8 +83,8 @@ registered and `close()` on a worker that never started is not the same as a dra
 Top-level `await` works here because the package is ESM and the tsconfig targets ES2024 under
 NodeNext resolution.
 
-## What `consumers` on the stopped line means
+## What `consumers` on the started line means
 
-`WorkerBootstrap` reports `consumers: this.workers.length`. The projection consumer is counted when
-it started and absent when it did not, which is **the only difference on the wire** between a worker
-running the analytics pipeline and one built without a store to project into.
+`WorkerBootstrap` reports `consumers: this.workers.length` on `process.started`. Every consumer
+starts unconditionally, so the number is five on every boot. It changes only when the consumer list
+in `WorkerBootstrap.start()` does.

@@ -1,14 +1,13 @@
 ---
 title: infra
-description: The local stack — every file, every service, and how they reach each other. Nine containers, two profiles, one bridge network.
+description: The local stack — every file, every service, and how they reach each other. Five containers, no profiles, one bridge network.
 ---
 
 # `infra/`
 
 > The files documented here live in [`infra/`](../../infra/docs/index.md) at the repository root —
-> `docker-compose.yml`, the two init scripts, and the Loki/Alloy configs. The documentation sits
-> under `docs/` with every other tree; the configuration stays next to the compose file that
-> mounts it.
+> `docker-compose.yml` and the Postgres init script. The documentation sits under `docs/` with
+> every other tree; the configuration stays next to the compose file that mounts it.
 
 Everything the application talks to, as containers. Nothing here is imported by any package — these
 are [Tier 0](../opinions/dependencies.md) dependencies, provided by the deployment and
@@ -18,8 +17,8 @@ reached over a protocol the code was going to speak anyway.
 explains *why* each choice was made. **This is the reference:** what each file does, how each service
 works, and how they connect.
 
-**Running it somewhere other than a laptop is [deployment](deployment.md)** — the same nine services
-on a VPS, and the order to move them to managed services in when one box stops fitting.
+**Running it somewhere other than a laptop is [deployment](deployment.md)** — the same services on a
+VPS, and the order to move them to managed services in when one box stops fitting.
 
 ---
 
@@ -29,83 +28,55 @@ on a VPS, and the order to move them to managed services in when one box stops f
 |---|---|---|
 | `docker-compose.yml` | `docker compose` | [compose](reference/compose.md) |
 | `postgres.init.sql` | Postgres, on first boot only | [postgres](reference/postgres.md) |
-| *(no file)* | pgBouncer, from compose env | [pgbouncer](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/pgbouncer.md) |
-| `loki.config.yml` | Loki, at startup | [loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md) |
-| `alloy.config.alloy` | Alloy, at startup | [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
-| `logs/` | Alloy, tailed continuously | [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
 | `.env` | `docker compose` | [compose](reference/compose.md#host-ports) |
 
-Redis and Mailpit have no config file — every setting is a command-line flag or a default. See
-[redis](reference/redis.md) and [mailpit](reference/mailpit.md).
+Redis, Mailpit and MinIO have no config file — every setting is a command-line flag, an
+environment variable or a default. See [redis](reference/redis.md), [mailpit](reference/mailpit.md)
+and [minio](reference/minio.md).
 
 **The config files are flat on purpose.** Each is mounted as a single file, so a directory per
 service would be a path holding one thing. `docs/` is nested because there is genuinely a page's worth
 to say about each — which is what earns structure ([Simplicity](../opinions/simplicity.md)).
 
 This is the opposite answer from the one `packages/infrastructure/src/` gives, and the difference is
-what each directory holds. There, ClickHouse and Loki each got a folder, because each is several
-TypeScript modules and the folder is the unit of "what does this package depend on". Here, each is
-one mounted file — and a `clickhouse/` folder holding that one file would state nothing
-the ClickHouse schema does not. **Structure is earned by contents, not by symmetry with another
-directory.**
+what each directory holds. There, each vendor gets a folder, because each is several TypeScript
+modules and the folder is the unit of "what does this package depend on". Here, each service is at
+most one mounted file. **Structure is earned by contents, not by symmetry with another directory.**
 
 ---
 
 ## How the services connect
 
 Compose creates one bridge network, `lite_default`, and joins every container to it. Inside that
-network **a container reaches another by its service name** — Docker's embedded DNS resolves `loki`,
-`minio`, `postgres` and so on to the container's address.
+network **a container reaches another by its service name** — Docker's embedded DNS resolves `minio`,
+`postgres` and so on to the container's address.
 
 ```
-                    ┌──────────────────────────── host ────────────────────────────┐
-                    │                                                              │
-   pnpm dev ────────┼──→ :5432 postgres      :6379 redis-cache   :6380 redis-queue │
-   (apps on host)   │    :9000 minio (S3)    :3100 loki (query API)                │
-                    │                                                              │
-                    └──────────────────────────────────────────────────────────────┘
+                    ┌──────────────────────────── host ─────────────────────────────┐
+                    │                                                               │
+   pnpm dev ────────┼──→ :25432 postgres   :26379 redis   :29000 minio (S3)         │
+   (apps on host)   │    :21025 mailpit (SMTP)                                      │
+                    │                                                               │
+                    └───────────────────────────────────────────────────────────────┘
                                               │
-   ══════════════════════════ lite_default (bridge) ══════════════════════════════════
+   ══════════════════════════ lite_default (bridge) ═══════════════════════════════════
 
-     ┌──────────┐   ┌─────────────┐  ┌─────────────┐   ┌───────┐
-     │ postgres │   │ redis-cache │  │ redis-queue │   │ minio │
-     └────┬─────┘   └─────────────┘  └─────────────┘   └───┬───┘
-          │                                                │
-          │                                      chunks +  │  bucket `loki`
-          │                                       index    │
-          │                                                │
-                            ┌──────┐  ────────────────────────┘
-     query_range ──────────→│ loki │
-            :3100           └──▲───┘
-                             │ push  loki:3100/loki/api/v1/push
-                          ┌──┴────┐
-                          │ alloy │──── reads /var/run/docker.sock (every container's stdout)
-                          └───────┘──── tails /var/log/app/*.log  (= infra/logs/)
+     ┌──────────┐   ┌───────┐   ┌─────────┐   ┌───────┐ ←── mc mb ── ┌────────────┐
+     │ postgres │   │ redis │   │ mailpit │   │ minio │              │ minio-init │
+     └──────────┘   └───────┘   └─────────┘   └───────┘              └────────────┘
 ```
 
-**Four things to take from that picture.**
+**Three things to take from that picture.**
 
-**Nothing connects to the applications.** Traffic runs the other way: the apps dial Postgres, Redis
-and MinIO from the host, and Alloy *reads* their output rather than being told anything. That is what
-makes the log platform swappable — see [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md).
+**Nothing connects to the applications.** Traffic runs one way: the apps dial Postgres, Redis,
+Mailpit and MinIO from the host.
 
-**MinIO has two unrelated consumers.** The application stores uploads in the `ratchet` bucket; Loki
-stores its chunks and index in the `loki` bucket. They share a server and nothing else
-([minio](reference/minio.md)).
+**Only `minio-init` talks to another container.** It dials `minio:9000` to create the bucket, then
+exits. No other service depends on another.
 
-**No container in this stack reads the logs back, and none will.** Loki is storage plus a
-`query_range` HTTP API; the reader is application code —
-[`LokiLogReader`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/loki.md), built when `LOKI_URL` is
-set — because the surface that matters is the super-admin dashboard, which already knows what an
-organization is. Grafana used to fill this slot and was removed deliberately: two consoles for one
-operator, and the query that mattered was the one it could not express
-([compose](reference/compose.md#why-there-is-no-log-ui)).
-
-`docker compose logs` and curl against the API stay the break-glass path regardless
-([loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md)) — a log query that needs the application running is no use during the
-incident where the application is down.
-
-**Only Alloy touches the Docker socket**, read-only, and only to read container stdout.
+**Logs go to stdout and nowhere else.** Each app writes JSON lines to stdout. No container collects
+them. `docker compose logs` covers the containers; your terminal covers the apps. Collecting and
+searching them is [logs](../scale/logs.md).
 
 ### Ports: inside versus outside
 
@@ -113,37 +84,35 @@ Two numbers per service, and confusing them is the usual source of "connection r
 
 | Service | Inside the network | From the host |
 |---|---|---|
-| postgres | `postgres:5432` | `localhost:25432` — **direct**, `DATABASE_DIRECT_URL` |
-| pgbouncer | `pgbouncer:5432` | `localhost:26432` — **pooled**, `DATABASE_URL` |
-| redis-cache | `redis-cache:6379` | `localhost:26379` |
-| redis-queue | `redis-queue:6379` | `localhost:26380` |
-| mailpit | `mailpit:1025` | `localhost:21025`, UI `:8025` |
-| minio | `minio:9000` | `localhost:29000`, console `:9001` |
-| loki | `loki:3100` | `localhost:23100` |
-| alloy | `alloy:12345` | `localhost:12345` |
-| clickhouse | `clickhouse:8123` | `localhost:28123`, native `:9002` |
+| postgres | `postgres:5432` | `localhost:25432` — `DATABASE_URL` and `DATABASE_DIRECT_URL` |
+| redis | `redis:6379` | `localhost:26379` — `REDIS_CACHE_URL` and `REDIS_QUEUE_URL` |
+| mailpit | `mailpit:1025`, UI `mailpit:8025` | `localhost:21025`, UI `localhost:28025` |
+| minio | `minio:9000`, console `minio:9001` | `localhost:29000`, console `localhost:29001` |
+| minio-init | — | — |
 
-**Both Redis instances listen on 6379 inside.** They are different containers, so there is no
-collision; only the host mapping differs. `redis-queue:6380` from inside the network is wrong and
-will refuse.
+**Two database URLs, one server.** `DATABASE_URL` and `DATABASE_DIRECT_URL` both reach Postgres
+directly. They are two names so adding a pooler later is an `.env` and compose change —
+[pgbouncer](../scale/pgbouncer.md).
 
-ClickHouse's native port maps to 9002 because MinIO owns 9000.
+**Two Redis URLs, one instance.** Splitting cache from queue is the same kind of change —
+[split-redis](../scale/split-redis.md).
 
 ---
 
 ## Startup order
 
-Only two dependencies are declared, and both are real:
+Only one dependency is declared:
 
 ```
-minio ──healthy──→ minio-init ──completed──→ loki ──healthy──→ alloy
+minio ──started──→ minio-init ──→ exits 0
 ```
 
-Loki cannot start until its bucket exists; Alloy has nowhere to push until Loki accepts writes.
-Everything else starts in parallel — Postgres, Redis and MinIO have no dependencies on each other.
+`minio-init` retries `mc alias set` until the MinIO API answers, so it needs no healthcheck on MinIO.
+Everything else starts in parallel — Postgres, Redis, Mailpit and MinIO have no dependencies on each
+other.
 
-**`minio-init` is a one-shot container.** It creates both buckets and exits, so `exited (0)` in
-`docker compose ps` is success. Without it the first upload fails with `NoSuchBucket` and everyone
+**`minio-init` is a one-shot container.** It creates the `ratchet` bucket and exits, so `exited (0)`
+in `docker compose ps` is success. Without it the first upload fails with `NoSuchBucket` and everyone
 goes looking for a code bug.
 
 ---
@@ -154,48 +123,43 @@ goes looking for a code bug.
 |---|---|---|---|
 | Domain rows, audit trail | use-cases | Postgres | **yes** — the source of truth |
 | Uploaded files | `StorageGateway` | MinIO `ratchet` | **yes** — a second source of truth |
+| Tenant exports | worker | MinIO `ratchet`, `export/` | no — expire after 7 days |
+| Deleted-tenant archives | worker | MinIO `ratchet`, `cold/` | 30 days, then swept |
 | Outbound mail | `SmtpEmailSender` | mailpit *(delivered nowhere)* | no — in memory, cleared on restart |
-| Capability and session cache | `CacheStore` | redis-cache | no — rebuilt from Postgres |
-| Queued jobs | `QueuePublisher` | redis-queue | **yes** — derived from nothing |
-| Diagnostic log lines | `JsonLogger` → stdout | Alloy → Loki → MinIO `loki` | no — 30 days, lossy |
-| Analytics aggregates | worker, replaying `activity_log` | ClickHouse *(stopped by default)* | no — replayable |
+| Capability and session cache | `CacheStore` | redis | no — rebuilt from Postgres |
+| Queued jobs | `QueuePublisher` | redis | **yes** — derived from nothing |
+| Diagnostic log lines | `JsonLogger` | stdout | no — whatever your terminal keeps |
 
 The rule behind that column is [Data and scale](../opinions/data-and-scale.md): **Postgres
 owns anything a transaction depends on or a user reads immediately after writing; everything else is
 a derived store behind a port.**
+
+The cache and the queue share one Redis, so it runs with `noeviction` and durable AOF. The queue's
+rules win; every cache key carries a TTL instead ([redis](reference/redis.md)).
 
 ---
 
 ## Running it
 
 ```bash
-pnpm infra:up              # four stores + observability     ← the normal command
-pnpm infra:core            # four stores only
-pnpm infra:up:analytics    # the above, plus ClickHouse
+pnpm infra:up              # all five services   ← the normal command
+pnpm infra:core            # the same thing — kept as an alias
 pnpm infra:down            # stop everything, keep volumes
 pnpm infra:reset           # stop everything, destroy volumes
 pnpm infra:logs            # tail every service
 ```
 
-| Profile | Services | Default |
-|---|---|---|
-| *(none)* | `postgres`, `pgbouncer`, `redis-cache`, `redis-queue`, `mailpit`, `minio`, `minio-init` | always |
-| `observability` | `loki`, `alloy` | **on** — the diagnostic stream is live today |
-| `analytics` | `clickhouse` | **off** — see [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md) |
+There are no profiles. Every service starts every time.
 
-**Starting the container and feeding it are two separate switches.** `pnpm infra:up:analytics` runs
-ClickHouse; `CLICKHOUSE_URL` in `.env` is what makes the application build a projector and the worker
-register the projection and reconciliation schedules. Both are off by default, and the adapters are
-written either way — a folder in `packages/infrastructure/src/` means the seam is implemented, not
-that the store is running.
-
-> `down`, `reset` and `logs` pass `--profile "*"`. Compose only acts on profiles it was given, so
-> without it a reset leaves ClickHouse running and `logs` omits it from the output you are reading to
-> debug it.
+> `down`, `reset` and `logs` still pass `--profile "*"`. With no profiles it changes nothing. It stays
+> so a profiled service added later is not left running by a reset.
 
 **Credentials are `ratchet` / `ratchet` everywhere except MinIO**, which is `ratchet` /
 `ratchetsecret`. They are hard-coded on purpose: this stack holds nothing worth protecting, and a
 scratch database behind a secret is a scratch database nobody can debug.
+
+**A database migrated before the lite squash needs `pnpm infra:reset`.** The migrations are now one
+baseline plus two small ones, and an old volume's history does not match them.
 
 ---
 
@@ -205,20 +169,14 @@ scratch database behind a secret is a scratch database nobody can debug.
 docker compose -f infra/docker-compose.yml ps
 ```
 
-Seven `healthy`, `minio-init` `exited (0)`, no `clickhouse`.
-
-```bash
-# every service is being collected — one entry per container
-curl -s -G http://localhost:23100/loki/api/v1/label/app/values | jq -r '.data[]' | sort
-```
+`postgres`, `redis` and `mailpit` `healthy`. `minio` `running` — it has no healthcheck.
+`minio-init` `exited (0)`.
 
 Per-service checks are on each reference page. The most common failures across all of them:
 
 | Symptom | Usually |
 |---|---|
 | `connection refused` from inside a container | Used the host port instead of the container port |
-| Alloy healthy, no logs in Loki | Project-name filter mismatch — [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
-| Loki unhealthy on first boot | Waiting on `minio-init`; give it the twenty retries |
-| A fifth label appears | Loki or a source component invented it — [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
-| ClickHouse table "missing" | It is in `default`, not `ratchet` — [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md) |
+| `NoSuchBucket` on first upload | `minio-init` did not finish — `docker compose logs minio-init` |
+| Migrations fail on an old volume | The volume predates the squash — `pnpm infra:reset` |
 | Port already allocated | Something else owns it — [compose](reference/compose.md#host-ports) |

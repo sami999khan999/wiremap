@@ -44,7 +44,7 @@ export const shardAssignments = pgTable(
   ],
 );
 
-// Tenants whose sixteen partitions exist and whose organization does not yet — `PF.3`.
+// Tenants whose seventeen partitions exist and whose organization does not yet — `PF.3`.
 // The founder claims one, so a signup pays no DDL. Catalog, and seeded on node 0 alone:
 // ──
 // the founder places every tenant there, and node 0 is the catalog's own database.

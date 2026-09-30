@@ -179,8 +179,7 @@ What belongs here is the pnpm mechanics and the three entries with a history.
     "format": "biome format --write .",
     "check": "biome check --write .",
 
-    "infra:up": "docker compose -f infra/docker-compose.yml --profile observability up -d",
-    "infra:up:analytics": "docker compose -f infra/docker-compose.yml --profile observability --profile analytics up -d",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:core": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml --profile \"*\" down",
     "infra:reset": "docker compose -f infra/docker-compose.yml --profile \"*\" down -v",
@@ -197,17 +196,17 @@ What belongs here is the pnpm mechanics and the three entries with a history.
 }
 ```
 
-### The `infra:*` scripts carry two profiles
+### The `infra:*` scripts
 
-`infra:up` starts the four stores **and** the observability stack, because the diagnostic stream is
-live from the first adapter written. `infra:core` skips Loki and Alloy when you want a
-lighter machine; `infra:up:analytics` adds ClickHouse, which is otherwise never started
-([11](11-local-infrastructure.md)).
+`infra:up` starts the whole lite stack: Postgres, Redis, Mailpit and MinIO
+([11](11-local-infrastructure.md)). `infra:core` is the same command today. It is kept as a name
+so a store ported back behind a compose profile, such as [Logs](../scale/logs.md), has a lighter
+command to leave it out of.
 
-**`--profile "*"` on `down`, `reset` and `logs` is load-bearing.** Compose only acts on services in
-the profiles it was given, so `docker compose down` without it leaves anything profile-gated running
-— and `logs -f` without it silently omits those services from the output you are reading to debug
-them.
+**`--profile "*"` on `down`, `reset` and `logs` is load-bearing.** No lite service sits behind a
+profile yet. Compose only acts on services in the profiles it was given, though, so the day one
+does, `docker compose down` without the flag leaves it running — and `logs -f` without it silently
+omits it from the output you are reading to debug it.
 
 ### What the flags actually do
 

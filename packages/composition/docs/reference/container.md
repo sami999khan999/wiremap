@@ -5,7 +5,7 @@ description: The four rules that govern the DI root — abstract types on the pu
 
 # `Container`
 
-Roughly a hundred lines, no decorators, no reflection, no module graph. Four rules make it work, and
+One class, no decorators, no reflection, no module graph. Four rules make it work, and
 each of them prevents a specific failure.
 
 ## 1. Ports are exposed as their abstract types
@@ -25,7 +25,7 @@ credential-collapsing decision, and there is no second implementation to be abst
 ## 1b. Swappable ports are chosen by a `driver`, not by a `new`
 
 ```ts
-this.vectors = Container.buildVectorStore(config, this.database, this.transactions);
+this.vectors = Container.buildVectorStore(config, this.cluster, this.transactions, this.shards);
 ```
 
 Rule 1 makes the *type* swappable. This makes the *choice* configurable, and the two are not the same
@@ -41,30 +41,21 @@ no code change.
 switch is a build error rather than a runtime surprise. `VECTOR_DRIVER` has one legal value today;
 that is the point of writing it as a union rather than as nothing.
 
-### Two derived stores are absent unless configured
+### The embedding vendor is a `SearchMode`, not an optional field
 
-`analyticsProjector` and `logReader` are `T | undefined`, reached through `projector` / `logs` getters
-that throw and `hasProjector` / `hasLogs` booleans the worker branches on.
+```ts
+this.searchMode = Container.buildSearchMode(config.embedding, this.logger);
+```
 
-**Optional fields rather than no-op implementations.** A `NullAnalyticsProjector` would let the worker
-register a projection consumer that runs every five minutes and writes nowhere — indistinguishable
-from a working pipeline until a quarterly report comes out wrong. Absent means the consumer is never
-registered, which is the state the compose file's stopped `clickhouse` container describes.
+`EMBEDDING_PROVIDER` picks one of three cases. `none` gives `{ kind: "lexical" }`, and search runs
+on text alone. `openai` and `gemini` give `{ kind: "semantic", provider }`, with an
+`OpenAiEmbeddingProvider` or a `GeminiEmbeddingProvider` inside.
 
-Same reasoning as the `auth` getter one section down, and the same shape: a process that reaches a
-port it was not built with fails at the call site with a sentence, rather than at the first insert
-with a `TypeError`.
-
-### Analytics has a connection and no driver
-
-`CLICKHOUSE_URL` builds the projector, and that is the only analytics switch. There was a second,
-`ANALYTICS_DRIVER`, moving reads between a Postgres and a ClickHouse `AnalyticsReader` — and it went
-with the port, because nothing ever read through either implementation.
-
-The two-switch arrangement it existed for still holds, in a stronger form: filling the store and
-reading it are separate decisions, and now the second one cannot be taken by accident, because there
-is no reader to point anywhere. A flag that moved reads the moment the pipeline started would cut a
-dashboard over to a store that is still backfilling.
+**A tagged value rather than a provider that might be missing.** A caller cannot reach a provider
+without first reading `kind`, so "no key configured" is a branch the compiler makes you write, not a
+`TypeError` at the first search. It is a `switch` like `buildVectorStore`, so a vendor added to the
+union and not here fails the build. See
+[`infrastructure/docs/reference/embedding.md`](../../../infrastructure/docs/reference/embedding.md).
 
 ## 2. Never build request-scoped state into the container
 
@@ -98,7 +89,7 @@ else. Spreading `config.logging` into it would **compile**, because excess-prope
 not apply to a variable, and both values would be silently dropped: no error, no label, and a log
 platform that cannot tell `web` from `worker`.
 
-Binding them puts `app` and `env` on every line, which is what lets the Alloy pipeline read all four
+Binding them puts `app` and `env` on every line, which is what lets a log shipper read all four
 labels out of the JSON body rather than inferring two of them from container metadata that differs
 between Compose, Kubernetes, and a host-run `pnpm dev`
 ([11](../../../../docs/setup/11-local-infrastructure.md)). The application knows what it is; the
@@ -117,7 +108,6 @@ orchestrator's name for the process is incidental.
 ```ts
 await this.queuePublisher.close();
 await this.redis.close();
-await this.clickhouse?.close();
 await this.emailSender.close();
 await this.cluster.close();
 ```
@@ -151,17 +141,19 @@ something to say on the way out.
 ## `health()` pings what callers actually hold
 
 ```ts
-const [database, cache, queue, analytics, realtime] = await Promise.all([
+const [database, cache, queue, realtime] = await Promise.all([
   this.cluster.isHealthy(),
   this.redis.healthy("cache"),
   this.redis.healthy("queue"),
-  this.clickhouse ? this.clickhouse.healthy() : Promise.resolve(null),
   this.redis.opened("subscriber") ? this.redis.healthy("subscriber") : Promise.resolve(null),
 ]);
 
 return {
-  healthy: Object.values(database).every(Boolean) && cache && queue && analytics !== false && …,
-  …
+  healthy: Object.values(database).every(Boolean) && cache && queue && realtime !== false,
+  database, cache, queue,
+  analytics: null,
+  realtime,
+  pool: this.database.stats(),
 };
 ```
 
@@ -184,12 +176,12 @@ eviction policies, so one being up says nothing about the other.
 and the body of a failing probe is what an operator reads at three in the morning. `false` alone says
 the deployment is unhealthy; it does not say whether to restart the pod or page whoever owns Redis.
 
-**ClickHouse only when it is part of this deployment**, and `null` rather than `true` when it is not:
-that container is not healthy and not degraded, it is not running one, and a probe body saying `true`
-claims otherwise. The roll-up reads `analytics !== false`, so absent does not fail the probe.
+**`analytics` is always `null`.** Lite runs no analytics store, and `null` means "not part of this
+deployment" — not healthy, not degraded. The field stays so the status contract keeps its shape for
+a kit that ports analytics back ([`docs/scale/analytics.md`](../../../../docs/scale/analytics.md)).
 
-**The realtime subscriber follows the same `null` rule, for a different reason.** ClickHouse is
-absent because the deployment does not run one; the subscriber connection is absent because
+**The realtime subscriber follows the same `null` rule, for a different reason.** Analytics is
+absent because the deployment does not run it; the subscriber connection is absent because
 *nothing in this process has opened a stream yet* — which is every worker, always, and a web
 replica until its first signed-in tab. `opened("subscriber")` is what makes that answerable:
 calling `healthy("subscriber")` would **create** the connection, and a worker reporting `true` for
@@ -200,11 +192,11 @@ roll-up reads `realtime !== false` rather than ignoring it. A web replica whose 
 connection has died serves every request correctly and delivers nothing, and that is exactly the
 failure a readiness probe should catch — the pod looks fine from every other angle.
 
-**Loki is deliberately absent from this list**, even though `LokiLogReader.healthy()` exists. Loki
-being down loses diagnostics and nothing else. Failing a readiness probe over it takes the application
-down in order to protect its logs — the wrong trade in every deployment, and exactly backwards during
-the incident where the logs matter most. The asymmetry is the decision: a dashboard reading from a
-store that is not answering is user-visible; a log line nobody is reading right now is not.
+**No log store is on this list.** Lite writes JSON to stdout and reads nothing back, so there is
+nothing to ping. Whatever ships those lines stays off the probe even when you add one: a log
+pipeline being down loses diagnostics and nothing else, and failing readiness over it takes the
+application down to protect its logs — backwards during the incident where the logs matter most.
+See [`docs/scale/logs.md`](../../../../docs/scale/logs.md).
 
 `RedisConnection.healthy(role)` takes the role rather than handing out a client, which is what keeps
 `ioredis` confined to `packages/infrastructure`. It pings the memoised connection the cache store and

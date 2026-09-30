@@ -38,11 +38,11 @@ The ten shipped codes:
 | `SERVER_ONLY` | no | unexpected | `ServerOnlyError`, from `core` at module load |
 
 **Every code has a class, and two of them are thrown only by adapters.** `RateLimitedError` takes
-the limiter's name; `UnavailableError` takes a dependency and an optional status — `("clickhouse",
+the limiter's name; `UnavailableError` takes a dependency and an optional status — `("openai.embeddings",
 503)`, `("smtp")`. Neither is raised by domain code, because a rate limiter and a health check are
 adapters, but both needed a class the moment an adapter had context worth carrying: the dependency
 that failed is the whole diagnostic, and putting it in a message rather than in `ErrorContext` is
-what let a ClickHouse response body reach the wire.
+what would let a vendor's response body reach the wire.
 
 A class exists for a code when something needs to *throw* it with context. That turned out to be
 every code.

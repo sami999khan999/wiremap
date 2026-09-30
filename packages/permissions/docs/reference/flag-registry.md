@@ -1,6 +1,6 @@
 ---
 title: flag-registry
-description: FlagRegistry — flags declared in code with an owner and an expiry, switched in Postgres, and the client-gating set derived from widgets rather than declared.
+description: FlagRegistry — flags declared in code with an owner and an expiry, switched in Postgres, none declared in lite, and a client-gating set that is empty until widgets are ported back.
 ---
 
 # `FlagRegistry`
@@ -11,36 +11,42 @@ becomes a permanent `if` that nobody remembers the reason for. So every flag is 
 with the three facts that make deleting it someone's job:
 
 ```ts
-export const widgetFlags = {
-  "widget.dismissal": {
+export const taskFlags = {
+  "task.bulk-edit": {
     owner: "sami",
     expiresOn: "2027-03-31",
-    description: "Lets a user hide a dismissible dashboard card, …",
+    description: "Lets a member edit several tasks at once, …",
   },
 } as const satisfies Record<string, FlagMeta>;
 ```
+
+That fragment is an example. Lite declares no flags: `FLAGS` in `src/flag/index.ts` is `{}`, and a
+fragment is spread into it when a rollout needs one.
 
 The declaration says a flag exists. Whether it is **on** lives in Postgres, for the deployment or
 per org, and a missing row means off.
 
 ## The key
 
-`<slice>.<change>`, where the change is a kebab noun: `widget.dismissal`. It names what is changing,
+`<slice>.<change>`, where the change is a kebab noun: `task.bulk-edit`. It names what is changing,
 not what it guards, because the flag is gone once the change has shipped.
 
-## Client-gating is derived
+## Client-gating is empty in lite
 
 ```ts
-FlagRegistry.instance.clientGating(); // the flags some widget names
+FlagRegistry.instance.clientGating(); // [] in lite
 ```
 
-Only these reach the session payload. The set is built at module load from `WIDGETS`, never written
-by hand. A hand-written list is a list someone forgets to update, and forgetting in one direction
-sends a server-only flag's name to every browser.
+Only these reach the session payload. In the big kit the set is built at module load from the
+widgets that name a flag, never written by hand. A hand-written list is a list someone forgets to
+update, and forgetting in one direction sends a server-only flag's name to every browser.
 
-A flag's name is still not a secret. Every client-gating name is in the bundle, because the widget
-that names it is. **A flag decides when something ships, not who may know it exists.** That is also
-why a flag check answers `NOT_FOUND` and its error carries no key.
+Lite has no widgets, so `CLIENT_GATING` is an empty set and every flag stays server-only. Porting
+widgets back is what fills it ([`docs/scale/widgets.md`](../../../../docs/scale/widgets.md)).
+
+A flag's name is still not a secret. Once a flag gates something in the browser, its name is in
+the bundle. **A flag decides when something ships, not who may know it exists.** That is also why
+a flag check answers `NOT_FOUND` and its error carries no key.
 
 ## `meta` answers `undefined` for a flag it does not know
 

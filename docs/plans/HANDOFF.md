@@ -29,11 +29,12 @@ state of the tree and the traps that cost time.
 | `0f3cc37` | `LT2.8`: the migrations squashed into `0000_lite_baseline.sql`; `check-architecture` 30 of 30 |
 | `6dad856` | `LT3`: the `owner` doc audience |
 | `b77ec46` | `LT4`: search without OpenAI — `none`, `openai` or `gemini` |
-| after `b77ec46` | `LT5`: CI on one Redis, the README, `docs/infra` trimmed, the check-architecture change log |
+| `55f0260` | `LT5`: CI on one Redis, the README, `docs/infra` trimmed, the check-architecture change log |
+| after `55f0260` | `LT1.6`: the docs sweep, and the stale source comments it found |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, `LT2.7`, `LT2.8`, Phases 3, 4 and 5, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, `LT2.7`, `LT2.8`, `LT1.6`, Phases 3, 4 and 5, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT1.6` the docs sweep, the only item left; then the owed runs in [`TESTS.md`](TESTS.md) and a first push.
+**Next, in order:** every plan item is done. What is left is the owed runs in [`TESTS.md`](TESTS.md), then a first push.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
@@ -69,14 +70,11 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
 - **Flags stay server-side only** (decided 2026-09-30, recorded under `LT1.2`). The only declared
   flag, `widget.dismissal`, leaves with widgets, so `FLAGS` is empty and no flag reaches the
   browser until widgets are ported back. `flags.assertOn` still gates a procedure with `NOT_FOUND`.
-- **Docs are swept once**, after Phases 1 and 2, not per cut (`LT1.6`). About 70 prose mentions of
-  messaging remain in `packages/*/docs`, `docs/setup` and `docs/infra`; the heaviest are
-  `packages/infrastructure/docs/reference/partitions.md`, `packages/api-server/docs/reference/router.md`
-  and `packages/infrastructure/docs/reference/notification-recipients.md`.
-  `LT1.2` adds widget prose to the sweep: the §30 rows in `docs/opinions/index.md` and
-  `docs/opinions/visibility.md`, "thirty-one" in `docs/setup/26-hygiene-and-ci.md` (and its §30
-  section), the `widget.tsx` line in `docs/setup/28-folder-structure.md`, the `widget_preferences`
-  sentence in `partitions.md`, and `packages/permissions/docs/reference/flag-registry.md`.
+- **Docs were swept once**, after Phases 1 and 2, not per cut (`LT1.6`, done 2026-10-01).
+  Three questions it raised are code, not docs, and are left open: nothing reads
+  `platform_policy.replica_reads_enabled`, so `doc.fn.ts` always asks for the replica; the
+  `UnavailableError` page says domain code never raises it, but the search use-case does; and the
+  code blocks in `docs/setup/15` and `17` are older than the files they copy.
 - **Tenant export and delete stay** (decided 2026-09-30, recorded under `LT1.3`). They moved from
   the dropped storage page to `platform/accounts.tsx`.
 - **The tenant Activity page left with analytics** (`LT1.4`): it read only ClickHouse. Lite has

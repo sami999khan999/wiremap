@@ -83,11 +83,11 @@ personal enroller's transaction it is a savepoint, called standalone it is a tra
 or neither does. That is the whole reason the audit trail lives in Postgres rather than in the log
 stream: no external store can join a transaction it has never heard of.
 
-It is also why the audit row doubles as a **transactional outbox**. The domain event published after
-commit is a latency optimisation, not a durability mechanism — if the publish is lost, the row is still
-in `activity_log`, reconciliation finds the gap, and a replay closes it. Publishing *inside* the
-transaction is the tempting mistake: it holds the transaction open across a network call and reintroduces
-the two-store atomicity problem the queue hop exists to avoid. The outbox drain made it until `CP4.2`,
+The domain event rides the same scope. `PgOutboxPublisher` writes an `outbox_event` row through
+`this.db`, so the state change and the event announcing it commit together or not at all — a
+**transactional outbox**. The drain relays it to the queue after commit. Publishing to the queue
+*inside* the transaction is the tempting mistake: it holds the transaction open across a network
+call and reintroduces the two-store atomicity problem the outbox exists to avoid. The outbox drain made it until `CP4.2`,
 relaying inside its claim; it claims with a lease now and relays with nothing open.
 
 ## The test is the only proof
@@ -138,9 +138,10 @@ there and costs one round trip per transaction.
 
 **`SET LOCAL`, never `SET`.** This is the whole reason the knob lives here rather than on the pool.
 `pg` can send `statement_timeout` as a startup parameter, and that works on a direct connection —
-but through pgBouncer in transaction mode the parameter is dropped, and `SHOW statement_timeout`
-reads `0`. Unlimited, on every application connection. Migration `0022` puts a floor back with
-`ALTER ROLE`, and `SET LOCAL` is how a transaction raises it above that floor for work that needs
+but through a transaction pooler such as pgBouncer the parameter is dropped, and
+`SHOW statement_timeout` reads `0`. Unlimited, on every application connection. Lite runs no pooler
+(see [PgBouncer](../../../../docs/scale/pgbouncer.md)), and is written as if it did.
+`0000_lite_baseline.sql` puts a floor back with `ALTER ROLE`, and `SET LOCAL` is how a transaction raises it above that floor for work that needs
 longer, because it dies with the transaction and cannot follow the server connection to the next
 client.
 

@@ -17,7 +17,7 @@ export interface RedisConfig {
 // exposing the clients, so `Container` never names `Redis` (17).
 export type RedisRole = "cache" | "queue" | "subscriber" | "realtime";
 
-// Two instances, one class. Which connection a consumer gets is a property of what
+// Two URLs, one class. Which connection a consumer gets is a property of what
 // it is doing, not a wiring decision two same-typed arguments could get backwards.
 export class RedisConnection {
   private readonly clients = new Map<RedisRole, Redis>();

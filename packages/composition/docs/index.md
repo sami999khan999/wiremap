@@ -33,28 +33,23 @@ packages/composition/src/
 ├── container/
 │   ├── index.ts
 │   ├── container.config.ts           → ContainerConfig
-│   ├── container.ts                  → Container
-│   └── test-container.ts             → TestContainer, TestPorts   (off the barrel)
-└── fake/                             ← one per port, all sixteen
+│   ├── container.ts                  → Container, HealthReport
+│   ├── container-health.reader.ts
+│   └── test-container.ts             → TestContainer, TestPorts
+├── mail/                             ← layout, renderer and the queued mailers
+├── shard/                            → the organization sharding strategy
+└── fake/                             ← one double per port
     ├── index.ts
-    ├── direct-unit-of-work.ts        → DirectUnitOfWork
-    ├── in-memory-activity-replay.reader.ts → InMemoryActivityReplayReader
-    ├── in-memory-analytics.projector.ts    → InMemoryAnalyticsProjector
-    ├── in-memory-cache.store.ts      → InMemoryCacheStore
-    ├── in-memory-log.reader.ts       → InMemoryLogReader
-    ├── in-memory-storage.gateway.ts  → InMemoryStorageGateway
-    ├── in-memory-vector.store.ts     → InMemoryVectorStore
-    ├── recording-activity.logger.ts  → RecordingActivityLogger, RecordedActivity
-    ├── recording-partition-archive.gateway.ts → RecordingPartitionArchiveGateway
-    ├── recording-email.sender.ts     → RecordingEmailSender
-    ├── recording-maintenance.gateway.ts → RecordingMaintenanceGateway
-    ├── recording-queue.publisher.ts  → RecordingQueuePublisher, PublishedJob
-    ├── stub-embedding.provider.ts    → StubEmbeddingProvider
-    └── stub-session.resolver.ts      → StubSessionResolver
+    ├── direct.unit-of-work.ts        → DirectUnitOfWork
+    ├── in-memory-*.ts                → InMemoryCacheStore, InMemoryVectorStore, InMemoryStorageGateway, …
+    ├── recording-*.ts                → RecordingActivityLogger, RecordingQueuePublisher,
+    │                                   RecordingPartitionArchiveGateway, RecordingMaintenanceGateway, …
+    └── stub-*.ts                     → StubEmbeddingProvider, StubSessionResolver, StubMailRenderer, …
 
 packages/composition/tests/
-├── container/test-container.spec.ts
-└── fake/fake.spec.ts
+├── container/                        ← container.spec.ts, test-container.spec.ts
+├── fake/                             ← fake.spec.ts, realtime-fake.spec.ts
+└── mail/
 ```
 
 `import.ts` here is the longest in the repository, and that is the package working: naming a port
@@ -78,8 +73,7 @@ shakes the rest out.
 | `storage` | `StorageGateway` | `S3StorageGateway` | one line |
 | `queue` | `QueuePublisher` | `BullMqQueuePublisher` | one line |
 | `vectors` | `VectorStore` | `PgVectorStore` | one line — pgvector → Qdrant |
-| `analytics` | `AnalyticsReader` | `PgAnalyticsReader` | one line — Postgres → ClickHouse |
-| `embeddings` | `EmbeddingProvider` | `OpenAiEmbeddingProvider` | one line |
+| `searchMode` | `SearchMode` | lexical, or semantic over `OpenAiEmbeddingProvider` / `GeminiEmbeddingProvider` | `EMBEDDING_PROVIDER`; a new vendor is one `case` |
 | `sessions` | `SessionResolver` | `BetterAuthSessionResolver` | one line |
 | `activity` | `ActivityLogger` | `PgActivityLogger` | one line |
 | `unitOfWork` | `UnitOfWork` | `PgUnitOfWork` | one line |

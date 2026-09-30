@@ -5,8 +5,8 @@ export interface PlatformHealth {
   readonly database: boolean;
   readonly cache: boolean;
   readonly queue: boolean;
-  // `null` when this deployment runs no ClickHouse — absent, rather than passing. The
-  // three-state reading the analytics switch depends on starts here.
+  // `null` when this deployment runs no analytics store, which lite never does: absent,
+  // rather than passing. See docs/scale/analytics.md.
   readonly analytics: boolean | null;
   // `null` in a process that has opened no subscriber connection, which is every worker.
   readonly realtime: boolean | null;

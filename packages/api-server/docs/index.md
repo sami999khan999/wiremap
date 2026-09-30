@@ -7,7 +7,7 @@ description: The router half of the transport — the authed middleware chain, t
 
 **`api-client` is how the browser reaches the server. `api-server` is what answers it**, minus the
 HTTP adapter. The adapter is each app's own; everything behind it is here, because more than one
-app mounts it: `apps/web` serves every procedure, and the stream process serves the two streams.
+app mounts it: `apps/web` serves every procedure, and the stream process serves the stream.
 
 | | |
 | --- | --- |
@@ -24,7 +24,9 @@ packages/api-server/src/
 └── router/
     ├── base.ts                  the `authed` chain: correlation → errors → principal → shard
     ├── error.interceptor.ts     every failure to the wire envelope, logged once
-    └── realtime.router.ts       both streams: the user stream and one conversation
+    ├── rate-limit.policy.ts     the procedures that are limited, and how hard
+    ├── stream-revalidation.ts   an open stream asks again every minute
+    └── realtime.router.ts       the stream: the user's channel
 ```
 
 **Why a package and not a folder in `apps/web`.** Apps cannot import each other, and the second app

@@ -52,11 +52,12 @@ membership check rides in the same `Promise.all` as the capabilities, so it cost
 
 **Flags ride the same `Promise.all`**, as `container.flags.onFor(organization)`: one cache key for
 the whole deployment, so it adds a cache read, not a round trip. The result is filtered through
-`FlagRegistry.isClientGating` **on the server**, and only the flags some widget names reach the
-snapshot. A server-only flag's name never leaves the server.
+`FlagRegistry.isClientGating` **on the server**, and only a flag marked as gating the client reaches
+the snapshot. A server-only flag's name never leaves the server. Lite's `FLAGS` is empty, so today
+the list is always empty; the filter is there for the first flag you add.
 
-That is not the same as the names being secret. Every client-gating flag is named in the bundle,
-because the widget that names it is. **A flag is the wrong tool for a secret.** It decides when
+That is not the same as the names being secret. A client-gating flag is named in the bundle, because
+the component it gates names it. **A flag is the wrong tool for a secret.** It decides when
 something ships, not who may know it exists.
 
 **`fetchAppearance`** is why the first painted byte is already the right colour: a cookie the server
@@ -130,8 +131,7 @@ authorised where it was produced. Gating the pipe again would gate the wrong thi
 to the subscriber as `after`, and the subscriber replays what its log holds past that id or yields
 a `resync` when the log no longer reaches back (`26.5`). Every event frame goes out through
 `withEventMeta({ id, retry })` — the `id` is what comes back as `Last-Event-ID`, and the `retry` is
-what `ClientRetryPlugin` reads for its delay. A typing frame carries no `id`, so it is never the
-point a client resumes from.
+what `ClientRetryPlugin` reads for its delay.
 
 **Keep-alive is set, not enabled.** `RPCHandler` sends a comment every 5 s by default; the handler
 here sets 15 s, inside every proxy idle timeout worth worrying about and a third of the traffic. It

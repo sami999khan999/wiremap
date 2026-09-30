@@ -26,8 +26,8 @@ export interface ContainerConfig {
     readonly statementTimeoutMs?: number;
   };
   readonly redis: {
-    // Two instances, different durability. Neither is optional: a missing
-    // queueUrl silently puts jobs on the instance that evicts them.
+    // Two names, different durability, one instance in lite. Neither is optional: once
+    // they split, a missing queueUrl puts jobs on the instance that evicts them.
     readonly cacheUrl: string;
     readonly queueUrl: string;
     // Live frames. Absent means the cache instance, which is the right default until

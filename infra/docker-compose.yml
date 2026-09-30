@@ -5,7 +5,7 @@ services:
     image: pgvector/pgvector:pg17
     restart: unless-stopped
     # pg_stat_statements is the measurement that answers "which query" before any move on
-    # the scaling ladder. max_connections is sized for the pooler, not for the apps.
+    # the scaling ladder. max_connections is sized for every app's pool at once.
     # max_locks_per_transaction is raised off the default 64 because every tenant is
     # partitions: a statement the planner cannot prune by tenant locks every leaf and its
     # indexes, ~112 per tenant for `notifications` at full retention. 1024 x 200 slots is

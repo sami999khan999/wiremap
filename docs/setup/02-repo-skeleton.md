@@ -27,7 +27,7 @@ Four directories, and the split between them is the architecture:
 | `apps/` | Framework code — TanStack Start, the worker's Node entrypoint, the Tauri desktop shell | The only place `process.env` is read. The only place `@tanstack/react-router` appears. Deliberately thin enough to delete and rewrite in a week. |
 | `packages/` | Everything that matters — primitives, permissions, contracts, use-cases, adapters, React components | Knows nothing about which web framework you use. Never reads its own configuration. |
 | `tooling/` | Shared `tsconfig`, Biome, and ESLint configs, published as workspace packages | Changed rarely, by whoever owns the platform. |
-| `infra/` | `docker-compose.yml`, plus the config files the services read — Postgres init SQL, Loki's storage and retention, Alloy's log pipeline | No application code, and nothing here is imported by a package. |
+| `infra/` | `docker-compose.yml`, plus the one config file a service reads — Postgres's init SQL | No application code, and nothing here is imported by a package. |
 
 `packages/` gets subdirectories in [06](06-package-anatomy.md) — leave it empty for now.
 
@@ -81,16 +81,10 @@ coverage/
 .DS_Store
 out/
 release/
-
-# The `pnpm dev | tee` target for the local Loki pipeline (docs/setup/11).
-# The directory is committed, the logs are not: Docker creates a missing bind-mount
-# path as root, and then `tee` into it fails for the developer who owns the repo.
-infra/logs/*
-!infra/logs/.gitkeep
 ```
 > `.env.*` is ignored and `.env.example` is force-included. That asymmetry is what stops `.env.production` reaching the repo while keeping the template versioned.
 >
-> `upstream:infra/logs/` is the only ignored path under `infra/`. Everything else there is configuration that must be committed — a Loki retention policy or an Alloy label pipeline living only on one machine is the same problem as an uncommitted migration.
+> Nothing under `infra/` is ignored. It is configuration, and configuration living on one machine is the same problem as an uncommitted migration.
 
 ### `.env.example`
 
@@ -99,10 +93,10 @@ infra/logs/*
 DATABASE_URL=postgres://ratchet:ratchet@localhost:25432/ratchet
 
 # ── Redis ────────────────────────────────────────────────
-# Two instances, because they have different durability needs. The cache evicts
-# under pressure; the queue must not, since a lost job is work that never happens.
+# One instance, `noeviction`, because the queue must never lose a job. Two names
+# anyway: splitting cache from queue is then these two lines.
 REDIS_CACHE_URL=redis://localhost:26379
-REDIS_QUEUE_URL=redis://localhost:26380
+REDIS_QUEUE_URL=redis://localhost:26379
 
 # ── S3 / MinIO ───────────────────────────────────────────
 S3_ENDPOINT=http://localhost:29000
@@ -135,9 +129,11 @@ AUTH_COOKIE_CACHE_MAX_AGE_SECONDS=60
 AUTH_REQUIRE_EMAIL_VERIFICATION=true
 
 # ── AI / embeddings ──────────────────────────────────────
-EMBEDDING_MODEL=text-embedding-3-small
+# `none` searches chunk text with Postgres full-text search: no key, no outbound
+# call. `openai` or `gemini` embed through the provider and need the key.
+EMBEDDING_PROVIDER=none
+# EMBEDDING_API_KEY=
 EMBEDDING_DIMENSIONS=1536
-OPENAI_API_KEY=
 
 # ── App ──────────────────────────────────────────────────
 NODE_ENV=development
@@ -148,7 +144,7 @@ ENV=development
 ```
 > Every variable that will ever be read, present from day one with a working local value. `S3_FORCE_PATH_STYLE` is `true` for MinIO and `false` for real AWS — having the switch here now means the production difference is a value, not a code change. `EMBEDDING_DIMENSIONS` is here because the pgvector column type depends on it, and changing it later is a migration ([14](14-vector-store.md)).
 
-> **Two Redis URLs from day one, even though both point at localhost.** They are separate containers with different eviction policies ([11](11-local-infrastructure.md)), and the reason is the same one that puts MinIO here rather than a filesystem stand-in: the code path exercised in development is the code path that runs in production. One URL now means the split arrives as a refactor of `Container`, `env.ts`, and every consumer, on the day a `FLUSHALL` on the cache eats the queue.
+> **Two Redis URLs from day one, even though both point at the same container.** Lite runs one Redis under `noeviction` ([11](11-local-infrastructure.md)). The cache and the queue still read their own name. One URL now means the split arrives as a refactor of `Container`, `env.ts`, and every consumer. Two names mean it arrives as an `.env` change — see [Split Redis](../scale/split-redis.md).
 
 > **`APP` and `ENV` look like they do nothing.** They are the low-cardinality labels a log platform indexes on; `LOG_LEVEL` supplies the third and the event catalog supplies the fourth. The rule that keeps that set closed — and keeps `traceId` and `organization_id` out of it — is in [Data and scale](../opinions/data-and-scale.md).
 
@@ -182,7 +178,7 @@ trim_trailing_whitespace = false
 ```markdown
 # loadbearing
 
-pnpm workspaces · TanStack Start + oRPC · standalone worker · Postgres + pgvector · Redis (cache + queue) · S3 · Loki
+pnpm workspaces · TanStack Start + oRPC · standalone worker · Postgres + pgvector · Redis (cache + queue) · S3
 
 ## Getting started
 
@@ -192,7 +188,7 @@ pnpm workspaces · TanStack Start + oRPC · standalone worker · Postgres + pgve
     pnpm db:migrate && pnpm db:seed
     pnpm dev
 
-Web: http://localhost:23000 · Loki API: http://localhost:23100 · MinIO console: http://localhost:29001
+Web: http://localhost:23000 · Mailpit: http://localhost:28025 · MinIO console: http://localhost:29001
 
 See `docs/` for the architecture and the build order.
 ```

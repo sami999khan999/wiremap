@@ -5,8 +5,8 @@ description: Tenant first and month underneath, the allowlist as the whole polic
 
 # Partitions
 
-**Every tenant-owned table is a tenant partition first.** Seven of them take
-`PARTITION BY LIST ("organization_id")`, and the three that also grow with activity take
+**Every tenant-owned table is a tenant partition first.** Eight of them take
+`PARTITION BY LIST ("organization_id")`, and the three that also grow with time take
 `PARTITION BY RANGE` again underneath, one child per month:
 
 ```
@@ -36,16 +36,19 @@ table, in one place:
 | `activity_log` | `organization_id` | `occurred_at` | 13 |
 | `outbox_event` | — | `occurred_at` | 2 |
 | `notifications` | `organization_id` | `created_at` | 12 |
-| `messages` | `organization_id` | `created_at` | `null` — domain data |
-| `conversations` | `organization_id` | — | — |
-| `conversation_members` | `organization_id` | — | — |
 | `notification_preferences` | `organization_id` | — | — |
 | `document_chunks` | `organization_id` | — | — |
+| `doc_spaces` | `organization_id` | — | — |
+| `doc_pages` | `organization_id` | — | — |
+| `doc_revision` | `organization_id` | `created_at` | `null` — an archive path, not a policy |
+| `doc_sections` | `organization_id` | — | — |
 
 `tenantKey: null` is "not split by tenant"; `column: null` is "tenant level only, never pruned by
-the calendar"; `retentionMonths: null` is "never retired at all", which for `messages` means domain
-data nothing drops. Every table that *is* retired goes through [cold storage](cold-storage.md)
-first: detached, uploaded, verified, and only then dropped.
+the calendar"; `retentionMonths: null` is "never retired at all".
+
+**Nothing in lite reads `retentionMonths`.** Lite never drops a month: the runway only adds them.
+The field is the policy the big kit's monthly archive and prune enforce, kept so the list reads the
+same in both kits. Bringing that back is [Retention](../../../../docs/scale/retention.md).
 
 **Nothing reads a copy of this list.** `TenantPartitionSeed` walks the tenant-partitioned entries,
 `MaintenanceConsumer.partitions()` walks the month-partitioned ones per tenant, and
@@ -71,7 +74,7 @@ that drifts from it the first time the shape changes.
 
 **Created standalone, then attached** — never `create table … partition of`. That form takes an
 `ACCESS EXCLUSIVE` lock on the parent for the rest of the transaction, which would stall every read
-on all eight tables for the length of a signup. `ALTER TABLE … ATTACH PARTITION` takes
+on every parent for the length of a signup. `ALTER TABLE … ATTACH PARTITION` takes
 `SHARE UPDATE EXCLUSIVE`, which blocks nothing a request does, and an empty child attaches with no
 validation scan — **as long as no foreign key points out of the parent into another partitioned
 table.** One that does is validated on every attach and locks its target; see below.
@@ -82,28 +85,27 @@ hyphens stripped, validated against `^[0-9a-f]{32}$` before it reaches `sql.raw`
 
 ## No foreign key points into a tenant-partitioned table
 
-**`PF.1` dropped the last two**, `messages` and `conversation_members` into `conversations`, and
+**`PF.1` dropped the last two** in the big kit, and
 `tests/maintenance/tenant-partition.spec.ts` fails if one comes back. Each one cost three things,
-all measured rather than reasoned (the ceiling table below has the numbers):
+all measured rather than reasoned:
 
 - **Every signup's attach validated it.** Attaching a partition to a table that carries a key
-  checks that key, so the two referencing tables were the two slowest attaches in the seed.
-- **That check took `SHARE ROW EXCLUSIVE` on `conversations`** — sampled from `pg_locks` during
-  the run — which blocks every insert and update there. Five attaches per signup meant five
-  windows in which nobody on the node could start a conversation.
+  checks that key, so the two referencing tables were the two slowest attaches in the seed —
+  over 100 ms each at 500 tenants, against under 10 ms for a table with no key.
+- **That check took `SHARE ROW EXCLUSIVE` on the referenced table** — sampled from `pg_locks`
+  during the run — which blocks every insert and update there, once per attach.
 - **A drop had to detach first.** Postgres will not drop a partition something references, and
-  detaching is one `ALTER TABLE` per partition; dropping the ceiling run's 1 658 leftover tenants
-  spent 60 of its 142 seconds detaching `conversations` alone.
+  detaching is one `ALTER TABLE` per partition. That was 60 of the 142 seconds it took to drop
+  1 658 leftover tenants.
 
-What they checked, the code already had: every insert into either table runs
-`ConversationAccess.assertMember` first, and nothing deletes a conversation, so `NO ACTION` never
-fired. The nightly `orphans` job counts conversation ids that a member or a message names and
-`conversations` does not hold, as it has counted tenants since `24.1`.
+The rule stays: a new table that wants a key into a tenant-partitioned table checks the reference
+in code instead. The nightly `orphans` job counts tenants with partitions on a node and no
+organization row, which is the check a key into `organizations` would have made.
 
 ## Dropping a tenant: one statement per table, and never `CASCADE`
 
-`TenantPartitionSeed.drop` is the one implementation. `dropTenantPartitions` (a tenant delete) and
-`PgTenantMoveGateway.dropOn` (the move's reclaim) both call it.
+`TenantPartitionSeed.drop` is the one implementation, and `dropTenantPartitions` (a tenant delete)
+calls it.
 
 - **No transaction around it.** Each `drop table` commits on its own, so a parent's
   `ACCESS EXCLUSIVE` lasts one statement. In one transaction, a single reader on one table kept every
@@ -129,10 +131,9 @@ partitioned table to carry every partition key, so a two-level table is keyed
 time-ordered, so the key still increases with the month and the composite costs nothing in index
 locality.
 
-That rule reaches the foreign keys too. `conversations` is keyed on the pair, so
-`messages.conversation_id` and `conversation_members.conversation_id` are composite references on
-`(conversation_id, organization_id)` — declared with drizzle's `foreignKey({ columns, foreignColumns })`,
-which is the only form that can express them.
+That rule reaches any foreign key into a partitioned table too: it has to name every column of the
+key, declared with drizzle's `foreignKey({ columns, foreignColumns })`, which is the only form that
+can express it. Lite has none, and the section above is why.
 
 This propagates. `notifications_dedupe_uq` carries `created_at` for the same reason, and that is
 sound **only** because the value written is the *event's* timestamp rather than the clock's — a
@@ -162,7 +163,6 @@ creates no children — those are the seed's — and running it twice rewrites n
 with *"declare the composite primary key in the schema; the generator does not synthesize keys"* —
 the fix is the schema, not the migration. And a table an earlier migration already created
 unpartitioned stops it too: converting a live table is the copy-and-swap below, written by hand.
-`0023` is exactly that case, which is why it is hand-written.
 
 A refusal leaves the file `drizzle-kit` wrote already on disk. Fix the schema and regenerate; the
 migration has not been applied, and the journal entry is rewritten with it.
@@ -188,16 +188,16 @@ is created, so `partition.runway.low` still reports what the run found rather th
 The lock is taken **before** the read, because read-then-create is two statements: two replicas
 booting together would both read a month as absent and one would get `42P07`. Per tenant, the old
 loop was eight statements per table and the lock taken each time — 48 000 statements at 2 000
-tenants. The prune pass reads every tenant's months of a table in one query for the same reason.
+tenants.
 
 ## What a node carrying tenants actually costs
 
 Measured by `tests/smoke/tenant-ceiling.smoke.spec.ts`, which creates synthetic tenants through
-`TenantPartitionSeed`. **Postgres 17, 2026-09-24**, on a developer machine (Docker Desktop on
-Windows) that was **not idle** — builds ran beside both runs — so read a number that moved by less
-than twice with suspicion. Sixteen partitions per tenant then: seven at the tenant level, plus three
-months under each of the three tables that carry a month level. `widget_preferences` has since made it
-eight at the tenant level; it takes no month level.
+`TenantPartitionSeed`. **Postgres 17, 2026-09-24**, in the big kit, on a developer machine (Docker
+Desktop on Windows) that was **not idle** — builds ran beside both runs — so read a number that
+moved by less than twice with suspicion. The big kit had sixteen partitions per tenant then. Lite
+has seventeen: eight at the tenant level, plus three months under each of the three tables that
+carry a month level. Rerun it with `TENANT_CEILING` set before trusting these for lite.
 
 **Before and after section 9's `PF.1`–`PF.5`**, same machine, same day:
 
@@ -208,20 +208,8 @@ eight at the tenant level; it takes no month level.
 | 2 000 | 354 → 377 ms | 127 → 42 ms | 35.6 s → 1.6 s | 0.31 → 0.21 ms |
 
 Signup DDL is one tenant's probe, create and attach, from `pg_stat_statements` over twenty signups.
-The first run's 2 000 row was taken after the smoke's own migrate step had applied `0037`, so its
-signup number is already without the keys. That is why it barely moves.
-
-**What the keys cost, read within one run.** The honest comparison is between tables in the same
-run, since the machine's load moved both:
-
-| attach, mean ms, 500 tenants | with the keys | without |
-| --- | --- | --- |
-| `conversation_members` | **116.1** | 6.7 |
-| `messages`, a month | **108.6** | 2.4 |
-| `notifications`, no key either way | 9.6 | 6.4 |
-
-`SHARE ROW EXCLUSIVE` on `conversations` was sampled 2 227 times during twenty signups with the keys
-and **zero** times without them, at every tenant count.
+The first run's 2 000 row was taken after the foreign keys were already gone, so its signup number
+barely moves.
 
 **Planning time does not grow with the tenant count, and that is the whole point of the tenant
 level.** 0.2–0.7 ms at every count in both runs. The predicate prunes to one list partition before
@@ -251,13 +239,15 @@ under the root: each leaf and the tenant partition, each with all its indexes. M
 | --- | --- | --- | --- | --- |
 | `notifications` | 6 | (months + 1) × 7 | 12 hot + runway ≈ 15 months → 112 | **~1 800 tenants** |
 | `activity_log` | 3 | (months + 1) × 4 | 13 + runway ≈ 16 months → 68 | ~3 000 tenants |
-| `messages` | 3 | (months + 1) × 4 | no retention; 24 months → 100 | ~2 000 tenants, falling |
+
+Those month counts assume the big kit's retention. Lite drops no month, so the count per tenant
+only grows, and the ceiling falls every month a node runs. See
+[Retention](../../../../docs/scale/retention.md).
 
 The digest's fan-out used to issue one: a `SELECT DISTINCT organization_id` over `notifications`
 with no tenant, once a day per node (`CR.22`). It pages the catalog's tenants instead now. The
-nightly orphan check was the other (`CR.21`): a `select distinct` over every `messages` row on the
-node. It runs one statement per tenant now, each pruned to that tenant's partitions and committed on
-its own, so it holds one tenant's locks at a time. Otherwise every repository query carries the tenant, and
+nightly orphan check reads partition names from the catalog rather than scanning rows. Otherwise
+every repository query carries the tenant, and
 `pg` sends unnamed statements, so each is planned with its values and pruned at plan time. Two
 things would issue one:
 
@@ -268,7 +258,8 @@ things would issue one:
   statement against a partitioned parent is never allowed.
 
 The setting stays 1 024. Raising it costs shared memory; a node heading past ~1 800 tenants
-should decide that with these numbers, or move tenants off with `24.2`.
+should decide that with these numbers, or add a node — see
+[Shard nodes](../../../../docs/scale/shard-nodes.md).
 
 **`pnpm db:partitions` is the same routine from a shell**, for the operator whose worker was down on
 the first of the month. It prints a row per table per tenant:
@@ -297,18 +288,17 @@ of three things per query, and **which one is the finding**:
 | Assertion | Queries | What it protects |
 | --- | --- | --- |
 | **One tenant partition** | every tenant-scoped read | The tenant predicate — the neighbour's subtree is not in the plan |
-| **Exactly one month** | `markRead`, `findById`, the activity daily rollup | An equality or a closed range on the time column |
-| **The retention tail is pruned** | `listUnreadBetween`, the projection walk, `unreadCounts` | A floor — nothing older than it is in the plan |
-| **Bounded by the newest message** | a conversation's first page, given `upTo` | A ceiling — nothing newer than the room's latest message is in the plan |
-| **Bounded by the cursor's month** | the inbox's and a conversation's later pages | A ceiling — nothing newer than the cursor is in the plan, and the cursor is still an index condition |
-| **Pinned at every month of the tenant** | the inbox's first page, a conversation's first page with no `upTo`, `countUnread`, `unreadSubjectHolders`, `markAllRead`, the outbox drain | Today's behaviour, deliberately |
+| **Exactly one month** | `markRead` | An equality or a closed range on the time column |
+| **The retention tail is pruned** | `listUnreadBetween` | A floor — nothing older than it is in the plan |
+| **Bounded by the cursor's month** | the inbox's later pages | A ceiling — nothing newer than the cursor is in the plan, and the cursor is still an index condition |
+| **Pinned at every month of the tenant** | the inbox's first page, `countUnread`, `unreadSubjectHolders`, `markAllRead`, the outbox drain | Today's behaviour, deliberately |
 
 The first row is the one the tenant level bought, and the spec proves it against a second tenant
 that also holds rows in both months — otherwise it would pass on a database with one tenant in it
 whatever the predicate said.
 
 **A row-constructor cursor does not prune, so a later page carries a second, redundant bound.**
-`(created_at, id) < (at, id)` is the keyset every inbox and conversation page uses, and the partition
+`(created_at, id) < (at, id)` is the keyset every inbox page uses, and the partition
 pruner does not decompose it — measured at plan time and again with `EXPLAIN (ANALYZE, FORMAT JSON)`
 against real parameters, where `Subplans Removed` was `0` on every row. So since `PF.6` those pages
 also say `created_at <= at`, which the pruner does read, and every month newer than the cursor
@@ -330,23 +320,14 @@ So the last row asserts what the system does today on purpose. It catches nothin
 the change detector. A bound added later fails that assertion and is lowered deliberately, with the
 numbers re-measured — rather than arriving as a badge that has quietly stopped counting old rows.
 
-At the fifteen-partition steady state the unbounded reads cost 0.21–0.87 ms, which is why they were
-left unbounded — and the tenant level narrows that set to one tenant's months rather than every
-tenant's. **That steady state does not hold for `messages`**, which is never retired: its month count
-only grows. So its two reads made on every render — a room's first page and the conversation list's
-unread counts — carry a bound of their own, and the spec asserts each one prunes.
-
-## `messages` had to give up an index to join the list
-
-`messages_client_uq` on `(organization_id, conversation_id, client_id)` was the send's idempotency
-key, and it cannot exist on a partitioned table without `created_at` in it — with `created_at` in it
-every retry inserts a second row instead of colliding. The dedupe is a Redis `SET … EX … NX` now, and
-`client_id` stays as a column with no index. See
-[messaging](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/application/docs/reference/messaging.md).
+At the big kit's fifteen-partition steady state the unbounded reads cost 0.21–0.87 ms, which is why
+they were left unbounded — and the tenant level narrows that set to one tenant's months rather than
+every tenant's. **Lite has no steady state**, since it drops no month. An unbounded read gets a
+little slower each month; the pinned row is the one to re-measure first.
 
 ## Converting a table that already holds rows
 
 The procedure is not "alter the table" — Postgres has no `ALTER TABLE … PARTITION BY`. A deployment
-with rows creates a new partitioned parent, copies into it, and swaps the two under a lock. The kit
-ships no rows in the seven tables `0023` rewrote, so that migration drops and recreates them in
-place; a deployment that holds rows does the copy-and-swap instead.
+with rows creates a new partitioned parent, copies into it, and swaps the two under a lock. Lite's
+`0000_lite_baseline.sql` creates every table partitioned from the start, so a fresh deployment never
+needs it; a table added later that already holds rows does.

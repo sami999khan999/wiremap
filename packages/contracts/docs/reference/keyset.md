@@ -9,7 +9,7 @@ description: Why the newer lists page by cursor rather than offset, why the page
 members, invitations. An organization has tens of roles, not tens of thousands, so the cost of
 `OFFSET` there is nothing.
 
-`Keyset` is for the ones that grow with activity: notifications, conversations, messages. **`OFFSET
+`Keyset` is for the ones that grow with activity, which in lite is notifications. **`OFFSET
 40000` reads forty thousand rows in order to discard them**, and it does it on a partitioned table
 where those rows are spread across months. The cost is not the page — it is every page before it.
 

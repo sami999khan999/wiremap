@@ -14,7 +14,7 @@ socialProviders: config.google
 ## Absent, never half-configured
 
 `apps/web` builds the `google` block only when **both** `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET` are present — the same shape the `analytics.clickhouse` block already uses.
+`GOOGLE_CLIENT_SECRET` are present.
 
 A half-filled pair does not fail here. It fails at Google's consent screen, as an error page the
 user sees and nobody can diagnose from anything this application logs. Absence is also what lets the

@@ -1,6 +1,6 @@
 ---
 title: minio
-description: The S3 stand-in, its two unrelated consumers, and the one-shot container that creates both buckets.
+description: The S3 stand-in, the one bucket and its three prefixes, and the one-shot container that creates it.
 ---
 
 # `minio`
@@ -15,7 +15,7 @@ than first executed on the day you deploy.
 | **From the host** | `localhost:29000` (API), `localhost:29001` (console) |
 | **Credentials** | `ratchet` / `ratchetsecret` |
 | **Volume** | `miniodata` |
-| **Buckets** | `ratchet`, `loki` |
+| **Bucket** | `ratchet` |
 
 ---
 
@@ -36,27 +36,34 @@ so the production difference is one line in an environment file.
 
 ---
 
-## Two unrelated consumers
+## One bucket, three uses
 
-This is the part worth knowing, because the two have nothing to do with each other and share only a
-server.
+Everything the application stores goes into `ratchet`. The prefix says what an object is.
 
-| Bucket | Written by | Contains | Derived? |
+| Prefix | Written by | Contains | Removed by |
 |---|---|---|---|
-| `ratchet` | `S3StorageGateway` | user uploads | **no** — a second source of truth |
-| `loki` | Loki | log chunks and the TSDB index | no — but only 30 days of it |
+| `<subject>/…` | `S3StorageGateway` | user uploads | the resource's delete |
+| `export/` | the tenant export job | a tenant's export archive | the bucket's lifecycle rule, after 7 days |
+| `cold/` | tenant delete | a deleted tenant's archive | the nightly `retention` job, after 30 days |
 
-**`ratchet` holds a genuine second source of truth.** Postgres holds the metadata row and the object
+**Uploads are a genuine second source of truth.** Postgres holds the metadata row and the object
 key; MinIO holds the bytes. That is why deleting a resource is two operations, and why the two can
 disagree if one half fails ([12](../../setup/12-application-package.md)).
 
-**`loki` is Loki's storage backend**, configured in [loki.config.yml](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md). Pointing Loki at
-object storage rather than a local volume is what makes retention a config line and what makes the
-local topology match production, where the same setting names S3.
+**The bucket carries one lifecycle rule**, on `export/`. The nightly `retention` job converges it:
+it reads the bucket's rules and writes the one that should be there. So a fresh MinIO gets the
+rule on the first run, with nothing to set up by hand.
 
-> Keys under `ratchet` follow `<subject>/<yyyy>/<mm>/<uuid>.<ext>` — date-partitioned because
+**`cold/` is swept by the job, not by a rule.** The job deletes a deleted tenant's archive once
+its 30 days are up.
+
+> Upload keys follow `<subject>/<yyyy>/<mm>/<uuid>.<ext>` — date-partitioned because
 > lifecycle rules and cost reporting both work on prefixes, and a UUID rather than the original
 > filename because filenames are user input.
+
+Lite has no second bucket. The big kit also created `loki`, for log storage, and ran a cold MinIO
+tier for lifecycle transitions. Neither is here — see [logs](../../scale/logs.md) and
+[retention](../../scale/retention.md).
 
 ---
 
@@ -67,20 +74,19 @@ A one-shot container, not a service:
 ```yaml
 minio-init:
   image: bitnamilegacy/minio-client:latest
+  restart: "no"
   depends_on: [minio]
   entrypoint: >
     /bin/sh -c "
     until mc alias set local http://minio:9000 ratchet ratchetsecret; do sleep 2; done &&
     mc mb --ignore-existing local/ratchet &&
-    mc mb --ignore-existing local/loki &&
     mc anonymous set none local/ratchet &&
-    mc anonymous set none local/loki &&
     echo 'buckets ready'
     "
 ```
 
-It runs, creates both buckets, and exits — so **`exited (0)` in `docker compose ps` is success**, not
-a failure. It has no `restart:` policy and no healthcheck, because a container meant to stop cannot
+It runs, creates the bucket, and exits — so **`exited (0)` in `docker compose ps` is success**, not
+a failure. It has `restart: "no"` and no healthcheck, because a container meant to stop cannot
 be unhealthy.
 
 **`mc alias set local http://minio:9000`** uses the service name, because this container is on the
@@ -88,18 +94,12 @@ bridge network. `localhost` here would be `minio-init`'s own loopback.
 
 **`--ignore-existing`** makes it idempotent, so it is safe on every `up`.
 
-**`mc anonymous set none`** makes both buckets private. That is the correct default: files are served
+**`mc anonymous set none`** makes the bucket private. That is the correct default: files are served
 through presigned URLs from `S3StorageGateway`, never by public path. A public bucket would make
 every uploaded document readable by anyone who guessed a key.
 
-Loki depends on this container *completing*, not merely starting:
-
-```yaml
-loki:
-  depends_on: { minio-init: { condition: service_completed_successfully } }
-```
-
-Without that, Loki starts before its bucket exists and fails on the first write.
+Nothing else in compose depends on it. The apps only need the bucket by their first upload, and
+`compose-wait.mjs` holds the stack un-ready until `minio-init` has exited.
 
 ---
 
@@ -107,20 +107,17 @@ Without that, Loki starts before its bucket exists and fails on the first write.
 
 ```bash
 C="docker compose -f infra/docker-compose.yml"
+MC="$C run --rm --entrypoint sh minio-init -c"
 
-# both buckets exist
-$C exec minio sh -c "mc alias set l http://localhost:29000 ratchet ratchetsecret >/dev/null && mc ls l"
+# the bucket exists
+$MC "mc alias set l http://minio:9000 ratchet ratchetsecret >/dev/null && mc ls l"
 
-# Loki is genuinely writing into its bucket
-$C exec minio sh -c "mc alias set l http://localhost:29000 ratchet ratchetsecret >/dev/null && mc ls --recursive l/loki | head"
+# what the application has written
+$MC "mc alias set l http://minio:9000 ratchet ratchetsecret >/dev/null && mc ls --recursive l/ratchet | head"
 ```
 
-`loki_cluster_seed.json` and an `index/` prefix appear as soon as Loki starts. **Chunks take longer**:
-Loki buffers them in its write-ahead log and flushes on a timer, so a `fake/` prefix — the tenant name
-used when `auth_enabled: false` — only shows up after the first flush, not after the first log line.
-
-An empty `loki` bucket with a healthy Loki means Loki is running but nothing has been shipped to it —
-check [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md). An `index/` but no `fake/` after a few minutes of traffic is normal.
+The server image ships no `mc`, so these borrow the `minio-init` image. It sits on the network,
+so it dials `minio:9000`, not the host port.
 
 The console at `http://localhost:29001` signs in with the same credentials and is the fastest way to
 look at an uploaded object.

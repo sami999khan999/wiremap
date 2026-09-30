@@ -31,8 +31,7 @@ packages/permissions/
 │   │   ├── index.ts
 │   │   ├── permission-registry.ts   → PermissionRegistry, PermissionKey, PermissionMeta, PermissionScope
 │   │   ├── module-registry.ts       → ModuleRegistry, ModuleKey, ModuleGate
-│   │   ├── flag-registry.ts         → FlagRegistry, FlagKey, FlagMeta
-│   │   └── widget-registry.ts       → WidgetRegistry, WidgetKey, ZoneKey, ZONES, WidgetVisibility, …
+│   │   └── flag-registry.ts         → FlagRegistry, FlagKey, FlagMeta
 │   ├── capability/
 │   │   ├── index.ts
 │   │   ├── capability-set.ts        → CapabilitySet, CapabilitySetDto, ScopedSetDto
@@ -44,30 +43,25 @@ packages/permissions/
 │   │   ├── rbac.permissions.ts
 │   │   ├── member.permissions.ts
 │   │   ├── apikey.permissions.ts
-│   │   └── ai.permissions.ts
+│   │   ├── ai.permissions.ts
+│   │   ├── doc.permissions.ts
+│   │   └── notification.permissions.ts
 │   ├── gate/                        ← same pattern for nav gates
 │   │   ├── index.ts
-│   │   └── rbac.gate.ts
+│   │   └── rbac.gate.ts, doc.gate.ts, document.gate.ts, notification.gate.ts, platform.gate.ts
 │   ├── flag/                        ← same pattern for feature flags
-│   │   ├── index.ts                 → FLAGS
-│   │   └── widget.flags.ts
-│   ├── widget/                      ← same pattern for widgets
-│   │   ├── index.ts                 → WIDGETS
-│   │   ├── core.widgets.ts          ←   the nav: required, ungated
-│   │   ├── member.widgets.ts
-│   │   └── notification.widgets.ts  ←   the bell: inline
+│   │   └── index.ts                 → FLAGS, empty in lite
 │   └── route/                       ← same pattern for destinations
 │       ├── index.ts                 → ROUTES, AppRoute, RoutePath
 │       ├── shell.routes.ts          ←   platform-owned: home, sign-in, forbidden
-│       ├── rbac.routes.ts
+│       ├── rbac.routes.ts, doc.routes.ts, document.routes.ts, notification.routes.ts, platform.routes.ts
 │       ├── account.routes.ts        ←   no gate: your own password is not a capability
 │       └── organization.routes.ts   ←   no gate: founding your own tenant is not either
 └── tests/
     ├── registry/
     │   ├── permission-registry.spec.ts
     │   ├── module-registry.spec.ts
-    │   ├── flag-registry.spec.ts
-    │   └── widget-registry.spec.ts
+    │   └── flag-registry.spec.ts
     ├── capability/
     │   ├── capability-set.spec.ts
     │   └── entitlement-mask.spec.ts
@@ -79,8 +73,8 @@ packages/permissions/
 
 ## The seams
 
-Beside the seams below, the barrel exports the raw tables the registries wrap — `CATALOG`, `GATES`,
-`FLAGS` and `WIDGETS` — because the registries' own specs and `content`'s `ModuleKey` read them
+Beside the seams below, the barrel exports the raw tables the registries wrap — `CATALOG`, `GATES`
+and `FLAGS` — because the registries' own specs and `content`'s `ModuleKey` read them
 directly.
 
 ### [`PermissionRegistry`](reference/permission-registry.md) — the vocabulary
@@ -111,7 +105,7 @@ four runtimes.
 ### [The platform scope](reference/platform-scope.md) — above the tenant
 
 ```ts
-caps.can("platform.retention.manage");   // the third axis, and only the third axis
+caps.can("platform.tenant.manage");      // the third axis, and only the third axis
 ```
 
 A tenant's wildcard does not reach it, the `core` exception does not apply to it, an API key's
@@ -159,9 +153,9 @@ FlagRegistry.instance.clientGating();   // the flags sent to a browser — none 
 ```
 
 Every flag is declared in code with an owner and an expiry date, and switched in Postgres. Lite
-declares none. In the big kit, client-gating is derived from the widgets that name a flag. Lite has
-no widgets, so every flag stays server-only until [widgets](../../../docs/scale/widgets.md) are
-ported back.
+declares none, so `FLAGS` is empty. In the big kit, client-gating is derived from the widgets that
+name a flag. Lite has no widgets, so `clientGating()` returns nothing, and a flag you add stays
+server-only until [widgets](../../../docs/scale/widgets.md) are ported back.
 
 ---
 

@@ -48,12 +48,11 @@ These are the checks a green build does not give you. Run them by hand once now,
 - [ ] **Clean client bundle.** The built client output contains no Drizzle, no ioredis, no AWS SDK.
 - [ ] **Naming.** Every file under `packages/*/src` matches the rules in [29](29-naming-and-boundaries.md): one class, filename derived from it, kebab-case, role suffix.
 - [ ] **The vector seam.** `grep -rn "PgVectorStore" packages/ apps/` returns hits in exactly two *packages*: `packages/infrastructure`, where it is defined and named by three barrels, and `packages/composition`, where it appears twice — in `src/import.ts` and `src/container/container.ts` — because every external symbol enters a package through its one outside surface. What matters is that no third package names it: if it appears in a use-case, the swap in [14](14-vector-store.md) is no longer cheap.
-- [ ] **The analytics seam.** `grep -rn "ClickHouseAnalyticsProjector" packages/ apps/` returns hits in exactly two places, for the same reason. A use-case that names it has turned a config change into a rewrite. There is no analytics *reader* to check: the kit shipped one nothing called, and it was deleted ([12](12-application-package.md)).
 - [ ] **Tenant scoping.** `pnpm check:architecture` reports every domain table carrying `organization_id`, and no repository method queries without narrowing by it. The grep covers the schema; the query side is a review habit.
 - [ ] **Query counts.** The integration tests assert a fixed number of queries for `resolveFor` and every repository method that loops. An N+1 is invisible at fifty rows and fatal at fifty thousand.
 - [ ] **Env boundary.** `process.env` appears in two files under `src/` — `apps/web/src/env.ts` and `apps/worker/src/env.ts` — and nowhere else. Six more reads are exempt and all sit *outside* an app or package's `src/`: `apps/web/vitest.config.ts`, `packages/infrastructure/{drizzle.config,migrate,seed,smoke}.ts` and `packages/auth/tables.ts`. That is the shape the exemption takes rather than a list of pardons: a build-time config or a runnable script above `src/` cannot make a folder barrel execute on import.
 
-**The bundle check, the two seam checks, and the naming check are the four that rot quietly.** The others fail loudly on their own. Put the first three in CI (you already did, in [26](26-hygiene-and-ci.md)); the naming one is a code-review habit.
+**The bundle check, the vector seam check, and the naming check are the three that rot quietly.** The others fail loudly on their own. Put the first two in CI (you already did, in [26](26-hygiene-and-ci.md)); the naming one is a code-review habit.
 
 ---
 
@@ -186,25 +185,18 @@ counting unread rows is the query the bell asks on every page load, so it is a r
 60-second TTL invalidated on every write, capped in SQL rather than in the client. The rows
 themselves are never cached, because a stale inbox is a bug and a stale badge is a rounding error.
 
-`messaging` is the one to read last, and the one that shows what the checklist does *not* say.
-Three of its lessons are worth having before you write a slice of your own:
+The big kit has a fourth slice, `messaging`, and it is the one that shows what the checklist does
+*not* say. Lite cut it; [Messaging](../scale/messaging.md) brings it back. Two of its lessons hold
+for any slice:
 
-- **A permission is necessary and never sufficient.** `messaging.conversation.read` says this
-  person may read conversations; `ConversationAccess.assertMember` says which. Every use-case in
-  the slice asks both, and a third member of the organization gets `FORBIDDEN` rather than an
-  empty page. Any slice whose rows belong to a *group* smaller than the tenant needs this second
-  question, and the checklist has no step for it.
+- **A permission is necessary and never sufficient.** A permission says this person may read a
+  kind of row; a second check says which rows. Any slice whose rows belong to a *group* smaller
+  than the tenant needs this second question, and the checklist has no step for it.
 - **The twelve steps are not twelve commits.** Four merge points bind together — the permission
   catalog, the module gates, the procedure map and the contract registration — because the specs
   that keep them honest assert in both directions: every key gates a reachable procedure *and*
   every procedure has a key, every gate has a page. Registering any one alone turns the tree red.
   Build the whole server slice, then commit it.
-- **Step 6 refused once, and the answer was a cache key.** `messages` grows with activity and so
-  wants partitioning, and Postgres will not accept the unique index that makes a retried send one
-  row instead of two on a partitioned table. A rule and a constraint disagreeing is not settled by
-  satisfying the rule and losing the guarantee: the table is partitioned and the dedupe is a Redis
-  `SET … EX … NX` the use-case holds, which costs one round trip on a path that already opens a
-  transaction. See [messaging](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/application/docs/reference/messaging.md).
 
 The organization plugin (switch, create, accept) is deliberately **not** a slice, and reading it as
 one is a mistake: those actions are identity-gated, no permission a non-owner holds could gate them,
@@ -246,9 +238,9 @@ The kit ships as `@loadbearing/*`. Before real work starts:
 1. Find and replace `@loadbearing/` with `@yourscope/` across the repo.
 2. Rename the directory names only if you want to — package names and folder names are independent.
 3. Update `scope-enum` in `commitlint.config.js` if you renamed packages too.
-4. Work the full list in [00](00-README.md#renaming-the-scope), which includes the three runtime
-   defaults a find-and-replace on the scope cannot reach — the auth cookie prefix, the Redis key
-   prefix, and the ClickHouse credentials in both `env.ts` schemas.
+4. Work the full list in [00](00-README.md#renaming-the-scope), which includes the two runtime
+   defaults a find-and-replace on the scope cannot reach — the auth cookie prefix and the Redis
+   key prefix.
 5. `rm -rf node_modules pnpm-lock.yaml && pnpm install`.
 6. Run Step 27.1 again.
 
@@ -263,7 +255,7 @@ Fifteen packages and two applications, where:
 - Business logic lives in `packages/`, and the applications are thin.
 - One permission decision drives four enforcement surfaces from one `can()`.
 - The domain layer imports no framework, so the use-cases outlive the frameworks.
-- Postgres, both Redis instances, S3, the vector store, and the analytics store all sit behind ports, so each is a one-line swap in the container.
+- Postgres, Redis, S3 and the vector store all sit behind ports, so each is a one-line swap in the container.
 - Every team owns one glob, one commit scope, one vertical slice.
 
 The next thing you build is a feature, not infrastructure. That was the point.

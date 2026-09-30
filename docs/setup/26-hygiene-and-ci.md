@@ -125,7 +125,7 @@ chore(deps): bump drizzle-orm
 
 ## Step 26.3 — The pipeline
 
-**`.github/workflows/ci.yml`**
+**`.github/workflows/ci.yml`**, less the `compose` job ([26.3b](#step-263b--the-compose-job)):
 
 ```yaml
 name: ci
@@ -153,15 +153,10 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U ratchet"
           --health-interval 5s --health-timeout 5s --health-retries 10
-      redis-cache:
+      # One instance, as in the lite stack: the cache and the queue share it by URL.
+      redis:
         image: redis:7-alpine
         ports: ["6379:6379"]
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-      redis-queue:
-        image: redis:7-alpine
-        ports: ["6380:6379"]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 5s --health-timeout 5s --health-retries 10
@@ -169,9 +164,9 @@ jobs:
     env:
       DATABASE_URL: postgres://ratchet:ratchet@localhost:5432/ratchet
       REDIS_CACHE_URL: redis://localhost:6379
-      REDIS_QUEUE_URL: redis://localhost:6380
+      REDIS_QUEUE_URL: redis://localhost:6379
       # Read by every `env.ts` like any other config, so a missing one is a startup
-      # crash. Loki and Alloy are Tier 0 and deliberately absent.
+      # crash.
       APP: ci
       ENV: test
       PGPASSWORD: ratchet
@@ -179,6 +174,7 @@ jobs:
       # this job sends a message. A shape that parses is the whole requirement.
       SMTP_URL: smtp://localhost:1025
       EMAIL_FROM: ci@localhost
+      APP_BASE_URL: http://localhost:3000
 
       # Every remaining key both `env.ts` schemas require. Without them the job passed
       # only because nothing ever evaluated `Env` — the boot smoke below does, so a
@@ -203,6 +199,9 @@ jobs:
 
       EMBEDDING_MODEL: text-embedding-3-small
       EMBEDDING_DIMENSIONS: "1536"
+
+      REALTIME_MAX_STREAMS_PER_USER: "8"
+      REALTIME_STREAM_MAX_AGE_SECONDS: "1800"
 
     steps:
       - uses: actions/checkout@v4
@@ -252,9 +251,10 @@ jobs:
 
       - run: pnpm test
 
-      # Both apps, because `tsc -p` on the worker is the only thing that compiles it and
+      # The node apps, because `tsc -p` is the only thing that compiles each and
       # `pnpm build:packages` filters to ./packages/*.
       - run: pnpm --filter @loadbearing/worker build
+      - run: pnpm --filter @loadbearing/realtime build
 
       # The two steps that start a process. Everything above them runs against source and
       # cannot tell that a variable is missing, because `env.ts` parses at module load.
@@ -262,6 +262,7 @@ jobs:
       # imported, listened, and answered 500 on every page.
       - run: node tooling/scripts/boot-smoke.mjs worker
       - run: node tooling/scripts/boot-smoke.mjs web
+      - run: node tooling/scripts/boot-smoke.mjs realtime
 
       # The web build above is also what makes this pass rather than skip:
       # `check:architecture`'s bundle assertion greps the built client output, and
@@ -314,7 +315,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 ```
 
-> **CI runs neither Loki nor Alloy, and that is the correct choice rather than an omission.** Both are a [Tier 0](../opinions/dependencies.md) platform dependency: no package imports them, so no test can fail because they are absent. What CI does need is `APP` and `ENV`, because they are read by `env.ts` like any other config — a missing one is a startup crash, and finding that out in CI is the entire point. `SMTP_URL` and `EMAIL_FROM` are there for the same reason and no container answers them: nothing in the job sends a message, so a shape that parses is the whole requirement.
+> **CI needs `APP` and `ENV`.** They are read by `env.ts` like any other config — a missing one is a startup crash, and finding that out in CI is the entire point. `SMTP_URL` and `EMAIL_FROM` are there for the same reason and no container answers them: nothing in the job sends a message, so a shape that parses is the whole requirement.
 
 > [!CAUTION]
 > **`pnpm/action-setup@v4` reads the root manifest's `packageManager` field and nothing else.** A
@@ -339,14 +340,9 @@ jobs:
 > pins the scratch URL, so a differently-named database fails every infrastructure spec with a
 > connection error rather than an assertion — which reads as infrastructure being down.
 > `packages/composition/tests/support/config.ts` pins the same one, plus both Redis URLs: a
-> `Container` opens a cache client and a queue client in its constructor, so its specs need the
-> two Redis services the job already declares, and nothing beyond them.
->
-> ClickHouse is absent for a different reason. Its adapters *are* written, but nothing in the unit
-> tiers touches them — `ClickHouseAnalyticsProjector` is covered by the smoke check, which runs
-> against live containers by hand and is not a CI job ([15](15-infrastructure-package.md)). If that
-> ever becomes a CI job, ClickHouse joins the service list; until then a container CI starts and
-> nothing asserts against is cost with no signal.
+> `Container` opens a cache client and a queue client in its constructor. In lite both URLs name
+> the one `redis` service, as they do in the local stack. Splitting them is
+> [Split Redis](../scale/split-redis.md).
 
 > [!CAUTION]
 > **That web build is not optional.** `check:architecture`'s third assertion greps the built *client* output for server-only fingerprints. `build:packages` filters to `./packages/*` and never builds `apps/web`, so without this step the grep runs over a directory that does not exist — it passes silently and gives you permanent false confidence that no server code is reaching the browser.
@@ -369,7 +365,7 @@ jobs:
 
 ---
 
-## Step 26.4 — The thirty-one architectural assertions
+## Step 26.4 — The thirty architectural assertions
 
 Types cannot express "this package must not import that one across a bundle boundary". Twenty-nine greps can.
 
@@ -567,8 +563,6 @@ const TENANT_EXEMPT = new Set([
   // Which tenant the session is pointed at, rather than which owns the row — the same
   // distinction that keeps `users` off this list despite `last_active_organization_id`.
   "sessions",
-  "retention_policy",                                // global: a partition spans every tenant
-  "projection_policy",                               // global: one deployment-wide decision per action
   "platform_policy",                                 // global: a deployment-wide switch has no tenant
   "shard_assignments",                               // the directory: read before any shard is known
   "__drizzle_migrations",
@@ -584,7 +578,7 @@ const TENANT_EXEMPT = new Set([
 >
 > `sessions` is on the list and `users` is not, and the two look alike. A session carries `active_organization_id` — which tenant it is *pointed at* — and a user carries `last_active_organization_id`. Neither is the tenant that owns the row, and neither table has one; the difference is only that §9 stopped matching the column as a substring, which is what surfaced `sessions` as never having been checked.
 >
-> **`partition_archive` is not on it.** It leads with `organization_id`, which the cold-storage index does because one tenant's months have to be readable, sweepable and countable without touching another's ([cold storage](../../packages/infrastructure/docs/reference/cold-storage.md)). `activity_archive` was the other, and `0034` dropped it.
+> **`partition_archive` is not on it.** It leads with `organization_id`, which the cold-storage index does because one tenant's months have to be readable, sweepable and countable without touching another's ([cold storage](../../packages/infrastructure/docs/reference/cold-storage.md)). `activity_archive` was the other, and the big kit dropped it (`upstream:packages/infrastructure/migrations/0034_activity_archive_drop.sql`).
 
 Note this cannot be a type-level rule. Drizzle table definitions are data, `pgTable` returns the same type whichever columns you pass, and there is no compile error available — which is precisely the category of rule this file exists for.
 
@@ -808,17 +802,14 @@ one, `tsconfig.json` otherwise. `apps/worker` is why: it builds with `tsc` and a
 **Why.** `pnpm db:generate` emits both unsafe forms by default, and both are correct on an empty
 table. On a populated one the unique index aborts over the first duplicate and the `NOT NULL`
 column aborts over the first existing row, halfway through a deploy, leaving the schema in neither
-state. `0005_giant_famine.sql` is the shape that works and is worth reading before writing a new
-one: drop, de-dup with a named winner, create.
+state. The big kit's `upstream:packages/infrastructure/migrations/0005_giant_famine.sql` is the
+shape that works and is worth reading before writing a new one: drop, de-dup with a named winner,
+create.
 
-**Three migrations are exempt by name, and that is the decision this repository makes about its own
-history.** `0003` creates `organizations_slug_uq` over whatever slugs are there; `0008` adds
-`invitations.token_hash` as `NOT NULL` with no default, which fails on any invitation that already
-exists. `0004` is listed with them and is the mild one: it drops `memberships_uq` and recreates it
-in the same file, and `migrate.ts` runs a file's statements in one transaction, so there is no
-window in which a duplicate could appear. All three have run everywhere they are going to run.
-**This history is applied to an empty database and is not replayed onto a populated one** — the
-guarantee the assertion makes is about every migration written from here on.
+**No migration is exempt.** The big kit exempted three old files by name, each safe only on an
+empty database. Lite replaced that history with one baseline,
+`packages/infrastructure/migrations/0000_lite_baseline.sql`, which creates every table it indexes —
+so `REPLAY_EXEMPT` is empty, and every file is held to the rule.
 
 ### 21 — Every partitioned table is on the allowlist, with the same keys
 
@@ -871,8 +862,9 @@ pools on purpose: they are one-shot and they exit.
 
 **This assertion and `partition-ddl.ts` are the two directions of one check.** The generator writes
 the clause from the allowlist onto a freshly generated migration; this reads the migrations back and
-asserts the allowlist against them. The generator cannot cover a hand-written migration — `0023` is
-one, and has to be — so the assertion is what closes the gap the generator leaves.
+asserts the allowlist against them. The generator cannot cover a hand-written migration — the big kit's
+`upstream:packages/infrastructure/migrations/0023_tenant_partitions.sql` is one, and has to be —
+so the assertion is what closes the gap the generator leaves.
 
 **No `DEFAULT` partition, on purpose.** A catch-all absorbs the rows of a month whose partition is
 missing, which turns a loud insert failure into a silent one, and attaching the real partition
@@ -922,8 +914,8 @@ Both directions, in one assertion:
 - **Example → schema.** Every key in `.env.example` is read by one of those schemas, because a
   documented key nothing reads sends somebody to set a variable that does nothing.
 
-A commented line counts as documentation: that is how the example carries an optional key, and
-`# CLICKHOUSE_URL=` is the whole mechanism by which the analytics store is opt-in.
+A commented line counts as documentation: that is how the example carries an optional key, as
+`# EMBEDDING_API_KEY=` and `# DATABASE_REPLICA_URL=` do.
 
 **Two exemptions, each named in the script with why.** `APP` is deliberately absent — each process
 defaults it to its own name, and pinning it in a shared file makes every worker line claim to have
@@ -979,8 +971,9 @@ another project's database answering.
 
 The assertion checks three things, all against `.env.example`, which is the committed template:
 
-1. **Each `*_PORT` and the URL beside it agree.** `POSTGRES_PORT` with `DATABASE_DIRECT_URL`,
-   `PGBOUNCER_PORT` with `DATABASE_URL`, and so on down the list. `WEB_PORT` is checked against
+1. **Each `*_PORT` and the URL beside it agree.** `POSTGRES_PORT` with both `DATABASE_URL` and
+   `DATABASE_DIRECT_URL` — lite has no pooler, so both dial Postgres — `REDIS_PORT` with all three
+   Redis URLs, and so on down the list. `WEB_PORT` is checked against
    all three of `APP_BASE_URL`, `AUTH_URL` and `AUTH_TRUSTED_ORIGINS`, because a sign-in that
    fails because they disagree reports an origin error naming none of them.
 2. **Each Compose default equals the template's value.** A checkout with no `.env` falls back to
@@ -1054,26 +1047,11 @@ itself where it sits; the signature is dropped, because the infrastructure copy 
 type where the two apps inline it. What is left is the algorithm, and four copies of one algorithm
 is a duplication somebody can read. Two algorithms is a bug nobody can see.
 
-### 30 — Every inline widget is placed by a literal key
+### 30 — removed in lite
 
-```js
-// fail if a widget fragment declares an entry with no `zone` and no file in
-// packages/feature/src or apps/*/src writes `<Widget widget="<that key>">`,
-// or if any `<Widget>` takes its key from an expression: `widget={…}`
-```
-
-A zone widget is placed by its zone: `DASHBOARD_WIDGETS` is typed total over it, so a card
-registered without an entry does not compile. An inline widget has no zone, and nothing in the
-type system says it is on a page at all. The only proof is the tag that renders it, so the rule
-reads the tag.
-
-**A literal, never an expression.** `widget={key}` compiles, and it proves nothing: the key is
-whatever the variable holds. Inside a loop over runtime data it places whatever the data says,
-which is a widget list assembled at runtime — the thing a registry exists to replace. Banning the
-braces is what makes the grep sound.
-
-Comments are stripped first, so a key named in a comment places nothing. The fragments are read
-through the widget barrel's spreads, as §24 and §28 read theirs.
+The big kit's §30 checked that every inline widget is placed by a literal key. Lite has no widgets,
+so the assertion went with them. §31 keeps its number, so the harness counts thirty. The rule comes
+back with the widgets: [Widgets and zones](../scale/widgets.md).
 
 ### 31 — Every flag is live
 
@@ -1089,9 +1067,9 @@ nothing at all. Both compile, lint and pass every test, which is why this is a g
 **Zero flags passes; it does not skip.** No rollout in flight is the state the rule exists to reach,
 and reporting it as unverified would make the goal look like a gap.
 
-It landed with the first flag's first reader. `widget.dismissal` was declared in Phase 2 of the
-access and visibility plan and read by nothing until the widget preference use-cases, so a check
-landed with the declaration would have failed its own phase.
+Lite ships with zero flags — `FLAGS` is empty — so today this assertion passes on an empty set. In
+the big kit it landed with the first flag's first reader, `widget.dismissal`, which went with the
+widgets.
 
 ## Step 26.4b — `check:contrast`, the gate that is not a grep
 
@@ -1100,7 +1078,7 @@ pnpm check:contrast   # node tooling/scripts/check-contrast.mjs
 OK 117 pairings meet WCAG AA and 108 colours are inside sRGB, across every theme and mode.
 ```
 
-**Twenty-nine assertions above read source; this one computes.** It resolves the twelve colour names
+**The assertions above read source; this one computes.** It resolves the twelve colour names
 ([Opinions · Colour](../ai/rules/color.md)) for every theme in every mode, walks the pairings
 `packages/ui/src/theme/class/` actually produces, and fails on a contrast ratio under WCAG AA, a
 name a theme forgot to declare, or an `oklch()` value outside the sRGB gamut.
@@ -1154,10 +1132,10 @@ found one more — `topLevelAwait` counted the word inside a quoted string, so `
 in a bundled barrel would have failed the build for nothing.
 
 `check-architecture.spec.mjs` runs the real script against fixture trees, one per assertion, each
-tree violating exactly one thing. It needs no `ROOT` parameter threaded through thirty-one
+tree violating exactly one thing. It needs no `ROOT` parameter threaded through thirty
 assertions: the script derives `ROOT` from its own location, so a fixture is a temporary directory
 with a copy of the script under `tooling/scripts/` and a few files around it. Twenty-eight of the
-thirty-one are covered both ways — the tree that violates it fails, and the tree that does not
+thirty are covered both ways — the tree that violates it fails, and the tree that does not
 passes. Assertion 8 is the exception, because it greps a built `apps/web/.output` and building one
 in a fixture is not a unit test.
 
@@ -1166,6 +1144,7 @@ in a fixture is not a unit test.
 ```bash
 node tooling/scripts/boot-smoke.mjs worker
 node tooling/scripts/boot-smoke.mjs web
+node tooling/scripts/boot-smoke.mjs realtime
 ```
 
 Everything else in the pipeline runs against source. `env.ts` parses at module load, so a variable
@@ -1189,9 +1168,10 @@ route is the obvious choice and it is obviously right for about a minute:
 
 - It renders no JSX, so it would have answered 200 straight through `T-032` while every page
   a user could reach answered 500. A gate that passes on the bug it was built for is not a gate.
-- It reports its dependencies. A 503 there means ClickHouse is not running, which is a statement
-  about the machine rather than the bundle. Measured locally: `/` 200 with 6 124 bytes of rendered
-  HTML, `/api/health` 503 with `analytics: false`, in the same process, in the same second.
+- It reports its dependencies. A 503 there means Postgres or Redis is not answering, which is a
+  statement about the machine rather than the bundle. In the big kit this was measured: `/` 200
+  with rendered HTML, `/api/health` 503 because ClickHouse was down, in the same process, in the
+  same second. Lite has no ClickHouse, but the point stands for any dependency.
 
 `/` is a server render — the router, the shell, the JSX runtime and a `Response` that completes.
 Nothing under `.output/public/` is a prerendered `index.html`, so a 200 there cannot come from a
@@ -1248,7 +1228,7 @@ images configured in the workflow file; `infra/docker-compose.yml` is what a dev
 what the setup pages describe. The two drift — an image tag, a healthcheck, an init script — and
 nothing else in this workflow can see it.
 
-It is also the only job that reaches **S3, Loki, Alloy and Mailpit at all.** A `services:` container
+It is also the only job that reaches **S3 and Mailpit at all.** A `services:` container
 takes no command and mounts nothing from the checkout, so none of them has an equivalent in
 `verify` — and `verify` needs none: its only S3-touching spec builds a `FakeStorage`, and the smoke
 suite that does real round trips is excluded from `pnpm test`. `verify` ran a MinIO container until
@@ -1262,7 +1242,7 @@ Three things it proves that `verify` cannot:
   so the file being correct *as an initdb script* is untested there.
 - **The healthchecks are right.** `compose-wait.mjs` reads them, so one that never reports healthy
   fails the job rather than being noticed by a developer waiting at a terminal.
-- **`pnpm smoke` runs against the real containers**, including the Loki reader, which no other job
+- **`pnpm smoke` runs against the real containers** — Redis, S3 and BullMQ — which no other job
   can reach.
 
 **`docker compose up -d --wait` cannot express this stack**, which is why the wait is a script.

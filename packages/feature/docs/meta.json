@@ -1,5 +1,5 @@
 {
   "title": "feature",
-  "description": "Components that fetch and mutate — auth screens, the message provider, the session guard, mountable under any routing shell",
+  "description": "Components that fetch and mutate — auth screens, the message provider, the member, doc and platform panels, mountable under any routing shell",
   "pages": ["index", "reference"]
 }

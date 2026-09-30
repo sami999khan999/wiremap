@@ -10,7 +10,7 @@ export interface ActivityActionMeta {
 }
 
 // Built once and frozen: a derived lookup rebuilt per call is a per-call allocation on
-// a path the reconcile pass takes for every row.
+// a path every activity row takes.
 const ALL: readonly ActivityActionMeta[] = Object.freeze(
   (Object.keys(ACTIVITY_ACTIONS) as ActivityAction[]).map((action) => ({
     action,

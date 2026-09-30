@@ -22,6 +22,8 @@ export interface PartitionedTableEntry {
   readonly name: string;
   readonly tenantKey: TenantKey | null;
   readonly column: PartitionColumn | null;
+  // Read by nothing in lite, which drops no month. It is the value
+  // docs/scale/retention.md ports back, kept so that port is data and not a decision.
   readonly retentionMonths: number | null;
 }
 
@@ -31,8 +33,6 @@ export interface PartitionedTableEntry {
 // Frozen at module load for the reason `QueueName` gives: `static readonly` freezes the
 // binding and not the array.
 const ALL = Object.freeze([
-  // Thirteen months keeps a full year queryable in Postgres and archives the month that
-  // has just fallen out of it. Every month leaves behind a verified object first.
   Object.freeze({
     name: ACTIVITY_LOG,
     tenantKey: "organization_id",

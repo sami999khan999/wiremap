@@ -10,7 +10,7 @@ description: The four places a permission is checked, in order of authority — 
 | 1 | `Authorizer.assert()` | inside the use-case | **the gate** |
 | 2 | `principalMiddleware` | the oRPC chain | defence in depth, failing closed |
 | 3 | `RouteGuard` | a route's `beforeLoad` | stops the page rendering |
-| 4 | `<Can>` or `<Widget>` | a component | a UX affordance |
+| 4 | `<Can>` | a component | a UX affordance |
 
 **The rule they exist to serve:** removing a permission from a role must hide the affordance **and**
 return `FORBIDDEN`. One without the other is either security theatre or a UI full of buttons that
@@ -83,13 +83,10 @@ resolves `/\evil.test` with `evil.test` as the host, the same way it resolves `/
 backslash is a path separator, so a rule that only refuses `//` is half a rule. The shape is one
 leading slash, no second separator of either kind, and no backslash later in the string.
 
-## 4. `<Can>` and `<Widget>`
+## 4. `<Can>`
 
-One surface in two forms, and neither is the gate. `<Can>` hides an affordance inside a unit — a
-button, a link — and names its permission at the call site. `<Widget>` hides a whole unit, and names
-no permission at all: the key does, through `WidgetRegistry`, which also consults the unit's flag.
-The bell in the header is the first inline one. Neither wraps the other, and a zone takes `items`
-rather than children so a `<Can>` cannot be dropped in where a unit belongs.
+Not the gate. `<Can>` hides an affordance — a button, a link — and names its permission at the call
+site.
 
 
 Hiding a button is a courtesy. The check is `Authorizer.assert()` in the use-case, and it runs whether
