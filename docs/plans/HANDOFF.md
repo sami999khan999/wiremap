@@ -17,11 +17,12 @@ state of the tree and the traps that cost time.
 | `7f88b41` | `LT1.1`: messaging removed from every layer |
 | `3af3b00` | `LT1.2`: widgets and zones removed from every layer; the dashboard is static |
 | `4873640` | `LT1.3`: the analytics, retention, shards and storage platform pages removed |
-| after `4873640` | `LT1.4`: ClickHouse analytics removed, the tenant Activity page with it |
+| `7100f81` | `LT1.4`: ClickHouse analytics removed, the tenant Activity page with it |
+| after `7100f81` | `LT1.5`: verified, no code change |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT1.5`
+**Next, in order:**
 permission catalog, `LT1.6` the docs sweep, then Phase 2.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
