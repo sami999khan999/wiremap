@@ -23,11 +23,12 @@ state of the tree and the traps that cost time.
 | `a6f3d27` | `LT2.2`: verified, no code change |
 | `9ee1ccd` | `LT2.3`: calendar retention and the cold tier removed, the delete archive kept |
 | `aa41dba` | `LT2.4`: Loki, Alloy and the log reader removed |
-| after `aa41dba` | `LT2.5`: compose down to five containers, one Redis, no pooler |
+| `d7ba5b3` | `LT2.5`: compose down to five containers, one Redis, no pooler |
+| after `d7ba5b3` | `LT2.6`: verified, no code change; `TESTS.md` added |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT2.6` env, `LT2.7` worker, `LT2.8` the migration baseline; `LT1.6`, the docs sweep, after it.
+**Next, in order:** `LT2.7` worker, `LT2.8` the migration baseline; `LT1.6`, the docs sweep, after it.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
@@ -57,6 +58,8 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
 
 ## Decisions taken since the plan was written
 
+- **From `LT2.6` on, the build runs typecheck and `check:architecture` only** (owner's call,
+  2026-10-01). Every test run owed goes in [`TESTS.md`](TESTS.md), for the owner to run in one pass.
 - **Keep the seams** (plan decision 5): tables stay partitioned, shard placement stays, one node.
 - **Flags stay server-side only** (decided 2026-09-30, recorded under `LT1.2`). The only declared
   flag, `widget.dismissal`, leaves with widgets, so `FLAGS` is empty and no flag reaches the
