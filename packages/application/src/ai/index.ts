@@ -1,3 +1,4 @@
+export type { SearchMode } from "./ai-search-mode.js";
 export {
   type IndexDocumentInput,
   type IndexDocumentResult,
@@ -8,6 +9,7 @@ export {
   QueueDocumentIndexUseCase,
   type QueuedDocumentIndex,
 } from "./queue-document-index.use-case.js";
+export { type ReembedChunksResult, ReembedChunksUseCase } from "./reembed-chunks.use-case.js";
 export {
   type SearchDocumentsInput,
   SearchDocumentsUseCase,

@@ -74,9 +74,12 @@ export interface ContainerConfig {
     // Better Auth's own: the worker sends invitation mail and has no auth config at all.
     readonly baseUrl: string;
   };
+  // `none` is lexical search over the chunk text and no outbound call. The other two need
+  // a key, and a model defaults per provider when unset. See docs/reference/container.md.
   readonly embedding: {
-    readonly apiKey: string;
-    readonly model: string;
+    readonly provider: "none" | "openai" | "gemini";
+    readonly apiKey?: string;
+    readonly model?: string;
     readonly dimensions: number;
   };
   readonly realtime: {

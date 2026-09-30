@@ -15,6 +15,7 @@
     "partitions.ts",
     "platform-grant.ts",
     "queue-replay.ts",
+    "ai-reindex.ts",
     "seed.ts",
     "shard-env.ts"
   ]

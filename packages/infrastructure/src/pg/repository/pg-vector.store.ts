@@ -3,6 +3,7 @@ import {
   asc,
   cosineDistance,
   type DocumentChunk,
+  desc,
   eq,
   type IndexedSource,
   inArray,
@@ -12,6 +13,7 @@ import {
   or,
   type Placement,
   type SearchHit,
+  type StaleChunk,
   sql,
   type VectorStore,
 } from "../../import.js";
@@ -55,7 +57,8 @@ export class PgVectorStore extends BaseRepository implements VectorStore {
           goalId: chunk.goalId,
           chunkIndex: asInt(chunk.metadata.chunkIndex, 0),
           content: chunk.content,
-          embedding: [...chunk.embedding],
+          embedding: chunk.embedding === null ? null : [...chunk.embedding],
+          embeddingModel: chunk.embeddingModel,
           metadata: { ...chunk.metadata },
         })),
       )
@@ -66,6 +69,7 @@ export class PgVectorStore extends BaseRepository implements VectorStore {
         set: {
           content: sql`excluded.content`,
           embedding: sql`excluded.embedding`,
+          embeddingModel: sql`excluded.embedding_model`,
           metadata: sql`excluded.metadata`,
         },
       });
@@ -111,6 +115,7 @@ export class PgVectorStore extends BaseRepository implements VectorStore {
   public async search(
     organizationId: OrganizationId,
     embedding: readonly number[],
+    model: string,
     goalIds: readonly string[],
     limit: number,
   ): Promise<readonly SearchHit[]> {
@@ -118,13 +123,6 @@ export class PgVectorStore extends BaseRepository implements VectorStore {
     // ascending order on the operator itself — see docs/reference/pgvector.md.
     const distance = cosineDistance(documentChunks.embedding, [...embedding]);
     const similarity = sql<number>`1 - (${distance})`;
-
-    // An empty scope means org-wide chunks only, never everything. If it meant "no
-    // filter", a bug that fails to compute the permitted set would grant the corpus.
-    const scope =
-      goalIds.length > 0
-        ? or(isNull(documentChunks.goalId), inArray(documentChunks.goalId, [...goalIds]))
-        : isNull(documentChunks.goalId);
 
     return this.db
       .select({
@@ -138,11 +136,87 @@ export class PgVectorStore extends BaseRepository implements VectorStore {
       .where(
         and(
           eq(documentChunks.organizationId, organizationId),
-          scope,
+          PgVectorStore.scope(goalIds),
+          // Another model's vector is a point in another space, and a distance to it
+          // would rank noise. After a switch those chunks wait for `ai:reindex`.
+          eq(documentChunks.embeddingModel, model),
           lt(distance, PgVectorStore.MAX_DISTANCE),
         ),
       )
       .orderBy(asc(distance))
       .limit(limit);
+  }
+
+  // `websearch_to_tsquery`, not `to_tsquery`: it takes what a person types, quotes and a
+  // leading minus included, and never throws on it. `simple`, matching the column.
+  public async searchText(
+    organizationId: OrganizationId,
+    query: string,
+    goalIds: readonly string[],
+    limit: number,
+  ): Promise<readonly SearchHit[]> {
+    const tsquery = sql`websearch_to_tsquery('simple', ${query})`;
+    const rank = sql<number>`ts_rank(${documentChunks.search}, ${tsquery})`;
+
+    return this.db
+      .select({
+        id: documentChunks.id,
+        sourceId: documentChunks.sourceId,
+        content: documentChunks.content,
+        score: rank,
+        metadata: documentChunks.metadata,
+      })
+      .from(documentChunks)
+      .where(
+        and(
+          eq(documentChunks.organizationId, organizationId),
+          PgVectorStore.scope(goalIds),
+          sql`${documentChunks.search} @@ ${tsquery}`,
+        ),
+      )
+      .orderBy(desc(rank), asc(documentChunks.id))
+      .limit(limit);
+  }
+
+  // Missing or another model's, which is every chunk a switch left behind.
+  public async stale(
+    organizationId: OrganizationId,
+    model: string,
+    limit: number,
+  ): Promise<readonly StaleChunk[]> {
+    return this.db
+      .select({ id: documentChunks.id, content: documentChunks.content })
+      .from(documentChunks)
+      .where(
+        and(
+          eq(documentChunks.organizationId, organizationId),
+          sql`${documentChunks.embeddingModel} is distinct from ${model}`,
+        ),
+      )
+      .orderBy(asc(documentChunks.createdAt), asc(documentChunks.id))
+      .limit(limit);
+  }
+
+  public async saveEmbeddings(
+    organizationId: OrganizationId,
+    embeddings: readonly { readonly id: string; readonly embedding: readonly number[] }[],
+    model: string,
+  ): Promise<void> {
+    for (const entry of embeddings) {
+      await this.db
+        .update(documentChunks)
+        .set({ embedding: [...entry.embedding], embeddingModel: model })
+        .where(
+          and(eq(documentChunks.organizationId, organizationId), eq(documentChunks.id, entry.id)),
+        );
+    }
+  }
+
+  // An empty scope means org-wide chunks only, never everything. If it meant "no
+  // filter", a bug that fails to compute the permitted set would grant the corpus.
+  private static scope(goalIds: readonly string[]) {
+    return goalIds.length > 0
+      ? or(isNull(documentChunks.goalId), inArray(documentChunks.goalId, [...goalIds]))
+      : isNull(documentChunks.goalId);
   }
 }

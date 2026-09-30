@@ -1,4 +1,5 @@
 import {
+  customType,
   index,
   integer,
   jsonb,
@@ -11,6 +12,10 @@ import {
   uuid,
   vector,
 } from "../../import.js";
+
+// Postgres full-text search's own type; drizzle has none, so it is declared here as
+// `doc.schema.ts` declares its own.
+const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
 
 // Partitioned by tenant and by nothing else. One HNSW graph per tenant is the better
 // shape: `search()` carries the tenant, so a query walks one small graph.
@@ -33,8 +38,14 @@ export const documentChunks = pgTable(
     content: text("content").notNull(),
 
     // Must match EMBEDDING_DIMENSIONS. Changing it is ALTER TABLE plus re-embedding
-    // the whole corpus, which is why the value is in `.env.example`.
-    embedding: vector("embedding", { dimensions: 1536 }).notNull(),
+    // the whole corpus, which is why the value is in `.env.example`. Null with no provider.
+    embedding: vector("embedding", { dimensions: 1536 }),
+    // The model that wrote `embedding`. A search compares only its own model's vectors,
+    // and `pnpm ai:reindex` re-embeds the rest after a switch.
+    embeddingModel: text("embedding_model"),
+    // What `EMBEDDING_PROVIDER=none` searches. `simple`, not a language: the corpus has
+    // no one language, and a stemmer for the wrong one is worse than none.
+    search: tsvector("search").generatedAlwaysAs(sql`to_tsvector('simple', content)`),
 
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -50,6 +61,7 @@ export const documentChunks = pgTable(
     index("document_chunks_goal_null_idx")
       .on(t.organizationId, t.id)
       .where(sql`${t.goalId} is null`),
+    index("document_chunks_search_idx").using("gin", t.search),
     // HNSW, not IVFFlat: it builds incrementally, which matters when the table
     // starts empty. The operator class must match the query or it seq-scans.
     index("document_chunks_embedding_idx")

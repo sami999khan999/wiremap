@@ -4,6 +4,7 @@ import { EmbeddingProvider } from "../import.js";
 // same vector out — which is what lets a retrieval test assert an ordering at all.
 export class StubEmbeddingProvider extends EmbeddingProvider {
   public override readonly dimensions: number;
+  public override readonly model = "stub-embedding";
 
   public constructor(dimensions = 8) {
     super();

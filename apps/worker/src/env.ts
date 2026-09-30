@@ -2,88 +2,102 @@ import { z } from "zod";
 
 // The second and last `process.env` reader, and deliberately not sharing the web app's
 // schema — see docs/reference/env.md.
-const Schema = z.object({
-  DATABASE_URL: z.url(),
-  // The same server without the pooler. Migrations, the seed and the archive's DDL
-  // use it — see docs/reference/env.md.
-  DATABASE_DIRECT_URL: z.url().optional(),
-  // Node 0's streaming standby — `24.3`. Reads move onto it only while
-  // `platform_policy.replica_reads_enabled` is on, and only once it has caught up.
-  DATABASE_REPLICA_URL: z.url().optional(),
-  DATABASE_POOL_MAX: z.coerce.number().int().min(1).default(20),
-  DATABASE_POOL_IDLE_TIMEOUT_MS: z.coerce.number().int().min(0).default(30_000),
-  DATABASE_POOL_CONNECT_TIMEOUT_MS: z.coerce.number().int().min(1).default(5_000),
-  // 120 s, against the web app's 30 s: a batch holds no browser open, and the outbox
-  // relay inside `PgUnitOfWork.run` is the long transaction this exists for.
-  DATABASE_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(1).default(120_000),
-  REDIS_CACHE_URL: z.url(),
-  REDIS_QUEUE_URL: z.url(),
-  // Live frames; the cache instance when unset. See docs/infra/reference/redis.md.
-  REDIS_REALTIME_URL: z.url().optional(),
+const Schema = z
+  .object({
+    DATABASE_URL: z.url(),
+    // The same server without the pooler. Migrations, the seed and the archive's DDL
+    // use it — see docs/reference/env.md.
+    DATABASE_DIRECT_URL: z.url().optional(),
+    // Node 0's streaming standby — `24.3`. Reads move onto it only while
+    // `platform_policy.replica_reads_enabled` is on, and only once it has caught up.
+    DATABASE_REPLICA_URL: z.url().optional(),
+    DATABASE_POOL_MAX: z.coerce.number().int().min(1).default(20),
+    DATABASE_POOL_IDLE_TIMEOUT_MS: z.coerce.number().int().min(0).default(30_000),
+    DATABASE_POOL_CONNECT_TIMEOUT_MS: z.coerce.number().int().min(1).default(5_000),
+    // 120 s, against the web app's 30 s: a batch holds no browser open, and the outbox
+    // relay inside `PgUnitOfWork.run` is the long transaction this exists for.
+    DATABASE_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(1).default(120_000),
+    REDIS_CACHE_URL: z.url(),
+    REDIS_QUEUE_URL: z.url(),
+    // Live frames; the cache instance when unset. See docs/infra/reference/redis.md.
+    REDIS_REALTIME_URL: z.url().optional(),
 
-  S3_ENDPOINT: z.url(),
-  S3_REGION: z.string().min(1),
-  S3_BUCKET: z.string().min(1),
-  S3_ACCESS_KEY: z.string().min(1),
-  S3_SECRET_KEY: z.string().min(1),
-  // Defaulted like `LOG_PRETTY`, and to the production answer: real S3 wants virtual-host
-  // addressing, MinIO wants path-style, and `.env.example` sets `true` for the local stack.
-  S3_FORCE_PATH_STYLE: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((v) => v === "true"),
+    S3_ENDPOINT: z.url(),
+    S3_REGION: z.string().min(1),
+    S3_BUCKET: z.string().min(1),
+    S3_ACCESS_KEY: z.string().min(1),
+    S3_SECRET_KEY: z.string().min(1),
+    // Defaulted like `LOG_PRETTY`, and to the production answer: real S3 wants virtual-host
+    // addressing, MinIO wants path-style, and `.env.example` sets `true` for the local stack.
+    S3_FORCE_PATH_STYLE: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
 
-  // In both processes because both build a `Container`, which treats mail as required
-  // rather than optional.
-  SMTP_URL: z.string().min(1),
-  EMAIL_FROM: z.string().min(1),
-  // Required here too, and this is the process that needs it: the worker renders the
-  // invitation link, and it parses no auth configuration to borrow an origin from.
-  APP_BASE_URL: z.url(),
+    // In both processes because both build a `Container`, which treats mail as required
+    // rather than optional.
+    SMTP_URL: z.string().min(1),
+    EMAIL_FROM: z.string().min(1),
+    // Required here too, and this is the process that needs it: the worker renders the
+    // invitation link, and it parses no auth configuration to borrow an origin from.
+    APP_BASE_URL: z.url(),
 
-  EMBEDDING_MODEL: z.string().min(1),
-  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive(),
-  OPENAI_API_KEY: z.string().default(""),
+    // `none` searches the chunk text and calls nobody. `openai` and `gemini` embed, need
+    // the key below, and default the model when unset. See infrastructure's embedding.md.
+    EMBEDDING_PROVIDER: z.enum(["none", "openai", "gemini"]).default("none"),
+    EMBEDDING_API_KEY: z.string().min(1).optional(),
+    EMBEDDING_MODEL: z.string().min(1).optional(),
+    EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
 
-  // Per process. The cap exists to stop one runaway tab, which is local by
-  // construction, and the age is what releases a channel a leaked reader is holding.
-  REALTIME_MAX_STREAMS_PER_USER: z.coerce.number().int().positive().default(8),
-  REALTIME_STREAM_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(1800),
+    // Per process. The cap exists to stop one runaway tab, which is local by
+    // construction, and the age is what releases a channel a leaked reader is holding.
+    REALTIME_MAX_STREAMS_PER_USER: z.coerce.number().int().positive().default(8),
+    REALTIME_STREAM_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(1800),
 
-  // Longer than your longest job, shorter than your orchestrator's SIGKILL timer: above
-  // it just means the platform kills you mid-drain.
-  WORKER_SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(25_000),
-  WORKER_EMBEDDING_CONCURRENCY: z.coerce.number().int().positive().default(4),
-  // Serial by default: these jobs take table-level locks and can deadlock on the same
-  // partition.
-  WORKER_MAINTENANCE_CONCURRENCY: z.coerce.number().int().positive().default(1),
-  WORKER_MAIL_CONCURRENCY: z.coerce.number().int().positive().default(4),
-  WORKER_EVENT_CONCURRENCY: z.coerce.number().int().positive().default(8),
-  // Two. The digest fan-out is one job a day and each tenant's digest is I/O bound
-  // on the mail queue, which has its own limiter.
-  WORKER_NOTIFICATION_CONCURRENCY: z.coerce.number().int().positive().default(2),
-  // A provider's cap, expressed once. Ten a second is under every managed sender's
-  // free tier and well under a self-hosted relay's.
-  WORKER_MAIL_RATE_PER_MINUTE: z.coerce.number().int().positive().default(600),
+    // Longer than your longest job, shorter than your orchestrator's SIGKILL timer: above
+    // it just means the platform kills you mid-drain.
+    WORKER_SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(25_000),
+    WORKER_EMBEDDING_CONCURRENCY: z.coerce.number().int().positive().default(4),
+    // Serial by default: these jobs take table-level locks and can deadlock on the same
+    // partition.
+    WORKER_MAINTENANCE_CONCURRENCY: z.coerce.number().int().positive().default(1),
+    WORKER_MAIL_CONCURRENCY: z.coerce.number().int().positive().default(4),
+    WORKER_EVENT_CONCURRENCY: z.coerce.number().int().positive().default(8),
+    // Two. The digest fan-out is one job a day and each tenant's digest is I/O bound
+    // on the mail queue, which has its own limiter.
+    WORKER_NOTIFICATION_CONCURRENCY: z.coerce.number().int().positive().default(2),
+    // A provider's cap, expressed once. Ten a second is under every managed sender's
+    // free tier and well under a self-hosted relay's.
+    WORKER_MAIL_RATE_PER_MINUTE: z.coerce.number().int().positive().default(600),
 
-  // The same block the web app parses: a worker with no log output cannot be operated.
+    // The same block the web app parses: a worker with no log output cannot be operated.
 
-  // ── the swappable stores ──
-  // A driver plus the connection detail it needs, so adopting a store is these variables
-  // and nothing else.
-  VECTOR_DRIVER: z.enum(["pgvector"]).default("pgvector"),
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-  LOG_PRETTY: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((v) => v === "true"),
-  // Two of the four log labels. Low-cardinality by construction, and this default is
-  // why `.env` must not pin `APP` globally — both processes would claim one name.
-  APP: z.string().default("worker"),
-  ENV: z.string().default("development"),
+    // ── the swappable stores ──
+    // A driver plus the connection detail it needs, so adopting a store is these variables
+    // and nothing else.
+    VECTOR_DRIVER: z.enum(["pgvector"]).default("pgvector"),
+    LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+    LOG_PRETTY: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
+    // Two of the four log labels. Low-cardinality by construction, and this default is
+    // why `.env` must not pin `APP` globally — both processes would claim one name.
+    APP: z.string().default("worker"),
+    ENV: z.string().default("development"),
 
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-});
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  })
+  // One cross-field rule: an embedding provider with no key fails on the first document.
+  .superRefine((env, ctx) => {
+    if (env.EMBEDDING_PROVIDER !== "none" && !env.EMBEDDING_API_KEY) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["EMBEDDING_API_KEY"],
+        message: `Required when EMBEDDING_PROVIDER is "${env.EMBEDDING_PROVIDER}".`,
+      });
+    }
+  });
 
 // `DATABASE_SHARD_<n>_URL` in index order, each with an optional `_DIRECT_URL` and
 // `_REPLICA_URL` beside it. Absent is one node, which is every deployment until the split.
@@ -197,9 +211,10 @@ export class Env {
       },
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
       embedding: {
-        apiKey: e.OPENAI_API_KEY,
-        model: e.EMBEDDING_MODEL,
+        provider: e.EMBEDDING_PROVIDER,
         dimensions: e.EMBEDDING_DIMENSIONS,
+        ...(e.EMBEDDING_API_KEY ? { apiKey: e.EMBEDDING_API_KEY } : {}),
+        ...(e.EMBEDDING_MODEL ? { model: e.EMBEDDING_MODEL } : {}),
       },
       realtime: {
         maxStreamsPerUser: e.REALTIME_MAX_STREAMS_PER_USER,

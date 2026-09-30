@@ -9,8 +9,11 @@ export {
   type QueueDocumentIndexInput,
   QueueDocumentIndexUseCase,
   type QueuedDocumentIndex,
+  type ReembedChunksResult,
+  ReembedChunksUseCase,
   type SearchDocumentsInput,
   SearchDocumentsUseCase,
+  type SearchMode,
 } from "./ai/index.js";
 export {
   type ApiKeyPage,
@@ -231,6 +234,7 @@ export {
   type EmailReceipt,
   EmailSender,
   EmbeddingProvider,
+  type EmbeddingPurpose,
   type ExportedObject,
   type IndexedSource,
   type JobOptions,
@@ -262,6 +266,7 @@ export {
   ShardingStrategy,
   type ShardPlacement,
   ShardResolver,
+  type StaleChunk,
   StorageGateway,
   StoragePolicyGateway,
   type StoredObject,

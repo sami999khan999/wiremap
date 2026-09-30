@@ -72,6 +72,7 @@ export {
   type EmailReceipt,
   EmailSender,
   EmbeddingProvider,
+  type EmbeddingPurpose,
   type EntitlementRepository,
   type ExportedObject,
   type FlagRecord,
@@ -105,7 +106,6 @@ export {
   type OverrideInput,
   PartitionArchiveGateway,
   type PartitionEstimate,
-  // A value, not a type: the seed and the maintenance gateway both walk the allowlist.
   PartitionedTable,
   type PartitionedTableEntry,
   type PartitionedTableName,
@@ -123,6 +123,8 @@ export {
   // an audit row as the tenant being created or joined.
   Principal,
   type QueuedJob,
+  // A value, not a type: the seed and the maintenance gateway both walk the allowlist.
+  QueueName,
   QueuePublisher,
   RateLimitStore,
   type RealtimeChannel,
@@ -144,6 +146,7 @@ export {
   type ShardPlacement,
   ShardResolver,
   type ShardTenant,
+  type StaleChunk,
   StorageGateway,
   StoragePolicyGateway,
   type StoredObject,

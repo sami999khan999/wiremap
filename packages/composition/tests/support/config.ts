@@ -31,7 +31,7 @@ export const baseConfig = (): ContainerConfig => ({
     from: "noreply@example.test",
     baseUrl: "http://localhost:23000",
   },
-  embedding: { apiKey: "sk-not-used", model: "text-embedding-3-small", dimensions: 1536 },
+  embedding: { provider: "none", dimensions: 1536 },
   realtime: { maxStreamsPerUser: 8, streamMaxAgeSeconds: 1800 },
   vector: { driver: "pgvector" },
   logging: { level: "error", pretty: false, app: "spec", env: "test" },

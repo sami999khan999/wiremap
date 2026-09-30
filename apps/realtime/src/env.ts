@@ -79,9 +79,12 @@ const Schema = z
     // Auth's own: the worker sends invitation mail and parses no auth configuration.
     APP_BASE_URL: z.url(),
 
-    EMBEDDING_MODEL: z.string().min(1),
-    EMBEDDING_DIMENSIONS: z.coerce.number().int().positive(),
-    OPENAI_API_KEY: z.string().default(""),
+    // `none` searches the chunk text and calls nobody. `openai` and `gemini` embed, need
+    // the key below, and default the model when unset. See infrastructure's embedding.md.
+    EMBEDDING_PROVIDER: z.enum(["none", "openai", "gemini"]).default("none"),
+    EMBEDDING_API_KEY: z.string().min(1).optional(),
+    EMBEDDING_MODEL: z.string().min(1).optional(),
+    EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
 
     // Per process. The cap exists to stop one runaway tab, which is local by
     // construction, and the age is what releases a channel a leaked reader is holding.
@@ -107,9 +110,18 @@ const Schema = z
 
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   })
-  // One cross-field rule, and it earns the exception: `bootstrap` with no slug enrols
-  // nobody.
+  // Two cross-field rules, and each earns the exception: `bootstrap` with no slug enrols
+  // nobody, and an embedding provider with no key fails on the first document.
   .superRefine((env, ctx) => {
+    // A provider with no key would fail on the first document, long after the deploy.
+    if (env.EMBEDDING_PROVIDER !== "none" && !env.EMBEDDING_API_KEY) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["EMBEDDING_API_KEY"],
+        message: `Required when EMBEDDING_PROVIDER is "${env.EMBEDDING_PROVIDER}".`,
+      });
+    }
+
     if (env.AUTH_ENROLMENT_MODE === "bootstrap" && !env.BOOTSTRAP_ORGANIZATION_SLUG) {
       ctx.addIssue({
         code: "custom",
@@ -226,9 +238,10 @@ export class Env {
       },
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
       embedding: {
-        apiKey: e.OPENAI_API_KEY,
-        model: e.EMBEDDING_MODEL,
+        provider: e.EMBEDDING_PROVIDER,
         dimensions: e.EMBEDDING_DIMENSIONS,
+        ...(e.EMBEDDING_API_KEY ? { apiKey: e.EMBEDDING_API_KEY } : {}),
+        ...(e.EMBEDDING_MODEL ? { model: e.EMBEDDING_MODEL } : {}),
       },
       realtime: {
         maxStreamsPerUser: e.REALTIME_MAX_STREAMS_PER_USER,

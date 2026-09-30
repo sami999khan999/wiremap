@@ -22,6 +22,7 @@ const chunk = (id: string, embedding: readonly number[], goalId: string | null):
   goalId,
   content: `content ${id}`,
   embedding,
+  embeddingModel: "stub-embedding",
   metadata: {},
 });
 
@@ -192,7 +193,7 @@ describe("InMemoryVectorStore", () => {
     const vectors = new InMemoryVectorStore();
     await vectors.upsert(ORG, [chunk("far", [0, 1], null), chunk("near", [1, 0], null)]);
 
-    const [top] = await vectors.search(ORG, [1, 0], [], 10);
+    const [top] = await vectors.search(ORG, [1, 0], "stub-embedding", [], 10);
 
     expect(top?.id).toBe("near");
   });
@@ -204,7 +205,7 @@ describe("InMemoryVectorStore", () => {
       chunk("hidden", [1, 0], "goal-b"),
     ]);
 
-    const hits = await vectors.search(ORG, [1, 0], ["goal-a"], 10);
+    const hits = await vectors.search(ORG, [1, 0], "stub-embedding", ["goal-a"], 10);
 
     expect(hits.map((hit) => hit.id)).toEqual(["permitted"]);
   });
@@ -223,7 +224,7 @@ describe("InMemoryVectorStore", () => {
     await vectors.upsert(ORG, [chunk("a", [1, 0], null)]);
 
     expect(vectors.countFor(other)).toBe(0);
-    expect(await vectors.search(other, [1, 0], [], 10)).toEqual([]);
+    expect(await vectors.search(other, [1, 0], "stub-embedding", [], 10)).toEqual([]);
   });
 
   it("drops every chunk from one source", async () => {
@@ -245,7 +246,7 @@ describe("the fakes agree with their adapters", () => {
     const vectors = new InMemoryVectorStore();
     await vectors.upsert(ORG, [chunk("a", [1, 0], null), chunk("b", [0, 1], null)]);
 
-    const hits = await vectors.search(ORG, [1, 0], [], 10);
+    const hits = await vectors.search(ORG, [1, 0], "stub-embedding", [], 10);
 
     expect(hits.map((hit) => hit.id)).toEqual(["a"]);
   });

@@ -57,6 +57,7 @@ packages/infrastructure/
     ├── bullmq/    bullmq-queue.publisher.ts → BullMqQueuePublisher
     │              queue-name.ts            → QueueName
     ├── smtp/      smtp-email.sender.ts     → SmtpEmailSender
+    ├── gemini/    gemini-embedding.provider.ts → GeminiEmbeddingProvider
     └── openai/    openai-embedding.provider.ts → OpenAiEmbeddingProvider
 ```
 
@@ -267,6 +268,7 @@ variable came back undefined — which looks exactly like an unconfigured stack.
   repository in one actually means.
 - [Enrollers, the founder, and the claimer](reference/enrollers.md) — the advisory locks, the races
   they protect against, and why every one of them binds structurally.
+- [Embedding](reference/embedding.md) — `none`, `openai` or `gemini`, lexical search, and what a provider switch does to the corpus
 - [pgvector](reference/pgvector.md) — the permission filter on the input set, the score floor, and
   the `ORDER BY` that stops the index being used.
 - [Partitions](reference/partitions.md) — the allowlist as the whole policy, the two mechanics that

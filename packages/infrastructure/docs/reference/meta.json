@@ -5,6 +5,7 @@
     "unit-of-work",
     "enrollers",
     "pgvector",
+    "embedding",
     "partitions",
     "sharding",
     "notification-recipients",

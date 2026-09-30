@@ -42,12 +42,12 @@ import {
   DocTree,
   type DomainEventPublisher,
   type EmailSender,
-  type EmbeddingProvider,
   ExpireEntitlementAdjustmentsUseCase,
   ExpirePermissionOverridesUseCase,
   ExportOrganizationUseCase,
   FindAccountUseCase,
   FlagCache,
+  GeminiEmbeddingProvider,
   GetDocPageUseCase,
   GetDocRevisionUseCase,
   GetDocSpaceUseCase,
@@ -150,6 +150,7 @@ import {
   RedisRateLimitStore,
   RedisRealtimePublisher,
   RedisRealtimeSubscriber,
+  ReembedChunksUseCase,
   ReinstateAccountUseCase,
   type RelayedActivityStore,
   type ReplicaHealth,
@@ -167,6 +168,7 @@ import {
   SERVER_CATALOG,
   SearchDocsUseCase,
   SearchDocumentsUseCase,
+  type SearchMode,
   SearchPlatformDocsUseCase,
   SendMailUseCase,
   SendNotificationDigestUseCase,
@@ -318,7 +320,9 @@ export class Container {
   public readonly storage: StorageGateway;
   public readonly queue: QueuePublisher;
   public readonly vectors: VectorStore;
-  public readonly embeddings: EmbeddingProvider;
+  // How the corpus is embedded and searched, from `EMBEDDING_PROVIDER`. Built once, so no
+  // use-case names a vendor or asks which one it was handed.
+  public readonly searchMode: SearchMode;
   public readonly activity: ActivityLogger;
   // The same adapter as `activity`, seen through the port the relay subscriber writes to.
   private readonly relayedActivity: RelayedActivityStore;
@@ -381,6 +385,7 @@ export class Container {
     readonly indexDocument: IndexDocumentUseCase;
     readonly queueIndex: QueueDocumentIndexUseCase;
     readonly searchDocuments: SearchDocumentsUseCase;
+    readonly reembed: ReembedChunksUseCase;
   };
   // Outside the `auth` block on purpose. The worker is the process that sends mail and it
   // has no auth config — which is exactly what building the old mailer in there got wrong.
@@ -640,7 +645,7 @@ export class Container {
     // Each reads a `driver` rather than naming a class: the alternative is named in a
     // switch a compiler checks, not in a document.
     this.vectors = Container.buildVectorStore(config, this.cluster, this.transactions, this.shards);
-    this.embeddings = new OpenAiEmbeddingProvider(config.embedding, this.logger);
+    this.searchMode = Container.buildSearchMode(config.embedding, this.logger);
 
     // The only catalog carrying the `email` namespace the worker's digests read. A
     // client bundle cannot reach it.
@@ -1168,7 +1173,7 @@ export class Container {
       // Run by the worker's consumer, off the queue the two below feed.
       indexDocument: new IndexDocumentUseCase(
         this.authorizer,
-        this.embeddings,
+        this.searchMode,
         this.vectors,
         this.activity,
         this.routedUnitOfWork,
@@ -1181,9 +1186,16 @@ export class Container {
       ),
       searchDocuments: new SearchDocumentsUseCase(
         this.authorizer,
-        this.embeddings,
+        this.searchMode,
         this.vectors,
         this.activity,
+        this.routedUnitOfWork,
+      ),
+      // The worker's, off `pnpm ai:reindex`: every chunk another model wrote, re-embedded.
+      reembed: new ReembedChunksUseCase(
+        this.authorizer,
+        this.searchMode,
+        this.vectors,
         this.routedUnitOfWork,
       ),
     };
@@ -1520,6 +1532,39 @@ export class Container {
         this.catalogUnitOfWork,
       ),
     };
+  }
+
+  // The one place a vendor is chosen, as a `case` the compiler checks. The default models
+  // are each vendor's current small embedding model; both are cut to `dimensions`.
+  private static buildSearchMode(config: ContainerConfig["embedding"], logger: Logger): SearchMode {
+    switch (config.provider) {
+      case "none":
+        return { kind: "lexical" };
+      case "openai":
+        return {
+          kind: "semantic",
+          provider: new OpenAiEmbeddingProvider(
+            {
+              apiKey: config.apiKey ?? "",
+              model: config.model ?? "text-embedding-3-small",
+              dimensions: config.dimensions,
+            },
+            logger,
+          ),
+        };
+      case "gemini":
+        return {
+          kind: "semantic",
+          provider: new GeminiEmbeddingProvider(
+            {
+              apiKey: config.apiKey ?? "",
+              model: config.model ?? "gemini-embedding-001",
+              dimensions: config.dimensions,
+            },
+            logger,
+          ),
+        };
+    }
   }
 
   // A static, so adopting a dedicated vector store is a `case` the compiler checks. The

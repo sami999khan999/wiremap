@@ -205,7 +205,7 @@ const ENV_EXEMPT = [
   // The web smoke's `globalSetup`: it spawns the built server, so it composes that
   // child's whole environment out of the one it was given.
   /^apps\/web\/tests\/smoke\/support\/server\.ts$/,
-  /^packages\/infrastructure\/(migrate|partitions|platform-grant|queue-replay|seed|shard-env|smoke)\.ts$/,
+  /^packages\/infrastructure\/(ai-reindex|migrate|partitions|platform-grant|queue-replay|seed|shard-env|smoke)\.ts$/,
 ];
 
 assert("only `env.ts` reads `process.env`", (failures) => {

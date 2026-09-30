@@ -3,7 +3,7 @@ export { CacheStore } from "./cache.store.js";
 export { CapabilityInvalidator } from "./capability.invalidator.js";
 export { DomainEventPublisher } from "./domain-event.publisher.js";
 export { type EmailMessage, type EmailReceipt, EmailSender } from "./email.sender.js";
-export { EmbeddingProvider } from "./embedding.provider.js";
+export { EmbeddingProvider, type EmbeddingPurpose } from "./embedding.provider.js";
 export { MailPublisher, type MailRequest } from "./mail.publisher.js";
 export { MailRenderer, type RenderedMail } from "./mail.renderer.js";
 export {
@@ -52,5 +52,6 @@ export {
   type DocumentChunk,
   type IndexedSource,
   type SearchHit,
+  type StaleChunk,
   VectorStore,
 } from "./vector.store.js";

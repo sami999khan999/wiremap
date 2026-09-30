@@ -10,6 +10,9 @@ import { documentChunks, organizations } from "../../src/pg/schema/index.js";
 import { ShardScope, TransactionScope } from "../../src/pg/transaction/index.js";
 import { DATABASE_URL, openDatabase, seedOrganizationId, seedTenant } from "../support/database.js";
 
+// The model every chunk below is written by, and every search asks for.
+const MODEL = "spec-model";
+
 // One node, so nothing is ever placed: every repository here resolves to it.
 const shards = new ShardScope();
 
@@ -68,6 +71,7 @@ describe("PgVectorStore", () => {
         goalId: null,
         content: "org-wide chunk",
         embedding: axis(0),
+        embeddingModel: MODEL,
         metadata: { chunkIndex: 0, sourceType: "note" },
       },
       {
@@ -76,14 +80,15 @@ describe("PgVectorStore", () => {
         goalId,
         content: "goal-scoped chunk",
         embedding: axis(0),
+        embeddingModel: MODEL,
         metadata: { chunkIndex: 1, sourceType: "note" },
       },
     ]);
 
-    const withoutScope = await store.search(organizationId, axis(0), [], 10);
+    const withoutScope = await store.search(organizationId, axis(0), MODEL, [], 10);
     expect(withoutScope.map((h) => h.content)).toEqual(["org-wide chunk"]);
 
-    const withScope = await store.search(organizationId, axis(0), [goalId], 10);
+    const withScope = await store.search(organizationId, axis(0), MODEL, [goalId], 10);
     expect(withScope.map((h) => h.content).sort()).toEqual(["goal-scoped chunk", "org-wide chunk"]);
 
     await store.deleteBySource(organizationId, sourceId);
@@ -100,6 +105,7 @@ describe("PgVectorStore", () => {
         goalId: null,
         content: "exact",
         embedding: axis(1),
+        embeddingModel: MODEL,
         metadata: { chunkIndex: 0 },
       },
       {
@@ -108,6 +114,7 @@ describe("PgVectorStore", () => {
         goalId: null,
         content: "near",
         embedding: blend(1, 2),
+        embeddingModel: MODEL,
         metadata: { chunkIndex: 1 },
       },
       {
@@ -116,11 +123,12 @@ describe("PgVectorStore", () => {
         goalId: null,
         content: "orthogonal",
         embedding: axis(3),
+        embeddingModel: MODEL,
         metadata: { chunkIndex: 2 },
       },
     ]);
 
-    const hits = await store.search(organizationId, axis(1), [], 10);
+    const hits = await store.search(organizationId, axis(1), MODEL, [], 10);
 
     // "orthogonal" scores 0, below MIN_SCORE, so the floor removes it entirely.
     expect(hits.map((h) => h.content)).toEqual(["exact", "near"]);
@@ -146,11 +154,12 @@ describe("PgVectorStore", () => {
         goalId: null,
         content: "other tenant chunk",
         embedding: axis(0),
+        embeddingModel: MODEL,
         metadata: { chunkIndex: 0 },
       },
     ]);
 
-    const hits = await store.search(organizationId, axis(0), [], 10);
+    const hits = await store.search(organizationId, axis(0), MODEL, [], 10);
     expect(hits.map((h) => h.content)).not.toContain("other tenant chunk");
 
     await store.deleteBySource(otherOrg, sourceId);
@@ -171,11 +180,12 @@ describe("PgVectorStore", () => {
         goalId: null,
         content: `chunk ${i}`,
         embedding: axis(i),
+        embeddingModel: MODEL,
         metadata: { chunkIndex: i },
       })),
     );
 
-    await store.search(organizationId, axis(0), [], 10);
+    await store.search(organizationId, axis(0), MODEL, [], 10);
 
     const issued = recorder.last;
     if (!issued) throw new Error("expected the search above to have been logged");
@@ -218,6 +228,7 @@ describe("PgVectorStore", () => {
       goalId: null,
       content: "first",
       embedding: axis(5),
+      embeddingModel: MODEL,
       metadata: { chunkIndex: 0 },
     };
 
@@ -246,6 +257,7 @@ describe("PgVectorStore", () => {
       goalId,
       content: "versioned",
       embedding: axis(6),
+      embeddingModel: MODEL,
       metadata: { chunkIndex: 0, ...(version === undefined ? {} : { version }) },
     });
 
@@ -260,6 +272,74 @@ describe("PgVectorStore", () => {
       goalId,
       version: 1_790_000_000_000,
     });
+
+    await store.deleteBySource(organizationId, sourceId);
+  });
+});
+
+// `LT4.5`: a vector from another model is a point in another space. It is never compared,
+// and the lexical path finds a chunk that has no vector at all.
+describe("PgVectorStore — models and text", () => {
+  it("never compares a vector another model wrote", async () => {
+    const organizationId = await seedOrg();
+    const sourceId = Uuid.v7();
+
+    await store.upsert(organizationId, [
+      {
+        id: Uuid.v7(),
+        sourceId,
+        goalId: null,
+        content: "this model",
+        embedding: axis(0),
+        embeddingModel: MODEL,
+        metadata: { chunkIndex: 0 },
+      },
+      {
+        id: Uuid.v7(),
+        sourceId,
+        goalId: null,
+        content: "another model",
+        embedding: axis(0),
+        embeddingModel: "another-model",
+        metadata: { chunkIndex: 1 },
+      },
+    ]);
+
+    const hits = await store.search(organizationId, axis(0), MODEL, [], 10);
+    expect(hits.map((h) => h.content)).toEqual(["this model"]);
+
+    await store.deleteBySource(organizationId, sourceId);
+  });
+
+  it("finds text with no vector, and lists it as stale for the active model", async () => {
+    const organizationId = await seedOrg();
+    const sourceId = Uuid.v7();
+    const id = Uuid.v7();
+
+    await store.upsert(organizationId, [
+      {
+        id,
+        sourceId,
+        goalId: null,
+        content: "quarterly invoices for the harbour office",
+        embedding: null,
+        embeddingModel: null,
+        metadata: { chunkIndex: 0 },
+      },
+    ]);
+
+    const hits = await store.searchText(organizationId, "harbour invoices", [], 10);
+    expect(hits.map((h) => h.id)).toEqual([id]);
+    expect(await store.searchText(organizationId, "nothing like it", [], 10)).toEqual([]);
+
+    expect((await store.stale(organizationId, MODEL, 10)).map((chunk) => chunk.id)).toContain(id);
+    await store.saveEmbeddings(organizationId, [{ id, embedding: axis(2) }], MODEL);
+    expect((await store.stale(organizationId, MODEL, 10)).map((chunk) => chunk.id)).not.toContain(
+      id,
+    );
+    expect((await store.search(organizationId, axis(2), MODEL, [], 10)).map((h) => h.id)).toEqual([
+      id,
+    ]);
 
     await store.deleteBySource(organizationId, sourceId);
   });

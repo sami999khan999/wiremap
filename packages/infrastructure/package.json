@@ -28,6 +28,7 @@
     "db:partitions": "tsx --env-file-if-exists=../../.env partitions.ts",
     "platform:grant": "tsx --env-file-if-exists=../../.env platform-grant.ts",
     "queue:replay": "tsx --env-file-if-exists=../../.env queue-replay.ts",
+    "ai:reindex": "tsx --env-file-if-exists=../../.env ai-reindex.ts",
     "db:seed": "tsx --env-file-if-exists=../../.env seed.ts",
     "smoke": "vitest run -c vitest.smoke.config.ts"
   },

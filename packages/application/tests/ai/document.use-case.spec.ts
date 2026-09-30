@@ -48,6 +48,7 @@ class RecordingQueue implements QueuePublisher {
 
 class StubEmbeddings implements EmbeddingProvider {
   public readonly dimensions: number;
+  public readonly model = "stub-model";
 
   public constructor(private readonly vectors: readonly (readonly number[])[]) {
     // Read off the vectors rather than fixed at 1536, so the double cannot claim a width
@@ -82,11 +83,24 @@ class RecordingVectors implements VectorStore {
   public search(
     _org: unknown,
     _embedding: readonly number[],
+    _model: string,
     goalIds: readonly string[],
     limit: number,
   ): Promise<readonly SearchHit[]> {
     this.searches.push({ goalIds, limit });
     return Promise.resolve(this.hits);
+  }
+
+  public searchText(): Promise<readonly SearchHit[]> {
+    throw new Error("not under test");
+  }
+
+  public stale(): Promise<readonly never[]> {
+    throw new Error("not under test");
+  }
+
+  public saveEmbeddings(): Promise<void> {
+    throw new Error("not under test");
   }
 }
 
@@ -240,9 +254,15 @@ describe("QueueDocumentIndexUseCase", () => {
 
 describe("SearchDocumentsUseCase", () => {
   const useCase = (vectors: RecordingVectors, embeddings: EmbeddingProvider) =>
-    new SearchDocumentsUseCase(new Authorizer(), embeddings, vectors, activity, {
-      run: (work: () => Promise<unknown>) => work(),
-    } as never);
+    new SearchDocumentsUseCase(
+      new Authorizer(),
+      { kind: "semantic", provider: embeddings },
+      vectors,
+      activity,
+      {
+        run: (work: () => Promise<unknown>) => work(),
+      } as never,
+    );
 
   it("refuses a principal without ai.embedding.read", async () => {
     const vectors = new RecordingVectors();

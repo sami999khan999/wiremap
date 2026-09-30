@@ -3,6 +3,7 @@ import { type Container, type Job, QueueName, type Redis, Worker } from "../impo
 
 interface EmbeddingJobData {
   readonly organizationId: string;
+  // Absent on a `reembed` job, which names only the tenant: `pnpm ai:reindex` queues one.
   readonly documentId: string;
   readonly text: string;
   readonly goalId?: string | null;
@@ -68,6 +69,13 @@ export class EmbeddingConsumer {
     const principal = SystemPrincipal.forOrganization(job.data.organizationId);
 
     // `document_chunks` is routed, so the job is placed before the use-case runs.
+    if (job.name === "reembed") {
+      await withShard(this.container, job.data.organizationId, () =>
+        this.container.ai.reembed.execute(principal),
+      );
+      return;
+    }
+
     await withShard(this.container, job.data.organizationId, () =>
       this.container.ai.indexDocument.execute(principal, {
         documentId: job.data.documentId,
