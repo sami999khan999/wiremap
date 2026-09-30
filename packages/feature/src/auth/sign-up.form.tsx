@@ -5,6 +5,7 @@ import {
   ErrorNormalizer,
   Field,
   type FormEvent,
+  fieldClassName,
   Input,
   SessionMutations,
   useState,
@@ -89,7 +90,7 @@ export function SignUpForm({ auth, verifyCallbackUrl, onSuccess }: SignUpFormPro
         // alternative claims an account was created when it was not.
       }
       {failure ? (
-        <p role="alert" className="ui-field__error">
+        <p role="alert" className={fieldClassName.error}>
           {failure === "CONFLICT" ? t("auth.emailTaken") : t("auth.signUpFailed")}
         </p>
       ) : null}

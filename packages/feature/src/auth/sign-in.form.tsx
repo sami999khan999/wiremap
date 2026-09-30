@@ -6,6 +6,7 @@ import {
   ErrorNormalizer,
   Field,
   type FormEvent,
+  fieldClassName,
   Input,
   SessionMutations,
   useState,
@@ -83,7 +84,7 @@ export function SignInForm({ auth, onSuccess, onNeedsTwoFactor }: SignInFormProp
         // is an account-enumeration oracle.
       }
       {signIn.isError && !needsTwoFactor ? (
-        <p role="alert" className="ui-field__error">
+        <p role="alert" className={fieldClassName.error}>
           {suspended ? failure.message : t("auth.signInFailed")}
         </p>
       ) : null}

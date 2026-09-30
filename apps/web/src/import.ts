@@ -152,6 +152,7 @@ export {
   FontRegistry,
   Icon,
   Input,
+  inputClassName,
   type LinkAttributes,
   type ModeKey,
   type ModePreference,

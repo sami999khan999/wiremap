@@ -7,6 +7,7 @@ import {
   CodeList,
   Field,
   type FormEvent,
+  fieldClassName,
   Input,
   QrCode,
   useState,
@@ -87,7 +88,7 @@ export function TwoFactorSetup({ account, onEnabled }: TwoFactorSetupProps) {
     return (
       <form onSubmit={finish} noValidate>
         <QrCode value={totpUri} label={t("account.twoFactorScan")} />
-        <p className="ui-field__hint">{t("account.twoFactorScan")}</p>
+        <p className={fieldClassName.hint}>{t("account.twoFactorScan")}</p>
 
         {
           // The same string the QR encodes, for an authenticator with no camera — so
@@ -115,7 +116,7 @@ export function TwoFactorSetup({ account, onEnabled }: TwoFactorSetupProps) {
         </Field>
 
         {verify.isError ? (
-          <p role="alert" className="ui-field__error">
+          <p role="alert" className={fieldClassName.error}>
             {t("account.twoFactorFailed")}
           </p>
         ) : null}

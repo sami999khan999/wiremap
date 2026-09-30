@@ -6,6 +6,7 @@ import {
   DocumentMutations,
   Field,
   type FormEvent,
+  inputClassName,
   useApiClient,
   useState,
 } from "../import.js";
@@ -38,7 +39,7 @@ export function IndexDocumentForm() {
         }
         <textarea
           id="document-text"
-          className="ui-input"
+          className={inputClassName()}
           rows={6}
           value={text}
           onChange={(event) => setText(event.target.value)}

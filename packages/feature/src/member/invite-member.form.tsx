@@ -6,6 +6,7 @@ import {
   Field,
   type FormEvent,
   Input,
+  inputClassName,
   MemberMutations,
   type RoleDto,
   RoleQueries,
@@ -79,7 +80,7 @@ export function InviteMemberForm() {
         }
         <select
           id="invite-role"
-          className="ui-input"
+          className={inputClassName()}
           value={selectedRole}
           onChange={(event) => setRoleId(event.target.value)}
           disabled={roles.isPending}

@@ -5,6 +5,7 @@ import {
   type DocReadingDto,
   type DocSpaceDto,
   EmptyState,
+  fieldClassName,
   Icon,
   NavTree,
   Popover,
@@ -162,7 +163,7 @@ export function DocReaderPanel({
         : {})}
     >
       <Prose html={page.html} copyLabel={t("doc.code.copy")} copiedLabel={t("doc.code.copied")} />
-      <p className="ui-field__hint">
+      <p className={fieldClassName.hint}>
         {t("doc.updated", { date: DateFormat.day(page.publishedAt) })}
       </p>
     </ReaderLayout>

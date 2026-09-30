@@ -10,7 +10,9 @@ import {
   type DocSpaceId,
   Field,
   type FormEvent,
+  fieldClassName,
   Input,
+  inputClassName,
   StatusBadge,
   useApiClient,
   useAppQuery,
@@ -65,7 +67,7 @@ export function DocGrantPanel({ spaceId }: DocGrantPanelProps) {
   return (
     <section className="ui-stack" aria-labelledby={`doc-grants-${spaceId}`}>
       <h3 id={`doc-grants-${spaceId}`}>{t("doc.grant.title")}</h3>
-      <p className="ui-field__hint">{t("doc.grant.description")}</p>
+      <p className={fieldClassName.hint}>{t("doc.grant.description")}</p>
 
       {items.length === 0 ? <p>{t("doc.grant.none")}</p> : null}
       <ul className="ui-stack">
@@ -77,7 +79,7 @@ export function DocGrantPanel({ spaceId }: DocGrantPanelProps) {
                 {t(`doc.grant.kind.${grant.kind}`)}
               </StatusBadge>
               <strong>{grant.label}</strong>
-              <span className="ui-field__hint">
+              <span className={fieldClassName.hint}>
                 {expired
                   ? t("doc.grant.expired")
                   : grant.expiresAt
@@ -102,7 +104,7 @@ export function DocGrantPanel({ spaceId }: DocGrantPanelProps) {
         <Field label={t("doc.grant.kind")} htmlFor={`doc-grant-kind-${spaceId}`}>
           <select
             id={`doc-grant-kind-${spaceId}`}
-            className="ui-input"
+            className={inputClassName()}
             value={kind}
             onChange={(event) => setKind(event.target.value as DocGrantKind)}
           >

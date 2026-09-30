@@ -9,6 +9,7 @@ import {
   Field,
   type FormEvent,
   Input,
+  inputClassName,
   ThemeRegistry,
   useApiClient,
   useState,
@@ -114,7 +115,7 @@ export function DocSpaceForm({ space, platform, onSaved, onDeleted }: DocSpaceFo
       >
         <select
           id={`doc-space-audience-${id}`}
-          className="ui-input"
+          className={inputClassName()}
           value={audience}
           onChange={(event) => setAudience(event.target.value as DocSpaceAudience)}
         >
@@ -131,7 +132,7 @@ export function DocSpaceForm({ space, platform, onSaved, onDeleted }: DocSpaceFo
       <Field label={t("doc.space.theme")} htmlFor={`doc-space-theme-${id}`}>
         <select
           id={`doc-space-theme-${id}`}
-          className="ui-input"
+          className={inputClassName()}
           value={theme}
           onChange={(event) => setTheme(event.target.value)}
         >

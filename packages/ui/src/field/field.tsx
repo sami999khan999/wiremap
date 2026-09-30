@@ -13,6 +13,14 @@ interface Association {
   readonly "aria-invalid"?: true;
 }
 
+// For copy that sits beside a control `Field` does not wrap. --danger is text only here,
+// where it clears 4.56:1 light and 5.41:1 dark; --success and --warning never are.
+export const fieldClassName = Object.freeze({
+  label: "ui-field__label font-medium text-fg text-sm",
+  hint: "ui-field__hint m-0 text-fg-muted text-xs",
+  error: "ui-field__error m-0 text-danger text-xs",
+});
+
 export interface FieldProps {
   readonly label: string;
   // Required, not optional: a label not tied to a control is decoration, and the input
@@ -48,8 +56,8 @@ export function Field({ label, htmlFor, hint, error, children }: FieldProps) {
   const describedBy = [hintId, errorId].filter(Boolean).join(" ");
 
   return (
-    <div className="ui-field" data-invalid={error ? "true" : undefined}>
-      <label className="ui-field__label" htmlFor={htmlFor}>
+    <div className="ui-field flex flex-col gap-2" data-invalid={error ? "true" : undefined}>
+      <label className={fieldClassName.label} htmlFor={htmlFor}>
         {label}
       </label>
       {
@@ -61,7 +69,7 @@ export function Field({ label, htmlFor, hint, error, children }: FieldProps) {
         ...(error ? { "aria-invalid": true as const } : {}),
       })}
       {hint ? (
-        <p className="ui-field__hint" id={hintId}>
+        <p className={fieldClassName.hint} id={hintId}>
           {hint}
         </p>
       ) : null}
@@ -70,7 +78,7 @@ export function Field({ label, htmlFor, hint, error, children }: FieldProps) {
         // input is next focused.
       }
       {error ? (
-        <p className="ui-field__error" id={errorId} role="alert">
+        <p className={fieldClassName.error} id={errorId} role="alert">
           {error}
         </p>
       ) : null}

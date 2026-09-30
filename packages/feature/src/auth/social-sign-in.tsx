@@ -1,5 +1,5 @@
 import { useMessages } from "../i18n/index.js";
-import { type AuthClient, Button, Callout, SessionMutations } from "../import.js";
+import { type AuthClient, Button, Callout, fieldClassName, SessionMutations } from "../import.js";
 
 export interface SocialSignInProps {
   readonly auth: AuthClient;
@@ -34,7 +34,7 @@ export function SocialSignIn({ auth, enabled, callbackUrl, errorCallbackUrl }: S
         {t("auth.continueWithGoogle")}
       </Button>
 
-      <p className="ui-field__hint">{t("auth.orDivider")}</p>
+      <p className={fieldClassName.hint}>{t("auth.orDivider")}</p>
     </>
   );
 }

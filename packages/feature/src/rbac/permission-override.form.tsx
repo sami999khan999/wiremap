@@ -6,6 +6,7 @@ import {
   CORE_MODULE,
   Field,
   Input,
+  inputClassName,
   OverrideMutations,
   type PermissionKey,
   PermissionRegistry,
@@ -66,7 +67,7 @@ export function PermissionOverrideForm({ userId }: PermissionOverrideFormProps) 
       <Field label={t("role.override.form.permission")} htmlFor="override-permission">
         <select
           id="override-permission"
-          className="ui-input"
+          className={inputClassName()}
           value={permission}
           onChange={(event) => setPermission(event.target.value)}
         >
@@ -80,7 +81,7 @@ export function PermissionOverrideForm({ userId }: PermissionOverrideFormProps) 
       <Field label={t("role.override.form.effect")} htmlFor="override-effect">
         <select
           id="override-effect"
-          className="ui-input"
+          className={inputClassName()}
           value={effect}
           onChange={(event) => setEffect(event.target.value === "deny" ? "deny" : "grant")}
         >

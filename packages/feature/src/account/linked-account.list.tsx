@@ -7,6 +7,7 @@ import {
   Button,
   Callout,
   EmptyState,
+  fieldClassName,
   StatusBadge,
   useAppQuery,
 } from "../import.js";
@@ -59,7 +60,7 @@ export function LinkedAccountList({
 
   return (
     <>
-      <p className="ui-field__hint">{t("account.linkedAccountsHint")}</p>
+      <p className={fieldClassName.hint}>{t("account.linkedAccountsHint")}</p>
 
       <ul>
         {linked.map((entry) => (
@@ -69,7 +70,7 @@ export function LinkedAccountList({
             </StatusBadge>
 
             {isLast ? (
-              <span className="ui-field__hint">{t("account.unlinkLast")}</span>
+              <span className={fieldClassName.hint}>{t("account.unlinkLast")}</span>
             ) : (
               <Button
                 variant="ghost"

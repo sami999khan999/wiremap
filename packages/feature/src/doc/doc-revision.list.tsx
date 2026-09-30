@@ -7,6 +7,7 @@ import {
   DocMutations,
   type DocPageId,
   DocQueries,
+  fieldClassName,
   useApiClient,
   useAppQuery,
 } from "../import.js";
@@ -38,13 +39,13 @@ export function DocRevisionList({ pageId, draftVersion, onRestored }: DocRevisio
       >
         {t("doc.revision.title")}
       </h2>
-      {items.length === 0 ? <p className="ui-field__hint">{t("doc.revision.none")}</p> : null}
+      {items.length === 0 ? <p className={fieldClassName.hint}>{t("doc.revision.none")}</p> : null}
       <ol className="ui-stack">
         {items.map((revision) => (
           <li key={revision.revisionNo}>
             <strong>{t("doc.revision.item", { revision: revision.revisionNo })}</strong>
             <br />
-            <span className="ui-field__hint">
+            <span className={fieldClassName.hint}>
               {revision.title} · {DateFormat.day(revision.createdAt)}
             </span>
             <br />

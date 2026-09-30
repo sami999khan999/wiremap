@@ -8,8 +8,10 @@ import {
   type DocPageDraftDto,
   Field,
   type FormEvent,
+  fieldClassName,
   IconRegistry,
   Input,
+  inputClassName,
   Prose,
   type ReactNode,
   StatusBadge,
@@ -192,7 +194,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
       <Field label={t("doc.page.icon")} htmlFor="doc-icon">
         <select
           id="doc-icon"
-          className="ui-input"
+          className={inputClassName()}
           value={icon}
           onChange={(event) => edit(setIcon)(event.target.value)}
         >
@@ -284,7 +286,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
               copiedLabel={t("doc.code.copied")}
             />
           ) : (
-            <p className="ui-field__hint">{t("doc.editor.previewEmpty")}</p>
+            <p className={fieldClassName.hint}>{t("doc.editor.previewEmpty")}</p>
           )}
         </>
       ) : (

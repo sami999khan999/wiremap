@@ -11,6 +11,7 @@ import {
   EmptyState,
   Field,
   Input,
+  inputClassName,
   type PermissionKey,
   PermissionRegistry,
   PlatformMutations,
@@ -144,7 +145,7 @@ export function OrganizationEntitlementPanel() {
           <Field label={t("platform.entitlement.plan")} htmlFor="entitlement-plan">
             <select
               id="entitlement-plan"
-              className="ui-input"
+              className={inputClassName()}
               value={planKey || data.planKey}
               disabled={!canManage}
               onChange={(event) => setPlanKey(event.target.value)}
@@ -199,7 +200,7 @@ export function OrganizationEntitlementPanel() {
               >
                 <select
                   id="adjust-permission"
-                  className="ui-input"
+                  className={inputClassName()}
                   value={permission}
                   onChange={(event) => setPermission(event.target.value)}
                 >
@@ -213,7 +214,7 @@ export function OrganizationEntitlementPanel() {
               <Field label={t("platform.entitlement.adjust.effect")} htmlFor="adjust-effect">
                 <select
                   id="adjust-effect"
-                  className="ui-input"
+                  className={inputClassName()}
                   value={effect}
                   onChange={(event) =>
                     setEffect(event.target.value === "remove" ? "remove" : "add")

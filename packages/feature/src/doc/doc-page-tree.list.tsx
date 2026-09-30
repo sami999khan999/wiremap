@@ -16,6 +16,7 @@ import {
   type FormEvent,
   Icon,
   Input,
+  inputClassName,
   type ReactNode,
   StatusBadge,
   useApiClient,
@@ -215,7 +216,7 @@ export function DocPageTreeList({
         <Field label={t("doc.page.kind")} htmlFor="doc-new-kind">
           <select
             id="doc-new-kind"
-            className="ui-input"
+            className={inputClassName()}
             value={kind}
             onChange={(event) => setKind(event.target.value as DocPageKind)}
           >
@@ -247,7 +248,7 @@ export function DocPageTreeList({
         <Field label={t("doc.tree.add")} htmlFor="doc-new-parent">
           <select
             id="doc-new-parent"
-            className="ui-input"
+            className={inputClassName()}
             value={parentId ?? ""}
             onChange={(event) =>
               setParentId(event.target.value === "" ? null : (event.target.value as DocPageId))

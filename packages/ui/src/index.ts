@@ -31,10 +31,10 @@ export {
   type TableRow,
 } from "./data-table/index.js";
 export { EmptyState, type EmptyStateProps } from "./empty-state/index.js";
-export { Field, type FieldProps } from "./field/index.js";
+export { Field, type FieldProps, fieldClassName } from "./field/index.js";
 export { ByteFormat, DateFormat } from "./format/index.js";
 export { Icon, type IconName, type IconProps, IconRegistry } from "./icon/index.js";
-export { Input, type InputProps } from "./input/index.js";
+export { Input, type InputProps, inputClassName, textareaClassName } from "./input/index.js";
 export { Menu, type MenuOption, type MenuProps } from "./menu/index.js";
 export {
   type LinkAttributes,

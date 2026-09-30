@@ -5,6 +5,7 @@ import {
   Callout,
   Field,
   type FormEvent,
+  fieldClassName,
   Input,
   SessionMutations,
   useState,
@@ -83,7 +84,7 @@ export function TwoFactorForm({ auth, onSuccess }: TwoFactorFormProps) {
       {otpSent ? <Callout tone="info">{t("auth.twoFactorOtpSent")}</Callout> : null}
 
       {failed ? (
-        <p role="alert" className="ui-field__error">
+        <p role="alert" className={fieldClassName.error}>
           {t("auth.twoFactorFailed")}
         </p>
       ) : null}

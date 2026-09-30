@@ -1,1 +1,1 @@
-export { Field, type FieldProps } from "./field.js";
+export { Field, type FieldProps, fieldClassName } from "./field.js";

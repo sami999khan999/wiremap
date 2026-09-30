@@ -13,6 +13,7 @@ import {
   EmptyState,
   Field,
   Input,
+  inputClassName,
   type PermissionKey,
   PermissionRegistry,
   PlatformMutations,
@@ -228,7 +229,7 @@ export function AccountPanel() {
               <Field label={t("platform.account.deny.organization")} htmlFor="deny-organization">
                 <select
                   id="deny-organization"
-                  className="ui-input"
+                  className={inputClassName()}
                   value={target}
                   onChange={(event) => setOrganizationId(event.target.value)}
                 >
@@ -242,7 +243,7 @@ export function AccountPanel() {
               <Field label={t("platform.account.column.permission")} htmlFor="deny-permission">
                 <select
                   id="deny-permission"
-                  className="ui-input"
+                  className={inputClassName()}
                   value={permission}
                   onChange={(event) => setPermission(event.target.value)}
                 >

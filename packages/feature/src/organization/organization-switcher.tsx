@@ -1,6 +1,12 @@
 import { useSession } from "../auth/index.js";
 import { useMessages } from "../i18n/index.js";
-import { Button, type OrganizationClient, OrganizationMutations } from "../import.js";
+import {
+  Button,
+  fieldClassName,
+  inputClassName,
+  type OrganizationClient,
+  OrganizationMutations,
+} from "../import.js";
 
 export interface OrganizationSwitcherProps {
   readonly organization: OrganizationClient;
@@ -26,7 +32,7 @@ export function OrganizationSwitcher({
 
   return (
     <span className="ui-organization-switcher">
-      <label className="ui-field__label" htmlFor="organization-switcher">
+      <label className={fieldClassName.label} htmlFor="organization-switcher">
         {t("nav.organization")}
       </label>{" "}
       {
@@ -34,7 +40,7 @@ export function OrganizationSwitcher({
       }
       <select
         id="organization-switcher"
-        className="ui-input"
+        className={inputClassName()}
         value={user.activeOrganizationId}
         disabled={switchTo.isPending}
         // `disabled` alone removes it from the tab order and says nothing about why.

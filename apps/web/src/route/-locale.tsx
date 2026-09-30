@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { type Locale, Locales, useMessages } from "~/import.js";
+import { inputClassName, type Locale, Locales, useMessages } from "~/import.js";
 import type { AppearanceStore } from "~/store/appearance.store.js";
 
 export interface LocaleSwitcherProps {
@@ -33,7 +33,7 @@ export function LocaleSwitcher({ appearance, current }: LocaleSwitcherProps) {
         // A native select styled as an input: the design system has no select yet.
       }
       <select
-        className="ui-input"
+        className={inputClassName()}
         value={current}
         onChange={(event) => choose(event.target.value as Locale)}
       >

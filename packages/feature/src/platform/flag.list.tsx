@@ -9,6 +9,7 @@ import {
   Field,
   type FlagDto,
   Input,
+  inputClassName,
   PlatformMutations,
   PlatformQueries,
   StatusBadge,
@@ -165,7 +166,7 @@ export function FlagList() {
           <Field label={t("platform.flags.column.flag")} htmlFor="flag-target-key">
             <select
               id="flag-target-key"
-              className="ui-input"
+              className={inputClassName()}
               value={flagKey || declared[0]?.key}
               onChange={(event) => setFlagKey(event.target.value)}
             >
