@@ -71,6 +71,13 @@ const fail = (why) => {
   process.exit(1);
 };
 
+// A probe or a shutdown that never answers would otherwise hold a CI job for hours.
+let running;
+setTimeout(() => {
+  running?.kill("SIGKILL");
+  fail(`did not finish within ${(3 * TIMEOUT_MS) / 1000}s`);
+}, 3 * TIMEOUT_MS).unref();
+
 // The line, not the socket, even for the web app: unlike the smoke suite this script
 // exists to assert that the app *says* it started. See `boot-app.mjs`.
 const booted = await bootApp({
@@ -82,13 +89,14 @@ const booted = await bootApp({
 }).catch((error) => fail(error.message));
 
 const { child } = booted;
+running = child;
 console.log(`✓ ${name}: booted`);
 
 // A request that completes, with a body, from the built bundle. `T-032` was a server
 // that imported cleanly, listened, and answered 500 on every page.
 async function serves() {
   const url = `http://127.0.0.1:${port}${app.probe}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   const body = await response.text();
 
   if (response.status !== 200) fail(`${app.probe} answered ${response.status}`);

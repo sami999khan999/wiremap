@@ -67,7 +67,8 @@ export default async function setup({
     entry: `${ROOT}apps/worker/dist/main.js`,
     started: '"event":"process.started"',
     cwd: ROOT,
-    env: { ...process.env, ...DECIDED },
+    // The web child's env, so a mail's link names the server the spec is signed in to.
+    env: childEnv(port),
   });
   booted.push(worker as Booted);
 
