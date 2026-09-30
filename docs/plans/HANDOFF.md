@@ -22,8 +22,7 @@ state of the tree and the traps that cost time.
 
 **Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:**
-permission catalog, `LT1.6` the docs sweep, then Phase 2.
+**Next, in order:** `LT1.6` the commitlint scopes and the docs sweep, then Phase 2.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
