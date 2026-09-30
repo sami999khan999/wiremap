@@ -34,4 +34,7 @@ from the right place.
 
 ## Added in lite, owed to the big kit
 
+The UI stack is the largest: lite styles its components with Tailwind and builds their behaviour on
+Base UI, where the big kit has hand-written CSS and components.
+
 See [`docs/scale/back-ports.md`](docs/scale/back-ports.md).

@@ -20,7 +20,8 @@ back to the big kit, or of the big kit's script into lite, knows what to reconci
 | §15 every path the docs name exists | `docs/plans/` is exempt: a plan names files that do not exist yet | `LT5.1` |
 | §20 every migration is safe on a populated table | `REPLAY_EXEMPT` is empty: the baseline creates every table it indexes | `LT2.8` |
 | §27 every host port is stated once | pairs for pgBouncer, the replica, the second Redis, the second node, Loki and ClickHouse removed; one `REDIS_PORT` pairs with all three Redis URLs | `LT1.4`, `LT2.1`, `LT2.4`, `LT2.5` |
-| §30 every inline widget is placed by a literal key | removed with widgets; §31 keeps its number, so the harness counts 30 | `LT1.2` |
+| §30 every inline widget is placed by a literal key | removed with widgets; §31 keeps its number | `LT1.2` |
+| §32 no colour outside the twelve | new in lite with Tailwind: an arbitrary colour value, a palette utility, a `style` colour literal, or a literal in a stylesheet outside `theme/color/`. The harness counts 31 | `UI4.1` |
 | `.env.example` documents every key an app requires | a schema key is read at two spaces or at four, so a schema with no `.superRefine` chain is still read | `LT2.3` |
 | runnable scripts above `src/` | `clickhouse-migrate.ts` removed from the list, `ai-reindex.ts` added | `LT1.4`, `LT4.5` |
 

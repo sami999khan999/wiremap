@@ -40,6 +40,17 @@ Two attributes keep the axes independent:
 A mode toggle keeps your palette. A palette switch keeps your mode. `ThemeMeta.modes` says which
 blocks a palette actually ships, so "light, dark, or both" is data rather than a naming convention.
 
+## How Tailwind reads the attributes
+
+The twelve names stay plain custom properties on the theme selectors, and
+[`theme/tailwind.css`](../../src/theme/tailwind.css) maps each to a Tailwind colour with
+`@theme inline`. `inline` matters: `bg-surface` compiles to `var(--surface)` itself, so a theme swap
+on `<html>`, or inside a `ThemeScope`, repaints every utility with no rebuild.
+
+`dark:` is not Tailwind's class strategy. It is declared as
+`&:where([data-mode="dark"], [data-mode="dark"] *)`, so it follows `data-mode`, including a
+nested scope. Components rarely need it, because the twelve already change with the mode.
+
 ## `resolveMode` is not a nicety
 
 ```ts

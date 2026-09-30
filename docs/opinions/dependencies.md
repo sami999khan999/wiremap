@@ -71,7 +71,9 @@ the failure — and this arrangement is what makes sure it never has to.
 ### Tier 1 — never ships
 
 Build, test, and lint tooling. It cannot constrain a consumer, because it never reaches one.
-`typescript`, `tsup`, `vitest`, `biome`, `eslint`, `drizzle-kit`, every `@types/*`.
+`typescript`, `tsup`, `vitest`, `biome`, `eslint`, `drizzle-kit`, `tailwindcss` and
+`@tailwindcss/vite`, every `@types/*`. Tailwind is Tier 1 because it runs at build and ships only
+the CSS it generates; the app owns that build.
 
 **One exception, and it is the most consequential entry in the file: `tsup` never ships but decides
 what does.** It is what makes every package ESM-only, and what decides whether a `"use client"`
@@ -85,7 +87,7 @@ not runtime-agnostic**:
 
 | | Runs in | Entries |
 |---|---|---|
-| **isomorphic** | server, browser, worker, webview, edge | `zod`, `@orpc/contract`, `@orpc/client` |
+| **isomorphic** | server, browser, worker, webview, edge | `zod`, `@orpc/contract`, `@orpc/client`, `clsx` and `tailwind-merge` behind `cn` in `packages/ui` |
 | **node-only** | a Node process, under any framework | `pg`, `ioredis`, `bullmq`, `drizzle-orm`, `@aws-sdk/*` |
 
 `pg` and `ioredis` want raw TCP, so they are dead on an edge runtime — which is one config line away
@@ -103,6 +105,7 @@ Each entry names a framework. Each is quarantined to the one layer allowed to na
 | `@tanstack/react-router` | `apps/` | Routing is app-shaped, not product-shaped. A Next app brings its own and reads paths from `@loadbearing/permissions`. |
 | `@tauri-apps/api` | `apps/desktop` | Desktop shell only, and not installed — the app does not exist ([30](../setup/30-desktop-app.md)). |
 | `@tanstack/react-query`, `@orpc/tanstack-query` | `packages/{query,ui,feature}` | React-scoped, which is inside the target set — all three front-end targets are React. |
+| `@base-ui/react` | `packages/ui` | React-scoped headless primitives: focus traps, dismissal, roving focus and ARIA. Only `ui` names it, through its `import.ts`, so a swap is one package. |
 | `better-auth` | `packages/auth` | Multi-framework by export map: `./node` covers Node, Express, Fastify, Nest; `./next-js` and `./tanstack-start` cover two front-ends; the core web handler covers Hono. |
 
 `check-architecture.mjs` asserts the quarantine ([26](../setup/26-hygiene-and-ci.md)).

@@ -39,7 +39,7 @@ packages/ui/
     │   │   ├── ocean.css · forest.css · plum.css
     │   │   └── midnight.css   ← dark only
     │   ├── class/             ← one file per component; styles the ui-* hooks
-    │   │   └── base.css · button.css · input.css · field.css · …
+    │   │   └── base.css · callout.css · card.css · code-block.css · prose.css
     │   ├── theme-registry.ts  → ThemeRegistry, ThemeKey, ThemeMeta
     │   ├── mode-registry.ts   → ModeRegistry, ModeKey, ModePreference
     │   └── font-registry.ts   → FontRegistry, FontKey, FontMeta
@@ -369,25 +369,15 @@ That constraint has a design consequence worth stating: an empty state is an inv
 1. **Props in, markup out.** No fetching, no context beyond theme, no global state.
 2. **Forward the ref and spread the rest.** `forwardRef` plus `...rest` onto the root element means a caller can attach a tooltip or a test id without you anticipating it.
 3. **Keyboard and focus, always.** Visible focus ring using `--focus-ring`, `Escape` closes overlays, focus is trapped in a modal and restored on close. Retrofitting this across thirty components later is a project; doing it per component as you write it is a minute each.
-4. **Use headless primitives for anything with complex interaction semantics.** Dialogs, popovers, comboboxes, and menus have genuinely hard focus and ARIA requirements. Radix or Ark handle them correctly. Write your own only for things that are actually simple.
+4. **Use headless primitives for anything with complex interaction semantics.** Dialogs, popovers, comboboxes, and menus have genuinely hard focus and ARIA requirements. Base UI (`@base-ui/react`) handles them correctly, and lite uses it. Write your own only for things that are actually simple.
 
 > [!IMPORTANT]
-> **`Dialog` is the one component this step does not deliver, and rule 4 is why.** A dialog needs a
-> focus trap, an inert background, restored focus on close, `Escape` handling, and correct
-> `aria-modal` semantics. Hand-rolling it is exactly what rule 4 forbids, so it waits on a library
-> choice this document deliberately leaves open — and that choice is not a file, it is a package that
-> lands in the client bundle of every consumer.
->
-> Pick one, add it to the **React-scoped** group of the catalog in
-> [03](03-workspace-and-catalogs.md), and wrap it here:
->
-> ```yaml
-> "@radix-ui/react-dialog": ^1.1.0   # or @ark-ui/react
-> ```
->
-> Until then `packages/ui` exports no `Dialog`, and the barrel below says so. That is better than a
-> stub: a dialog that traps focus incorrectly is worse than one that does not exist, because the first
-> ships and the second fails a build.
+> **Rule 4 is a library choice, and lite made it: Base UI.** A dialog needs a focus trap, an inert
+> background, restored focus on close, `Escape` handling, and correct `aria-modal` semantics, and
+> hand-rolling that is what rule 4 forbids. `@base-ui/react` sits in the **React-scoped** group of
+> the catalog in [03](03-workspace-and-catalogs.md), and `Dialog`, `AlertDialog`, `Popover`,
+> `Select`, `Tooltip` and `ThemeToggle` wrap it. Styling is Tailwind utilities in each component,
+> through `cn`. See [`packages/ui/docs`](../../packages/ui/docs/index.md).
 
 ---
 
@@ -471,7 +461,7 @@ tree-shakeable and the stylesheets are not, and a blanket `false` would let a bu
 ## ✅ Gate
 
 ```bash
-grep -rniE "task|goal|invoice|lead" packages/ui/src --include=*.tsx --include=*.ts   | grep -v "src/can/can.tsx"
+grep -rniE "task|goal|invoice|\blead\b" packages/ui/src --include=*.tsx --include=*.ts   | grep -v "src/can/can.tsx"
 ```
 
 Returns nothing. No domain nouns in the design system.

@@ -142,8 +142,8 @@ jobs:
       # `check:architecture`'s bundle assertion greps the built client output, and
       # `build:packages` filters to ./packages/*. Under `CI=true` a skip fails the run.
       - run: pnpm check:architecture
-      # Every palette against every text pairing — 117 of them across five themes and
-      # both modes. With one theme this is judgement; with five it is the only thing
+      # Every palette against every pairing the components produce, across six themes
+      # and both modes. With one theme this is judgement; with six it is the only thing
       # between a contributor and an unreadable one.
       - run: pnpm check:contrast
 

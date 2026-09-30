@@ -23,13 +23,15 @@ Lite diverges from the big kit here, which is recorded in `UPSTREAM.md` at `UI4`
 
 ## UI0 — a green baseline
 
-- [ ] `UI0.1` CI green on `main` before any UI change is pushed, because it is the only proof
-  nothing broke.
-  - done so far: `8df785d` fixed the outbox months the baseline dropped (`pnpm smoke`).
+- [x] `UI0.1` CI green on `main` before any UI change is pushed.
+  done: 2026-10-01, run `36790382733` on `192c27d`, all three jobs.
+  - `8df785d` restored the outbox months the baseline dropped (`pnpm smoke`).
   - `b4263aa` let `smoke:web` boot its worker and bounded every job at 30 minutes.
-  - `2890e0b` makes a `boot-smoke` timeout print the app's last output.
-  - **Open:** in CI, `boot-smoke.mjs web` serves `/` and then never exits after SIGTERM. It exits
-    locally with the same environment.
+  - `2890e0b` and `295014e` make a `boot-smoke` timeout print the app's output and the libuv
+    handles holding it open.
+  - `192c27d` fixed the web app never exiting under CI. The one handle open was its listening
+    socket: srvx skips its SIGTERM handling when `CI` or `TEST` is set, and the web app's own
+    listener stopped Node's default exit.
 
 ## UI1 — wiring, no visual change
 
@@ -37,66 +39,71 @@ Lite diverges from the big kit here, which is recorded in `UPSTREAM.md` at `UI4`
   - `tailwindcss` and `@tailwindcss/vite`, Tier 1;
   - `clsx` and `tailwind-merge`, Tier 2;
   - `@base-ui/react`, React-scoped.
-
-  `ui` depends on the last three; `apps/web` takes the first two as dev dependencies.
-- [x] `UI1.2` `apps/web/src/style/app.css` is the one stylesheet, linked from `__root.tsx`.
-  - It holds Tailwind's theme and utilities, with no Preflight yet, then `ui/theme.css`, then
-    `ui/class.css` in `layer(components)`.
-  - `@source` names `packages/ui/src` and `packages/feature/src`.
-  - `tailwindcss()` is in the Vite plugins.
-  - Biome parses Tailwind directives.
-- [x] `UI1.3` Tokens become Tailwind's theme.
-  - `token/*.css` hold `@theme static` blocks with each namespace reset, so the kit's own names
-    are the only values.
-  - `theme/tailwind.css` maps the twelve colours with `@theme inline`, after `--color-*: initial`.
-  - The `dark` variant follows `data-mode`.
-- [x] `UI1.4` `cn` is in `packages/ui/src/class-name/`, with a spec, and is exported from the
-  package.
+- [x] `UI1.2` `apps/web/src/style/app.css` is the one stylesheet. It holds Tailwind's theme and
+  utilities, then `ui/theme.css`, then `ui/class.css` in `layer(components)`; `@source` names `ui`
+  and `feature`.
+- [x] `UI1.3` The tokens are Tailwind's theme, with each namespace reset. The twelve colours are
+  the only palette, through `@theme inline`, and `dark:` follows `data-mode`.
+- [x] `UI1.4` `cn` is in `packages/ui/src/class-name/`.
 
 ## UI2 — components to utilities, one commit each
 
-Each commit does the same five things:
-1. Utilities go in the component through `cn`. The `ui-*` hook stays first and carries no styles.
-2. Variants are a frozen `Record<Variant, string>`.
-3. `class/<name>.css` is deleted, along with its `@import`.
-4. Hand-rolled behaviour is rebuilt on Base UI, with the same props.
-5. The existing spec stays as the contract.
+- [x] `UI2.A` button, status-badge, empty-state, code-list, qr-code, data-table, toc, nav-tree,
+  input, textarea, reader-layout.
+  - Callers that must look like a component without being one get a class export:
+    `buttonClassName`, `inputClassName`, `fieldClassName`, `readerClassName`,
+    `dataTableClassName`.
+- [x] `UI2.B` field, as utilities. **It stays on its own association logic.** It has no interaction
+  for Base UI to take over, and Base UI's `Field` would require its own control inside.
+- [x] `UI2.C` popover, on Base UI `Popover`. Focus moves in on open. It dismisses on the click that
+  ends a press, and it renders in a portal.
+- [x] `UI2.D` `Select` on Base UI, with `Menu` as its switcher-sized variant. The trigger is now a
+  `combobox`.
+- [x] `UI2.E` theme-toggle, on `RadioGroup`, with arrow keys and one tab stop.
+- [x] `UI2.F` sidebar, as utilities. **Its drawer stays hand-written.** It is one element that is a
+  column on a wide screen, and a Base UI `Dialog` renders only while open, in a portal. There is no
+  focus trap: a gap, recorded here.
+- [x] `UI2.G` command-dialog, on Base UI `Dialog`. The result list keeps its own keys, because
+  Enter follows the caller's router link.
+- **Kept as stylesheets:** `callout`, `card`, `prose` and `code-block`. The Markdown renderer
+  writes their hooks into doc HTML that React never renders. `base.css` stays too.
+- **`ThemeScope`** renders a nested `data-theme` and hands its element to every portal inside it,
+  so the doc reader's panels keep its theme.
 
-- [ ] `UI2.A` button, status-badge, callout, card, empty-state, code-list, qr-code, input,
-  textarea, data-table, reader-layout, toc, nav-tree
-- [ ] `UI2.B` field, on Base UI `Field`
-- [ ] `UI2.C` popover, on Base UI `Popover`, unmounted when closed
-- [ ] `UI2.D` menu, on Base UI `Select` (it is a listbox), keeping the `Menu` API
-- [ ] `UI2.E` theme-toggle, on `RadioGroup`, which adds arrow-key roving
-- [ ] `UI2.F` sidebar's narrow-screen drawer, on `Dialog`, which adds the focus trap
-- [ ] `UI2.G` command-dialog, on `Dialog` plus `Autocomplete`
-- `prose` and `code-block` style HTML that React does not render. They stay as stylesheets in the
-  components layer, using only the theme.
-- A Base UI portal renders outside the doc reader's nested `data-theme`. Give it a container inside
-  that scope.
+## UI3 — missing primitives, then callers
 
-## UI3 — missing primitives, then consumers
-
-- [ ] `UI3.1` `Select`, `Dialog`, `AlertDialog` and `Tooltip` in `ui`.
-- [ ] `UI3.2` Replace the raw `<select className="ui-input">` elements in `feature` and in
-  `-locale.tsx` with `Select`, and replace `window.confirm` in `api-key.list.tsx` with
-  `AlertDialog`.
-- [ ] `UI3.3` Replace `ui-stack`, `ui-organization-switcher`, `ui-reader__*` and `ui-field__hint` in
-  consumers, and the kitchen sink's inline styles, with utilities. Then:
-  - delete `class.css`;
-  - add Preflight;
-  - drop `token/space.css`'s named steps.
+- [x] `UI3.1` `Select`, `Dialog`, `AlertDialog` and `Tooltip`. An `AlertDialog` starts on Cancel
+  and ignores the backdrop.
+- [x] `UI3.2` Eighteen native selects and the locale picker now use `Select`. `window.confirm` in
+  the API key list is now an `AlertDialog`.
+- [x] `UI3.3` Callers use utilities or the class exports.
+  - `ui-stack`, which no stylesheet ever defined, is now a real vertical stack. That is the one
+    intended visual change.
+  - The kitchen sink is on utilities and shows every Base UI primitive.
+  - **Not done, on purpose:**
+    - `class.css` stays, holding `base.css` and the four Markdown stylesheets.
+    - Preflight stays out. It resets list and heading defaults those stylesheets rely on, and
+      Tailwind's utilities work without it.
+    - The `--space-*` steps stay, because those stylesheets read them.
 
 ## UI4 — guardrails and docs
 
-- [ ] `UI4.1` A `check-architecture` assertion: no colour outside the twelve in a `className`.
-  That covers arbitrary values, colour keywords and `style` colour literals.
-- [ ] `UI4.2` `check-contrast.mjs`'s pairs are re-derived from the components, and `ci.yml`'s
-  stale count is fixed.
-- [ ] `UI4.3` Docs:
-  - `packages/ui/docs` and the component reference pages;
-  - `docs/ai/rules/color.md`, `docs/ai/rules/dependencies.md` and `docs/opinions/`;
-  - `docs/setup/22` (its `lead` grep matches `leading-*`);
+- [x] `UI4.1` `check-architecture` §32 fails on:
+  - a colour outside the twelve in a class, meaning an arbitrary value, a palette utility, or
+    `white`/`black`;
+  - a colour literal in a `style` prop;
+  - a colour literal in a stylesheet outside `theme/color/`.
+
+  The harness counts 31. It was checked against deliberate violations.
+- [x] `UI4.2` `check-contrast.mjs` pairs were re-derived from the components. It adds `--primary`
+  on `--muted`, the option icon, at the non-text floor, for 154 pairings. `ci.yml`'s stale count
+  is fixed.
+- [x] `UI4.3` Docs:
+  - `packages/ui/docs` (index, palette, theming, popover);
+  - `docs/ai/rules/color.md` and `docs/ai/rules/workflow.md`;
+  - `docs/opinions/dependencies.md`;
+  - `docs/setup/22` (Base UI, and the `\blead\b` grep) and `docs/setup/26` (§32);
+  - `apps/web/docs/reference/import-surfaces.md`;
   - `UPSTREAM.md` and `docs/scale/back-ports.md`.
 
 ## Verification

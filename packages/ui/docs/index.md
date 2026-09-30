@@ -186,32 +186,39 @@ runs whether or not the button was ever rendered.
    in a diff and announces nothing — every form in `feature` inherited exactly that. The child's own
    `aria-describedby` is joined rather than replaced, because the attribute is a list.
 
-## Three things this package does not have
+## Behaviour comes from Base UI
 
-**No `Dialog`.** A dialog needs a focus trap, an inert background, restored focus on close, `Escape`
-handling and correct `aria-modal` semantics. Hand-rolling it is what rule 4 forbids, so it waits on a
-headless library — Radix or Ark — which is a package that lands in the client bundle of every
-consumer and therefore a decision, not a file. One catalog line in the React-scoped group plus one
-wrapper here when that is made. A dialog that traps focus incorrectly is worse than one that does not
-exist, because the first ships.
+Rule 4 says to use a headless library for anything with hard interaction semantics, and that
+library is [Base UI](https://base-ui.com) (`@base-ui/react`), one line in the React-scoped group
+of the catalog. It owns focus traps, inert backgrounds, restored focus, `Escape`, dismissal,
+roving focus and ARIA. This package owns the markup's styling and the props.
 
-**`CommandDialog` is not the exception either.** It is the native `<dialog>` opened with
-`showModal()`, and the browser supplies the trap, the inert background and Escape. That is a headless
-primitive that ships in every engine rather than in the bundle. See
-[Documentation primitives](reference/docs-primitives.md).
+| Component | Base UI part | What it took over |
+| --- | --- | --- |
+| `Popover` | `Popover` | Escape, outside press, focus in and back, trigger ARIA |
+| `Select`, `Menu` | `Select` | the listbox: arrows, Home and End, typeahead, a hidden input for forms |
+| `ThemeToggle` | `RadioGroup` | a real radio group, with arrow keys and one tab stop |
+| `CommandDialog` | `Dialog` | the modal trap, the inert page, Escape, focus return |
+| `Dialog`, `AlertDialog` | `Dialog`, `AlertDialog` | as above; an alert dialog starts on Cancel and ignores the backdrop |
+| `Tooltip` | `Tooltip` | hover and focus delays, Escape, the description link |
 
-**`Popover` is not the exception to that**, and the distinction is worth stating because the two
-look alike. A popover is non-modal: the page behind it stays live, Tab moves out of it, and
-nothing is inerted. There is no trap to get wrong, which is exactly why one could be written here
-and a dialog could not. See [Popover](reference/popover.md) for what it deliberately is not, and
-for why it is React state rather than the native `popover` attribute.
+Three stayed hand-written, each for a stated reason:
+- **`Field`** has no interaction to take over. Base UI's `Field` would also require its own
+  control inside, which every native control would then have to become.
+- **`Sidebar`'s drawer** is one element that is a column on a wide screen, and Base UI's `Dialog`
+  renders only while open, in a portal.
+- **`CommandDialog`'s result list** follows the caller's router link on Enter, which is not
+  a select.
+
+**A portal leaves a nested theme.** A panel opened inside the doc reader would paint in the page's
+theme, so [`ThemeScope`](../src/theme-scope/theme-scope.tsx) renders the scoped `data-theme` and
+hands its element to every portal inside it. See [Popover](reference/popover.md).
 
 **No Storybook, and no `*.stories.tsx`.** Doc 22 offers Storybook or a `/kitchen-sink` route in
 `apps/web` and says to pick one deliberately. The route is what was picked —
-`apps/web/src/route/(dev)/kitchen-sink.tsx` renders eleven of the twelve components against every
-theme and every mode, with no second build, no second dependency tree and no story files to keep in
-step with the components. `Can` is the twelfth and has nothing to show: it renders no element of
-its own.
+`apps/web/src/route/(dev)/kitchen-sink.tsx` renders every component against every theme and every
+mode, with no second build, no second dependency tree and no story files to keep in step with the
+components. `Can` is the exception and has nothing to show: it renders no element of its own.
 The component tests under `tests/`, on `jsdom` and `@testing-library/react`, are the other half: they
 assert *behaviour* where the route shows *appearance*.
 

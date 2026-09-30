@@ -66,13 +66,13 @@ original hand-written palette.
 ## Contrast is checked, not reviewed
 
 `pnpm check:contrast` runs in CI after `check:architecture` and asserts WCAG AA over every pairing
-the class layer actually produces — 143 of them across six themes. Two consequences worth knowing
+the components actually produce — 154 of them across six themes. Two consequences worth knowing
 before authoring a theme:
 
 - **`--fg-muted` is bounded by `--muted`, not by `--bg`.** A placeholder sits inside an input. That
   pairing is the tightest in the system, and it is what fixes light `--fg-muted` at `L 0.535`.
 - **`--success` and `--warning` are not text-safe on `--bg`.** At these lightnesses they land at
-  3.5:1 and 2.6:1. They are fills, and `status-badge.css` tints them into `--surface` rather than
+  3.5:1 and 2.6:1. They are fills, and `StatusBadge` tints them into `--surface` rather than
   filling with them, which puts `--fg` on a near-surface background instead. Only `--danger` clears
   AA as text, which is why the field error is the one place a status colour is a foreground.
 

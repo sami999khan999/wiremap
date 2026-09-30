@@ -30,13 +30,16 @@ state of the tree and the traps that cost time.
 | `6dad856` | `LT3`: the `owner` doc audience |
 | `b77ec46` | `LT4`: search without OpenAI — `none`, `openai` or `gemini` |
 | `55f0260` | `LT5`: CI on one Redis, the README, `docs/infra` trimmed, the check-architecture change log |
-| after `55f0260` | `LT1.6`: the docs sweep, and the stale source comments it found |
+| `1665811` | `LT1.6`: the docs sweep, and the stale source comments it found |
+| `192c27d` | CI green: outbox months restored, web smoke env, the web app exits under `CI` |
+| after `192c27d` | [`UI-KIT-PLAN.md`](UI-KIT-PLAN.md): Tailwind v4, Base UI and `cn`, `UI0`–`UI4` |
 
 **Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, `LT2.7`, `LT2.8`, `LT1.6`, Phases 3, 4 and 5, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** every plan item is done. What is left is the owed runs in [`TESTS.md`](TESTS.md), then a first push.
+**Next, in order:** every item in both plans is done and pushed. What is left is the owed runs in
+[`TESTS.md`](TESTS.md), the UI checks by hand among them.
 
-**The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
+**The remote is `origin`** (GitHub), and `main` is pushed.
 
 ## What is verified after `LT2.5`
 

@@ -1786,6 +1786,52 @@ assert("every flag is live", (failures) => {
   }
 });
 
+// ── 32 — no colour outside the twelve ──────────────────────────────────────
+//
+// Tailwind's palette is reset to the twelve, so `bg-red-500` generates nothing, but an
+// arbitrary value compiles: `text-[#fff]` is a colour no theme knows and `check:contrast`
+// never sees. The same holds for a literal in a `style` prop or in any stylesheet outside
+// `theme/color/`. `token/shadow.css` may write `oklch(0 0 0 / <alpha>)`, and only that.
+
+const PALETTE =
+  "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
+const COLOUR_UTILITY = new RegExp(
+  String.raw`\b(?:bg|text|border(?:-[trblxy])?|ring|outline|fill|stroke|decoration|accent|caret|divide|placeholder|shadow|from|via|to)-(?:\[(?:#[0-9a-fA-F]{3,8}|(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\()|(?:white|black)\b|(?:${PALETTE})-\d{2,3}\b)`,
+);
+const STYLE_COLOUR =
+  /\b(?:color|background|backgroundColor|borderColor|outlineColor|fill|stroke)\s*:\s*["'`](?!var\()/;
+const CSS_COLOUR = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklab|lab|lch|hwb)\(|\boklch\(/;
+
+assert("no colour outside the twelve", (failures) => {
+  const roots = ["packages/ui/src", "packages/feature/src", "apps/web/src"].map((dir) =>
+    join(ROOT, dir),
+  );
+
+  for (const file of roots.flatMap((root) => walk(root, [".ts", ".tsx"]))) {
+    if (/\.gen\.tsx?$/.test(file)) continue;
+    const lines = withoutComments(readFileSync(file, "utf8")).split("\n");
+    lines.forEach((line, index) => {
+      const hit = COLOUR_UTILITY.exec(line)?.[0] ?? STYLE_COLOUR.exec(line)?.[0];
+      if (hit) failures.push(`${rel(file)}:${index + 1}: \`${hit}\` is not one of the twelve`);
+    });
+  }
+
+  const colourDir = join(ROOT, "packages/ui/src/theme/color");
+  const shadow = join(ROOT, "packages/ui/src/theme/token/shadow.css");
+  for (const file of roots.flatMap((root) => walk(root, [".css"]))) {
+    if (file.startsWith(colourDir)) continue;
+    // `/* */` is CSS's only comment, and prose about a colour is not one.
+    const lines = readFileSync(file, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .split("\n");
+    lines.forEach((line, index) => {
+      const text = file === shadow ? line.replaceAll(/oklch\(0 0 0 \/ [\d.]+\)/g, "") : line;
+      const hit = CSS_COLOUR.exec(text)?.[0];
+      if (hit) failures.push(`${rel(file)}:${index + 1}: \`${hit}\` is a literal colour`);
+    });
+  }
+});
+
 let failed = 0;
 let skippedCount = 0;
 

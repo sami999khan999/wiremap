@@ -42,9 +42,9 @@ const REQUIRED = [
   "ring",
 ];
 
-// Every pairing the class layer actually produces. --success and --warning are absent as
-// foregrounds on purpose: neither clears AA as text on --bg at these lightnesses, which
-// is why status-badge.css tints them into --surface instead of filling with them.
+// Every pairing the components' utilities and the remaining stylesheets produce, read off
+// them rather than off the palette. --success and --warning are absent as foregrounds on
+// purpose: neither clears AA as text on --bg, which is why StatusBadge tints them instead.
 const PAIRS = [
   { front: "fg", back: "bg", floor: AA_TEXT, label: "body text on the page" },
   { front: "fg", back: "surface", floor: AA_TEXT, label: "body text on a card" },
@@ -58,6 +58,7 @@ const PAIRS = [
   { front: "primary", back: "surface", floor: AA_TEXT, label: "link text on a card" },
   { front: "danger", back: "bg", floor: AA_TEXT, label: "field error text" },
   { front: "danger", back: "surface", floor: AA_TEXT, label: "field error text on a card" },
+  { front: "primary", back: "muted", floor: AA_NON_TEXT, label: "an option's icon on its tile" },
   { front: "ring", back: "bg", floor: AA_NON_TEXT, label: "focus ring against the page" },
 ];
 
