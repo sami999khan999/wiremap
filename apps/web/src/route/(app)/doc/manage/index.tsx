@@ -5,6 +5,7 @@ import {
   DocQueries,
   type DocSpaceDto,
   DocSpaceForm,
+  readerClassName,
   StatusBadge,
   useApiClient,
   useAppQuery,
@@ -40,14 +41,14 @@ function DocManage() {
   const items: readonly DocSpaceDto[] = spaces.data?.items ?? [];
 
   return (
-    <main id="main" className="ui-reader__content">
+    <main id="main" className={readerClassName.content}>
       <div className="ui-stack">
-        <nav className="ui-reader__actions">
+        <nav className={readerClassName.actions}>
           <Link to="/doc">{t("doc.home.title")}</Link>
         </nav>
-        <header className="ui-reader__header">
-          <h1 className="ui-reader__title">{t("doc.manage.title")}</h1>
-          <p className="ui-reader__description">{t("doc.manage.description")}</p>
+        <header className={readerClassName.header}>
+          <h1 className={readerClassName.title}>{t("doc.manage.title")}</h1>
+          <p className={readerClassName.description}>{t("doc.manage.description")}</p>
         </header>
 
         <section className="ui-stack" aria-labelledby="doc-spaces">
@@ -61,7 +62,7 @@ function DocManage() {
                   {t(`doc.space.audience.${space.audience}`)}
                 </StatusBadge>
               </summary>
-              <div className="ui-reader__actions">
+              <div className={readerClassName.actions}>
                 <Link to="/doc/$space/$" params={{ space: space.slug, _splat: "" }}>
                   {t("doc.space.open")}
                 </Link>

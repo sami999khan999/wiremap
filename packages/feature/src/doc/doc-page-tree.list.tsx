@@ -18,6 +18,7 @@ import {
   Input,
   inputClassName,
   type ReactNode,
+  readerClassName,
   StatusBadge,
   useApiClient,
   useAppQuery,
@@ -137,7 +138,7 @@ export function DocPageTreeList({
       <ul className="ui-stack">
         {list.map((node) => (
           <li key={node.id}>
-            <div className="ui-reader__actions">
+            <div className={readerClassName.actions}>
               {renderLink(
                 editHref(node.id),
                 <>

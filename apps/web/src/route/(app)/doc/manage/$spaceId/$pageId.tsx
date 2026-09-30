@@ -1,11 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   type ClientNamespace,
+  cn,
   DocEditorForm,
   type DocPageDraftDto,
   DocQueries,
   DocRevisionList,
   Identifiers,
+  readerClassName,
   useApiClient,
   useAppQuery,
   useMessages,
@@ -50,19 +52,19 @@ function DocEdit() {
   const page: DocPageDraftDto = draft.data;
 
   return (
-    <main id="main" className="ui-reader__content ui-reader__content--aside">
+    <main id="main" className={cn(readerClassName.content, readerClassName.contentAside)}>
       <div className="ui-stack">
-        <nav className="ui-reader__actions">
+        <nav className={readerClassName.actions}>
           <Link to="/doc/manage/$spaceId" params={{ spaceId: page.spaceId }}>
             {t("doc.editor.back")}
           </Link>
         </nav>
-        <header className="ui-reader__header">
-          <h1 className="ui-reader__title">{t("doc.editor.title")}</h1>
+        <header className={readerClassName.header}>
+          <h1 className={readerClassName.title}>{t("doc.editor.title")}</h1>
         </header>
         <DocEditorForm key={`${page.id}:${generation}`} draft={page} />
       </div>
-      <aside className="ui-reader__aside">
+      <aside className={readerClassName.aside}>
         <DocRevisionList
           pageId={page.id}
           draftVersion={page.draftVersion}

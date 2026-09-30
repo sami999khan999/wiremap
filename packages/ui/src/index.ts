@@ -47,7 +47,7 @@ export {
 export { Popover, type PopoverAlign, type PopoverProps } from "./popover/index.js";
 export { Prose, type ProseProps } from "./prose/index.js";
 export { QrCode, type QrCodeProps } from "./qr-code/index.js";
-export { ReaderLayout, type ReaderLayoutProps } from "./reader-layout/index.js";
+export { ReaderLayout, type ReaderLayoutProps, readerClassName } from "./reader-layout/index.js";
 export { Sidebar, type SidebarProps } from "./sidebar/index.js";
 export { type BadgeTone, StatusBadge, type StatusBadgeProps } from "./status-badge/index.js";
 export { Textarea, type TextareaProps } from "./textarea/index.js";

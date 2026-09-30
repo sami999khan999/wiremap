@@ -14,6 +14,7 @@ import {
   inputClassName,
   Prose,
   type ReactNode,
+  readerClassName,
   StatusBadge,
   Textarea,
   useApiClient,
@@ -164,7 +165,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
 
   return (
     <form onSubmit={submit} noValidate className="ui-stack">
-      <div className="ui-reader__actions">
+      <div className={readerClassName.actions}>
         <StatusBadge
           tone={status === "published" ? "success" : status === "changed" ? "warning" : "neutral"}
         >
@@ -229,7 +230,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
             />
           </Field>
 
-          <div className="ui-reader__actions" role="tablist">
+          <div className={readerClassName.actions} role="tablist">
             <Button
               variant={tab === "write" ? "secondary" : "ghost"}
               role="tab"
@@ -300,7 +301,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
         </Callout>
       ) : null}
 
-      <div className="ui-reader__actions">
+      <div className={readerClassName.actions}>
         <Button type="submit" variant="secondary" disabled={save.isPending || !dirty}>
           {save.isPending ? t("doc.editor.saving") : t("doc.editor.save")}
         </Button>

@@ -10,6 +10,7 @@ import {
   type FormEvent,
   Input,
   inputClassName,
+  readerClassName,
   ThemeRegistry,
   useApiClient,
   useState,
@@ -148,7 +149,7 @@ export function DocSpaceForm({ space, platform, onSaved, onDeleted }: DocSpaceFo
       {failure ? <Callout tone="danger">{describe(failure)?.message}</Callout> : null}
       {update.isSuccess ? <Callout tone="success">{t("doc.space.saved")}</Callout> : null}
 
-      <div className="ui-reader__actions">
+      <div className={readerClassName.actions}>
         <Button type="submit" disabled={pending || slug === "" || title.trim() === ""}>
           {space ? t("doc.space.save") : t("doc.space.create")}
         </Button>

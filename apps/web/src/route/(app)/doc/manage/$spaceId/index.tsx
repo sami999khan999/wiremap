@@ -4,6 +4,7 @@ import {
   DocPageTreeList,
   DocQueries,
   Identifiers,
+  readerClassName,
   useApiClient,
   useAppQuery,
   useMessages,
@@ -42,9 +43,9 @@ function DocSpacePages() {
   const space = useAppQuery(DocQueries.space(client, spaceId));
 
   return (
-    <main id="main" className="ui-reader__content">
+    <main id="main" className={readerClassName.content}>
       <div className="ui-stack">
-        <nav className="ui-reader__actions">
+        <nav className={readerClassName.actions}>
           <Link to="/doc/manage">{t("doc.manage.title")}</Link>
           {space.data ? (
             <Link to="/doc/$space/$" params={{ space: space.data.slug, _splat: "" }}>
@@ -52,9 +53,9 @@ function DocSpacePages() {
             </Link>
           ) : null}
         </nav>
-        <header className="ui-reader__header">
-          <h1 className="ui-reader__title">{space.data?.title}</h1>
-          <p className="ui-reader__description">{t("doc.manage.pages")}</p>
+        <header className={readerClassName.header}>
+          <h1 className={readerClassName.title}>{space.data?.title}</h1>
+          <p className={readerClassName.description}>{t("doc.manage.pages")}</p>
         </header>
         <DocPageTreeList
           spaceId={spaceId}

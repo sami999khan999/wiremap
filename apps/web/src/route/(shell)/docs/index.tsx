@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { type ClientNamespace, DocSpaceList, useMessages } from "~/import.js";
+import { type ClientNamespace, DocSpaceList, readerClassName, useMessages } from "~/import.js";
 import { DocLink } from "~/route/-doc-link.js";
 import { fetchPlatformDocSpaces } from "~/server/doc.fn.js";
 import { DocCacheHeaders } from "./-cache.js";
@@ -26,13 +26,13 @@ function PublicDocHome() {
   const { spaces } = Route.useLoaderData();
 
   return (
-    <main id="main" className="ui-reader__content">
+    <main id="main" className={readerClassName.content}>
       <div className="ui-stack">
-        <nav className="ui-reader__actions">
+        <nav className={readerClassName.actions}>
           <Link to="/">{t("doc.back.home")}</Link>
         </nav>
-        <header className="ui-reader__header">
-          <h1 className="ui-reader__title">{t("doc.home.public")}</h1>
+        <header className={readerClassName.header}>
+          <h1 className={readerClassName.title}>{t("doc.home.public")}</h1>
         </header>
         <DocSpaceList spaces={spaces} root="/docs" renderLink={DocLink.render} />
       </div>

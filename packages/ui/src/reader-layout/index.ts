@@ -1,1 +1,1 @@
-export { ReaderLayout, type ReaderLayoutProps } from "./reader-layout.js";
+export { ReaderLayout, type ReaderLayoutProps, readerClassName } from "./reader-layout.js";

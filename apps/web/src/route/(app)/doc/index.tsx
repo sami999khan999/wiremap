@@ -3,6 +3,7 @@ import {
   type ClientNamespace,
   DocQueries,
   DocSpaceList,
+  readerClassName,
   useApiClient,
   useAppQuery,
   useCapabilities,
@@ -33,17 +34,17 @@ function DocHome() {
   const capabilities = useCapabilities();
 
   return (
-    <main id="main" className="ui-reader__content">
+    <main id="main" className={readerClassName.content}>
       <div className="ui-stack">
-        <nav className="ui-reader__actions">
+        <nav className={readerClassName.actions}>
           <Link to="/dashboard">{t("doc.back.app")}</Link>
           {capabilities.can("doc.page.write") ? (
             <Link to="/doc/manage">{t("doc.home.manage")}</Link>
           ) : null}
         </nav>
-        <header className="ui-reader__header">
-          <h1 className="ui-reader__title">{t("doc.home.title")}</h1>
-          <p className="ui-reader__description">{t("doc.home.description")}</p>
+        <header className={readerClassName.header}>
+          <h1 className={readerClassName.title}>{t("doc.home.title")}</h1>
+          <p className={readerClassName.description}>{t("doc.home.description")}</p>
         </header>
         <DocSpaceList spaces={spaces.data?.items ?? []} root="/doc" renderLink={DocLink.render} />
       </div>

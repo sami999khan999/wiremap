@@ -13,6 +13,7 @@ import {
   fieldClassName,
   Input,
   inputClassName,
+  readerClassName,
   StatusBadge,
   useApiClient,
   useAppQuery,
@@ -74,7 +75,7 @@ export function DocGrantPanel({ spaceId }: DocGrantPanelProps) {
         {items.map((grant) => {
           const expired = grant.expiresAt !== null && grant.expiresAt.getTime() <= now;
           return (
-            <li key={grant.id} className="ui-reader__actions">
+            <li key={grant.id} className={readerClassName.actions}>
               <StatusBadge tone={expired ? "neutral" : "accent"}>
                 {t(`doc.grant.kind.${grant.kind}`)}
               </StatusBadge>

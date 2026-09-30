@@ -12,6 +12,7 @@ import {
   Prose,
   type ReactNode,
   ReaderLayout,
+  readerClassName,
   Sidebar,
   Toc,
   useEffect,
@@ -120,9 +121,9 @@ export function DocReaderPanel({
 
   const header = (
     <>
-      <h1 className="ui-reader__title">{page.title}</h1>
-      {page.description ? <p className="ui-reader__description">{page.description}</p> : null}
-      <div className="ui-reader__actions">
+      <h1 className={readerClassName.title}>{page.title}</h1>
+      {page.description ? <p className={readerClassName.description}>{page.description}</p> : null}
+      <div className={readerClassName.actions}>
         <DocCopyButton markdown={page.markdown} />
         {markdownHref || editHref ? (
           <Popover

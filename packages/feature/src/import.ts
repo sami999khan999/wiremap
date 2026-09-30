@@ -133,6 +133,7 @@ export {
   Prose,
   QrCode,
   ReaderLayout,
+  readerClassName,
   SearchTrigger,
   Sidebar,
   StatusBadge,
