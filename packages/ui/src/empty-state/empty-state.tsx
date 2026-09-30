@@ -14,10 +14,14 @@ export interface EmptyStateProps {
 // design system translatable and testable with props alone.
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="ui-empty-state">
+    <div className="ui-empty-state flex flex-col items-center gap-3 rounded-lg border border-border bg-surface px-6 py-12 text-center text-fg-muted">
       {icon ? <Icon name={icon} size={32} /> : null}
-      <p className="ui-empty-state__title">{title}</p>
-      {description ? <p className="ui-empty-state__description">{description}</p> : null}
+      <p className="ui-empty-state__title m-0 font-semibold text-fg text-lg">{title}</p>
+      {description ? (
+        <p className="ui-empty-state__description m-0 max-w-[42ch] text-fg-muted text-sm">
+          {description}
+        </p>
+      ) : null}
       {action}
     </div>
   );

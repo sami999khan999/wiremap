@@ -1,3 +1,4 @@
+import { cn } from "../class-name/index.js";
 import type { ReactNode } from "../import.js";
 
 // `id` is the only field this component knows about: React needs a key and `onRowClick`
@@ -35,13 +36,20 @@ function DataTableSkeleton({ rows = 5, columns = 3 }: DataTableSkeletonProps) {
       {Array.from({ length: rows }, (_, row) => (
         <div className="ui-data-table__skeleton-row" key={row}>
           {Array.from({ length: columns }, (_, column) => (
-            <span className="ui-data-table__skeleton-cell" key={column} />
+            // --muted mixed toward --border rather than a grey of its own: right in every theme.
+            <span
+              className="ui-data-table__skeleton-cell h-(--text-base) animate-pulse rounded-sm bg-[color-mix(in_oklch,var(--muted)_60%,var(--border))] motion-reduce:animate-none"
+              key={column}
+            />
           ))}
         </div>
       ))}
     </div>
   );
 }
+
+// The alignment the column declares, read back from the attribute the cell already carries.
+const CELL = "border-border border-b px-4 py-3 text-start data-[align=end]:text-end";
 
 function DataTableRoot<TRow extends TableRow>({
   columns,
@@ -51,12 +59,29 @@ function DataTableRoot<TRow extends TableRow>({
   className,
 }: DataTableProps<TRow>) {
   return (
-    <table className={["ui-data-table", className].filter(Boolean).join(" ")}>
-      {caption ? <caption className="ui-data-table__caption">{caption}</caption> : null}
+    <table
+      className={cn(
+        "ui-data-table w-full border-collapse overflow-hidden rounded-lg border border-border bg-surface text-sm [&_tr:last-child_td]:border-b-0",
+        className,
+      )}
+    >
+      {caption ? (
+        <caption className="ui-data-table__caption px-4 py-3 text-start text-fg-muted text-xs">
+          {caption}
+        </caption>
+      ) : null}
       <thead>
         <tr>
           {columns.map((column) => (
-            <th key={column.key} scope="col" data-align={column.align ?? "start"}>
+            <th
+              key={column.key}
+              scope="col"
+              data-align={column.align ?? "start"}
+              className={cn(
+                CELL,
+                "bg-muted font-semibold text-fg-muted text-xs uppercase tracking-[0.02em]",
+              )}
+            >
               {column.header}
             </th>
           ))}
@@ -66,7 +91,9 @@ function DataTableRoot<TRow extends TableRow>({
         {rows.map((row) => (
           <tr
             key={row.id}
-            className={onRowClick ? "ui-data-table__row--clickable" : undefined}
+            className={
+              onRowClick ? "ui-data-table__row--clickable cursor-pointer hover:bg-muted" : undefined
+            }
             // A clickable row is a control: without these three attributes the
             // interaction exists only for a mouse.
             tabIndex={onRowClick ? 0 : undefined}
@@ -83,7 +110,7 @@ function DataTableRoot<TRow extends TableRow>({
             }
           >
             {columns.map((column) => (
-              <td key={column.key} data-align={column.align ?? "start"}>
+              <td key={column.key} data-align={column.align ?? "start"} className={CELL}>
                 {column.cell(row)}
               </td>
             ))}

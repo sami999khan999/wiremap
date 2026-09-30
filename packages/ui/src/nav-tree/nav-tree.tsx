@@ -1,3 +1,4 @@
+import { cn } from "../class-name/index.js";
 import { Icon } from "../icon/index.js";
 import { type IconName, type ReactNode, useEffect, useId, useState } from "../import.js";
 
@@ -46,18 +47,32 @@ interface BranchProps {
   readonly collapseLabel: string;
 }
 
+const LINK =
+  "ui-nav-tree__link flex min-h-(--control-height) w-full min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-2 py-1 text-left text-fg-muted no-underline [font:inherit] transition-colors duration-(--duration-fast) hover:bg-muted hover:text-fg";
+
+// A primary-tinted pill with --fg text: --primary text on a color-mix tint is a pairing
+// check-contrast.mjs cannot see, --fg on a near-page background is one it asserts.
+const ACTIVE =
+  "ui-nav-tree__link--active bg-[color-mix(in_oklch,var(--primary)_14%,var(--bg))] font-medium text-fg hover:bg-[color-mix(in_oklch,var(--primary)_14%,var(--bg))] hover:text-fg";
+
 function contains(node: NavTreeNode, id: string | undefined): boolean {
   if (id === undefined) return false;
   return node.children?.some((child) => child.id === id || contains(child, id)) ?? false;
 }
 
-function content(node: NavTreeNode): ReactNode {
+function content(node: NavTreeNode, active = false): ReactNode {
   return (
     <>
-      {node.icon ? <Icon name={node.icon} size={16} className="ui-nav-tree__icon" /> : null}
-      <span className="ui-nav-tree__label">{node.label}</span>
+      {node.icon ? (
+        <Icon
+          name={node.icon}
+          size={16}
+          className={cn("ui-nav-tree__icon shrink-0", active && "text-primary")}
+        />
+      ) : null}
+      <span className="ui-nav-tree__label min-w-0 flex-1 truncate">{node.label}</span>
       {node.kind === "link" ? (
-        <Icon name="external" size={14} className="ui-nav-tree__external" />
+        <Icon name="external" size={14} className="ui-nav-tree__external shrink-0 text-fg-muted" />
       ) : null}
     </>
   );
@@ -66,9 +81,7 @@ function content(node: NavTreeNode): ReactNode {
 function link(node: NavTreeNode, activeId: string | undefined, renderLink: RenderNavLink) {
   const active = node.id === activeId;
   const attributes: LinkAttributes = {
-    className: ["ui-nav-tree__link", active ? "ui-nav-tree__link--active" : null]
-      .filter(Boolean)
-      .join(" "),
+    className: cn(LINK, active && ACTIVE),
     ...(active ? { "aria-current": "page" as const } : {}),
   };
 
@@ -76,12 +89,12 @@ function link(node: NavTreeNode, activeId: string | undefined, renderLink: Rende
   if (node.kind === "link") {
     return (
       <a href={node.href} className={attributes.className} target="_blank" rel="noreferrer">
-        {content(node)}
+        {content(node, active)}
       </a>
     );
   }
 
-  return renderLink(node, content(node), attributes);
+  return renderLink(node, content(node, active), attributes);
 }
 
 function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: BranchProps) {
@@ -98,8 +111,8 @@ function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: Bran
 
   if (node.kind === "section") {
     return (
-      <li className="ui-nav-tree__section">
-        <p className="ui-nav-tree__heading">{node.label}</p>
+      <li className="ui-nav-tree__section [&+&]:mt-5">
+        <p className="ui-nav-tree__heading m-0 mb-2 px-2 font-semibold text-fg">{node.label}</p>
         <Level
           nodes={children}
           activeId={activeId}
@@ -118,7 +131,7 @@ function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: Bran
   const toggle = (
     <button
       type="button"
-      className="ui-nav-tree__toggle"
+      className="ui-nav-tree__toggle inline-flex size-(--control-height-sm) shrink-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-fg-muted hover:bg-muted hover:text-fg [&_svg]:transition-transform [&_svg]:duration-(--duration-fast) aria-expanded:[&_svg]:rotate-90"
       aria-expanded={open}
       aria-controls={listId}
       aria-label={`${open ? collapseLabel : expandLabel} ${node.label}`}
@@ -130,7 +143,7 @@ function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: Bran
 
   return (
     <li className="ui-nav-tree__item">
-      <div className="ui-nav-tree__row">
+      <div className="ui-nav-tree__row flex items-center gap-1">
         {
           // A page with no destination of its own is only a folder, and then the whole
           // row is the toggle rather than a link that goes nowhere.
@@ -140,7 +153,7 @@ function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: Bran
         ) : (
           <button
             type="button"
-            className="ui-nav-tree__link"
+            className={LINK}
             aria-expanded={open}
             aria-controls={listId}
             onClick={() => setOpen((was) => !was)}
@@ -150,7 +163,14 @@ function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: Bran
         )}
         {node.href ? toggle : null}
       </div>
-      <div id={listId} className="ui-nav-tree__children" hidden={!open}>
+      {
+        // Nested pages hang off a rail, which shows the depth without a second indent system.
+      }
+      <div
+        id={listId}
+        className="ui-nav-tree__children [&>ul]:my-1 [&>ul]:ml-3 [&>ul]:border-border [&>ul]:border-l [&>ul]:pl-2"
+        hidden={!open}
+      >
         <Level
           nodes={children}
           activeId={activeId}
@@ -171,7 +191,7 @@ function Level({
   collapseLabel,
 }: Omit<BranchProps, "node"> & { readonly nodes: readonly NavTreeNode[] }) {
   return (
-    <ul className="ui-nav-tree__list">
+    <ul className="ui-nav-tree__list m-0 flex list-none flex-col gap-1 p-0">
       {nodes.map((node) => (
         <Branch
           key={node.id}
@@ -198,7 +218,7 @@ export function NavTree({
   className,
 }: NavTreeProps) {
   return (
-    <nav aria-label={label} className={["ui-nav-tree", className].filter(Boolean).join(" ")}>
+    <nav aria-label={label} className={cn("ui-nav-tree text-sm", className)}>
       <Level
         nodes={nodes}
         activeId={activeId}

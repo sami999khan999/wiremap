@@ -1,3 +1,4 @@
+import { cn } from "../class-name/index.js";
 import { encode, useMemo } from "../import.js";
 
 export interface QrCodeProps {
@@ -18,7 +19,12 @@ export function QrCode({ value, label, className }: QrCodeProps) {
 
   return (
     <svg
-      className={["ui-qr-code", className].filter(Boolean).join(" ")}
+      // --bg and --fg, the theme's highest contrast: the padding is the quiet zone a scanner
+      // needs, and an inverted code in dark mode still scans where a low-contrast one does not.
+      className={cn(
+        "ui-qr-code block h-auto w-full max-w-52 rounded-md border border-border bg-bg p-3 text-fg",
+        className,
+      )}
       // One unit per module, so the rendered size is entirely the stylesheet's business.
       viewBox={`0 0 ${qr.size} ${qr.size}`}
       role="img"

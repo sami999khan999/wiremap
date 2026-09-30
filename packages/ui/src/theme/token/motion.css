@@ -18,6 +18,18 @@
   --default-transition-timing-function: var(--ease-out);
 }
 
+/* `animate-pulse` is the loading pulse, on the one curve. Replacing the default rather than
+   adding a name keeps the utility everyone already knows. */
+@theme inline {
+  --animate-pulse: ui-pulse 1.4s var(--ease-out) infinite;
+
+  @keyframes ui-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+}
+
 /* One block, and every transition in the system respects it -- rather than each
    component checking the media query for itself. */
 @media (prefers-reduced-motion: reduce) {

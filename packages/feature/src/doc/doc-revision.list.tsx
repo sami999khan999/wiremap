@@ -32,7 +32,10 @@ export function DocRevisionList({ pageId, draftVersion, onRestored }: DocRevisio
 
   return (
     <section className="ui-stack" aria-labelledby="doc-revisions">
-      <h2 id="doc-revisions" className="ui-toc__title">
+      <h2
+        id="doc-revisions"
+        className="ui-toc__title m-0 mb-3 flex items-center gap-2 text-fg-muted"
+      >
         {t("doc.revision.title")}
       </h2>
       {items.length === 0 ? <p className="ui-field__hint">{t("doc.revision.none")}</p> : null}
