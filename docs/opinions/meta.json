@@ -1,0 +1,17 @@
+{
+  "title": "Opinions",
+  "description": "The positions this repository takes — naming, folders, imports, dependencies, classes, vocabulary, data ownership, visibility, simplicity, comments. One page per topic, each rule stated flatly with the failure it prevents.",
+  "pages": [
+    "index",
+    "files",
+    "folders",
+    "imports",
+    "dependencies",
+    "classes",
+    "vocabulary",
+    "data-and-scale",
+    "visibility",
+    "simplicity",
+    "comments"
+  ]
+}

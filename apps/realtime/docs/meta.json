@@ -1,0 +1,5 @@
+{
+  "title": "realtime",
+  "description": "The stream process — every open browser stream, off the web app's event loop, and a shutdown that hands streams on",
+  "pages": ["index", "reference"]
+}

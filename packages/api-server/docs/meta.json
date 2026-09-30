@@ -1,0 +1,5 @@
+{
+  "title": "api-server",
+  "description": "The router half of the transport — the authed middleware chain and the stream router, mounted by more than one app",
+  "pages": ["index", "reference"]
+}

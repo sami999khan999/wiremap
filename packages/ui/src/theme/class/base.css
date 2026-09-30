@@ -1,0 +1,52 @@
+/* The only rules here that are not scoped to a ui-* class. A design system that cannot
+   set the page background is one every consuming app has to re-implement. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One focus rule for the whole system, and :focus-visible rather than :focus so a mouse
+   click does not leave a ring behind. Every control below inherits this and none of
+   them restate it. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Off-screen until focused, rather than display:none — a hidden element is not
+   focusable, so a skip link that hides itself that way can never be reached. It stays
+   in the layout at a position no pointer user will hit, and returns on :focus. */
+.ui-skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: calc(-1 * var(--space-12));
+  z-index: 100;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.ui-skip-link:focus {
+  top: var(--space-2);
+}
+
+/* The skip target. It takes focus programmatically via tabindex="-1", and the ring on
+   a whole page region is noise rather than information. */
+main:focus {
+  outline: none;
+  box-shadow: none;
+}

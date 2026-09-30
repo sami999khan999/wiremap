@@ -1,0 +1,54 @@
+/* Also the stylesheet for cards the Markdown renderer writes into a page, so every rule
+   here targets the classes alone and never a React-only wrapper. */
+
+.ui-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-4);
+  margin: var(--space-6) 0;
+}
+
+.ui-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+a.ui-card:hover {
+  border-color: color-mix(in oklch, var(--border) 60%, var(--fg));
+  background: color-mix(in oklch, var(--surface) 70%, var(--muted));
+}
+
+.ui-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  margin-bottom: var(--space-2);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  color: var(--primary);
+}
+
+.ui-card__title {
+  color: var(--fg);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-card__description {
+  color: var(--fg-muted);
+  line-height: var(--leading-normal);
+}

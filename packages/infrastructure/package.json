@@ -1,0 +1,77 @@
+{
+  "name": "@loadbearing/infrastructure",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rimraf dist",
+    "db:generate": "drizzle-kit generate && tsx partition-ddl.ts",
+    "db:migrate": "tsx --env-file-if-exists=../../.env migrate.ts",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:partitions": "tsx --env-file-if-exists=../../.env partitions.ts",
+    "platform:grant": "tsx --env-file-if-exists=../../.env platform-grant.ts",
+    "queue:replay": "tsx --env-file-if-exists=../../.env queue-replay.ts",
+    "db:seed": "tsx --env-file-if-exists=../../.env seed.ts",
+    "ch:migrate": "tsx --env-file-if-exists=../../.env clickhouse-migrate.ts",
+    "smoke": "vitest run -c vitest.smoke.config.ts"
+  },
+  "devDependencies": {
+    "@loadbearing/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/nodemailer": "catalog:",
+    "@types/hast": "catalog:",
+    "@types/mdast": "catalog:",
+    "@types/pg": "catalog:",
+    "drizzle-kit": "catalog:",
+    "rimraf": "catalog:",
+    "tsup": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/lib-storage": "catalog:",
+    "@aws-sdk/s3-request-presigner": "catalog:",
+    "@loadbearing/application": "workspace:*",
+    "@loadbearing/content": "workspace:*",
+    "@loadbearing/contracts": "workspace:*",
+    "@loadbearing/core": "workspace:*",
+    "@loadbearing/errors": "workspace:*",
+    "@loadbearing/observability": "workspace:*",
+    "@loadbearing/permissions": "workspace:*",
+    "bullmq": "catalog:",
+    "drizzle-orm": "catalog:",
+    "hast-util-to-string": "catalog:",
+    "ioredis": "catalog:",
+    "nodemailer": "catalog:",
+    "pg": "catalog:",
+    "rehype-highlight": "catalog:",
+    "rehype-sanitize": "catalog:",
+    "rehype-slug": "catalog:",
+    "rehype-stringify": "catalog:",
+    "remark-directive": "catalog:",
+    "remark-gfm": "catalog:",
+    "remark-parse": "catalog:",
+    "remark-rehype": "catalog:",
+    "unified": "catalog:",
+    "unist-util-visit": "catalog:"
+  }
+}

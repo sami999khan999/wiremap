@@ -1,0 +1,6 @@
+# The three that run in seconds and catch what a reviewer cannot see. `typecheck` and
+# `test` stay in CI: both are minutes, and a hook people bypass checks nothing.
+pnpm lint:fast
+pnpm exec eslint .
+pnpm check:architecture
+pnpm check:contrast

@@ -1,0 +1,152 @@
+/* Rendered Markdown, styled by element because the server writes plain HTML. Scoped under
+   .ui-prose so none of these element rules leak onto the page around the article. */
+
+.ui-prose {
+  min-width: 0;
+  color: var(--fg);
+  font-size: var(--text-base);
+  line-height: 1.75;
+  overflow-wrap: break-word;
+}
+
+.ui-prose > :first-child {
+  margin-top: 0;
+}
+
+.ui-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.ui-prose :is(h1, h2, h3, h4) {
+  /* Clears a sticky header when a TOC link or a #hash lands on the heading. */
+  scroll-margin-top: var(--space-16);
+  color: var(--fg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.ui-prose h1 {
+  margin: var(--space-10) 0 var(--space-4);
+  font-size: var(--text-2xl);
+}
+
+.ui-prose h2 {
+  margin: var(--space-12) 0 var(--space-4);
+  font-size: var(--text-xl);
+}
+
+.ui-prose h3 {
+  margin: var(--space-8) 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.ui-prose h4 {
+  margin: var(--space-6) 0 var(--space-2);
+  font-size: var(--text-base);
+}
+
+.ui-prose :is(p, ul, ol, table, blockquote) {
+  margin: var(--space-4) 0;
+}
+
+/* Not a card: a card is a whole block that is a link, and styles itself as one. */
+.ui-prose a:not(.ui-card) {
+  color: var(--primary);
+  font-weight: var(--weight-medium);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--primary) 40%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.ui-prose a:not(.ui-card):hover {
+  text-decoration-color: var(--primary);
+}
+
+/* A heading's own link, when the renderer wraps one in it, reads as the heading. */
+.ui-prose :is(h1, h2, h3, h4) a {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+.ui-prose :is(ul, ol) {
+  padding-left: var(--space-6);
+}
+
+.ui-prose li + li {
+  margin-top: var(--space-2);
+}
+
+.ui-prose li > :is(ul, ol) {
+  margin: var(--space-2) 0;
+}
+
+.ui-prose li::marker {
+  color: var(--fg-muted);
+}
+
+.ui-prose input[type="checkbox"] {
+  margin-right: var(--space-2);
+}
+
+.ui-prose blockquote {
+  padding-left: var(--space-4);
+  border-left: var(--space-1) solid var(--border);
+  color: var(--fg-muted);
+}
+
+.ui-prose hr {
+  margin: var(--space-10) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--border);
+}
+
+.ui-prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+}
+
+.ui-prose :not(pre) > code {
+  padding: 0.125em 0.375em;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+/* Wide tables scroll inside themselves rather than widening the article. */
+.ui-prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.ui-prose :is(th, td) {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--border);
+  text-align: left;
+}
+
+.ui-prose th {
+  background: var(--muted);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-prose .ui-callout {
+  margin: var(--space-6) 0;
+  font-size: var(--text-sm);
+}
+
+.ui-prose .ui-callout :is(p, ul, ol) {
+  margin: 0;
+}
+
+.ui-prose .ui-callout__body > * + * {
+  margin-top: var(--space-2);
+}

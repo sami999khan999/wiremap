@@ -1,0 +1,5 @@
+{
+  "title": "infra",
+  "description": "Nine containers the application dials and nothing imports — the directory, its services, and what belongs in it",
+  "pages": ["index"]
+}

@@ -1,0 +1,63 @@
+/* Tinted, never solid, for the reason status-badge.css states in full: --success at
+   3.54:1 and --warning at 2.62:1 on --bg are fills rather than foregrounds, and a solid
+   one needs a text colour the twelve names do not carry.
+
+   The body text is --fg on a near-surface background in every tone, which is a pairing
+   check-contrast.mjs already asserts. The tone appears on the border and the title only,
+   and the title is --fg too — a tone-coloured heading would be a new pairing, and two of
+   the four tones would fail it. */
+
+.ui-callout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--border);
+  /* The tone lives here rather than on all four sides, so the colour reads as a marker
+     rather than as a box the content is trapped in. */
+  border-left-width: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.ui-callout__title {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+
+.ui-callout__body {
+  color: var(--fg-muted);
+}
+
+/* A callout with no title is one sentence, and that sentence is the message rather than
+   a note under one — so it gets the full foreground. */
+.ui-callout__body:only-child {
+  color: var(--fg);
+}
+
+.ui-callout--info {
+  background: color-mix(in oklch, var(--primary) 8%, var(--surface));
+  border-color: color-mix(in oklch, var(--primary) 26%, var(--border));
+  border-left-color: var(--primary);
+}
+
+.ui-callout--success {
+  background: color-mix(in oklch, var(--success) 10%, var(--surface));
+  border-color: color-mix(in oklch, var(--success) 28%, var(--border));
+  border-left-color: var(--success);
+}
+
+.ui-callout--warning {
+  background: color-mix(in oklch, var(--warning) 12%, var(--surface));
+  border-color: color-mix(in oklch, var(--warning) 30%, var(--border));
+  border-left-color: var(--warning);
+}
+
+.ui-callout--danger {
+  background: color-mix(in oklch, var(--danger) 10%, var(--surface));
+  border-color: color-mix(in oklch, var(--danger) 28%, var(--border));
+  border-left-color: var(--danger);
+}

@@ -1,0 +1,5 @@
+{
+  "title": "api-client",
+  "description": "The typed oRPC client and the auth-strategy seam — one client for browser cookies, in-process SSR, and desktop bearer tokens",
+  "pages": ["index", "reference"]
+}

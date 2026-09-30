@@ -1,0 +1,5 @@
+{
+  "title": "application",
+  "description": "Principal, Authorizer, and the sixteen abstract ports — the package that makes every infrastructure decision reversible",
+  "pages": ["index", "reference"]
+}

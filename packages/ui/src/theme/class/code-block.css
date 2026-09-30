@@ -1,0 +1,135 @@
+/* Code sits on --surface, not --muted: --primary and --danger clear AA on --surface in
+   every theme and miss it on --muted in several. The tokens use those two, --fg and
+   --fg-muted, and nothing else — --success and --warning are fills, never text. */
+
+.ui-code-block {
+  position: relative;
+  margin: var(--space-4) 0;
+}
+
+.ui-code-block pre,
+.ui-prose pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  tab-size: 2;
+}
+
+.ui-code-block pre code,
+.ui-prose pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.ui-code-block__language {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-4);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.ui-code-block:has(.ui-code-block__language) pre {
+  padding-top: var(--space-8);
+}
+
+.ui-code-block__copy {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+/* Revealed on hover and on focus, so a keyboard user tabbing into the block finds it. */
+.ui-code-block:hover .ui-code-block__copy,
+.ui-code-block__copy:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .ui-code-block__copy {
+    opacity: 1;
+  }
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-type,
+.hljs-literal,
+.hljs-meta {
+  color: var(--primary);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-symbol,
+.hljs-number,
+.hljs-deletion {
+  color: var(--danger);
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-name,
+.hljs-tag,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: var(--fg);
+  font-weight: var(--weight-semibold);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-params,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--fg-muted);
+}
+
+/* A diff's added line cannot be green text on this palette, so it is marked by weight
+   and a tinted fill rather than by hue. */
+.hljs-addition {
+  background: color-mix(in oklch, var(--success) 12%, var(--surface));
+  color: var(--fg);
+}
+
+.hljs-deletion {
+  background: color-mix(in oklch, var(--danger) 8%, var(--surface));
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: var(--weight-semibold);
+}

@@ -1,0 +1,45 @@
+{
+  "name": "@loadbearing/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rimraf dist",
+    "auth:tables": "tsx --env-file-if-exists=../../.env tables.ts"
+  },
+  "devDependencies": {
+    "@loadbearing/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "rimraf": "catalog:",
+    "tsx": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@loadbearing/application": "workspace:*",
+    "@loadbearing/content": "workspace:*",
+    "@loadbearing/contracts": "workspace:*",
+    "@loadbearing/core": "workspace:*",
+    "@loadbearing/infrastructure": "workspace:*",
+    "@loadbearing/permissions": "workspace:*",
+    "better-auth": "catalog:",
+    "zod": "catalog:"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "extends": "@loadbearing/tsconfig/library.json",
+  "compilerOptions": {
+    "paths": {
+      "highlight.js": ["./highlight-js.d.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "clickhouse-migrate.ts",
+    "migrate.ts",
+    "partition-ddl.ts",
+    "partitions.ts",
+    "platform-grant.ts",
+    "queue-replay.ts",
+    "seed.ts",
+    "shard-env.ts"
+  ]
+}

@@ -1,0 +1,13 @@
+/* Elevation, and the focus ring that is not elevation but is built the same way.
+
+   The ring is two shadows, not an outline: the inner one punches a gap in the page
+   colour so the ring stays visible against a control of any fill. It reads --bg and
+   --ring, which is why it lives here and resolves per theme. */
+
+:root {
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05);
+  --shadow-md: 0 2px 4px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
+  --shadow-lg: 0 8px 24px oklch(0 0 0 / 0.1), 0 2px 6px oklch(0 0 0 / 0.05);
+
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
+}

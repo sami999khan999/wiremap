@@ -1,0 +1,2 @@
+ALTER TABLE "partition_archive" ADD COLUMN "deleted_at" timestamp with time zone;--> statement-breakpoint
+CREATE INDEX "partition_archive_deleted_idx" ON "partition_archive" USING btree ("deleted_at") WHERE deleted_at is not null;

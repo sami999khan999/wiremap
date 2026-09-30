@@ -1,0 +1,5 @@
+{
+  "title": "biome-config",
+  "description": "Formatting, import organisation, and the server-only boundary",
+  "pages": ["index", "reference"]
+}

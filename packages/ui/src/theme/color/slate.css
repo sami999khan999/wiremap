@@ -1,0 +1,41 @@
+/* Slate -- the default, and the ladder every other theme is a hue rotation of.
+
+   Its light block also claims :root, so a document carrying no attributes at all still
+   resolves all twelve names. That is the pre-hydration state of any page rendered
+   without the cookie, and without this line every colour there is undefined. :root is
+   specificity (0,1,0) against a theme block's (0,2,0), so it never interferes. */
+
+:root,
+[data-theme="slate"][data-mode="light"] {
+  --bg: oklch(0.985 0.002 260); /* page */
+  --surface: oklch(1 0 0); /* cards, popovers, modals */
+  --muted: oklch(0.96 0.004 260); /* subtle fills, hover, inputs */
+  --border: oklch(0.92 0.004 260);
+  --fg: oklch(0.21 0.01 260); /* primary text */
+  /* 0.535 rather than 0.550: a placeholder sits on --muted, not on --bg, and at 0.550
+     that pairing is 4.32:1 -- under AA. The two are indistinguishable side by side. */
+  --fg-muted: oklch(0.535 0.012 260); /* secondary text, placeholders */
+  --primary: oklch(0.55 0.19 260);
+  --primary-fg: oklch(0.99 0 0);
+  --success: oklch(0.6 0.14 155);
+  /* 0.145 rather than 0.160: at this lightness amber runs out of sRGB at 0.148, and a
+     chroma the display cannot reach is one the browser silently clips. */
+  --warning: oklch(0.7 0.145 75);
+  --danger: oklch(0.58 0.21 27);
+  --ring: oklch(0.55 0.19 260);
+}
+
+[data-theme="slate"][data-mode="dark"] {
+  --bg: oklch(0.17 0.008 260);
+  --surface: oklch(0.21 0.009 260);
+  --muted: oklch(0.265 0.01 260);
+  --border: oklch(0.3 0.01 260);
+  --fg: oklch(0.96 0.003 260);
+  --fg-muted: oklch(0.7 0.012 260);
+  --primary: oklch(0.68 0.165 260);
+  --primary-fg: oklch(0.18 0.02 260);
+  --success: oklch(0.7 0.14 155);
+  --warning: oklch(0.78 0.15 75);
+  --danger: oklch(0.65 0.19 27);
+  --ring: oklch(0.68 0.165 260);
+}

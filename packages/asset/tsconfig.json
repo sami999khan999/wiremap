@@ -1,0 +1,4 @@
+{
+  "extends": "@loadbearing/tsconfig/library.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx", "asset.d.ts"]
+}

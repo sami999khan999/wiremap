@@ -1,0 +1,5 @@
+{
+  "title": "auth",
+  "description": "Identity, and the wall Better Auth stops at — four credential types collapsed into one Principal",
+  "pages": ["index", "reference"]
+}

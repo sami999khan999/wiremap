@@ -1,0 +1,35 @@
+/* Graphite -- a near-neutral ladder with an amber primary, the documentation look.
+
+   The neutrals carry a trace of the primary's hue (0.003-0.01 chroma) so the greys do not
+   read as blue beside the amber. Light mode darkens the amber to a gold-brown: amber at
+   the lightness that reads as amber on black is 1.6:1 on white, which is no link at all. */
+
+[data-theme="graphite"][data-mode="light"] {
+  --bg: oklch(0.99 0.002 85);
+  --surface: oklch(1 0 0);
+  --muted: oklch(0.965 0.004 85);
+  --border: oklch(0.92 0.005 85);
+  --fg: oklch(0.2 0.006 85);
+  --fg-muted: oklch(0.52 0.012 85);
+  --primary: oklch(0.52 0.11 70);
+  --primary-fg: oklch(0.99 0 0);
+  --success: oklch(0.6 0.14 155);
+  --warning: oklch(0.7 0.145 75);
+  --danger: oklch(0.56 0.21 27);
+  --ring: oklch(0.52 0.11 70);
+}
+
+[data-theme="graphite"][data-mode="dark"] {
+  --bg: oklch(0.16 0.003 85);
+  --surface: oklch(0.195 0.004 85);
+  --muted: oklch(0.245 0.005 85);
+  --border: oklch(0.29 0.006 85);
+  --fg: oklch(0.96 0.004 85);
+  --fg-muted: oklch(0.72 0.01 85);
+  --primary: oklch(0.84 0.15 88);
+  --primary-fg: oklch(0.2 0.03 85);
+  --success: oklch(0.7 0.14 155);
+  --warning: oklch(0.78 0.15 75);
+  --danger: oklch(0.66 0.19 27);
+  --ring: oklch(0.84 0.15 88);
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@loadbearing/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./base.json": "./src/base.json",
+    "./library.json": "./src/library.json",
+    "./node-esm.json": "./src/node-esm.json",
+    "./react.json": "./src/react.json"
+  },
+  "files": [
+    "src"
+  ]
+}

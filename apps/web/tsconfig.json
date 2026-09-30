@@ -1,0 +1,11 @@
+{
+  "extends": "@loadbearing/tsconfig/react.json",
+  "compilerOptions": {
+    "verbatimModuleSyntax": false,
+    "types": ["vite/client", "node"],
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx", "web.d.ts"]
+}

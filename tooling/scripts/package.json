@@ -1,0 +1,19 @@
+{
+  "name": "@loadbearing/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "*.mjs"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@loadbearing/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

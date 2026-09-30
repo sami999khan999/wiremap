@@ -1,0 +1,5 @@
+{
+  "title": "Reference",
+  "description": "One page per export",
+  "pages": ["app-error", "error-normalizer", "catalog"]
+}

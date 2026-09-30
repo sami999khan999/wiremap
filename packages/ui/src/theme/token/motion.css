@@ -1,0 +1,26 @@
+/* Motion. Two durations and one curve, because a system with nine of each has no
+   opinion at all. */
+
+:root {
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* One block, and every transition in the system respects it -- rather than each
+   component checking the media query for itself. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}
+
+/* Held on <html> for one frame while a theme swaps. The same mechanism as the block
+   above, for the same reason: zero the durations rather than fight every rule for the
+   cascade. Without it every transitioned property animates at once and the switch reads
+   as a stall rather than as a change. */
+[data-theme-switching] {
+  --duration-fast: 0ms;
+  --duration-base: 0ms;
+}

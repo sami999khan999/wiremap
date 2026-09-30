@@ -1,0 +1,115 @@
+/* Positioned the way popover.css positions its panel, against the wrapper, for the same
+   reason: it stays beside its trigger on a narrow screen without a positioning library. */
+
+.ui-menu {
+  position: relative;
+  display: flex;
+}
+
+.ui-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-lg);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.ui-menu__trigger:hover {
+  background: var(--muted);
+}
+
+.ui-menu__chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.ui-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  flex-shrink: 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--primary);
+}
+
+.ui-menu__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ui-menu__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-menu__description {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+}
+
+.ui-menu__list {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 20rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  list-style: none;
+}
+
+/* Opens upwards, for a trigger at the foot of the sidebar. The width follows the widest
+   option rather than the trigger, since a short trigger would clip a theme's name. */
+.ui-menu__list--above {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
+  right: auto;
+  min-width: 100%;
+  width: max-content;
+}
+
+.ui-menu__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.ui-menu__option--active {
+  background: var(--muted);
+}
+
+.ui-menu__check {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--primary);
+}

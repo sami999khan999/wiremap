@@ -1,0 +1,35 @@
+{
+  "name": "@loadbearing/asset",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./font.css": "./src/font/font.css",
+    "./sprite.svg": "./src/icon/sprite.svg"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "node build-sprite.mjs",
+    "build": "tsup",
+    "dev": "node build-sprite.mjs && tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rimraf dist src/icon/sprite.svg"
+  },
+  "devDependencies": {
+    "@loadbearing/tsconfig": "workspace:*",
+    "rimraf": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

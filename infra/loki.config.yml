@@ -1,0 +1,52 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+  storage:
+    s3:
+      endpoint: minio:9000
+      bucketnames: loki
+      access_key_id: ratchet
+      secret_access_key: ratchetsecret
+      s3forcepathstyle: true
+      insecure: true
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # The thirty-day policy, as one line.
+  retention_period: 720h
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  # A guard against the failure this whole design is about.
+  max_label_names_per_series: 8
+
+  # Loki 3.x invents labels unless told not to. Left at their defaults it adds a
+  # `service_name` to every stream and a `detected_level` alongside ours — so the
+  # label set the Alloy pipeline carefully limits to four arrives as six.
+  # Both are off because the pipeline already decides what a label is.
+  discover_service_name: []
+  discover_log_levels: false
+
+compactor:
+  working_directory: /loki/compactor
+  delete_request_store: s3
+  retention_enabled: true

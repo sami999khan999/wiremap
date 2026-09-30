@@ -1,0 +1,19 @@
+/* Every @font-face the product ships, declared once. Imported by packages/ui/src/theme/token/typography.css
+   and nowhere else.
+
+   Nothing is declared here, because no binary ships in this repository. The stack in
+   typography.css still names Inter and JetBrains Mono first, so an operator who drops
+   inter-variable.woff2 into this directory and adds the block below gets them:
+
+   @font-face {
+     font-family: "Inter";
+     src: url("./inter-variable.woff2") format("woff2-variations");
+     font-weight: 100 900;
+     font-style: normal;
+     font-display: swap;
+   }
+
+   Declaring a face whose file is absent is not neutral: the browser requests it, takes a
+   404, and falls back — a request per face per cold load, buying nothing. `build-sprite.mjs`
+   reports what is declared against what is present, so a block added without its binary is
+   visible on the next build. */

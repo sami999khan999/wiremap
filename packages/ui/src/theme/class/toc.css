@@ -1,0 +1,49 @@
+/* "On this page": a rail down the left, and the current heading drawn on it in --primary,
+   which is text on --bg — a pairing check-contrast.mjs asserts in every theme. */
+
+.ui-toc {
+  font-size: var(--text-sm);
+}
+
+.ui-toc__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  color: var(--fg-muted);
+}
+
+.ui-toc__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: var(--border-width) solid var(--border);
+}
+
+.ui-toc__link {
+  display: block;
+  margin-left: calc(-1 * var(--border-width));
+  padding: var(--space-1) var(--space-3);
+  border-left: var(--border-width) solid transparent;
+  color: var(--fg-muted);
+  line-height: var(--leading-tight);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.ui-toc__link:hover {
+  color: var(--fg);
+}
+
+.ui-toc__link--active {
+  border-left-color: var(--primary);
+  color: var(--primary);
+}
+
+.ui-toc__item[data-depth="1"] .ui-toc__link {
+  padding-left: var(--space-6);
+}
+
+.ui-toc__item[data-depth="2"] .ui-toc__link {
+  padding-left: var(--space-8);
+}

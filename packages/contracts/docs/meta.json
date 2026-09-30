@@ -1,0 +1,5 @@
+{
+  "title": "contracts",
+  "description": "Branded identifiers, the one list envelope, the merged oRPC contract, and the procedure→permission map — every shape that crosses a boundary, declared once",
+  "pages": ["index", "reference"]
+}

@@ -1,0 +1,73 @@
+{
+  "name": "loadbearing-lite",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.21.0",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.21.0"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "build:packages": "pnpm --filter \"./packages/*\" run build",
+    "build:changed": "pnpm -r --filter \"...[origin/main]\" run build",
+    "dev": "pnpm build:packages && pnpm --filter \"./apps/*\" --parallel run dev",
+    "dev:web": "pnpm build:packages && pnpm --filter @loadbearing/web run dev",
+    "dev:worker": "pnpm build:packages && pnpm --filter @loadbearing/worker run dev",
+    "dev:realtime": "pnpm build:packages && pnpm --filter @loadbearing/realtime run dev",
+    "typecheck": "pnpm -r run typecheck",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "lint": "biome check . && eslint .",
+    "lint:fast": "biome check .",
+    "test": "pnpm -r run test",
+    "clean": "pnpm -r --parallel run clean",
+    "deps:check": "syncpack lint",
+    "repo:check": "sherif -r unordered-dependencies",
+    "check:architecture": "node tooling/scripts/check-architecture.mjs",
+    "check:comments": "node tooling/scripts/comment-density.mjs",
+    "check:contrast": "node tooling/scripts/check-contrast.mjs",
+    "infra:up": "node tooling/scripts/compose.mjs --profile observability up -d",
+    "infra:up:analytics": "node tooling/scripts/compose.mjs --profile observability --profile analytics up -d",
+    "infra:up:sharded": "node tooling/scripts/compose.mjs --profile observability --profile sharded up -d",
+    "infra:up:replica": "node tooling/scripts/compose.mjs --profile observability --profile replica up -d",
+    "infra:up:cold-tier": "node tooling/scripts/compose.mjs --profile observability --profile cold-tier up -d",
+    "infra:core": "node tooling/scripts/compose.mjs up -d",
+    "infra:down": "node tooling/scripts/compose.mjs --profile \"*\" down",
+    "infra:reset": "node tooling/scripts/compose.mjs --profile \"*\" down -v",
+    "infra:logs": "node tooling/scripts/compose.mjs --profile \"*\" logs -f",
+    "db:generate": "pnpm --filter @loadbearing/infrastructure run db:generate",
+    "db:migrate": "pnpm --filter @loadbearing/infrastructure run db:migrate",
+    "db:partitions": "pnpm --filter @loadbearing/infrastructure run db:partitions",
+    "db:seed": "pnpm --filter @loadbearing/infrastructure run db:seed",
+    "db:studio": "pnpm --filter @loadbearing/infrastructure run db:studio",
+    "ch:migrate": "pnpm --filter @loadbearing/infrastructure run ch:migrate",
+    "platform:grant": "pnpm --filter @loadbearing/infrastructure run platform:grant",
+    "queue:replay": "pnpm --filter @loadbearing/infrastructure run queue:replay",
+    "auth:tables": "pnpm --filter @loadbearing/auth run auth:tables",
+    "smoke": "pnpm --filter @loadbearing/infrastructure run smoke",
+    "smoke:web": "pnpm --filter @loadbearing/web run smoke",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@loadbearing/eslint-config": "workspace:*",
+    "@biomejs/biome": "catalog:",
+    "@commitlint/cli": "catalog:",
+    "@commitlint/config-conventional": "catalog:",
+    "eslint": "catalog:",
+    "husky": "catalog:",
+    "lint-staged": "catalog:",
+    "rimraf": "catalog:",
+    "sherif": "catalog:",
+    "syncpack": "catalog:",
+    "typescript": "catalog:"
+  }
+}

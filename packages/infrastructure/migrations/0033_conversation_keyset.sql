@@ -1,0 +1,2 @@
+DROP INDEX "conversations_recent_idx";--> statement-breakpoint
+CREATE INDEX "conversations_recent_idx" ON "conversations" USING btree ("organization_id",coalesce("last_message_at", "created_at") desc,"id" DESC NULLS LAST);

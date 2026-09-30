@@ -1,0 +1,105 @@
+// Container stdout, every service in the compose file. The filter is not
+// optional: `discovery.docker` finds every container on the machine, so without
+// it Alloy ingests unrelated projects a developer happens to have running.
+discovery.docker "compose" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "15s"
+
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.project=lite"]
+  }
+}
+
+discovery.relabel "compose" {
+  targets = discovery.docker.compose.targets
+
+  // The fallback `app`, for the containers that do not emit our JSON. Our own
+  // apps overwrite it from the log body in the pipeline below.
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "app"
+  }
+}
+
+loki.source.docker "compose" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.compose.output
+  forward_to = [loki.process.stream.receiver]
+}
+
+// `pnpm dev` runs on the host, not in a container, so nothing above can see it.
+// `pnpm dev | tee infra/logs/dev.log` lands here.
+local.file_match "dev" {
+  path_targets = [{ __path__ = "/var/log/app/*.log", app = "dev" }]
+}
+
+loki.source.file "dev" {
+  targets    = local.file_match.dev.targets
+  forward_to = [loki.process.stream.receiver]
+}
+
+// One pipeline for every source. A stage that cannot parse a line extracts
+// nothing and falls through to the next, so the stages compose rather than
+// needing a branch per service.
+loki.process "stream" {
+  forward_to = [loki.write.default.receiver]
+
+  // Our own lines. `app` and `env` are bound onto every one by the container
+  // ([17]); `level` and `event` come from the catalog.
+  stage.json {
+    expressions = {
+      app        = "app",
+      env        = "env",
+      level      = "level",
+      event_code = "event",
+    }
+  }
+
+  // Loki and Alloy emit logfmt with a `level` key. Same extracted key
+  // as above, so whichever stage understood the line is the one that wins.
+  //
+  // Gated by a selector, unlike stage.json: a JSON stage that cannot parse a
+  // line fails silently, but stage.logfmt logs an error for every line it does
+  // not understand — and Alloy collects its own stdout, so ungated it spends the
+  // whole pipeline reporting that Postgres does not speak logfmt.
+  stage.match {
+    selector = "{app=~\"loki|alloy\"}"
+
+    stage.logfmt {
+      mapping = { level = "" }
+    }
+  }
+
+  // Every line gets `env`, including the third-party containers whose format
+  // carries no such field. Set before `stage.labels`, so an app line that
+  // carries its own `env` still overrides this.
+  stage.static_labels {
+    values = { env = "development" }
+  }
+
+  // Promote exactly these four. A key nothing extracted is left unset rather
+  // than blanked, which is what keeps the fallback `app` from the relabel rule.
+  stage.labels {
+    values = {
+      app        = "",
+      env        = "",
+      level      = "",
+      event_code = "",
+    }
+  }
+
+  // `loki.source.file` attaches `filename` to every stream it creates, which is
+  // a fifth label and one stream per rotated file. Nothing in this config asked
+  // for it — which is exactly why the gate queries the live label set rather
+  // than trusting a reading of this file.
+  stage.label_drop {
+    values = ["filename"]
+  }
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

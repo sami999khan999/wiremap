@@ -1,0 +1,123 @@
+// Everything this package takes from outside itself, in one place. No relative
+// re-exports live here — that is what keeps it cycle-free.
+
+// ── @loadbearing/content ─────────────────────────────────────────────────────
+// A type and nothing else. Mail is composed per recipient, so a locale rides every mail
+// request — and `content` sits left of this package, which is what makes the edge legal.
+export type { Locale } from "@loadbearing/content";
+
+// ── @loadbearing/contracts ───────────────────────────────────────────────────
+export {
+  type ActivityAction,
+  ActivityActions,
+  type ApiKeyId,
+  type ConversationId,
+  type ConversationKind,
+  type ConversationMemberInput,
+  type ConversationMemberRole,
+  type CreateConversationInput,
+  type CreateDocPageInput,
+  type CreateDocSpaceInput,
+  type DeleteMessageInput,
+  type DocGrantDto,
+  type DocGrantKind,
+  type DocGrantListDto,
+  type DocImageType,
+  type DocImageUploadDto,
+  type DocNavNodeDto,
+  type DocPageDraftDto,
+  type DocPageId,
+  type DocPageKind,
+  type DocPageNodeDto,
+  type DocPageRefInput,
+  type DocPageStatus,
+  type DocPageTreeDto,
+  type DocReadingDto,
+  type DocRevisionDto,
+  type DocRevisionListDto,
+  type DocRevisionRefInput,
+  type DocSearchHitDto,
+  type DocSearchHitsDto,
+  type DocSpaceAudience,
+  type DocSpaceDto,
+  type DocSpaceId,
+  type DocSpaceListDto,
+  type DocSpaceRefInput,
+  type DocTocEntryDto,
+  type DomainEvent,
+  type DomainEventInput,
+  type DomainEventName,
+  DomainEvents,
+  type EditMessageInput,
+  type GoalId,
+  type InvitationId,
+  type KeysetQuery,
+  type LeaveConversationInput,
+  type ListConversationsInput,
+  type ListDocGrantsInput,
+  type ListDocPagesInput,
+  type ListMessagesInput,
+  type ListNotificationsInput,
+  type MailTemplateKey,
+  type MailTemplateParams,
+  MailTemplates,
+  type MarkConversationReadInput,
+  type MarkNotificationReadInput,
+  type MessageId,
+  type MoveDocPageInput,
+  type NotificationCategory,
+  type NotificationChannel,
+  type NotificationDto,
+  type NotificationId,
+  type NotificationKind,
+  type NotificationMode,
+  type OrganizationId,
+  type PaginationQuery,
+  type PreviewDocPageInput,
+  type PublishDocPageInput,
+  type ReadDocPageInput,
+  type RealtimeEventName,
+  type RealtimeMessage,
+  type RenameConversationInput,
+  type RenderedDocDto,
+  type RestoreDocRevisionInput,
+  type RevokeDocGrantInput,
+  type RoleId,
+  type SaveDocGrantInput,
+  type SaveDocPageInput,
+  type SearchDocsInput,
+  type SendMessageInput,
+  type TypingInput,
+  type UpdateDocSpaceInput,
+  type UpdateNotificationPreferenceInput,
+  type UploadDocImageInput,
+  type UserId,
+} from "@loadbearing/contracts";
+
+// ── @loadbearing/core ────────────────────────────────────────────────────────
+export { type Clock, ServerOnly, Token, Uuid } from "@loadbearing/core";
+
+// ── @loadbearing/errors ──────────────────────────────────────────────────────
+export {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  type SchemaIssue,
+  UnavailableError,
+  ValidationError,
+} from "@loadbearing/errors";
+// A value, not a type: a subscriber builds an empty set to make a system principal
+// that asserts nothing.
+// ── @loadbearing/permissions ─────────────────────────────────────────────────
+export {
+  CapabilitySet,
+  CORE_MODULE,
+  type DismissibleWidgetKey,
+  EntitlementMask,
+  type FlagKey,
+  FlagRegistry,
+  type PermissionKey,
+  PermissionRegistry,
+  type ScopedSetDto,
+  WidgetRegistry,
+} from "@loadbearing/permissions";

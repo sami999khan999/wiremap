@@ -1,0 +1,19 @@
+{
+  "title": "Reference",
+  "description": "One page per export with reasoning that outgrew a two-line comment",
+  "pages": [
+    "unit-of-work",
+    "enrollers",
+    "pgvector",
+    "partitions",
+    "sharding",
+    "notification-recipients",
+    "cold-storage",
+    "storage-policy",
+    "clickhouse",
+    "loki",
+    "realtime",
+    "fan-out",
+    "doc-renderer"
+  ]
+}

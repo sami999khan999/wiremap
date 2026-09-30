@@ -1,0 +1,170 @@
+import { useMessages } from "../i18n/index.js";
+import {
+  Button,
+  DateFormat,
+  type DocReadingDto,
+  type DocSpaceDto,
+  EmptyState,
+  Icon,
+  NavTree,
+  Popover,
+  Prose,
+  type ReactNode,
+  ReaderLayout,
+  Sidebar,
+  Toc,
+  useEffect,
+  useMemo,
+  useState,
+} from "../import.js";
+import { type DocAppearance, DocAppearancePanel } from "./doc-appearance.panel.js";
+import { DocCopyButton } from "./doc-copy.button.js";
+import { DocNavTree } from "./doc-nav-tree.js";
+import { type DocSearchHit, DocSearchPanel, type RenderDocLink } from "./doc-search.panel.js";
+import { DocSpaceSwitcherButton } from "./doc-space-switcher.button.js";
+
+export interface DocReaderPanelProps {
+  readonly reading: DocReadingDto;
+  // Every space this reader may open, for the switcher. The current one included.
+  readonly spaces: readonly DocSpaceDto[];
+  // `/doc` for an organization's own docs, `/docs` for the platform's. The space and the
+  // page path are appended to it, so one component serves both trees.
+  readonly root: string;
+  readonly renderLink: RenderDocLink;
+  readonly onSelectSpace: (slug: string) => void;
+  readonly appearance: DocAppearance;
+  // Above the search field: a way back into the app, or the product's name.
+  readonly brand?: ReactNode;
+  // Null when the reader may not edit, or for a page an outside tool cannot fetch.
+  readonly editHref?: string | null;
+  readonly markdownHref?: string | null;
+  readonly search?: (query: string) => Promise<readonly DocSearchHit[]>;
+}
+
+// The whole reading screen: navigation, the page, its outline. The shell supplies links
+// and data; nothing here fetches.
+export function DocReaderPanel({
+  reading,
+  spaces,
+  root,
+  renderLink,
+  onSelectSpace,
+  appearance,
+  brand,
+  editHref = null,
+  markdownHref = null,
+  search,
+}: DocReaderPanelProps) {
+  const { t } = useMessages("doc");
+  const { space, page } = reading;
+  const base = `${root}/${space.slug}`;
+  const nodes = useMemo(() => DocNavTree.toNodes(space.nav, base), [space.nav, base]);
+  const [open, setOpen] = useState(false);
+
+  // A drawer left open over the page just navigated to would hide the page asked for.
+  const pageId = page?.id;
+  useEffect(() => {
+    if (pageId !== undefined) setOpen(false);
+  }, [pageId]);
+
+  const sidebar = (
+    <Sidebar
+      label={t("doc.nav.label")}
+      open={open}
+      onOpenChange={setOpen}
+      closeLabel={t("doc.sidebar.close")}
+      header={
+        <>
+          {brand}
+          <DocSearchPanel
+            nav={space.nav}
+            base={base}
+            renderLink={renderLink}
+            {...(search ? { search } : {})}
+          />
+          <DocSpaceSwitcherButton spaces={spaces} current={space.slug} onSelect={onSelectSpace} />
+        </>
+      }
+      footer={<DocAppearancePanel appearance={appearance} />}
+    >
+      <NavTree
+        label={t("doc.nav.label")}
+        nodes={nodes}
+        renderLink={(node, content, attributes) =>
+          renderLink(node.href ?? base, content, attributes)
+        }
+        {...(pageId ? { activeId: pageId } : {})}
+        expandLabel={t("doc.nav.expand")}
+        collapseLabel={t("doc.nav.collapse")}
+      />
+    </Sidebar>
+  );
+
+  const topbar = (
+    <>
+      <Button variant="ghost" aria-label={t("doc.sidebar.open")} onClick={() => setOpen(true)}>
+        <Icon name="menu" size={18} />
+      </Button>
+      <span>{space.title}</span>
+    </>
+  );
+
+  if (!page) {
+    return (
+      <ReaderLayout sidebar={sidebar} topbar={topbar}>
+        <EmptyState icon="book" title={space.title} description={t("doc.space.empty")} />
+      </ReaderLayout>
+    );
+  }
+
+  const header = (
+    <>
+      <h1 className="ui-reader__title">{page.title}</h1>
+      {page.description ? <p className="ui-reader__description">{page.description}</p> : null}
+      <div className="ui-reader__actions">
+        <DocCopyButton markdown={page.markdown} />
+        {markdownHref || editHref ? (
+          <Popover
+            label={t("doc.open.label")}
+            align="start"
+            trigger={
+              <>
+                {t("doc.open.label")}
+                <Icon name="chevron-down" size={14} />
+              </>
+            }
+          >
+            <ul className="ui-stack">
+              {markdownHref ? (
+                <li>
+                  <a href={markdownHref} target="_blank" rel="noreferrer">
+                    {t("doc.open.markdown")}
+                  </a>
+                </li>
+              ) : null}
+              {editHref ? (
+                <li>{renderLink(editHref, t("doc.open.edit"), { className: "" })}</li>
+              ) : null}
+            </ul>
+          </Popover>
+        ) : null}
+      </div>
+    </>
+  );
+
+  return (
+    <ReaderLayout
+      sidebar={sidebar}
+      topbar={topbar}
+      header={header}
+      {...(page.toc.length > 0
+        ? { aside: <Toc title={t("doc.toc.title")} items={page.toc} /> }
+        : {})}
+    >
+      <Prose html={page.html} copyLabel={t("doc.code.copy")} copiedLabel={t("doc.code.copied")} />
+      <p className="ui-field__hint">
+        {t("doc.updated", { date: DateFormat.day(page.publishedAt) })}
+      </p>
+    </ReaderLayout>
+  );
+}

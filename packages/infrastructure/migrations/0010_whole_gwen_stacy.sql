@@ -1,0 +1,2 @@
+ALTER TABLE "memberships" ADD COLUMN "deactivated_at" timestamp with time zone;--> statement-breakpoint
+CREATE INDEX "memberships_active_idx" ON "memberships" USING btree ("organization_id","deactivated_at");

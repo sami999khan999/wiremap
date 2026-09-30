@@ -1,0 +1,2 @@
+ALTER TABLE "notifications" ADD COLUMN "subject_id" text;--> statement-breakpoint
+CREATE INDEX "notifications_subject_idx" ON "notifications" USING btree ("organization_id","user_id","kind","subject_id") WHERE read_at is null and subject_id is not null;

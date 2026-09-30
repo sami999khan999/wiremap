@@ -1,0 +1,19 @@
+{
+  "title": "Scaling up",
+  "description": "Each limit of the lite kit and the big-kit piece that fixes it, with the procedure for porting it back",
+  "pages": [
+    "index",
+    "porting",
+    "split-redis",
+    "pgbouncer",
+    "read-replica",
+    "analytics",
+    "retention",
+    "logs",
+    "shard-nodes",
+    "messaging",
+    "widgets",
+    "beyond-the-big-kit",
+    "back-ports"
+  ]
+}

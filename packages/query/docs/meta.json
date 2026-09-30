@@ -1,0 +1,5 @@
+{
+  "title": "query",
+  "description": "The single TanStack owner — cache keys, the client factory, the provider, and declarative invalidation",
+  "pages": ["index", "reference"]
+}

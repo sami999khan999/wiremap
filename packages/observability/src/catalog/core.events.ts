@@ -1,0 +1,135 @@
+import type { EventMeta } from "./index.js";
+
+// This catalog is the cardinality budget for the `event_code` label, so codes stay
+// coarse: one code carrying a `queue` field, never one code per queue.
+export const coreEvents = {
+  "process.started": { level: "info" },
+  "process.stopping": { level: "info" },
+  "process.stopped": { level: "info" },
+
+  // Sampled: the highest-volume line this system emits, and 10 % shows a latency shift.
+  // Failures below are never sampled.
+  "http.request.completed": { level: "info", sample: 0.1 },
+  "http.request.failed": { level: "warn" },
+
+  "queue.job.completed": { level: "debug" },
+  "queue.job.failed": { level: "error" },
+  "queue.job.stalled": { level: "warn" },
+  "queue.schedule.registered": { level: "info" },
+
+  // `saturated` is the pool's own queue, and it is blind to a pooler in front: a wait
+  // inside pgBouncer reads as zero here. See docs/infra/reference/pgbouncer.md.
+  "database.pool.saturated": { level: "warn" },
+  // An idle connection whose socket died — a restarted pooler, a failover. Warn, not
+  // error: `pg` opens another, and the alternative to catching it is the process exiting.
+  "database.pool.error": { level: "warn" },
+  // The sum of what the consumers that actually started will run concurrently, against
+  // the pool they share. Once at boot.
+  "worker.pool.oversubscribed": { level: "warn" },
+
+  // Do not alert on `ensured.created == 0` — that is the steady state, because the runway
+  // is already three months deep. `partition.runway.low` is the signal.
+  "maintenance.sweep.completed": { level: "info" },
+  "maintenance.partitions.ensured": { level: "info" },
+  // One line per table-month, never one per tenant object: a month with five thousand
+  // tenants would otherwise be five thousand lines.
+  "maintenance.partition.archived": { level: "info" },
+  // Only ever behind a verified object since retention became archive-then-drop. A
+  // partition named here is one cold storage already holds.
+  "maintenance.partition.dropped": { level: "info" },
+  // Counts what exists, never what the last run created: a run that creates zero is the
+  // healthy case and the starved case alike.
+  "partition.runway.low": { level: "warn" },
+
+  // `drifted` first, then `applied`: the pair says whether the reconcile is doing its
+  // job or repairing a hand edit, and a lone `applied` cannot tell them apart.
+  "retention.lifecycle.applied": { level: "info" },
+  "retention.lifecycle.drifted": { level: "warn" },
+  // An archive index row whose object the bucket has already expired. Deleted here, so
+  // an archived-notifications read is an empty list rather than a `NotFoundError`.
+  "retention.rows.expired": { level: "info" },
+  // The ClickHouse TTL, same shape. Separate from the two above because it is a
+  // different store with a different failure — `MODIFY TTL` rewrites every part.
+  "analytics.retention.applied": { level: "info" },
+  // One per tenant-month restored. Into a scratch table unless the month is inside
+  // the hot window, which the line says so a reader knows where to look.
+  "cold.partition.restored": { level: "info" },
+  // A month a cut-off archive left detached, put back where a query and the next run can
+  // see it. Warn, because the run that left it there did not finish.
+  "cold.partition.recovered": { level: "warn" },
+  // Cold storage outliving a deleted tenant is the hole this mechanism created, so
+  // this is the line that says it closed. One per run, not one per object.
+  "cold.objects.swept": { level: "info" },
+  // One per export, not one per object: nine lines a run would be nine lines saying
+  // the same thing, and the counts are what an operator reads.
+  "cold.tenant.exported": { level: "info" },
+  // The delete is a job now (`19.20`), so this is the only line that says it finished.
+  // `outboxRows` is on it because `24.1` moved that sweep out of the database.
+  "tenant.purge.completed": { level: "info" },
+  // A move is a job, so this is the only line that says the flip happened. The audit
+  // row says who asked; this says how many rows it carried.
+  "tenant.move.completed": { level: "info" },
+  // The end of a grace period. Silent on a night with nothing due.
+  "tenant.source.reclaimed": { level: "info" },
+  // The spare pool refilled after signups drew on it. Silent when it was already full.
+  "tenant.spares.replenished": { level: "info" },
+  // `warn`, not `info`: a non-zero count is a tenant delete that did not finish, and
+  // since `24.1` the database will not say so on its own.
+  "maintenance.orphans.found": { level: "warn" },
+  // One per tenant-month refilled from cold storage. Idempotent through the
+  // `ReplacingMergeTree`, so a second run over the same month is a no-op.
+  "cold.partition.reprojected": { level: "info" },
+  // The directory has no row for a key. Today every node is zero and guessing would
+  // work; after a split it would place a tenant somewhere else entirely.
+  "shard.resolution.failed": { level: "error" },
+  "shard.assignment.created": { level: "info" },
+
+  // The vendor body, which `UnavailableError` deliberately does not carry: a ClickHouse
+  // or Loki failure echoes the offending row, and the wire is not where that belongs.
+  "dependency.request.failed": { level: "warn" },
+
+  // The transport's own reason, which `UnavailableError("smtp")` deliberately does not
+  // carry. Without it a bounced invitation is a 200 and nothing else.
+  "email.send.failed": { level: "error" },
+
+  // Together these are the delivery record, because there is no delivery table. `queued`
+  // and `sent` bracket a message; `failed` fires once, on the last attempt.
+  "mail.delivery.queued": { level: "debug" },
+  "mail.delivery.sent": { level: "info" },
+  "mail.delivery.failed": { level: "error" },
+
+  // `lagged` is the one that matters: a drain that stops running is silent otherwise,
+  // because "no events published" and "no events to publish" look identical.
+  "outbox.drain.completed": { level: "debug" },
+  "outbox.drain.lagged": { level: "warn" },
+  // One node failed a cross-tenant pass and the pass went on to the next one.
+  "shard.sweep.failed": { level: "warn" },
+  "outbox.delivery.failed": { level: "error" },
+
+  "notification.digest.completed": { level: "info" },
+
+  // A pair, not a counter: `opened` minus `closed` is the live stream count, and the
+  // duration on `closed` is what says whether a client is reconnecting in a loop.
+  "realtime.stream.opened": { level: "debug" },
+  "realtime.stream.closed": { level: "debug" },
+  // A stopping stream process handed its streams on; `streams` is -1 if it ran out of time.
+  "realtime.stream.drained": { level: "info" },
+  "realtime.publish.failed": { level: "warn" },
+
+  "cache.entry.corrupt": { level: "warn" },
+  "embedding.request.failed": { level: "error" },
+
+  // `lagged` is the one that matters: the realistic failure is a consumer that died
+  // quietly, not one that threw.
+  "analytics.projection.completed": { level: "debug" },
+  "analytics.projection.failed": { level: "error" },
+  "analytics.projection.lagged": { level: "warn" },
+  // A tenant with no directory row, passed over so every other tenant still projects —
+  // `23.21`. Error, because the row should not exist and somebody has to fix it.
+  "analytics.tenant.skipped": { level: "error" },
+  // A tenant-month that left Postgres without reaching ClickHouse. Recorded rather than
+  // blocking the drop: a forgotten switch costs a known hole, never an unbounded table.
+  "analytics.projection.gap": { level: "warn" },
+  "analytics.reconciliation.completed": { level: "info" },
+  "analytics.reconciliation.drifted": { level: "error" },
+} as const satisfies Record<string, EventMeta>;

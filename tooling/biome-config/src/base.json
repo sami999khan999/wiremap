@@ -1,0 +1,206 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**", "!**/dist", "!**/.output", "!**/migrations"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "useConsistentMemberAccessibility": {
+          "level": "error",
+          "options": {
+            "accessibility": "explicit"
+          }
+        },
+        "useImportType": "error",
+        "noProcessEnv": "error",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "node:process": "Config is read once in apps/*/src/env.ts and passed down."
+            }
+          }
+        }
+      },
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noConsole": "error"
+      },
+      "complexity": {
+        "noStaticOnlyClass": "off"
+      },
+      "performance": {
+        "noReExportAll": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "packages/ui/**",
+        "packages/feature/**",
+        "packages/query/**",
+        "packages/errors/**",
+        "packages/content/**",
+        "packages/asset/**",
+        "apps/web/src/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@loadbearing/infrastructure": "Server-only. Cross the boundary via @loadbearing/contracts.",
+                  "@loadbearing/auth": "Server-only. Cross the boundary via @loadbearing/contracts.",
+                  "@loadbearing/composition": "Server-only. Cross the boundary via @loadbearing/contracts.",
+                  "@loadbearing/application": "Server-only. Cross the boundary via @loadbearing/contracts.",
+                  "@loadbearing/api-server": "Server-only. Cross the boundary via @loadbearing/contracts.",
+                  "drizzle-orm": "Server-only dependency. It must never appear in a client bundle.",
+                  "pg": "Server-only dependency. It must never appear in a client bundle.",
+                  "ioredis": "Server-only dependency. It must never appear in a client bundle.",
+                  "bullmq": "Server-only dependency. It must never appear in a client bundle.",
+                  "better-auth": "Server-only dependency. It must never appear in a client bundle."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/server/**", "**/*.server.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/*/src/env.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "*.config.ts",
+        "*.config.mts",
+        "*.config.js",
+        "*.config.mjs",
+        "packages/*/*.config.ts",
+        "packages/*/*.config.mts",
+        "packages/*/*.config.js",
+        "packages/*/*.config.mjs",
+        "apps/*/*.config.ts",
+        "apps/*/*.config.mts",
+        "apps/*/*.config.js",
+        "apps/*/*.config.mjs",
+        "packages/auth/tables.ts",
+        "apps/web/tests/smoke/support/server.ts",
+        "packages/composition/tests/support/config.ts",
+        "packages/infrastructure/tests/support/database.ts",
+        "packages/infrastructure/clickhouse-migrate.ts",
+        "packages/infrastructure/migrate.ts",
+        "packages/infrastructure/partitions.ts",
+        "packages/infrastructure/platform-grant.ts",
+        "packages/infrastructure/queue-replay.ts",
+        "packages/infrastructure/seed.ts",
+        "packages/infrastructure/shard-env.ts",
+        "packages/infrastructure/smoke.ts",
+        "tooling/scripts/boot-smoke.mjs",
+        "tooling/scripts/check-architecture.mjs"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/infrastructure/src/pg/schema/index.ts"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noReExportAll": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/asset/src/icon/svg/**"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "**/*.mjs",
+        "packages/auth/tables.ts",
+        "packages/infrastructure/clickhouse-migrate.ts",
+        "packages/infrastructure/migrate.ts",
+        "packages/infrastructure/partition-ddl.ts",
+        "packages/infrastructure/partitions.ts",
+        "packages/infrastructure/platform-grant.ts",
+        "packages/infrastructure/queue-replay.ts",
+        "packages/infrastructure/seed.ts",
+        "packages/infrastructure/smoke.ts",
+        "packages/infrastructure/tests/smoke/fan-out.smoke.spec.ts",
+        "packages/infrastructure/tests/smoke/routed.smoke.spec.ts",
+        "packages/infrastructure/tests/smoke/tenant-ceiling.smoke.spec.ts",
+        "packages/infrastructure/tests/support/orphan-sweep.ts",
+        "packages/observability/src/logger/json.logger.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ]
+}

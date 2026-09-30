@@ -1,0 +1,5 @@
+{
+  "title": "Reference",
+  "description": "One page per export",
+  "pages": ["content-shapes", "content-source", "error-copy", "namespace", "translator"]
+}

@@ -1,0 +1,5 @@
+{
+  "title": "infrastructure",
+  "description": "Postgres, Redis, S3, BullMQ and OpenAI behind their ports — every concrete adapter the system owns, confined to one package",
+  "pages": ["index", "reference"]
+}

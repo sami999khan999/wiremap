@@ -1,0 +1,5 @@
+{
+  "title": "tsconfig",
+  "description": "Shared TypeScript configuration \u2014 one base, three presets",
+  "pages": ["index", "reference"]
+}

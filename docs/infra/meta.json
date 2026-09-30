@@ -1,0 +1,5 @@
+{
+  "title": "infra",
+  "description": "The local stack — every file, every service, and how they reach each other. Nine containers, two profiles, one bridge network",
+  "pages": ["index", "deployment", "reference"]
+}

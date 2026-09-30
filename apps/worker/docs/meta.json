@@ -1,0 +1,5 @@
+{
+  "title": "worker",
+  "description": "The background process — three consumers, five schedules, and a shutdown that drains rather than drops",
+  "pages": ["index", "reference"]
+}

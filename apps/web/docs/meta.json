@@ -1,0 +1,5 @@
+{
+  "title": "web",
+  "description": "The TanStack Start application — routes, server functions, the oRPC transport, and the two import surfaces the server-only boundary is drawn between",
+  "pages": ["index", "reference"]
+}

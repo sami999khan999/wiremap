@@ -1,0 +1,5 @@
+{
+  "title": "content",
+  "description": "Every user-visible string, split by locale and namespace - plus the ContentSource seam a CMS slots into. Partially built: the error slice first.",
+  "pages": ["index", "reference"]
+}

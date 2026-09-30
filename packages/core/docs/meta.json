@@ -1,0 +1,5 @@
+{
+  "title": "core",
+  "description": "Clock, Result, Uuid, ServerOnly — the four primitives everything else may depend on",
+  "pages": ["index", "reference"]
+}

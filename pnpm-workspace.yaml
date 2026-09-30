@@ -1,0 +1,189 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tooling/*"
+
+# Every version in this repository lives here, grouped by what a dependency can do
+# to portability. The kit targets React, Next.js and TanStack Start on the front,
+# and pure Node, Express, NestJS, Fastify and Hono on the back — a dependency's
+# tier says which of those it is able to constrain. See docs/setup/03.
+catalog:
+  # ════════════════════════════════════════════════════════════════════════════
+  # Tier 1 — never ships
+  #
+  # Build, test, and lint tooling. None of it enters a bundle or a dist/, so none
+  # of it can constrain a consumer's framework or runtime.
+  #
+  # One exception worth knowing: `tsup` never ships but decides what does. It is
+  # what makes every package ESM-only, and what determines whether a "use client"
+  # directive survives into dist/ — see docs/setup/06.
+  # ════════════════════════════════════════════════════════════════════════════
+
+  # ── language & build ──
+  typescript: ^5.8.3
+  tsup: ^8.5.0
+  # Vite builds the apps; `tsup` builds the packages. Neither ships.
+  vite: ^8.0.0
+  "@vitejs/plugin-react": ^6.0.1
+  tsx: ^4.19.0
+  rimraf: ^6.0.1
+  vitest: ^3.1.4
+  # The React renderer the component packages test through. Tier 1: never ships, and
+  # `packages/{ui,feature}` are the only consumers.
+  jsdom: ^28.0.0
+  "@testing-library/react": ^16.3.0
+  "@testing-library/dom": ^10.4.1
+
+  # ── types ──
+  "@types/node": ^24.3.0
+  "@types/nodemailer": ^8.0.1
+  "@types/pg": ^8.11.10
+  # The syntax trees the Markdown renderer walks. Types only, erased at build.
+  "@types/hast": ^3.0.5
+  "@types/mdast": ^4.0.4
+
+  # ── lint & format ──
+  "@biomejs/biome": ^2.4.15
+  eslint: ^9.27.0
+  typescript-eslint: ^8.32.1
+  sherif: ^1.13.0
+  syncpack: ^15.3.2
+
+  # ── hooks & commit messages ──
+  #    Root devDependencies only. `husky` installs the git hooks, `lint-staged` runs
+  #    Biome over the staged set, and commitlint holds the closed scope enum — see
+  #    docs/setup/26.
+  husky: ^9.1.7
+  lint-staged: ^17.3.0
+  "@commitlint/cli": ^21.2.2
+  "@commitlint/config-conventional": ^21.2.2
+
+  # ── generators & CLIs ──
+  drizzle-kit: ^0.31.0
+  "@tauri-apps/cli": ^2.9.0
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Tier 2 — framework-agnostic runtime
+  #
+  # Ships, and works under every framework on the list. **Framework-agnostic is
+  # not runtime-agnostic**, so the tier is split in two: the first group runs
+  # anywhere, the second needs a Node runtime and is dead in a browser, a Tauri
+  # webview, or an edge runtime — `pg` and `ioredis` both want raw TCP.
+  #
+  # That second group is why every one of them is reached through an abstract
+  # port in `packages/application/src/port/` and never imported directly by a
+  # use-case: the domain must not know which runtime it landed on.
+  # ════════════════════════════════════════════════════════════════════════════
+
+  # ── isomorphic — server, browser, worker, webview, edge ──
+  zod: ^4.4.3
+  # Keep every @orpc/* entry on one version line; see Tier 3 for why.
+  "@orpc/contract": ^1.15.0
+  "@orpc/client": ^1.15.0
+  # QR rendering for two-factor enrolment. Zero dependencies, ESM, and it emits an SVG
+  # string rather than drawing to a canvas — which is what makes it isomorphic and lets
+  # the QR render during SSR like everything else. The alternative is asking people to
+  # hand-type a base32 secret into an authenticator app.
+  uqr: ^0.1.2
+
+  # ── node-only, framework-neutral — behind a port, never imported by the domain ──
+  drizzle-orm: ^0.44.7
+  pg: ^8.23.0
+  ioredis: ^5.11.1
+  # Transactional mail. SMTP rather than a provider SDK, because every managed sender
+  # speaks it and a vendor swap is then a URL rather than a new adapter. Types ship
+  # separately and must stay on the same major — see packages/infrastructure/src/import.ts.
+  nodemailer: ^8.0.11
+  bullmq: ^5.81.3
+  "@aws-sdk/client-s3": ^3.1107.0
+  "@aws-sdk/s3-request-presigner": ^3.1107.0
+  # Multipart upload for a body that will not fit in memory — an archived partition.
+  "@aws-sdk/lib-storage": ^3.1107.0
+  # Doc pages, Markdown to sanitised HTML, run once at publish behind `MarkdownRenderer`.
+  # The unified family moves together; keep every entry on the major it was added on.
+  unified: ^11.0.5
+  remark-parse: ^11.0.0
+  remark-gfm: ^4.0.1
+  remark-directive: ^4.0.0
+  remark-rehype: ^11.1.2
+  rehype-sanitize: ^6.0.0
+  rehype-slug: ^6.0.0
+  rehype-highlight: ^7.0.2
+  rehype-stringify: ^10.0.1
+  hast-util-to-string: ^3.0.1
+  unist-util-visit: ^5.1.0
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Tier 3 — framework-scoped
+  #
+  # Each entry names a framework, and each is quarantined to the one layer
+  # allowed to name it. Nothing here may appear in `packages/*` except the
+  # React-scoped group, and `check-architecture.mjs` asserts it (docs/setup/26).
+  # ════════════════════════════════════════════════════════════════════════════
+
+  # ── the transport seam — packages/api-server and apps/*/src/server/ only ──
+  #    Ships fetch, node, and Nest adapters. The adapters stay in the apps; the
+  #    router half is `api-server`, so two apps can mount one chain.
+  #
+  #    ⚠ All four @orpc/* entries must stay on one version line, here and in
+  #    Tier 2. They pin @orpc/shared **exactly** rather than with a caret, so a
+  #    skew puts two copies of it in the tree. `syncpack lint` does not catch
+  #    this — it checks one dependency across packages, not a declared group.
+  "@orpc/server": ^1.15.0
+
+  # ── multi-framework by export map — ./node, ./next-js, ./tanstack-start ──
+  #    ./node covers pure Node, Express, Fastify and Nest; the core web handler
+  #    covers Hono. Floored above CVE-2025-61928 — see docs/setup/03.
+  better-auth: ^1.6.26
+
+  # ── React-scoped — packages/{query,ui,feature} and apps/{web,desktop} ──
+  #    Inside the target set: all three front-end targets are React.
+  "@tanstack/react-query": ^5.101.4
+  "@orpc/tanstack-query": ^1.15.0
+
+  # ── router-scoped — apps/ only, never a package ──
+  #    Routing is app-shaped, not product-shaped. A Next app brings its own
+  #    router and reads paths from @loadbearing/permissions instead.
+  #
+  #    `react-start` is the fullstack framework around that router. Both are apps-only
+  #    for the same reason the router is — swapping to Next replaces this group and
+  #    nothing above it.
+  #
+  #    `nitro` is a **separate, swappable** entry, not something react-start bundles:
+  #    it is the deployment adapter that turns `vite build` into a `.output/` a Node
+  #    host can run, and `@cloudflare/vite-plugin` or the Netlify plugin replaces it
+  #    one line at a time. Nothing in `apps/web/src/` may name it — the API endpoints
+  #    are Start server routes precisely so the host stays this replaceable (24).
+  "@tanstack/react-router": ^1.170.32
+  "@tanstack/react-start": ^1.168.49
+  "@tanstack/router-cli": ^1.167.33
+  nitro: 3.0.260610-beta
+
+  # ── desktop-scoped — apps/desktop only ──
+  "@tauri-apps/api": ^2.9.0
+
+# React moves on its own cadence and only four packages consume it. A named
+# catalog means `catalog:react` in a package.json reads as a deliberate statement
+# that this is a React package. Declared as a peerDependency there, never a
+# dependency, so a consuming app supplies the single copy.
+catalogs:
+  react:
+    react: ^19.1.0
+    react-dom: ^19.1.0
+    "@types/react": ^19.1.4
+    "@types/react-dom": ^19.1.5
+
+# ── resolution & safety ──
+engineStrict: true
+linkWorkspacePackages: deep
+preferWorkspacePackages: true
+saveWorkspaceProtocol: rolling
+strictPeerDependencies: false
+
+# ── which dependencies may run install scripts ──
+allowBuilds:
+  esbuild: true
+  # Optional native accelerator for msgpackr, pulled in transitively by bullmq.
+  # Denied: msgpackr falls back to pure JS and round-trips correctly without it.
+  msgpackr-extract: false
+  sharp: true

@@ -1,0 +1,5 @@
+{
+  "title": "errors",
+  "description": "AppError, the closed ErrorCode union, the wire envelope, and ErrorNormalizer — one failure shape for every runtime, carrying no prose",
+  "pages": ["index", "reference"]
+}

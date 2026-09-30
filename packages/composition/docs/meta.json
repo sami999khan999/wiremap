@@ -1,0 +1,5 @@
+{
+  "title": "composition",
+  "description": "The hand-written DI root — one Container class, constructed identically by the web app and the worker, and the only place a vendor swap happens",
+  "pages": ["index", "reference"]
+}

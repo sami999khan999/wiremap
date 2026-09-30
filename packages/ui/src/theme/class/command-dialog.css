@@ -1,0 +1,172 @@
+/* The palette, the field that opens it, and the key caps both of them draw. The native
+   <dialog> sits in the top layer, so nothing here competes with the page's z-index. */
+
+.ui-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.ui-search-trigger:hover {
+  border-color: color-mix(in oklch, var(--border) 70%, var(--fg));
+}
+
+.ui-search-trigger__label {
+  flex: 1;
+}
+
+.ui-search-trigger__keys {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.ui-kbd {
+  display: inline-flex;
+  align-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 var(--space-1);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1;
+}
+
+.ui-command {
+  width: min(40rem, calc(100vw - var(--space-8)));
+  max-height: min(32rem, calc(100dvh - var(--space-16)));
+  margin: 12vh auto auto;
+  padding: 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-lg);
+}
+
+.ui-command::backdrop {
+  background: color-mix(in oklch, var(--bg) 60%, transparent);
+}
+
+.ui-command__panel {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+
+.ui-command__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border-bottom: var(--border-width) solid var(--border);
+  color: var(--fg-muted);
+}
+
+.ui-command__input {
+  flex: 1;
+  height: var(--control-height-lg);
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--text-base);
+}
+
+/* The search field is the dialog's whole purpose and already carries the caret, so a
+   ring around it would frame the entire panel. */
+.ui-command__input:focus-visible {
+  box-shadow: none;
+}
+
+.ui-command__input::placeholder {
+  color: var(--fg-muted);
+  opacity: 1;
+}
+
+.ui-command__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.ui-command__group {
+  margin: var(--space-2) var(--space-2) var(--space-1);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.ui-command__status {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.ui-command__item {
+  border-radius: var(--radius-md);
+}
+
+.ui-command__item--active {
+  background: var(--muted);
+}
+
+.ui-command__link {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.ui-command__link > svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: var(--fg-muted);
+}
+
+.ui-command__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ui-command__title {
+  font-weight: var(--weight-medium);
+}
+
+.ui-command__excerpt {
+  overflow: hidden;
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The server marks matched words with <mark> in an excerpt; tinted, never a fill colour
+   for the text to sit on. */
+.ui-command__excerpt mark {
+  background: color-mix(in oklch, var(--primary) 18%, transparent);
+  color: var(--fg);
+}
