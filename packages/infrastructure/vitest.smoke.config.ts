@@ -29,8 +29,6 @@ const routed = numbers("ROUTED_SCALE");
 
 const shard1Url = optional("DATABASE_SHARD_1_URL");
 const replicaUrl = optional("DATABASE_REPLICA_URL");
-const coldClass = optional("S3_COLD_STORAGE_CLASS");
-const coldDays = numbers("S3_COLD_TRANSITION_DAYS")?.[0];
 const lokiUrl = optional("LOKI_URL");
 
 export default defineConfig({
@@ -76,9 +74,6 @@ export default defineConfig({
           secretKey: required("S3_SECRET_KEY"),
           forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
         },
-        ...(coldClass && coldDays
-          ? { coldTier: { storageClass: coldClass, afterDays: coldDays } }
-          : {}),
         ...(tenantCeiling?.length ? { tenantCeiling } : {}),
         ...(fanOut?.length ? { fanOut } : {}),
         ...(routed?.length ? { routed } : {}),

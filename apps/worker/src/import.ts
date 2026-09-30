@@ -6,16 +6,13 @@
 // constructs a user's.
 export {
   type ArchivedPartition,
-  type ColdMode,
   PartitionedTable,
   type PartitionedTableEntry,
   type PartitionedTableName,
   Principal,
   QueueName,
-  type RetentionPolicyRecord,
   RetentionRules,
   Shard,
-  type TenantRetentionPolicyRecord,
   type TenantRunway,
 } from "@loadbearing/application";
 

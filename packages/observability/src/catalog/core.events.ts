@@ -31,12 +31,6 @@ export const coreEvents = {
   // is already three months deep. `partition.runway.low` is the signal.
   "maintenance.sweep.completed": { level: "info" },
   "maintenance.partitions.ensured": { level: "info" },
-  // One line per table-month, never one per tenant object: a month with five thousand
-  // tenants would otherwise be five thousand lines.
-  "maintenance.partition.archived": { level: "info" },
-  // Only ever behind a verified object since retention became archive-then-drop. A
-  // partition named here is one cold storage already holds.
-  "maintenance.partition.dropped": { level: "info" },
   // Counts what exists, never what the last run created: a run that creates zero is the
   // healthy case and the starved case alike.
   "partition.runway.low": { level: "warn" },
@@ -45,15 +39,6 @@ export const coreEvents = {
   // job or repairing a hand edit, and a lone `applied` cannot tell them apart.
   "retention.lifecycle.applied": { level: "info" },
   "retention.lifecycle.drifted": { level: "warn" },
-  // An archive index row whose object the bucket has already expired. Deleted here, so
-  // an archived-notifications read is an empty list rather than a `NotFoundError`.
-  "retention.rows.expired": { level: "info" },
-  // One per tenant-month restored. Into a scratch table unless the month is inside
-  // the hot window, which the line says so a reader knows where to look.
-  "cold.partition.restored": { level: "info" },
-  // A month a cut-off archive left detached, put back where a query and the next run can
-  // see it. Warn, because the run that left it there did not finish.
-  "cold.partition.recovered": { level: "warn" },
   // Cold storage outliving a deleted tenant is the hole this mechanism created, so
   // this is the line that says it closed. One per run, not one per object.
   "cold.objects.swept": { level: "info" },
@@ -107,8 +92,4 @@ export const coreEvents = {
 
   "cache.entry.corrupt": { level: "warn" },
   "embedding.request.failed": { level: "error" },
-
-  // A tenant-month that left Postgres without reaching ClickHouse. Recorded rather than
-  // blocking the drop: a forgotten switch costs a known hole, never an unbounded table.
-  "analytics.projection.gap": { level: "warn" },
 } as const satisfies Record<string, EventMeta>;

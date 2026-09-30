@@ -40,7 +40,6 @@ describe("TestContainer", () => {
       "cache",
       "capabilities",
       "clock",
-      "coldArchive",
       "content",
       "eachShard",
       "email",

@@ -37,19 +37,6 @@ export class NotificationContract {
     createdAt: z.date(),
   });
 
-  public static readonly archivedQuery = Keyset.query.extend({
-    // The first of a month, which is what `partition_archive` stores. The UI offers
-    // the months that exist rather than a date picker that mostly returns nothing.
-    period: z.string().regex(/^\d{4}-\d{2}-01$/),
-  });
-
-  // Months that actually have an object for this tenant. Not a range: a gap between
-  // two archived months is a month nobody wrote, and offering it would be a lie.
-  public static readonly archivedMonth = z.object({
-    period: z.string().min(1),
-    rows: z.number().int(),
-  });
-
   public static readonly listQuery = Keyset.query.extend({
     // The bell's own list, which is the only screen that wants it.
     unreadOnly: z.boolean().default(false),
@@ -82,8 +69,6 @@ export class NotificationContract {
 }
 
 export type NotificationDto = z.infer<typeof NotificationContract.entity>;
-export type ArchivedNotificationQuery = z.infer<typeof NotificationContract.archivedQuery>;
-export type ArchivedMonthDto = z.infer<typeof NotificationContract.archivedMonth>;
 export type NotificationKind = z.infer<typeof kind>;
 export type NotificationCategory = z.infer<typeof category>;
 export type NotificationChannel = z.infer<typeof channel>;

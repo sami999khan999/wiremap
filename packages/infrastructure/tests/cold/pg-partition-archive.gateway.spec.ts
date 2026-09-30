@@ -143,15 +143,6 @@ const freshPartitions = async () => {
   }
 };
 
-// Sorted ids, hashed by Postgres: the one check that says the rows that came back are
-// the rows that went out, rather than merely as many of them.
-const idChecksum = async (name: string) => {
-  const result = await database.client.execute<{ digest: string | null }>(
-    sql`select md5(string_agg(id::text, ',' order by id)) as digest from ${sql.identifier(name)}`,
-  );
-  return result.rows[0]?.digest ?? null;
-};
-
 const founded = async (name: string): Promise<OrganizationId> => {
   const id = Identifiers.organizationId.parse(Uuid.v7());
   await database.client.insert(organizations).values({ id, slug: `cold-${id}`, name });
@@ -307,102 +298,6 @@ describe("PgPartitionArchiveGateway.archive", () => {
   });
 });
 
-// `CR.15`. A run cut off between the detach and the drop left a standalone table that no
-// query could read and no later run could find, so the month was gone for good.
-describe("PgPartitionArchiveGateway.recover", () => {
-  it("attaches a month a cut-off run left standalone, and names it", async () => {
-    await freshPartitions();
-    await write(first, "task.reactivated", 2);
-    const child = monthPartition(first);
-    const parent = TenantPartitionSeed.partitionName(TABLE, first);
-    await database.client.execute(sql.raw(`alter table ${parent} detach partition ${child}`));
-    expect(await isAttached(first)).toBe(false);
-
-    const recovered = await gateway(new FakeStorage()).recover(TABLE);
-
-    expect(recovered).toContain(child);
-    expect(await isAttached(first)).toBe(true);
-    // And it is a month like any other again: the next run archives it.
-    const result = await gateway(new FakeStorage()).archive(TABLE, PERIOD, first);
-    expect(result.objects.map((object) => object.rowCount)).toEqual([2]);
-  });
-
-  it("leaves a restore's scratch table alone", async () => {
-    await freshPartitions();
-    const scratch = `${monthPartition(first)}_restore`;
-    await database.client.execute(sql.raw(`create table ${scratch} (like ${TABLE} including all)`));
-
-    const recovered = await gateway(new FakeStorage()).recover(TABLE);
-
-    expect(recovered).not.toContain(scratch);
-    expect(await exists(scratch)).toBe(true);
-  });
-});
-
-describe("PgPartitionArchiveGateway.restore", () => {
-  // An archive nobody has restored is a deletion with extra steps. This is the only
-  // thing that makes the difference checkable rather than asserted.
-  it("brings a tenant-month back with the same rows, into a scratch table", async () => {
-    await freshPartitions();
-    await write(first, "task.reactivated", 7);
-    const before = await idChecksum(monthPartition(first));
-
-    const storage = new FakeStorage();
-    await gateway(storage).archive(TABLE, PERIOD);
-
-    const restored = await gateway(storage).restore(TABLE, PERIOD, first);
-
-    expect(restored.scratchTable).toBe(`${monthPartition(first)}_restore`);
-    expect(restored.rowCount).toBe(7);
-    expect(await idChecksum(restored.scratchTable)).toBe(before);
-
-    const [recorded] = await database.client
-      .select()
-      .from(partitionArchive)
-      .where(and(eq(partitionArchive.organizationId, first), eq(partitionArchive.period, ISO)));
-
-    expect(recorded?.rowCount).toBe(restored.rowCount);
-
-    // Never the live parent: a re-attached month puts archived rows back in the hot
-    // database and leaves the retention job arguing with itself about them.
-    expect(await exists(monthPartition(first))).toBe(false);
-  });
-
-  it("refuses a month cold storage has no row for", async () => {
-    const storage = new FakeStorage();
-
-    // The message *is* the code, which is the rule the error catalog rests on.
-    await expect(gateway(storage).restore(TABLE, PERIOD, first)).rejects.toThrow("NOT_FOUND");
-  });
-});
-
-describe("PgPartitionArchiveGateway.markProjected", () => {
-  it("stamps once and leaves an already-stamped row alone", async () => {
-    await freshPartitions();
-    await write(first, "task.reactivated", 1);
-
-    const storage = new FakeStorage();
-    await gateway(storage).archive(TABLE, PERIOD);
-    await gateway(storage).markProjected(TABLE, PERIOD, first);
-
-    const [stamped] = await database.client
-      .select()
-      .from(partitionArchive)
-      .where(and(eq(partitionArchive.organizationId, first), eq(partitionArchive.period, ISO)));
-    const at = stamped?.projectedAt;
-    expect(at).not.toBeNull();
-
-    await gateway(storage).markProjected(TABLE, PERIOD, first);
-
-    const [again] = await database.client
-      .select()
-      .from(partitionArchive)
-      .where(and(eq(partitionArchive.organizationId, first), eq(partitionArchive.period, ISO)));
-
-    expect(again?.projectedAt).toEqual(at);
-  });
-});
-
 describe("PgPartitionArchiveGateway.sweep", () => {
   // Deleting a tenant cascades cleanly through Postgres and leaves every object behind.
   // That hole is created by cold storage, so cold storage closes it.
@@ -456,15 +351,12 @@ describe("PgPartitionArchiveGateway across the allowlist", () => {
     );
     await maintenance.ensureMonthlyPartitions(PartitionedTable.NOTIFICATIONS, first, PERIOD, 1);
 
-    const [user] = await database.client
-      .execute<{ id: string }>(sql`select id from users limit 1`)
-      .then((result) => result.rows);
-    if (!user) throw new Error("run `pnpm db:seed` first, and sign one user up");
-
+    // Any id: `notifications.user_id` has no foreign key, so the spec needs no signed-up
+    // user and runs on a fresh database.
     await database.client.insert(notifications).values({
       id: Uuid.v7(),
       organizationId: first,
-      userId: user.id as never,
+      userId: Uuid.v7() as never,
       eventId: Uuid.v7(),
       kind: "task.assigned",
       category: "task",

@@ -20,27 +20,28 @@ state of the tree and the traps that cost time.
 | `7100f81` | `LT1.4`: ClickHouse analytics removed, the tenant Activity page with it |
 | `ce72bdc` | `LT1.5`: verified, no code change |
 | `ad78a30` | `LT2.1`: the tenant-move machinery removed, the shard seam kept |
-| after `ad78a30` | `LT2.2`: verified, no code change |
+| `a6f3d27` | `LT2.2`: verified, no code change |
+| after `a6f3d27` | `LT2.3`: calendar retention and the cold tier removed, the delete archive kept |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT2.3` cold tier and retention, then the rest of Phase 2; `LT1.6`, the docs sweep, after it.
+**Next, in order:** `LT2.4` logs, then the rest of Phase 2; `LT1.6`, the docs sweep, after it.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
-## What is verified after `LT2.1`
+## What is verified after `LT2.3`
 
 Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:migrate` and `db:seed`.
 
 - Typecheck clean in every package; `pnpm lint` clean apart from one warning that was already
   there (an unused import in `feature/src/rbac/effective-permissions.inspector.tsx`).
   `check:contrast`, `deps:check` and `repo:check` green.
-- Tests, per package: application 323, infrastructure 329 (one known failure, below), query 64,
-  web 65, worker 56, permissions 69, contracts 58, composition 68, feature 161, auth 71, ui 103,
+- Tests, per package: application 305, infrastructure 310, query 64,
+  web 65, worker 40, permissions 69, contracts 58, composition 68, feature 161, auth 71, ui 103,
   tooling 140, and every other package green. The drop since `7f88b41` is the widget, zone and
   dashboard specs, then the specs of the four platform pages' use-cases and the shard-map panel,
   then the analytics consumer, ClickHouse, replay-reader and activity-trend specs, then the
-  relocate and reclaim specs.
+  relocate and reclaim specs, then the retention, restore and cold-reader specs.
 - `check:architecture`: 29 of 30. §30 left with widgets and §31 kept its number. **The red one is
   expected** — "every partitioned table is on the allowlist" reads migrations `0023` (the three
   messaging tables) and `0047` (`widget_preferences`). `LT2.8` regenerates the baseline and clears
@@ -48,9 +49,7 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
 
 ### Known failures that are not defects
 
-1. `packages/infrastructure/tests/cold/pg-partition-archive.gateway.spec.ts` needs a signed-up user
-   on a fresh database. It leaves with retention in `LT2.3`.
-2. `tooling/scripts` ends with `Timeout calling "onTaskUpdate"` although every test passes. The big
+1. `tooling/scripts` ends with `Timeout calling "onTaskUpdate"` although every test passes. The big
    kit does the same at the cut commit. `BACKLOG.md` `BL.1`. It did not appear on the Linux run.
 
 ## Decisions taken since the plan was written
@@ -75,6 +74,8 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
   the `sharded` profile. Loki, Alloy,
   pgbouncer and the second Redis still start with `infra:up`, and nothing reads them; they go in
   `LT2.4` and `LT2.5`.
+- **A tenant delete keeps its 30-day archive; archived notifications went** (decided
+  2026-10-01, recorded under `LT2.3`).
 - **A permission key leaves with its last procedure**, not in `LT1.5`: §28 fails on a key nothing
   asserts. `LT1.3` removed seven platform keys this way; `LT1.5` covers the rest.
 - **A flag spec declares its own flag.** Lite has none, so `application/tests/support/example-flag.ts`

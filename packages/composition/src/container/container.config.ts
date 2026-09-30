@@ -41,9 +41,6 @@ export interface ContainerConfig {
     readonly accessKey: string;
     readonly secretKey: string;
     readonly forcePathStyle: boolean;
-    // The colder class the `cold/` prefixes move to, from `S3_COLD_STORAGE_CLASS` and
-    // `S3_COLD_TRANSITION_DAYS` — `25.3`. Absent is no transition at all.
-    readonly coldTier?: { readonly storageClass: string; readonly afterDays: number };
   };
   // Optional, because `apps/worker` never issues or validates a session and must not
   // carry an AUTH_SECRET it has no use for (25.2). Absent means no `AuthFactory`.

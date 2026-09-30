@@ -14,19 +14,6 @@ export interface EnsuredPartitions {
   readonly months: number;
 }
 
-export interface DroppedPartitions {
-  readonly table: PartitionedTableName;
-  readonly organizationId: OrganizationId | null;
-  readonly cutoff: Date;
-}
-
-export interface Attachment {
-  readonly table: PartitionedTableName;
-  readonly organizationId: OrganizationId | null;
-  readonly period: Date;
-  readonly scratchTable: string;
-}
-
 export interface RunwayCheck {
   readonly table: PartitionedTableName;
   readonly organizationId: OrganizationId | null;
@@ -38,11 +25,9 @@ export interface RunwayCheck {
 export class RecordingMaintenanceGateway extends MaintenanceGateway {
   private readonly sweeps: Date[] = [];
   private readonly partitionRuns: EnsuredPartitions[] = [];
-  private readonly dropRuns: DroppedPartitions[] = [];
   private readonly runwayChecks: RunwayCheck[] = [];
   private readonly tenantRuns: OrganizationId[] = [];
   private readonly tenantDrops: OrganizationId[] = [];
-  private readonly attachments: Attachment[] = [];
   // Seeded rather than recorded: a spec about the nightly count wants to say what the
   // node holds, not to assert that the job asked.
   public orphans: OrganizationId[] = [];
@@ -126,29 +111,6 @@ export class RecordingMaintenanceGateway extends MaintenanceGateway {
     return Promise.resolve(this.monthsAhead);
   }
 
-  public override dropMonthlyPartitionsBefore(
-    table: PartitionedTableName,
-    organizationId: OrganizationId | null,
-    cutoff: Date,
-  ): Promise<readonly string[]> {
-    this.dropRuns.push({ table, organizationId, cutoff });
-    return Promise.resolve([]);
-  }
-
-  public override attachMonthlyPartition(
-    table: PartitionedTableName,
-    organizationId: OrganizationId | null,
-    period: Date,
-    scratchTable: string,
-  ): Promise<void> {
-    this.attachments.push({ table, organizationId, period, scratchTable });
-    return Promise.resolve();
-  }
-
-  public attached(): readonly Attachment[] {
-    return this.attachments;
-  }
-
   public override partitionsBefore(): Promise<readonly PartitionEstimate[]> {
     return Promise.resolve(this.estimates);
   }
@@ -159,10 +121,6 @@ export class RecordingMaintenanceGateway extends MaintenanceGateway {
 
   public partitionsEnsured(): readonly EnsuredPartitions[] {
     return this.partitionRuns;
-  }
-
-  public partitionsDropped(): readonly DroppedPartitions[] {
-    return this.dropRuns;
   }
 
   public runwayChecked(): readonly RunwayCheck[] {

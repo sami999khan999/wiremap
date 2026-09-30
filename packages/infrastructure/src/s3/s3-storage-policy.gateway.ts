@@ -1,12 +1,10 @@
 import {
-  type ColdTier,
   DeleteBucketLifecycleCommand,
   GetBucketLifecycleConfigurationCommand,
   type LifecycleRule,
   PutBucketLifecycleConfigurationCommand,
   type S3Client,
   StoragePolicyGateway,
-  type TransitionStorageClass,
 } from "../import.js";
 import { S3ClientFactory } from "./s3-client.factory.js";
 import type { S3Config } from "./s3-storage.gateway.js";
@@ -36,17 +34,10 @@ export class S3StoragePolicyGateway extends StoragePolicyGateway {
         .flatMap((rule) => {
           const prefix = rule.Filter?.Prefix;
           const days = rule.Expiration?.Days;
-          // A rule this system did not write — no prefix, or an expiry expressed as a
-          // date rather than a span. Reported as absent rather than guessed at.
+          // A rule this system did not write — no prefix, or an expiry as a date — is
+          // reported as absent. A transition is ignored: lite writes and compares none.
           if (!prefix || days === undefined) return [];
-
-          const [transition] = rule.Transitions ?? [];
-          const storageClass = transition?.StorageClass;
-          const afterDays = transition?.Days;
-          if (!storageClass || afterDays === undefined) {
-            return [{ prefix, expireAfterDays: days }];
-          }
-          return [{ prefix, expireAfterDays: days, transition: { storageClass, afterDays } }];
+          return [{ prefix, expireAfterDays: days }];
         });
     } catch (error: unknown) {
       if (S3StoragePolicyGateway.isMissing(error)) return [];
@@ -75,26 +66,10 @@ export class S3StoragePolicyGateway extends StoragePolicyGateway {
             Filter: { Prefix: rule.prefix },
             Status: "Enabled",
             Expiration: { Days: rule.expireAfterDays },
-            // The SDK types the class as AWS's enum; MinIO names a tier instead, so the
-            // string is passed through and the bucket is what validates it.
-            ...(rule.transition
-              ? {
-                  Transitions: [
-                    {
-                      Days: rule.transition.afterDays,
-                      StorageClass: rule.transition.storageClass as TransitionStorageClass,
-                    },
-                  ],
-                }
-              : {}),
           })),
         },
       }),
     );
-  }
-
-  public coldTier(): ColdTier | null {
-    return this.config.coldTier ?? null;
   }
 
   // The SDK puts the code on `name` for a modelled error and on `Code` for one it only

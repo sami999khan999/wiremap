@@ -84,8 +84,6 @@ export {
   type SetMemberActiveInput,
 } from "./member/index.js";
 export {
-  type ArchivedMonthDto,
-  type ArchivedNotificationQuery,
   type ListNotificationsInput,
   type MarkNotificationReadInput,
   type NotificationCategory,

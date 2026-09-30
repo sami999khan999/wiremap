@@ -24,7 +24,6 @@ export type {
   AdjustmentClearInput,
   AdjustmentSaveInput,
   ApiKeyDto,
-  ArchivedNotificationQuery,
   ChangeMemberRoleInput,
   ChangeRolePermissionInput,
   ClearOverrideInput,

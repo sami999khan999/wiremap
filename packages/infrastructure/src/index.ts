@@ -43,12 +43,10 @@ export {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
-  PgRetentionPolicyRepository,
   PgRoleRepository,
   PgShardMapReader,
   PgShardResolver,
   PgTenantRepository,
-  PgTenantRetentionPolicyRepository,
   PgUnitOfWork,
   type PgUnitOfWorkConfig,
   PgUserReader,
@@ -70,8 +68,6 @@ export {
   type RedisRole,
 } from "./redis/index.js";
 export {
-  OrdinalCursor,
-  S3ColdArchiveReader,
   type S3Config,
   S3StorageGateway,
   S3StoragePolicyGateway,

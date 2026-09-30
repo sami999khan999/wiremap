@@ -301,60 +301,6 @@ export class PgMaintenanceGateway extends BaseRepository implements MaintenanceG
     }).length;
   }
 
-  public async dropMonthlyPartitionsBefore(
-    table: PartitionedTableName,
-    organizationId: OrganizationId | null,
-    cutoff: Date,
-  ): Promise<readonly string[]> {
-    const boundary = PgMaintenanceGateway.monthStart(cutoff, 0);
-    const dropped: string[] = [];
-
-    // Null on a tenant-partitioned table is every tenant, the same reading
-    // `partitionsBefore` has — otherwise a caller previews across tenants and drops one.
-    for (const [parent, children] of await this.monthChildren(table, organizationId)) {
-      for (const child of children) {
-        const start = PgMaintenanceGateway.partitionMonth(parent, child.name);
-        // A name the pattern does not match is left alone rather than dropped: this
-        // loop holds a `drop table`, and "I could not parse it" is not a reason to run.
-        if (!start || start.getTime() >= boundary.getTime()) continue;
-
-        // Re-derived from the parsed month, never interpolated from the catalog string.
-        await this.db.execute(
-          sql.raw(`drop table if exists ${parent}_${PgMaintenanceGateway.monthSuffix(start)}`),
-        );
-        dropped.push(child.name);
-      }
-    }
-
-    return dropped;
-  }
-
-  // One `attach`, and the bounds are derived from a `Date` rather than passed: a caller
-  // that could name its own range could attach a month over another month's rows.
-  public async attachMonthlyPartition(
-    table: PartitionedTableName,
-    organizationId: OrganizationId | null,
-    period: Date,
-    scratchTable: string,
-  ): Promise<void> {
-    const parent = this.monthParent(table, organizationId);
-    const from = PgMaintenanceGateway.iso(PgMaintenanceGateway.monthStart(period, 0));
-    const to = PgMaintenanceGateway.iso(PgMaintenanceGateway.monthStart(period, 1));
-
-    // Validated before it reaches `sql.raw`: the name comes from the archive gateway
-    // and is derived, but this is the boundary and derivation is not a guarantee.
-    if (!/^[a-z0-9_]+$/.test(scratchTable)) {
-      throw new InternalError(new Error(`Not a table name: ${scratchTable}`));
-    }
-
-    await this.db.execute(
-      sql.raw(
-        `alter table ${parent} attach partition ${scratchTable} ` +
-          `for values from ('${from}') to ('${to}')`,
-      ),
-    );
-  }
-
   // Across every tenant when `organizationId` is null, and the same parse the drop uses
   // off the same read — so the two cannot disagree about what a child is.
   public async partitionsBefore(

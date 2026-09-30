@@ -45,8 +45,6 @@ export class QueryKeys {
     list: (params: unknown) => ["notification", "list", params] as const,
     // Every list at once, whatever its filter: what a new notification can change.
     lists: () => ["notification", "list"] as const,
-    archived: (params: unknown) => ["notification", "archived", params] as const,
-    archivedMonths: () => ["notification", "archived", "month"] as const,
     // The bell's count is its own key rather than a field on the list: it is read on
     // every page and the list on one, so they cannot share a lifetime.
     unreadCount: () => ["notification", "unreadCount"] as const,

@@ -1,10 +1,4 @@
-import type {
-  ArchivedObject,
-  PartitionArchiveEntry,
-  PartitionEstimate,
-  RetentionPolicyRecord,
-  TenantRetentionPolicyRecord,
-} from "@loadbearing/application";
+import type { ArchivedObject, PartitionEstimate } from "@loadbearing/application";
 import { PartitionedTable } from "@loadbearing/application";
 import type { Container } from "@loadbearing/composition";
 import {
@@ -12,9 +6,7 @@ import {
   InMemoryOrganizationReader,
   InMemoryOutboxGateway,
   InMemoryPlatformPolicyRepository,
-  InMemoryRetentionPolicyRepository,
   InMemoryStoragePolicyGateway,
-  InMemoryTenantRetentionPolicyRepository,
   RecordingMaintenanceGateway,
   RecordingPartitionArchiveGateway,
   TestContainer,
@@ -45,12 +37,6 @@ const RUNS: readonly Run[] = PartitionedTable.MONTH_PARTITIONED.flatMap((entry) 
     : [{ table: entry.name, organizationId: null }],
 );
 
-// Every table the calendar drops something from. `doc_revision` is an archive path and is never
-// dropped, so a prune pass that touched it would be the bug.
-const RETAINED = PartitionedTable.MONTH_PARTITIONED.filter(
-  (entry) => entry.retentionMonths !== null,
-);
-
 const estimate = (period: Date): PartitionEstimate => ({
   name: `partition_${period.getUTCFullYear()}_${period.getUTCMonth() + 1}`,
   period,
@@ -60,15 +46,6 @@ const estimate = (period: Date): PartitionEstimate => ({
 
 // `TestContainer` rather than an object literal of the four members this consumer
 // touches: a port added to the container is a compile error there, and was silence here.
-const archived = (organizationId: OrganizationId): ArchivedObject => ({
-  organizationId,
-  key: `cold/activity_log/2024/01/${organizationId}.ndjson.gz`,
-  rowCount: 4,
-  bytes: 512,
-  checksum: "sha-512",
-  actionCounts: { "task.created": 4 },
-});
-
 function harness(
   options: {
     // How many entitlement adjustments the nightly sweep finds expired.
@@ -78,12 +55,6 @@ function harness(
     monthsAhead?: number;
     estimates?: readonly PartitionEstimate[];
     objects?: readonly ArchivedObject[];
-    // Empty by default, which is the state that matters: an absent row is the code
-    // default, so most of these cases assert the allowlist's own numbers.
-    policies?: readonly RetentionPolicyRecord[];
-    // An override is what makes the prune pass walk tenants rather than months, so
-    // most cases here stage none and assert the table-month path.
-    tenantPolicies?: readonly TenantRetentionPolicyRecord[];
     lifecycle?: InMemoryStoragePolicyGateway;
   } = {},
 ) {
@@ -94,11 +65,7 @@ function harness(
   );
   const partitionArchive = new RecordingPartitionArchiveGateway(options.objects);
   const outbox = new InMemoryOutboxGateway();
-  const retentionPolicies = new InMemoryRetentionPolicyRepository(options.policies);
   const platformPolicy = new InMemoryPlatformPolicyRepository();
-  const tenantRetentionPolicies = new InMemoryTenantRetentionPolicyRepository(
-    options.tenantPolicies,
-  );
   const storagePolicy = options.lifecycle ?? new InMemoryStoragePolicyGateway();
   const logger = { emit: vi.fn(), failure: vi.fn() };
 
@@ -137,9 +104,7 @@ function harness(
         },
       },
     },
-    retentionPolicies,
     platformPolicy,
-    tenantRetentionPolicies,
     storagePolicy,
     logger,
     placed: <T>(principal: { organizationId: string }, work: () => Promise<T>): Promise<T> => {
@@ -153,8 +118,6 @@ function harness(
     maintenance,
     partitionArchive,
     outbox,
-    retentionPolicies,
-    tenantRetentionPolicies,
     storagePolicy,
     logger,
     placements,
@@ -277,67 +240,16 @@ describe("MaintenanceConsumer", () => {
     ).toEqual(RUNS);
   });
 
-  it("archives nothing when no partition is older than the cutoff", async () => {
-    const { container, partitionArchive } = harness();
+  // Lite has no retention pass: a month older than any window stays where it is. Nothing
+  // may drop a month except a tenant delete, which archives first.
+  it("archives and drops nothing, however old the month", async () => {
+    const period = new Date(Date.UTC(2020, 0, 1));
+    const { container, partitionArchive, logger } = harness({ estimates: [estimate(period)] });
+
     await consumerFor(container).handle(job("partitions"));
 
     expect(partitionArchive.archived()).toEqual([]);
-  });
-
-  // Retention stops meaning deletion: a month that ages out leaves through the archive,
-  // and the drop is the gateway's last step behind a verified object.
-  it("archives every table-month older than the cutoff, once per table-month", async () => {
-    const period = new Date(Date.UTC(2024, 0, 1));
-    const { container, partitionArchive, logger } = harness({
-      estimates: [estimate(period), estimate(period)],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    // One call and one line per table-month, `organizationId: null` meaning every
-    // tenant — five thousand tenants must not be five thousand lines.
-    expect(partitionArchive.archived()).toEqual(
-      RETAINED.map((entry) => ({ table: entry.name, period, organizationId: null })),
-    );
-    expect(emitted(logger, "maintenance.partition.archived")).toHaveLength(RETAINED.length);
-  });
-
-  // A stuck event must never leave by the calendar, and the guard is the outbox's alone:
-  // applying it to every table would let one block them all.
-  it("leaves the outbox alone while the drain is behind", async () => {
-    const period = new Date(Date.UTC(2024, 0, 1));
-    const { container, partitionArchive, outbox } = harness({ estimates: [estimate(period)] });
-
-    outbox.enqueue({
-      name: "task.created",
-      organizationId: FIRST,
-      actorId: FIRST as never,
-      occurredAt: period,
-      payload: {},
-    } as never);
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(partitionArchive.archived().map(({ table }) => table)).not.toContain(
-      PartitionedTable.OUTBOX_EVENT,
-    );
-  });
-
-  // A month is archived and dropped whether or not the derived store has it. A forgotten
-  // switch costs a known hole, never an unbounded table.
-  it("records a projection gap for every archived month of the audit trail", async () => {
-    const period = new Date(Date.UTC(2024, 0, 1));
-    const { container, partitionArchive, logger } = harness({
-      estimates: [estimate(period)],
-      objects: [archived(FIRST)],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(emitted(logger, "analytics.projection.gap")).toEqual([
-      { period: "2024-01-01", reason: "disabled" },
-    ]);
-    expect(partitionArchive.projected()).toEqual([]);
+    expect(emitted(logger, "maintenance.partition.dropped")).toEqual([]);
   });
 });
 
@@ -396,47 +308,6 @@ describe("MaintenanceConsumer — the spare pool", () => {
 // `19.11`: the daily converger. Neither store is written by the save alone — a bucket
 // call after the commit can fail, and a rule deleted in a console is drift.
 describe("MaintenanceConsumer — the retention job", () => {
-  const cold = (tableName: string, coldMonths: number | null): RetentionPolicyRecord => ({
-    store: "postgres",
-    tableName,
-    hotMonths: 12,
-    coldMonths,
-    coldMode: "archive",
-  });
-
-  it("writes the bucket's configuration when it does not match the rows", async () => {
-    const { container, storagePolicy, logger } = harness({
-      policies: [cold("activity_log", 24)],
-    });
-
-    await consumerFor(container).handle(job("retention"));
-
-    expect(await storagePolicy.lifecycle()).toEqual([
-      { prefix: "cold/activity_log/", expireAfterDays: 731 },
-      // Not composed from a row: an export is a copy of a tenant's data in a bucket,
-      // and seven days is how long that is a download rather than a liability.
-      { prefix: "export/", expireAfterDays: 7 },
-    ]);
-    // Drift first, then the repair: a lone `applied` cannot tell "the reconcile is
-    // doing its job" from "somebody edited the bucket by hand last night".
-    expect(emitted(logger, "retention.lifecycle.drifted")).toHaveLength(1);
-    expect(emitted(logger, "retention.lifecycle.applied")).toEqual([{ rules: 2 }]);
-  });
-
-  // The one that matters most: `PutBucketLifecycleConfiguration` replaces everything,
-  // so a job that wrote on every run would rewrite the bucket daily for no reason.
-  it("writes nothing on the second run", async () => {
-    const { container, storagePolicy, logger } = harness({
-      policies: [cold("activity_log", 24)],
-    });
-
-    await consumerFor(container).handle(job("retention"));
-    await consumerFor(container).handle(job("retention"));
-
-    expect(storagePolicy.applied()).toHaveLength(1);
-    expect(emitted(logger, "retention.lifecycle.applied")).toHaveLength(1);
-  });
-
   // An empty table is the state every deployment starts in, and `export/` is the one
   // rule it still writes — once, then the comparison holds and nothing is rewritten.
   it("writes only the export rule with no rows, and nothing on the second run", async () => {
@@ -447,48 +318,6 @@ describe("MaintenanceConsumer — the retention job", () => {
 
     expect(storagePolicy.applied()).toEqual([[{ prefix: "export/", expireAfterDays: 7 }]]);
     expect(emitted(logger, "retention.lifecycle.applied")).toEqual([{ rules: 1 }]);
-  });
-
-  // `25.3`. The tier is the gateway's, so the converger composes with it, and a bucket
-  // that lost its transition by hand is put back rather than read as settled.
-  it("writes the cold tier's transition, and restores one removed by hand", async () => {
-    const tier = { storageClass: "COLD", afterDays: 30 };
-    const storagePolicy = new InMemoryStoragePolicyGateway(tier);
-    const { container, logger } = harness({
-      policies: [cold("activity_log", 24)],
-      lifecycle: storagePolicy,
-    });
-
-    await consumerFor(container).handle(job("retention"));
-    expect(await storagePolicy.lifecycle()).toEqual([
-      { prefix: "cold/activity_log/", expireAfterDays: 731, transition: tier },
-      { prefix: "export/", expireAfterDays: 7 },
-    ]);
-
-    await storagePolicy.applyLifecycle([
-      { prefix: "cold/activity_log/", expireAfterDays: 731 },
-      { prefix: "export/", expireAfterDays: 7 },
-    ]);
-    await consumerFor(container).handle(job("retention"));
-
-    expect(storagePolicy.applied()).toHaveLength(3);
-    expect(emitted(logger, "retention.lifecycle.drifted")[1]).toMatchObject({
-      expected: "cold/activity_log/=731>COLD@30|export/=7",
-      actual: "cold/activity_log/=731|export/=7",
-    });
-  });
-
-  // The rows only. The bucket's own rule deleted the object; a row still pointing at one
-  // is a `NotFoundError` on a read that should have been an empty list.
-  it("forgets an archive row past its hot plus cold window", async () => {
-    const { container, partitionArchive } = harness({ policies: [cold("activity_log", 24)] });
-
-    await consumerFor(container).handle(job("retention"));
-
-    // 2026-08 less thirty-six months.
-    expect(partitionArchive.forgets()).toEqual([
-      { table: "activity_log", period: new Date(Date.UTC(2023, 7, 1)) },
-    ]);
   });
 
   // One line per export, not one per object. The counts are what an operator reads,
@@ -547,201 +376,10 @@ describe("MaintenanceConsumer — the retention job", () => {
 
     expect(emitted(logger, "cold.objects.swept")).toEqual([]);
   });
-
-  it("forgets nothing for a table whose objects never expire", async () => {
-    const { container, partitionArchive } = harness({ policies: [cold("activity_log", null)] });
-
-    await consumerFor(container).handle(job("retention"));
-
-    expect(partitionArchive.forgets()).toEqual([]);
-  });
 });
 
-// `19.10`: an absent row is the code default, and a row replaces it.
-describe("MaintenanceConsumer — prune reads the row", () => {
-  const period = new Date(Date.UTC(2024, 0, 1));
-
-  it("uses the allowlist when no row exists", async () => {
-    const { container, partitionArchive } = harness({ estimates: [estimate(period)] });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    // `activity_log` at thirteen months and `notifications` at twelve, from the
-    // allowlist alone. `doc_revision` is never retired and contributes nothing.
-    expect(partitionArchive.archived().map(({ table }) => table)).toEqual(
-      RETAINED.map((entry) => entry.name),
-    );
-  });
-
-  // The whole point of the row: a table the allowlist never retires becomes one that
-  // does, with no deploy.
-  it("retires a table the allowlist leaves alone when a row says so", async () => {
-    const { container, partitionArchive } = harness({
-      estimates: [estimate(period)],
-      policies: [
-        {
-          store: "postgres",
-          tableName: "doc_revision",
-          hotMonths: 6,
-          coldMonths: null,
-          coldMode: "archive",
-        },
-      ],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(partitionArchive.archived().map(({ table }) => table)).toContain("doc_revision");
-  });
-
-  // `drop` destroys the month rather than archiving it — a table of transport rows
-  // deciding it is not worth the bytes. Nothing reaches cold storage.
-  it("drops rather than archives under cold_mode drop", async () => {
-    const { container, partitionArchive, maintenance } = harness({
-      estimates: [estimate(period)],
-      policies: [
-        {
-          store: "postgres",
-          tableName: "notifications",
-          hotMonths: 12,
-          coldMonths: null,
-          coldMode: "drop",
-        },
-      ],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(partitionArchive.archived().map(({ table }) => table)).not.toContain("notifications");
-    expect(maintenance.partitionsDropped().map(({ table }) => table)).toContain("notifications");
-  });
-});
-
-// `19.19`: `override ?? retention_policy row ?? allowlist`, per tenant. The pass walks
-// tenants only when an override exists, which keeps the common case one call.
-describe("MaintenanceConsumer — a per-tenant retention override", () => {
-  const period = new Date(Date.UTC(2024, 0, 1));
-
-  const override = (
-    organizationId: OrganizationId,
-    hotMonths: number,
-  ): TenantRetentionPolicyRecord => ({
-    organizationId,
-    tableName: "activity_log",
-    hotMonths,
-    coldMonths: null,
-  });
-
-  it("archives per tenant once an override exists", async () => {
-    const { container, partitionArchive } = harness({
-      estimates: [estimate(period)],
-      tenantPolicies: [override(FIRST, 3)],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    // Both tenants, named: the override made the pass walk them, and `SECOND` takes the
-    // table default rather than being skipped.
-    const activityLog = partitionArchive.archived().filter(({ table }) => table === "activity_log");
-
-    expect(activityLog.map(({ organizationId }) => organizationId)).toEqual([FIRST, SECOND]);
-  });
-
-  // The table the override does not name keeps the cheap path. Otherwise one override
-  // anywhere would turn every table's pass into a tenant walk.
-  it("leaves the other tables on the table-month path", async () => {
-    const { container, partitionArchive } = harness({
-      estimates: [estimate(period)],
-      tenantPolicies: [override(FIRST, 3)],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    const notifications = partitionArchive
-      .archived()
-      .filter(({ table }) => table === "notifications");
-
-    expect(notifications.map(({ organizationId }) => organizationId)).toEqual([null]);
-  });
-
-  // Why `update-tenant-retention` refuses one: `prune` returns before it reads an
-  // override on a table whose default is null, so the setting would do nothing.
-  it("does not retire a table whose default is never, even with a row", async () => {
-    const { container, partitionArchive } = harness({
-      estimates: [estimate(period)],
-      tenantPolicies: [{ ...override(FIRST, 3), tableName: "doc_revision" }],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(partitionArchive.archived().map(({ table }) => table)).not.toContain("doc_revision");
-  });
-});
-
-// `R.6`, `R.8`: two ways a pass reached the wrong rows — a mode that skipped the
-// overrides, and two jobs that named a tenant and never placed it.
-describe("MaintenanceConsumer — the overrides and the node", () => {
-  const period = new Date(Date.UTC(2024, 0, 1));
-
-  const entry = (organizationId: OrganizationId): PartitionArchiveEntry => ({
-    organizationId,
-    tableName: "activity_log",
-    period: "2024-01-01",
-    objectKey: `cold/activity_log/2024/01/${organizationId}.ndjson.gz`,
-    rowCount: 4,
-    bytes: 512,
-    checksum: "sha-512",
-    actionCounts: {},
-    projectedAt: null,
-  });
-
-  // `drop` destroys the month. Branching on the mode before reading the overrides meant
-  // a tenant that had paid for three years lost the month at the deployment's cutoff.
-  it("honours a per-tenant override under cold_mode drop", async () => {
-    const { container, maintenance } = harness({
-      estimates: [estimate(period)],
-      policies: [
-        {
-          store: "postgres",
-          tableName: "activity_log",
-          hotMonths: 12,
-          coldMonths: null,
-          coldMode: "drop",
-        },
-      ],
-      tenantPolicies: [
-        { organizationId: FIRST, tableName: "activity_log", hotMonths: 36, coldMonths: null },
-      ],
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    const drops = maintenance
-      .partitionsDropped()
-      .filter(({ table }) => table === "activity_log")
-      .map(({ organizationId, cutoff }) => ({ organizationId, cutoff: cutoff.toISOString() }));
-
-    // One drop per tenant at its own cutoff, never one table-wide drop at the
-    // deployment's. `SECOND` has no override and keeps the row's twelve months.
-    expect(drops).toEqual([
-      { organizationId: FIRST, cutoff: "2023-08-01T00:00:00.000Z" },
-      { organizationId: SECOND, cutoff: "2025-08-01T00:00:00.000Z" },
-    ]);
-  });
-
-  // The archive index is catalog and the scratch table is the tenant's. Unplaced, the
-  // restore wrote node 0 and a tenant on another node got somebody else's table.
-  it("places cold-restore on the tenant that owns the object", async () => {
-    const { container, partitionArchive, placements } = harness();
-    partitionArchive.stage([entry(SECOND)]);
-
-    await consumerFor(container).handle(
-      job("cold-restore", { table: "activity_log", period: "2024-01-01", organizationId: null }),
-    );
-
-    expect(placements).toEqual([SECOND]);
-  });
-
+// `R.8`: a job that named a tenant and never placed it reached the wrong node's rows.
+describe("MaintenanceConsumer — the node", () => {
   // An export reads live rows, so an unplaced one read node 0 and wrote a manifest
   // saying a tenant on another node had nothing.
   it("places tenant-export on the tenant it names", async () => {

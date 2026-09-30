@@ -11,9 +11,6 @@ export interface Stack {
   // is what `replica.smoke.spec.ts` skips on.
   readonly replica?: { readonly url: string };
   readonly redis: { readonly cacheUrl: string; readonly queueUrl: string };
-  // The colder class under the `cold-tier` profile, from `S3_COLD_STORAGE_CLASS` and
-  // `S3_COLD_TRANSITION_DAYS`. Absent is what `lifecycle.smoke.spec.ts` skips on.
-  readonly coldTier?: { readonly storageClass: string; readonly afterDays: number };
   readonly storage: {
     readonly endpoint: string;
     readonly region: string;

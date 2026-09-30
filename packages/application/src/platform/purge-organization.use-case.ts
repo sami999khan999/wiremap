@@ -12,7 +12,6 @@ import type {
 import { PartitionedTable, Principal, Shard } from "../primitive/index.js";
 import type { PlatformReader } from "./platform.reader.js";
 import type { TenantRepository } from "./tenant.repository.js";
-import type { TenantRetentionPolicyRepository } from "./tenant-retention-policy.repository.js";
 
 export interface PurgeOrganizationInput {
   readonly organizationId: OrganizationId;
@@ -40,9 +39,6 @@ export class PurgeOrganizationUseCase {
     private readonly activity: ActivityLogger,
     private readonly unitOfWork: UnitOfWork,
     private readonly clock: { now(): Date },
-    // The overrides. No foreign key on that table — the schema says so, and says
-    // the delete path sweeps it — and `deleteFor` had no caller anywhere.
-    private readonly tenantRetention: TenantRetentionPolicyRepository,
     // The placement cache. Its TTL is deliberately long, so without this a deleted
     // tenant keeps resolving to a node for up to five minutes after its rows are gone.
     private readonly shards: ShardResolver,
@@ -81,7 +77,6 @@ export class PurgeOrganizationUseCase {
     await this.archive.markTenantDeleted(input.organizationId, this.clock.now());
 
     await this.unitOfWork.run(async () => {
-      await this.tenantRetention.deleteFor(input.organizationId);
       await this.tenants.delete(input.organizationId);
 
       // Rebased onto the tier, which is the only reason this row survives the delete

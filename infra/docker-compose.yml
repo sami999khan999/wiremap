@@ -217,41 +217,6 @@ services:
       echo 'buckets ready'
       "
 
-  # The colder tier `25.3` transitions archived months to, behind the `cold-tier` profile.
-  # A second MinIO, because MinIO has no storage classes of its own — only remote tiers.
-  minio-cold:
-    image: coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
-    restart: unless-stopped
-    profiles: ["cold-tier"]
-    command: server /data
-    environment:
-      MINIO_ROOT_USER: ratchet
-      MINIO_ROOT_PASSWORD: ratchetsecret
-    volumes:
-      - miniocolddata:/data
-
-  # One-shot, like `minio-init`: the tier's bucket, then the tier registered on `minio`
-  # as `COLD`. `tier ls | grep`, because `tier info` exits 0 for a tier that is absent.
-  minio-cold-init:
-    image: bitnamilegacy/minio-client:latest
-    restart: "no"
-    profiles: ["cold-tier"]
-    depends_on:
-      minio-init:
-        condition: service_completed_successfully
-      minio-cold:
-        condition: service_started
-    environment:
-      MC_CONFIG_DIR: /tmp/.mc
-    entrypoint: >
-      /bin/sh -c "
-      until mc alias set cold http://minio-cold:9000 ratchet ratchetsecret; do sleep 2; done &&
-      until mc alias set local http://minio:9000 ratchet ratchetsecret; do sleep 2; done &&
-      mc mb --ignore-existing cold/tier &&
-      (mc ilm tier ls local | grep -q COLD || mc ilm tier add minio local COLD --endpoint http://minio-cold:9000 --access-key ratchet --secret-key ratchetsecret --bucket tier) &&
-      echo 'cold tier ready'
-      "
-
   loki:
     image: grafana/loki:3.3.2
     profiles: ["observability"]
@@ -302,5 +267,4 @@ volumes:
   pgreplicadata:
   redisqueuedata:
   miniodata:
-  miniocolddata:
   lokidata:

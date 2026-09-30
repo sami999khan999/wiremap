@@ -39,12 +39,10 @@ export {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
-  PgRetentionPolicyRepository,
   PgRoleRepository,
   PgShardMapReader,
   PgShardResolver,
   PgTenantRepository,
-  PgTenantRetentionPolicyRepository,
   PgUserReader,
   PgVectorStore,
 } from "./repository/index.js";

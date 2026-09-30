@@ -8,13 +8,6 @@ export const notificationPermissions = {
     module: "notification",
     label: "View your notifications",
   },
-  // Separate from the inbox, because the cost is: an archived read pulls a whole
-  // tenant-month out of S3, and an organization may want to grant one and not the other.
-  "notification.archive.read": {
-    scope: "org",
-    module: "notification",
-    label: "View your archived notifications",
-  },
   // Marking read is a write, and it is separate from reading: a role that may see the
   // inbox but not clear it is a coherent thing to want.
   "notification.inbox.update": {

@@ -1,30 +1,23 @@
 import {
   type ArchivedObject,
   type ArchivedPartition,
-  ConflictError,
   createGzip,
-  createHash,
   type DeletedTenantSweep,
   type ExportedObject,
   InternalError,
-  NotFoundError,
   type OrganizationId,
   once,
-  type PartitionArchiveEntry,
   PartitionArchiveGateway,
   PartitionedTable,
   type PartitionedTableEntry,
   type PartitionedTableName,
   type Placement,
-  type ProjectionGap,
   Readable,
-  type RestoredMonth,
   type SQL,
   type StorageGateway,
   sql,
   type TenantExport,
 } from "../../import.js";
-import { NdjsonLines } from "../../s3/index.js";
 import { BaseRepository, type DatabaseCluster } from "../primitive/index.js";
 import { partitionArchive } from "../schema/index.js";
 import type { ShardScope, TransactionScope } from "../transaction/index.js";
@@ -33,20 +26,12 @@ import type { ShardScope, TransactionScope } from "../transaction/index.js";
 // overhead disappears, small enough that one batch is a few megabytes of JSON.
 const PAGE = 10_000;
 
-// Rows per insert on the way back in. Smaller than `PAGE`: a restore hands Postgres one
-// JSON parameter per batch, and the server parses the whole thing before it writes a row.
-const RESTORE_BATCH = 5_000;
-
 // NDJSON is newline-delimited by definition, so the separator is data rather than
 // formatting — naming it keeps a formatter from ever treating it as the latter.
 const NEWLINE = "\n";
 
 // The suffix of the index an archive builds on a detached month to walk it by.
 const WALK_INDEX = "_walk";
-
-// Postgres truncates an identifier past this, and a truncated scratch table collides
-// silently with the next tenant's.
-const MAX_IDENTIFIER = 63;
 
 // Where an export lands, and the rule `RetentionRules` writes for it: seven days.
 const EXPORT_PREFIX = "export";
@@ -98,20 +83,6 @@ type ArchiveRow = {
 type ChildRow = {
   parent: string;
   name: string;
-};
-
-// `bytes` comes back as text because it is a `bigint`: the driver would hand back a
-// string anyway, and asking for one is what makes that explicit.
-type EntryRow = {
-  organization_id: string;
-  table_name: string;
-  period: string;
-  object_key: string;
-  row_count: number;
-  bytes: string;
-  checksum: string;
-  action_counts: Record<string, number>;
-  projected_at: string | null;
 };
 
 // An alias, not an interface, for the reason `ArchiveRow` gives: drizzle's `execute<T>`
@@ -173,27 +144,6 @@ export class PgPartitionArchiveGateway extends BaseRepository implements Partiti
     }
 
     return { table, period: PgPartitionArchiveGateway.iso(period), objects, dropped };
-  }
-
-  // `CR.15`. A run cut off between the detach and the drop left the month detach-pending,
-  // which made every later run throw, or standalone, which no query and no run could see.
-  public async recover(table: PartitionedTableName): Promise<readonly string[]> {
-    const entry = PgPartitionArchiveGateway.monthly(table);
-
-    for (const child of await this.pendingOf(entry)) {
-      await this.db.execute(
-        sql.raw(`alter table ${child.parent} detach partition ${child.name} finalize`),
-      );
-    }
-
-    const recovered: string[] = [];
-    for (const orphan of await this.orphansOf(entry)) {
-      const period = PgPartitionArchiveGateway.periodOf(orphan.name);
-      await this.db.execute(sql.raw(`drop index if exists ${orphan.name}${WALK_INDEX}`));
-      await this.attach(orphan, period);
-      recovered.push(orphan.name);
-    }
-    return recovered;
   }
 
   // detach → stream to S3 → record → verify → drop. The order is the job: dropping
@@ -324,70 +274,6 @@ export class PgPartitionArchiveGateway extends BaseRepository implements Partiti
           actionCounts: object.actionCounts,
         },
       });
-  }
-
-  // Into a scratch table, never the live parent: a re-attached month puts archived rows
-  // back in the hot database and leaves the retention job arguing with itself.
-  public async restore(
-    table: PartitionedTableName,
-    period: Date,
-    organizationId: OrganizationId,
-  ): Promise<RestoredMonth> {
-    const entry = PgPartitionArchiveGateway.monthly(table);
-    const iso = PgPartitionArchiveGateway.iso(period);
-    const archived = await this.archivedOf(table, iso, organizationId);
-
-    const child = PgPartitionArchiveGateway.childName(entry, period, organizationId);
-    const scratch = PgPartitionArchiveGateway.scratchName(child);
-
-    // Dropped rather than appended to: a previous restore of the same month is evidence
-    // of that restore, and two runs merged into one table are evidence of neither.
-    await this.db.execute(sql`drop table if exists ${sql.identifier(scratch)}`);
-    await this.db.execute(sql.raw(`create table ${scratch} (like ${entry.name} including all)`));
-
-    // Streamed a batch at a time (`CR.16`): gunzipped whole and split, a large month OOMed
-    // the worker or passed V8's string limit. Hashed on the way through, as it was stored.
-    const hash = createHash("sha256");
-    let batch: string[] = [];
-    let lines = 0;
-    for await (const line of NdjsonLines.of(this.storage.getStream(archived.key), hash)) {
-      batch.push(line);
-      lines += 1;
-      if (batch.length < RESTORE_BATCH) continue;
-      await this.insertBatch(scratch, batch);
-      batch = [];
-    }
-    if (batch.length > 0) await this.insertBatch(scratch, batch);
-
-    // A scratch table from an object that rotted is not a restore, so it does not stay.
-    if (hash.digest("hex") !== archived.checksum || lines !== archived.rowCount) {
-      await this.db.execute(sql`drop table if exists ${sql.identifier(scratch)}`);
-      throw new ConflictError("cold", "checksum");
-    }
-
-    return {
-      table,
-      period: iso,
-      organizationId,
-      scratchTable: scratch,
-      rowCount: await this.countOf(scratch),
-    };
-  }
-
-  // `where projected_at is null`, so a second run over the same month is a no-op rather
-  // than a stamp that moves. The partial index is what makes the predicate free.
-  public async markProjected(
-    table: PartitionedTableName,
-    period: Date,
-    organizationId: OrganizationId,
-  ): Promise<void> {
-    await this.catalogDb.execute(
-      sql`update partition_archive set projected_at = now()
-          where organization_id = ${organizationId}::uuid
-            and table_name = ${table}
-            and period = ${PgPartitionArchiveGateway.iso(period)}::date
-            and projected_at is null`,
-    );
   }
 
   // Objects first, rows second. A crash between the two leaves a row pointing at a
@@ -543,45 +429,6 @@ export class PgPartitionArchiveGateway extends BaseRepository implements Partiti
     return JSON.stringify(row);
   }
 
-  // Leads with the tenant, which is what the primary key is ordered by — so this is a
-  // range scan on one tenant rather than a filter over every month ever archived.
-  public async monthsOf(
-    table: PartitionedTableName,
-    organizationId: OrganizationId,
-  ): Promise<readonly PartitionArchiveEntry[]> {
-    const rows = await this.catalogDb.execute<EntryRow>(
-      sql`select organization_id::text as organization_id, table_name, period::text as period,
-                 object_key,
-                 row_count, bytes::bigint::text as bytes, checksum, action_counts, projected_at
-          from partition_archive
-          where organization_id = ${organizationId}::uuid and table_name = ${table}
-          order by period`,
-    );
-
-    return rows.rows.map((row) => PgPartitionArchiveGateway.entryOf(row, table));
-  }
-
-  // Reads the partial index on `(table_name, period) where projected_at is null`, which
-  // is what keeps this off a scan over every tenant-month ever archived.
-  public async gaps(table: PartitionedTableName): Promise<readonly ProjectionGap[]> {
-    const rows = await this.catalogDb.execute<{ period: string; tenants: string; rows: string }>(
-      sql`select period::text as period,
-                 count(*)::text as tenants,
-                 coalesce(sum(row_count), 0)::text as rows
-          from partition_archive
-          where table_name = ${table} and projected_at is null
-          group by period
-          order by period`,
-    );
-
-    return rows.rows.map((row) => ({
-      tableName: table,
-      period: row.period,
-      tenants: Number(row.tenants),
-      rows: Number(row.rows),
-    }));
-  }
-
   // The tombstone every row of a deleted tenant carries. Written once, at the delete,
   // so the recovery window runs from then rather than from when a month was archived.
   public async markTenantDeleted(organizationId: OrganizationId, at: Date): Promise<number> {
@@ -620,86 +467,6 @@ export class PgPartitionArchiveGateway extends BaseRepository implements Partiti
     }
 
     return { organizations: organizations.size, objects: rows.rows.length };
-  }
-
-  // No `storage.delete()`, and that is the whole difference from `sweep`: the bucket
-  // expired these objects itself, so deleting them again is a round trip per row.
-  public async forget(table: PartitionedTableName, before: Date): Promise<number> {
-    const result = await this.catalogDb.execute(
-      sql`delete from partition_archive
-          where table_name = ${table}
-            and period < ${PgPartitionArchiveGateway.iso(before)}::date`,
-    );
-
-    return result.rowCount ?? 0;
-  }
-
-  // Ordered by tenant, so a restore of a whole month walks them in a stable order and
-  // two runs log the same sequence.
-  public async entriesFor(
-    table: PartitionedTableName,
-    period: string,
-    organizationId?: OrganizationId,
-  ): Promise<readonly PartitionArchiveEntry[]> {
-    const tenant = organizationId ? sql`and organization_id = ${organizationId}::uuid` : sql``;
-
-    const rows = await this.catalogDb.execute<EntryRow>(
-      sql`select organization_id::text as organization_id, table_name, period::text as period,
-                 object_key, row_count, bytes::bigint::text as bytes, checksum,
-                 action_counts, projected_at
-          from partition_archive
-          where table_name = ${table} and period = ${period}::date ${tenant}
-          order by organization_id`,
-    );
-
-    return rows.rows.map((row) => PgPartitionArchiveGateway.entryOf(row, table));
-  }
-
-  // One mapper for both reads: two copies drifted the moment `projected_at` was added.
-  private static entryOf(row: EntryRow, table: PartitionedTableName): PartitionArchiveEntry {
-    return {
-      organizationId: row.organization_id as OrganizationId,
-      tableName: table,
-      period: row.period,
-      objectKey: row.object_key,
-      rowCount: Number(row.row_count),
-      bytes: Number(row.bytes),
-      checksum: row.checksum,
-      actionCounts: row.action_counts,
-      projectedAt: row.projected_at === null ? null : new Date(row.projected_at),
-    };
-  }
-
-  // The key, and the two facts that prove the object is the one this row recorded.
-  private async archivedOf(
-    table: PartitionedTableName,
-    period: string,
-    organizationId: OrganizationId,
-  ): Promise<{ key: string; checksum: string; rowCount: number }> {
-    const rows = await this.catalogDb.execute<{
-      object_key: string;
-      checksum: string;
-      row_count: number;
-    }>(
-      sql`select object_key, checksum, row_count from partition_archive
-          where organization_id = ${organizationId}::uuid
-            and table_name = ${table}
-            and period = ${period}::date`,
-    );
-
-    const row = rows.rows[0];
-    if (!row) throw new NotFoundError("cold", `${table}/${period}/${organizationId}`);
-
-    return { key: row.object_key, checksum: row.checksum, rowCount: Number(row.row_count) };
-  }
-
-  // Handed to Postgres as one JSON array, so the lines never become objects here at all.
-  private async insertBatch(scratch: string, lines: readonly string[]): Promise<void> {
-    await this.db.execute(
-      sql`insert into ${sql.identifier(scratch)}
-          select * from json_populate_recordset(null::${sql.identifier(scratch)},
-                                                ${`[${lines.join(",")}]`}::json)`,
-    );
   }
 
   // Awaited, not only asked for: `destroy()` returns before the page already in flight
@@ -758,59 +525,6 @@ export class PgPartitionArchiveGateway extends BaseRepository implements Partiti
       ) as standalone
     `);
     return result.rows[0]?.standalone === true;
-  }
-
-  // Every month of the table still half-detached, whichever run left it so.
-  private async pendingOf(entry: PartitionedTableEntry): Promise<readonly Child[]> {
-    const rows = await this.db.execute<ChildRow>(sql`
-      select parent.relname as parent, child.relname as name
-      from pg_inherits i
-      join pg_class parent on parent.oid = i.inhparent
-      join pg_class child on child.oid = i.inhrelid
-      where i.inhdetachpending
-        and (parent.relname = ${entry.name} or exists (
-          select 1 from pg_inherits ti join pg_class root on root.oid = ti.inhparent
-          where ti.inhrelid = parent.oid and root.relname = ${entry.name}
-        ))
-    `);
-    return rows.rows.map((row) => ({
-      parent: row.parent,
-      name: row.name,
-      organizationId: PartitionArchiveGateway.NO_TENANT,
-    }));
-  }
-
-  // A table named as a month of this one — `<parent>_<yyyy>_<mm>` — that is nobody's
-  // partition. The `_restore` scratch tables do not end in a month, so never match.
-  private async orphansOf(entry: PartitionedTableEntry): Promise<readonly Child[]> {
-    const parents = entry.tenantKey
-      ? sql`select tenant.relname as name from pg_class root
-            join pg_inherits ti on ti.inhparent = root.oid
-            join pg_class tenant on tenant.oid = ti.inhrelid
-            where root.relname = ${entry.name}`
-      : sql`select ${entry.name}::text as name`;
-
-    const rows = await this.db.execute<ChildRow>(sql`
-      select parent.name as parent, orphan.relname as name
-      from (${parents}) parent
-      join pg_class orphan
-        on orphan.relkind = 'r'
-       and orphan.relname ~ ('^' || parent.name || '_[0-9]{4}_[0-9]{2}$')
-      join pg_namespace ns on ns.oid = orphan.relnamespace and ns.nspname = 'public'
-      where not exists (select 1 from pg_inherits i where i.inhrelid = orphan.oid)
-    `);
-    return rows.rows.map((row) => ({
-      parent: row.parent,
-      name: row.name,
-      organizationId: PartitionArchiveGateway.NO_TENANT,
-    }));
-  }
-
-  // `<name>_<yyyy>_<mm>` back to the first of that month.
-  private static periodOf(name: string): Date {
-    const match = /_(\d{4})_(\d{2})$/.exec(name);
-    if (!match) throw new InternalError(new Error(`Not a month partition: ${name}`));
-    return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1));
   }
 
   // `inhdetachpending` is the only thing that distinguishes a half-detached partition from
@@ -937,31 +651,6 @@ export class PgPartitionArchiveGateway extends BaseRepository implements Partiti
     const match = /^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})$/.exec(hex);
     if (!match) throw new InternalError(new Error(`Not a tenant partition: ${parent}`));
     return match.slice(1).join("-") as OrganizationId;
-  }
-
-  private static childName(
-    entry: PartitionedTableEntry,
-    period: Date,
-    organizationId: OrganizationId,
-  ): string {
-    const suffix = PgPartitionArchiveGateway.monthSuffix(period);
-    if (!entry.tenantKey) return `${entry.name}_${suffix}`;
-
-    const hex = organizationId.replaceAll("-", "").toLowerCase();
-    if (!/^[0-9a-f]{32}$/.test(hex)) {
-      throw new InternalError(new Error(`Not an organization id: ${organizationId}`));
-    }
-    return `${entry.name}_${hex}_${suffix}`;
-  }
-
-  // The partition's own name plus a suffix, so what a scratch table holds is legible
-  // from its name and two restores of different months never collide.
-  private static scratchName(child: string): string {
-    const name = `${child}_restore`;
-    if (name.length > MAX_IDENTIFIER) {
-      throw new InternalError(new Error(`Scratch table name too long: ${name}`));
-    }
-    return name;
   }
 
   private static nextMonth(period: Date): Date {

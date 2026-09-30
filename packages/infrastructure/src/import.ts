@@ -21,7 +21,6 @@ export {
   PutBucketLifecycleConfigurationCommand,
   PutObjectCommand,
   S3Client,
-  type TransitionStorageClass,
 } from "@aws-sdk/client-s3";
 
 // ── @aws-sdk/lib-storage ─────────────────────────────────────────────────────
@@ -50,9 +49,6 @@ export {
   type CapabilityExplanation,
   type CapabilityRepository,
   CapabilityResolution,
-  ColdArchiveReader,
-  type ColdPage,
-  type ColdTier,
   type DeletedTenantSweep,
   type DocDraftFields,
   type DocGrantee,
@@ -110,7 +106,6 @@ export {
   type OrganizationReader,
   type OutboxGateway,
   type OverrideInput,
-  type PartitionArchiveEntry,
   PartitionArchiveGateway,
   type PartitionEstimate,
   // A value, not a type: the seed and the maintenance gateway both walk the allowlist.
@@ -130,7 +125,6 @@ export {
   // A value, not a type: the founder and the invitation claimer construct one to write
   // an audit row as the tenant being created or joined.
   Principal,
-  type ProjectionGap,
   type QueuedJob,
   QueuePublisher,
   RateLimitStore,
@@ -143,10 +137,6 @@ export {
   type RelayedActivityStore,
   type RenderedMarkdown,
   type RenderedSection,
-  type RestoredMonth,
-  type RetentionPolicyRecord,
-  type RetentionPolicyRepository,
-  type RetentionStore,
   type RolePage,
   type RoleRecord,
   type RoleRepository,
@@ -154,11 +144,9 @@ export {
   Shard,
   type ShardKey,
   type ShardMapReader,
-  type ShardNode,
   type ShardPlacement,
   ShardResolver,
   type ShardTenant,
-  type ShardTenantPage,
   StorageGateway,
   StoragePolicyGateway,
   type StoredObject,
@@ -169,8 +157,6 @@ export {
   type TenantExport,
   type TenantRecord,
   type TenantRepository,
-  type TenantRetentionPolicyRecord,
-  type TenantRetentionPolicyRepository,
   type TenantRunway,
   UnitOfWork,
   type UnreadQuery,

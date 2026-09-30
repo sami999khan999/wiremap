@@ -9,14 +9,6 @@ export class NotificationRouter {
     context.container.notification.list.execute(context.principal, input),
   );
 
-  public static readonly archived = authed.notification.archived.handler(({ input, context }) =>
-    context.container.notification.archived.execute(context.principal, input),
-  );
-
-  public static readonly archivedMonths = authed.notification.archivedMonths.handler(
-    ({ context }) => context.container.notification.archived.months(context.principal),
-  );
-
   public static readonly unreadCount = authed.notification.unreadCount.handler(({ context }) =>
     context.container.notification.countUnread.execute(context.principal),
   );
@@ -55,8 +47,6 @@ export class NotificationRouter {
   // `NotificationProcedures.all`.
   public static readonly all = {
     list: NotificationRouter.list,
-    archived: NotificationRouter.archived,
-    archivedMonths: NotificationRouter.archivedMonths,
     unreadCount: NotificationRouter.unreadCount,
     markRead: NotificationRouter.markRead,
     markAllRead: NotificationRouter.markAllRead,

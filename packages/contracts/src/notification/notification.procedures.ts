@@ -1,4 +1,4 @@
-import { oc, z } from "../import.js";
+import { oc } from "../import.js";
 import { Envelope, Keyset } from "../primitive/index.js";
 import { NotificationContract } from "./notification.contract.js";
 
@@ -9,17 +9,6 @@ export class NotificationProcedures {
     .route({ method: "GET", path: "/notifications" })
     .input(NotificationContract.listQuery)
     .output(Keyset.page(NotificationContract.entity));
-
-  // The same page shape as `list`, so the client renders it with the component it
-  // already has. See packages/application/docs/reference/ports.md.
-  public static readonly archived = oc
-    .route({ method: "GET", path: "/notifications/archived" })
-    .input(NotificationContract.archivedQuery)
-    .output(Keyset.page(NotificationContract.entity));
-
-  public static readonly archivedMonths = oc
-    .route({ method: "GET", path: "/notifications/archived/months" })
-    .output(z.array(NotificationContract.archivedMonth).readonly());
 
   // Its own procedure rather than a field on the list: the bell is on every page and the
   // list is on one, so they have different cache lifetimes and different call rates.
@@ -51,8 +40,6 @@ export class NotificationProcedures {
   // procedure to, rather than two.
   public static readonly all = {
     list: NotificationProcedures.list,
-    archived: NotificationProcedures.archived,
-    archivedMonths: NotificationProcedures.archivedMonths,
     unreadCount: NotificationProcedures.unreadCount,
     markRead: NotificationProcedures.markRead,
     markAllRead: NotificationProcedures.markAllRead,

@@ -28,11 +28,9 @@ export { PgPermissionOverrideRepository } from "./pg-permission-override.reposit
 export { PgPersonalOrganizationEnroller } from "./pg-personal-organization.enroller.js";
 export { PgPlatformReader } from "./pg-platform.reader.js";
 export { PgPlatformPolicyRepository } from "./pg-platform-policy.repository.js";
-export { PgRetentionPolicyRepository } from "./pg-retention-policy.repository.js";
 export { PgRoleRepository } from "./pg-role.repository.js";
 export { PgShardResolver } from "./pg-shard.resolver.js";
 export { PgShardMapReader } from "./pg-shard-map.reader.js";
 export { PgTenantRepository } from "./pg-tenant.repository.js";
-export { PgTenantRetentionPolicyRepository } from "./pg-tenant-retention-policy.repository.js";
 export { PgUserReader } from "./pg-user.reader.js";
 export { PgVectorStore } from "./pg-vector.store.js";

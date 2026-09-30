@@ -1,11 +1,6 @@
 export { ActivityLogger } from "./activity.logger.js";
 export { CacheStore } from "./cache.store.js";
 export { CapabilityInvalidator } from "./capability.invalidator.js";
-export {
-  ColdArchiveReader,
-  type ColdPage,
-  type PartitionArchiveEntry,
-} from "./cold-archive.reader.js";
 export { DomainEventPublisher } from "./domain-event.publisher.js";
 export { type EmailMessage, type EmailReceipt, EmailSender } from "./email.sender.js";
 export { EmbeddingProvider } from "./embedding.provider.js";
@@ -31,8 +26,6 @@ export {
   type DeletedTenantSweep,
   type ExportedObject,
   PartitionArchiveGateway,
-  type ProjectionGap,
-  type RestoredMonth,
   type TenantExport,
 } from "./partition-archive.gateway.js";
 export { type JobOptions, type QueuedJob, QueuePublisher } from "./queue.publisher.js";
@@ -50,7 +43,6 @@ export { type ShardPlacement, ShardResolver } from "./shard.resolver.js";
 export { ShardingStrategy } from "./sharding.strategy.js";
 export { StorageGateway, type StoredObject } from "./storage.gateway.js";
 export {
-  type ColdTier,
   type LifecycleRule,
   StoragePolicyGateway,
 } from "./storage-policy.gateway.js";

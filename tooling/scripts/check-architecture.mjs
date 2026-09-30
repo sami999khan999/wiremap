@@ -1426,8 +1426,8 @@ function exampleKeys() {
   return found;
 }
 
-// Every key an app's `Env` schema names. Four spaces, because that is the indent of a
-// field inside the one `z.object({ … })` each schema declares.
+// Every key an app's `Env` schema names: a field of the one `z.object({ … })` each schema
+// declares, at two spaces bare or four inside a `.superRefine` chain.
 function schemaKeys() {
   const apps = join(ROOT, "apps");
   if (!existsSync(apps)) return [];
@@ -1438,7 +1438,9 @@ function schemaKeys() {
     const file = join(apps, name, "src/env.ts");
     if (!existsSync(file)) continue;
 
-    for (const key of readFileSync(file, "utf8").matchAll(/^\s{4}([A-Z][A-Z0-9_]*):\s/gm)) {
+    for (const key of readFileSync(file, "utf8").matchAll(
+      /^(?:\s{2}|\s{4})([A-Z][A-Z0-9_]*):\s/gm,
+    )) {
       found.push({ app: name, key: key[1] ?? "" });
     }
   }

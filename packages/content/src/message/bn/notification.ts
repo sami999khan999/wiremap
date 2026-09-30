@@ -5,14 +5,6 @@ export const notification = {
   "notification.kind.member.role.changed.body":
     "একজন প্রশাসক এখানে আপনি কী করতে পারেন তা বদলেছেন। আপনার নতুন ভূমিকা দেখতে সদস্য পাতাটি খুলুন।",
 
-  "notification.archived.title": "এক বছরের বেশি পুরনো",
-  "notification.archived.description": "সরাসরি কোল্ড স্টোরেজ থেকে পড়া হয়। পুনরুদ্ধারের অপেক্ষা নেই।",
-  "notification.archived.month": "মাস",
-  "notification.archived.column.kind": "কী ঘটেছে",
-  "notification.archived.column.created": "কখন",
-  "notification.archived.noMonths": "আপনার কিছুই এখনো আর্কাইভ হয়নি।",
-  "notification.archived.empty": "এই মাসে আপনার কিছু নেই।",
-  "notification.archived.more": "আরও দেখুন",
   "notification.inbox.title": "বিজ্ঞপ্তি",
   "notification.inbox.empty": "এখনও কিছু নেই। হালনাগাদগুলো এখানে দেখা যাবে।",
   "notification.inbox.emptyUnread": "অপঠিত কিছু নেই। এখানকার সবকিছু দেখা হয়ে গেছে।",

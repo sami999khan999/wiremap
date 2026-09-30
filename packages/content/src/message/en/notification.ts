@@ -7,17 +7,6 @@ export const notification = {
   "notification.kind.member.role.changed.body":
     "An administrator changed what you can do here. Open the members page to see your new role.",
 
-  "notification.archived.title": "Older than a year",
-  "notification.archived.description":
-    "Read straight out of cold storage. Nothing to restore and nothing to wait for.",
-  "notification.archived.month": "Month",
-  "notification.archived.column.kind": "What happened",
-  "notification.archived.column.created": "When",
-  // Two different empties: nothing of yours was ever archived, and nothing of yours
-  // is in the month you picked. A screen saying one for the other reads as a bug.
-  "notification.archived.noMonths": "Nothing of yours has been archived yet.",
-  "notification.archived.empty": "You have nothing in this month.",
-  "notification.archived.more": "Load more",
   "notification.inbox.title": "Notifications",
   "notification.inbox.empty": "Nothing yet. This is where updates will appear.",
   "notification.inbox.emptyUnread": "Nothing unread. Everything here has been seen.",

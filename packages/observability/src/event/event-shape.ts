@@ -72,16 +72,6 @@ export interface EventShape {
     // runway, which is one less. Named for what it is after the two drifted apart.
     readonly months: number;
   };
-  readonly "maintenance.partition.archived": {
-    readonly table: string;
-    readonly period: string;
-    // Objects written, which is tenants with rows in that month — not tenants, and not
-    // partitions: an empty tenant-month is dropped and writes none.
-    readonly objects: number;
-    readonly rows: number;
-  };
-  readonly "maintenance.partition.dropped": { readonly table: string; readonly partition: string };
-  readonly "cold.partition.recovered": { readonly table: string; readonly partition: string };
   readonly "partition.runway.low": {
     readonly table: string;
     // Which tenant ran out, empty for the table that has no tenant level. Body, not label.
@@ -100,10 +90,6 @@ export interface EventShape {
     // them is a line an operator has to go and look something up to read.
     readonly expected: string;
     readonly actual: string;
-  };
-  readonly "retention.rows.expired": {
-    readonly table: string;
-    readonly rows: number;
   };
   readonly "cold.objects.swept": {
     // Why they went, so a sweep for a deleted tenant is distinguishable from the
@@ -144,15 +130,6 @@ export interface EventShape {
     readonly tenants: number;
     readonly organizationIds: string;
   };
-  readonly "cold.partition.restored": {
-    readonly table: string;
-    readonly period: string;
-    readonly organizationId: string;
-    readonly rows: number;
-    // Where it landed. `false` is the scratch table, which is every restore outside the
-    // table's hot window — and the screen says to raise hot months first.
-    readonly attached: boolean;
-  };
   readonly "dependency.request.failed": {
     readonly dependency: string;
     readonly status: number;
@@ -192,13 +169,6 @@ export interface EventShape {
 
   readonly "cache.entry.corrupt": { readonly key: string };
   readonly "embedding.request.failed": { readonly model: string; readonly chunks: number };
-
-  readonly "analytics.projection.gap": {
-    readonly period: string;
-    // `disabled` is no projector at all; `behind` is one that has not caught up to the
-    // end of the month. The first is a decision, the second is a backlog.
-    readonly reason: string;
-  };
 }
 
 export type EventFields<C extends EventCode> = EventShape[C];

@@ -1,18 +1,10 @@
-import { type ColdTier, type LifecycleRule, StoragePolicyGateway } from "../import.js";
+import { type LifecycleRule, StoragePolicyGateway } from "../import.js";
 
 // Rules in a field, and `applyLifecycle` **replaces** them — the same semantics S3 has,
 // because a fake that merged would let a caller that drops a rule pass.
 export class InMemoryStoragePolicyGateway extends StoragePolicyGateway {
   private rules: readonly LifecycleRule[] = [];
   private readonly writes: (readonly LifecycleRule[])[] = [];
-
-  public constructor(private readonly tier: ColdTier | null = null) {
-    super();
-  }
-
-  public override coldTier(): ColdTier | null {
-    return this.tier;
-  }
 
   public override lifecycle(): Promise<readonly LifecycleRule[]> {
     return Promise.resolve(this.rules);

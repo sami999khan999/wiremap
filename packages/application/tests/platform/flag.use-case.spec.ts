@@ -54,7 +54,6 @@ const TENANT_ROW: ShardTenant = {
   node: 0,
   assignedAt: new Date(0),
   movedAt: null,
-  retentionOverrides: 0,
 };
 
 function harness() {

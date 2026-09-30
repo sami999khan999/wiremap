@@ -18,7 +18,6 @@ import {
   ClearEntitlementAdjustmentUseCase,
   ClearPermissionOverrideUseCase,
   type Clock,
-  type ColdArchiveReader,
   type ContentSource,
   CountUnreadNotificationsUseCase,
   CreateApiKeyUseCase,
@@ -65,7 +64,6 @@ import {
   InviteMemberUseCase,
   JsonLogger,
   ListApiKeysUseCase,
-  ListArchivedNotificationsUseCase,
   ListDocGrantsUseCase,
   ListDocPagesUseCase,
   ListDocRevisionsUseCase,
@@ -129,12 +127,10 @@ import {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
-  PgRetentionPolicyRepository,
   PgRoleRepository,
   PgShardMapReader,
   PgShardResolver,
   PgTenantRepository,
-  PgTenantRetentionPolicyRepository,
   PgUnitOfWork,
   PgVectorStore,
   type PlatformPolicyRepository,
@@ -161,12 +157,10 @@ import {
   type ReplicaHealth,
   ResendInvitationUseCase,
   RestoreDocRevisionUseCase,
-  type RetentionPolicyRepository,
   RevokeApiKeyUseCase,
   RevokeDocGrantUseCase,
   RevokeInvitationUseCase,
   RevokePermissionUseCase,
-  S3ColdArchiveReader,
   S3StorageGateway,
   S3StoragePolicyGateway,
   SaveDocGrantUseCase,
@@ -193,7 +187,6 @@ import {
   SwitchModuleUseCase,
   SystemClock,
   type TenantMembershipReader,
-  type TenantRetentionPolicyRepository,
   ToggleReplicaReadsUseCase,
   TransactionScope,
   UnifiedMarkdownRenderer,
@@ -403,7 +396,6 @@ export class Container {
   // half needs an auth config, which is why this sits outside that branch too.
   public readonly notification: {
     readonly list: ListNotificationsUseCase;
-    readonly archived: ListArchivedNotificationsUseCase;
     readonly countUnread: CountUnreadNotificationsUseCase;
     readonly markRead: MarkNotificationReadUseCase;
     readonly markAllRead: MarkAllNotificationsReadUseCase;
@@ -443,12 +435,9 @@ export class Container {
     readonly updateFlag: UpdateFlagUseCase;
     readonly updateFlagTarget: UpdateFlagTargetUseCase;
   };
-  // Bucket-shaped policy, beside the object-shaped `storage`. The retention screen and
-  // the worker's daily reconcile are its only two readers.
+  // Bucket-shaped policy, beside the object-shaped `storage`. The worker's daily
+  // reconcile is its only reader.
   public readonly storagePolicy: StoragePolicyGateway;
-  // Cold storage read back. Whole-object and verified, which is what makes a restore
-  // and a re-projection read the same bytes the archive wrote.
-  public readonly coldArchive: ColdArchiveReader;
   // One row. An absent row is the defaults, so a deployment that never opens the screen
   // behaves as it always did.
   public readonly platformPolicy: PlatformPolicyRepository;
@@ -490,12 +479,6 @@ export class Container {
     // caller places it at that organization's node.
     readonly openImage: OpenDocImageUseCase;
   };
-  // Read by the prune pass once per run, and by the screen. An absent row is the code
-  // default, so this is never the only source of a number.
-  public readonly retentionPolicies: RetentionPolicyRepository;
-  // Read once per table by the prune pass, and usually empty: an override is what
-  // makes that pass walk tenants rather than months.
-  public readonly tenantRetentionPolicies: TenantRetentionPolicyRepository;
   // One person's exceptions to their role. `expire` is the worker's, like the other sweeps.
   public readonly overrides: {
     readonly list: ListPermissionOverridesUseCase;
@@ -615,7 +598,6 @@ export class Container {
     this.rateLimits = new RedisRateLimitStore(this.redis.client());
     this.storage = new S3StorageGateway(config.storage);
     this.storagePolicy = new S3StoragePolicyGateway(config.storage);
-    this.coldArchive = new S3ColdArchiveReader(this.storage);
 
     // The *direct* pool, not the shared one: a month-sized detach and stream needs a
     // budget the 30 s role floor will not give it. See docs/infra/reference/pgbouncer.md.
@@ -731,11 +713,6 @@ export class Container {
 
     this.notification = {
       list: new ListNotificationsUseCase(this.authorizer, notifications),
-      archived: new ListArchivedNotificationsUseCase(
-        this.authorizer,
-        this.partitionArchive,
-        this.coldArchive,
-      ),
       countUnread: new CountUnreadNotificationsUseCase(this.authorizer, notifications, this.cache),
       markRead: new MarkNotificationReadUseCase(
         this.authorizer,
@@ -985,16 +962,6 @@ export class Container {
     const tenantLookup = new PgShardMapReader(this.cluster, this.transactions, this.shards);
     this.flags = new FlagCache(flagRepository, this.cache);
     this.doc = this.buildDoc();
-    this.retentionPolicies = new PgRetentionPolicyRepository(
-      this.cluster,
-      this.transactions,
-      this.shards,
-    );
-    this.tenantRetentionPolicies = new PgTenantRetentionPolicyRepository(
-      this.cluster,
-      this.transactions,
-      this.shards,
-    );
 
     this.platformAdmin = {
       deleteOrganization: new DeleteOrganizationUseCase(
@@ -1014,7 +981,6 @@ export class Container {
         this.activity,
         this.catalogUnitOfWork,
         this.clock,
-        this.tenantRetentionPolicies,
         this.shardResolver,
         new DocImageSweep(this.storage),
       ),

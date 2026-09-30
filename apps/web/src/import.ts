@@ -46,7 +46,6 @@ export {
   AccountPanel,
   ActiveSessionList,
   ApiKeyList,
-  ArchivedNotificationList,
   ChangeEmailForm,
   ChangePasswordForm,
   CreateApiKeyForm,

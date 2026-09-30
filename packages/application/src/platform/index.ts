@@ -86,18 +86,10 @@ export {
   ReinstateAccountUseCase,
 } from "./reinstate-account.use-case.js";
 export { RetentionRules } from "./retention.rules.js";
-export {
-  type ColdMode,
-  type RetentionPolicyRecord,
-  RetentionPolicyRepository,
-  type RetentionStore,
-} from "./retention-policy.repository.js";
 export { SavePlanUseCase } from "./save-plan.use-case.js";
 export {
   ShardMapReader,
-  type ShardNode,
   type ShardTenant,
-  type ShardTenantPage,
 } from "./shard-map.reader.js";
 export {
   type SuspendAccountInput,
@@ -105,10 +97,6 @@ export {
 } from "./suspend-account.use-case.js";
 export { type SwitchModuleInput, SwitchModuleUseCase } from "./switch-module.use-case.js";
 export { type TenantRecord, TenantRepository } from "./tenant.repository.js";
-export {
-  type TenantRetentionPolicyRecord,
-  TenantRetentionPolicyRepository,
-} from "./tenant-retention-policy.repository.js";
 export {
   type ToggleReplicaReadsInput,
   ToggleReplicaReadsUseCase,

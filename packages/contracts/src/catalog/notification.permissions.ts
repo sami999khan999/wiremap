@@ -4,8 +4,6 @@ import type { PermissionKey } from "../import.js";
 // preferences are the same power: both are "what has this system got for me".
 export const notificationProcedurePermissions = {
   "notification.list": "notification.inbox.read",
-  "notification.archived": "notification.archive.read",
-  "notification.archivedMonths": "notification.archive.read",
   "notification.unreadCount": "notification.inbox.read",
   "notification.markRead": "notification.inbox.update",
   "notification.markAllRead": "notification.inbox.update",

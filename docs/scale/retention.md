@@ -49,4 +49,32 @@ create something a later one drops — port the *final* shape, per [Porting](por
 > delete must sweep them itself — the archive index has no foreign key to cascade from. Port that
 > part with the rest, not later.
 
+## What lite kept, and trimmed
+
+A tenant delete still archives before it drops: every month of the tenant's partitions goes to
+S3 under `cold/`, and the nightly `retention` job deletes those objects 30 days later. So lite
+has these files, trimmed to that path. Compare each against the big kit rather than copying over
+it:
+
+- `PartitionArchiveGateway` and `PgPartitionArchiveGateway` keep `archive`, `sweep`,
+  `exportTenant`, `markTenantDeleted` and `sweepDeleted`. Lite removed `recover`, `restore`,
+  `markProjected`, `monthsOf`, `gaps`, `forget` and `entriesFor`, and the types `RestoredMonth`
+  and `ProjectionGap`.
+- `MaintenanceGateway` lost `dropMonthlyPartitionsBefore` and `attachMonthlyPartition`.
+- `RetentionRules` composes only the `export/` rule. The big kit composes a rule per table from
+  the retention rows, and a colder-class transition.
+- `StoragePolicyGateway` lost `coldTier()`, and `LifecycleRule` its `transition`.
+- The worker's `partitions` job only keeps the runway. Its `prune`, the `cold-restore` job and
+  the archive-row expiry were removed, and `retention` keeps the lifecycle converger and the
+  deleted-tenant sweep.
+- The schema kept `partition_archive`. `retention_policy` and `tenant_retention_policy` left the
+  drizzle schema and `primitive/shard.ts`, and `PurgeOrganizationUseCase` no longer takes the
+  tenant-retention repository.
+
+**Also restore:** `upstream:packages/infrastructure/src/s3/ndjson-lines.ts` and
+`upstream:packages/infrastructure/src/s3/ordinal-cursor.ts`, the `notification.archive.read`
+permission with the `notification.archived` and `notification.archivedMonths` procedures, the
+`S3_COLD_*` checks in each `env.ts`, the six event codes the prune and restore emit, and the
+`infra:up:cold-tier` script.
+
 Background: `upstream:packages/infrastructure/docs/reference/cold-storage.md`.

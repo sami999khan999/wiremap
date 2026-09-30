@@ -1,7 +1,5 @@
 import { SystemPrincipal, withShard } from "../bootstrap/index.js";
 import {
-  type ArchivedPartition,
-  type ColdMode,
   type Container,
   type Job,
   type OrganizationId,
@@ -10,21 +8,11 @@ import {
   type PartitionedTableName,
   QueueName,
   type Redis,
-  type RetentionPolicyRecord,
   RetentionRules,
-  type TenantRetentionPolicyRecord,
   type TenantRunway,
   type UserId,
   Worker,
 } from "../import.js";
-
-// What `cold-restore` carries. A closed shape rather than the job's `unknown`, checked
-// at the one place the payload crosses from the queue into typed code.
-interface RestoreJob {
-  readonly table: PartitionedTableName;
-  readonly period: string;
-  readonly organizationId: OrganizationId | null;
-}
 
 // What `tenant-export` carries. The day comes from the request rather than the clock, so
 // a retry the next morning writes the objects the job id already claimed.
@@ -138,71 +126,12 @@ export class MaintenanceConsumer {
         return this.orphans();
       case "spares":
         return this.spares();
-      case "cold-restore":
-        return this.restore(job.data as RestoreJob);
       case "tenant-export":
         return this.export(job.data as ExportJob);
       case "tenant-delete":
         return this.purge(job.data as PurgeJob);
       default:
         throw new Error(`Unknown maintenance job: ${job.name}`);
-    }
-  }
-
-  // One tenant-month per object, into a scratch table — `17.4`'s rule, and the one
-  // case where attaching is right is below.
-  private async restore(data: RestoreJob): Promise<void> {
-    const table = data.table;
-    const period = new Date(`${data.period}T00:00:00.000Z`);
-    const entries = await this.container.partitionArchive.entriesFor(
-      table,
-      data.period,
-      data.organizationId ?? undefined,
-    );
-
-    // The hot window, from the row if there is one and the allowlist if not — the same
-    // resolution `prune()` does, because the two have to agree about what "hot" means.
-    const policy = await this.container.retentionPolicies.findBy("postgres", table);
-    const months = policy?.hotMonths ?? PartitionedTable.byName(table).retentionMonths;
-    const now = this.container.clock.now();
-    const cutoff =
-      months === null
-        ? null
-        : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
-
-    // Inside the window, the retention pass will not argue with it. Outside, the
-    // scratch table stays as evidence — nothing sweeps it, on purpose.
-    const inWindow = cutoff === null || period.getTime() >= cutoff.getTime();
-
-    for (const entry of entries) {
-      // Placed per entry, not per job: the index is catalog and the scratch table and
-      // its ATTACH are the tenant's, so unplaced they were written to node 0.
-      const restored = await withShard(this.container, entry.organizationId, async () => {
-        const outcome = await this.container.partitionArchive.restore(
-          table,
-          period,
-          entry.organizationId,
-        );
-
-        if (inWindow) {
-          await this.container.maintenance.attachMonthlyPartition(
-            table,
-            PartitionedTable.byName(table).tenantKey ? entry.organizationId : null,
-            period,
-            outcome.scratchTable,
-          );
-        }
-
-        return outcome;
-      });
-
-      this.container.logger.emit("cold.partition.restored", {
-        table,
-        period: restored.period,
-        organizationId: entry.organizationId,
-        rows: restored.rowCount,
-        attached: inWindow,
-      });
     }
   }
 
@@ -295,32 +224,22 @@ export class MaintenanceConsumer {
   }
 
   // Every month-partitioned table from the allowlist, on every node: a partition is
-  // physical, so the runway is per node and so is the month that leaves for cold storage.
+  // physical, so the runway is per node. Nothing in lite drops a month.
   private async partitions(): Promise<void> {
-    // One query for the whole run rather than one per table or per node. An absent row
-    // is the code default, so this map is usually empty and the allowlist answers all.
-    const rows = await this.container.retentionPolicies.forPostgres();
-
     await this.container.eachShard(async (node) => {
-      for (const entry of PartitionedTable.MONTH_PARTITIONED) {
-        await this.ensure(entry, node);
-        await this.prune(entry.name, rows.get(entry.name), node);
-      }
+      for (const entry of PartitionedTable.MONTH_PARTITIONED) await this.ensure(entry, node);
     });
   }
 
-  // The daily converger. Neither store is written by a save alone: the call after the
-  // commit can fail, and a rule deleted by hand in a console is drift nothing else sees.
+  // The daily converger: the bucket's export rule, then the end of each deleted tenant's
+  // recovery window. A rule deleted by hand in a console is drift nothing else sees.
   private async retention(): Promise<void> {
-    const rows = await this.container.retentionPolicies.all();
-
-    await this.convergeLifecycle(rows);
-    await this.expireArchiveRows(rows);
+    await this.convergeLifecycle();
     await this.sweepDeletedTenants();
   }
 
-  private async convergeLifecycle(rows: readonly RetentionPolicyRecord[]): Promise<void> {
-    const expected = RetentionRules.lifecycleFor(rows, this.container.storagePolicy.coldTier());
+  private async convergeLifecycle(): Promise<void> {
+    const expected = RetentionRules.lifecycleFor();
     const actual = await this.container.storagePolicy.lifecycle();
     if (RetentionRules.lifecycleMatches(expected, actual)) return;
 
@@ -333,29 +252,6 @@ export class MaintenanceConsumer {
 
     await this.container.storagePolicy.applyLifecycle(expected);
     this.container.logger.emit("retention.lifecycle.applied", { rules: expected.length });
-  }
-
-  // A row pointing at an object the bucket already expired is a `NotFoundError` on the
-  // archived read. Deleted after the rule that removed the object, never before.
-  private async expireArchiveRows(rows: readonly RetentionPolicyRecord[]): Promise<void> {
-    const now = this.container.clock.now();
-
-    for (const row of rows) {
-      if (row.store !== "postgres" || row.coldMonths === null) continue;
-      if (!MaintenanceConsumer.isPartitioned(row.tableName)) continue;
-
-      const cutoff = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (row.hotMonths + row.coldMonths), 1),
-      );
-
-      const expired = await this.container.partitionArchive.forget(row.tableName, cutoff);
-      if (expired === 0) continue;
-
-      this.container.logger.emit("retention.rows.expired", {
-        table: row.tableName,
-        rows: expired,
-      });
-    }
   }
 
   // Postgres forgot these tenants when their row was deleted; the bucket has not. The
@@ -372,14 +268,7 @@ export class MaintenanceConsumer {
     this.container.logger.emit("cold.objects.swept", { reason: "tenant_deleted", ...swept });
   }
 
-  // The closed union, checked rather than cast: a row naming a table the allowlist no
-  // longer has must not reach a method that inlines the name into DDL.
-  private static isPartitioned(table: string): table is PartitionedTableName {
-    return (PartitionedTable.NAMES as readonly string[]).includes(table);
-  }
-
-  // The comparison's own spelling, transitions included: a drift line that left them out
-  // would print two identical strings for a bucket that lost its colder class.
+  // The comparison's own spelling, so a drift line prints what was compared.
   private static serialise(rules: Parameters<typeof RetentionRules.lifecycleMatches>[0]): string {
     return [...rules]
       .sort((left, right) => left.prefix.localeCompare(right.prefix))
@@ -482,168 +371,6 @@ export class MaintenanceConsumer {
       organizationId: organizationId ?? "",
       created,
       months: MaintenanceConsumer.MONTHS_PER_RUN,
-    });
-  }
-
-  private async outboxIsBehind(cutoff: Date): Promise<boolean> {
-    const oldest = await this.container.outbox.oldestPendingAt();
-    return oldest !== null && oldest < cutoff;
-  }
-
-  // Archive, then drop — never one without the other. Retention stops meaning deletion
-  // here: every month leaves for cold storage and is dropped behind a verified object.
-  private async prune(
-    table: PartitionedTableName,
-    policy: RetentionPolicyRecord | undefined,
-    node: number,
-  ): Promise<void> {
-    // The row, then the allowlist. An absent row **is** the code default, which is what
-    // makes an empty `retention_policy` behave exactly as the deploy before it did.
-    const months = policy?.hotMonths ?? PartitionedTable.byName(table).retentionMonths;
-    if (months === null) return;
-
-    // Before the months are listed, so one a cut-off run left detached is listed again.
-    for (const partition of await this.container.partitionArchive.recover(table)) {
-      this.container.logger.emit("cold.partition.recovered", { table, partition });
-    }
-
-    const now = this.container.clock.now();
-    const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
-
-    // Only the outbox has a notion of "not yet handled", and a stuck event must never be
-    // archived out from under the drain. One table's guard, never every table's.
-    if (table === PartitionedTable.OUTBOX_EVENT && (await this.outboxIsBehind(cutoff))) return;
-
-    // Overrides make a table's cutoff differ per tenant, so the pass walks them. Read
-    // **before** the mode branch: `drop` destroys a month, and an override cannot undo it.
-    const overrides = await this.container.tenantRetentionPolicies.forTable(table);
-    const mode = policy?.coldMode ?? "archive";
-
-    if (overrides.size > 0) {
-      await this.pruneByTenant(table, months, overrides, node, mode);
-      return;
-    }
-
-    // `drop` destroys the month rather than archiving it, which is a table of transport
-    // rows deciding it is not worth the bytes. The outbox guard above still applies.
-    if (mode === "drop") {
-      for (const partition of await this.container.maintenance.dropMonthlyPartitionsBefore(
-        table,
-        null,
-        cutoff,
-      )) {
-        this.container.logger.emit("maintenance.partition.dropped", { table, partition });
-      }
-      return;
-    }
-
-    for (const period of await this.periodsBefore(table, cutoff)) {
-      await this.archivePeriod(table, period);
-    }
-  }
-
-  // `override ?? retention_policy row ?? allowlist`, resolved per tenant. The default
-  // months are already resolved by the caller, which is the middle two of the three.
-  private async pruneByTenant(
-    table: PartitionedTableName,
-    defaultMonths: number,
-    overrides: ReadonlyMap<OrganizationId, TenantRetentionPolicyRecord>,
-    node: number,
-    mode: ColdMode,
-  ): Promise<void> {
-    const now = this.container.clock.now();
-    let after: OrganizationId | null = null;
-
-    for (;;) {
-      const page = await this.container.organizations.page(
-        after,
-        MaintenanceConsumer.TENANT_PAGE,
-        node,
-      );
-      if (page.length === 0) break;
-
-      for (const organizationId of page) {
-        const months = overrides.get(organizationId)?.hotMonths ?? defaultMonths;
-        const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
-
-        if (mode === "drop") {
-          for (const partition of await this.container.maintenance.dropMonthlyPartitionsBefore(
-            table,
-            organizationId,
-            cutoff,
-          )) {
-            this.container.logger.emit("maintenance.partition.dropped", { table, partition });
-          }
-          continue;
-        }
-
-        for (const period of await this.periodsBefore(table, cutoff, organizationId)) {
-          await this.archivePeriod(table, period, organizationId);
-        }
-      }
-
-      after = page[page.length - 1] ?? null;
-      if (page.length < MaintenanceConsumer.TENANT_PAGE) break;
-    }
-  }
-
-  // Distinct months, oldest first, across every tenant. The read is the same one the
-  // retention preview makes, so the screen and the job cannot disagree about what exists.
-  private async periodsBefore(
-    table: PartitionedTableName,
-    cutoff: Date,
-    organizationId?: OrganizationId,
-  ): Promise<readonly Date[]> {
-    const estimates = await this.container.maintenance.partitionsBefore(
-      table,
-      cutoff,
-      organizationId,
-    );
-    const periods = new Map<number, Date>();
-
-    for (const estimate of estimates) periods.set(estimate.period.getTime(), estimate.period);
-
-    return [...periods.values()].sort((a, b) => a.getTime() - b.getTime());
-  }
-
-  // One table-month. A failure here is logged and the loop continues: one month whose
-  // upload failed must not stop the months after it, and nothing was dropped.
-  private async archivePeriod(
-    table: PartitionedTableName,
-    period: Date,
-    organizationId?: OrganizationId,
-  ): Promise<void> {
-    try {
-      const archived = await this.container.partitionArchive.archive(table, period, organizationId);
-      const rows = archived.objects.reduce((total, object) => total + object.rowCount, 0);
-
-      // One line per table-month, not one per tenant object: a month with five thousand
-      // tenants would otherwise be five thousand lines.
-      this.container.logger.emit("maintenance.partition.archived", {
-        table,
-        period: archived.period,
-        objects: archived.objects.length,
-        rows,
-      });
-
-      for (const partition of archived.dropped) {
-        this.container.logger.emit("maintenance.partition.dropped", { table, partition });
-      }
-
-      this.stampProjected(table, archived);
-    } catch (error: unknown) {
-      this.container.logger.failure(error, { table, period: period.toISOString() });
-    }
-  }
-
-  // Only the audit trail reaches ClickHouse, so only its months can have a hole. Lite
-  // runs no projection, so every archived month of it is one, recorded as `disabled`.
-  private stampProjected(table: PartitionedTableName, archived: ArchivedPartition): void {
-    if (table !== PartitionedTable.ACTIVITY_LOG || archived.objects.length === 0) return;
-
-    this.container.logger.emit("analytics.projection.gap", {
-      period: archived.period,
-      reason: "disabled",
     });
   }
 }

@@ -171,49 +171,6 @@ describe("PgMaintenanceGateway.monthlyPartitionsAfter", () => {
   });
 });
 
-describe("PgMaintenanceGateway.dropMonthlyPartitionsBefore", () => {
-  // The cutoff is read as a month boundary, not an instant: a partition holding the
-  // cutoff's own month also holds rows newer than it, and dropping it would lose them.
-  it("drops only the partitions whose month ends before the cutoff month", async () => {
-    await gateway.ensureMonthlyPartitions(PartitionedTable.ACTIVITY_LOG, organizationId, FROM, 2);
-
-    const dropped = await gateway.dropMonthlyPartitionsBefore(
-      PartitionedTable.ACTIVITY_LOG,
-      organizationId,
-      new Date("2020-08-15T00:00:00.000Z"),
-    );
-
-    expect(dropped).toContain(NAMES[0]);
-    expect(dropped).not.toContain(NAMES[1]);
-
-    // The regression, and the reason the months above are in the past: a cutoff later
-    // than today sweeps every partition the migrations made, under every other spec.
-    expect(dropped.filter((name) => !NAMES.includes(name))).toEqual([]);
-  });
-
-  // The loop holds a `drop table`, so a child it cannot parse has to be left alone: an
-  // unrecognised name is not evidence that the rows in it are expendable.
-  it("leaves a child whose name is not <table>_<yyyy>_<mm> alone", async () => {
-    const scratch = `${tenantPartition}_scratch`;
-    await database.client.execute(
-      sql.raw(`create table if not exists ${scratch} partition of ${tenantPartition}
-          for values from ('2021-01-01') to ('2021-02-01')`),
-    );
-
-    try {
-      const dropped = await gateway.dropMonthlyPartitionsBefore(
-        PartitionedTable.ACTIVITY_LOG,
-        organizationId,
-        new Date("2021-06-01T00:00:00.000Z"),
-      );
-
-      expect(dropped).not.toContain(scratch);
-    } finally {
-      await database.client.execute(sql.raw(`drop table if exists ${scratch}`));
-    }
-  });
-});
-
 // The gateway's own rows, so a run leaves the scratch database as it found it.
 const session = (expiresAt: Date) => ({
   id: Uuid.v7(),

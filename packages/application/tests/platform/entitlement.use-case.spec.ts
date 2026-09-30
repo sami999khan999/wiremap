@@ -40,7 +40,6 @@ const TENANT: ShardTenant = {
   node: 0,
   assignedAt: NOW,
   movedAt: null,
-  retentionOverrides: 0,
 };
 
 class MemoryEntitlements extends EntitlementRepository {
