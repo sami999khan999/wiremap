@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Menu } from "../../src/menu/menu.js";
 
@@ -14,7 +14,24 @@ const mount = () => {
   return onSelect;
 };
 
-const trigger = () => screen.getByRole("button", { name: "Space: API" });
+const trigger = () => screen.getByRole("combobox", { name: "Space: API" });
+
+// Base UI moves focus to the highlighted option a tick after opening.
+const open = async () => {
+  fireEvent.click(trigger());
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
+
+// A whole press: Base UI selects on the click that ends it.
+const press = (element: Element) => {
+  fireEvent.pointerDown(element);
+  fireEvent.mouseDown(element);
+  fireEvent.pointerUp(element);
+  fireEvent.mouseUp(element);
+  fireEvent.click(element);
+};
 
 describe("Menu", () => {
   it("names the trigger after the selected option", () => {
@@ -29,23 +46,22 @@ describe("Menu", () => {
     expect(screen.getByRole("option", { selected: true }).textContent).toContain("API");
   });
 
-  it("moves with the arrow keys and chooses with Enter", () => {
+  it("moves with the arrow keys and chooses with Enter", async () => {
     const onSelect = mount();
-    fireEvent.click(trigger());
-    const list = screen.getByRole("listbox");
+    await open();
 
-    fireEvent.keyDown(list, { key: "ArrowDown" });
-    fireEvent.keyDown(list, { key: "Enter" });
+    fireEvent.keyDown(document.activeElement ?? document, { key: "ArrowDown" });
+    fireEvent.keyDown(document.activeElement ?? document, { key: "Enter" });
 
     expect(onSelect).toHaveBeenCalledWith("cli");
-    expect(screen.queryByRole("listbox")).toBeNull();
-    expect(document.activeElement).toBe(trigger());
+    await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(trigger()));
   });
 
-  it("chooses on a click", () => {
+  it("chooses on a click", async () => {
     const onSelect = mount();
-    fireEvent.click(trigger());
-    fireEvent.click(screen.getByRole("option", { name: /Guide/ }));
+    await open();
+    press(screen.getByRole("option", { name: /Guide/ }));
     expect(onSelect).toHaveBeenCalledWith("guide");
   });
 

@@ -4,6 +4,7 @@
 // ── @base-ui/react ───────────────────────────────────────────────────────────
 // Behaviour only: focus, keyboard, dismissal and ARIA. Every part is styled here.
 export { Popover as BasePopover } from "@base-ui/react/popover";
+export { Select as BaseSelect } from "@base-ui/react/select";
 // ── @loadbearing/asset ───────────────────────────────────────────────────────
 export { type IconName, IconRegistry } from "@loadbearing/asset";
 export { default as spriteUrl } from "@loadbearing/asset/sprite.svg";
