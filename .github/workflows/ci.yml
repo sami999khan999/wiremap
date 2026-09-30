@@ -110,7 +110,10 @@ jobs:
       - run: pnpm --filter @loadbearing/web build
 
       - run: pnpm typecheck
+      # Type-aware ESLint over every package outgrows the runner's default Node heap.
       - run: pnpm lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
       # packages/infrastructure's specs are integration tests against a real Postgres,
       # and they read the seeded organization rather than creating one. Without both
