@@ -266,7 +266,7 @@ Two files. Neither is application code, and no package imports either of them â€
 [Tier 0](../opinions/dependencies.md): the deployment provides the log platform, and `JsonLogger`
 never learns it exists.
 
-**`infra/loki.config.yml`**
+**`upstream:infra/loki.config.yml`**
 
 ```yaml
 auth_enabled: false
@@ -331,7 +331,7 @@ S3.
 which promotes exactly four. This makes a mistake fail loudly at ingest rather than quietly
 multiplying streams.
 
-**`infra/alloy.config.alloy`**
+**`upstream:infra/alloy.config.alloy`**
 
 ```alloy
 // Container stdout, every service in the compose file. The filter is not
@@ -512,7 +512,7 @@ rather than decorative.
 > pnpm dev | tee infra/logs/dev.log
 > ```
 >
-> `infra/logs/` is gitignored. Everything running *in* Compose is picked up with no extra step.
+> `upstream:infra/logs/` is gitignored. Everything running *in* Compose is picked up with no extra step.
 
 ---
 

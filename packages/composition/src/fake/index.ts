@@ -1,7 +1,6 @@
 export { DirectUnitOfWork } from "./direct.unit-of-work.js";
 export { InMemoryCacheStore } from "./in-memory-cache.store.js";
 export { InMemoryFlagRepository } from "./in-memory-flag.repository.js";
-export { InMemoryLogReader } from "./in-memory-log.reader.js";
 export { InMemoryOrganizationReader } from "./in-memory-organization.reader.js";
 export { InMemoryOutboxGateway } from "./in-memory-outbox.gateway.js";
 export { InMemoryPlatformPolicyRepository } from "./in-memory-platform-policy.repository.js";

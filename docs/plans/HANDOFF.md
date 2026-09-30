@@ -21,23 +21,24 @@ state of the tree and the traps that cost time.
 | `ce72bdc` | `LT1.5`: verified, no code change |
 | `ad78a30` | `LT2.1`: the tenant-move machinery removed, the shard seam kept |
 | `a6f3d27` | `LT2.2`: verified, no code change |
-| after `a6f3d27` | `LT2.3`: calendar retention and the cold tier removed, the delete archive kept |
+| `9ee1ccd` | `LT2.3`: calendar retention and the cold tier removed, the delete archive kept |
+| after `9ee1ccd` | `LT2.4`: Loki, Alloy and the log reader removed |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT2.4` logs, then the rest of Phase 2; `LT1.6`, the docs sweep, after it.
+**Next, in order:** `LT2.5` compose, then the rest of Phase 2; `LT1.6`, the docs sweep, after it.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
-## What is verified after `LT2.3`
+## What is verified after `LT2.4`
 
 Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:migrate` and `db:seed`.
 
 - Typecheck clean in every package; `pnpm lint` clean apart from one warning that was already
   there (an unused import in `feature/src/rbac/effective-permissions.inspector.tsx`).
   `check:contrast`, `deps:check` and `repo:check` green.
-- Tests, per package: application 305, infrastructure 310, query 64,
-  web 65, worker 40, permissions 69, contracts 58, composition 68, feature 161, auth 71, ui 103,
+- Tests, per package: application 305, infrastructure 307, query 64,
+  web 65, worker 40, permissions 69, contracts 58, composition 66, feature 161, auth 71, ui 103,
   tooling 140, and every other package green. The drop since `7f88b41` is the widget, zone and
   dashboard specs, then the specs of the four platform pages' use-cases and the shard-map panel,
   then the analytics consumer, ClickHouse, replay-reader and activity-trend specs, then the
@@ -70,10 +71,9 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
   the dropped storage page to `platform/accounts.tsx`.
 - **The tenant Activity page left with analytics** (`LT1.4`): it read only ClickHouse. Lite has
   no activity view until analytics is ported back.
-- **Compose is partly trimmed already**: `LT1.4` removed the `clickhouse` service and `LT2.1`
-  the `sharded` profile. Loki, Alloy,
-  pgbouncer and the second Redis still start with `infra:up`, and nothing reads them; they go in
-  `LT2.4` and `LT2.5`.
+- **Compose is partly trimmed already**: `LT1.4` removed the `clickhouse` service, `LT2.1` the
+  `sharded` profile and `LT2.4` Loki and Alloy. pgbouncer and the second Redis still start with
+  `infra:up`; they go in `LT2.5`.
 - **A tenant delete keeps its 30-day archive; archived notifications went** (decided
   2026-10-01, recorded under `LT2.3`).
 - **A permission key leaves with its last procedure**, not in `LT1.5`: §28 fails on a key nothing
@@ -85,7 +85,7 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
 
 ```bash
 cd loadbearing_mini                       # wherever the clone lives
-cp .env.example .env                      # then set ALLOY_PORT=22345 — see the traps
+cp .env.example .env
 pnpm install
 pnpm infra:up
 pnpm build:packages                       # before db:migrate — it imports dist/
@@ -115,8 +115,6 @@ CI= node tooling/scripts/check-architecture.mjs
 
 ## Traps that cost time
 
-- **`ALLOY_PORT` 12345 is the one unshifted port** and collides with the big kit's Alloy. Set
-  `ALLOY_PORT=22345` in the local `.env`; Alloy leaves in `LT2.4`.
 - **Docker Desktop hung once mid-run**: `docker ps` never returned and Postgres accepted connections
   without answering, which surfaced as test timeouts everywhere. Restart Docker, `pnpm infra:up`,
   rerun. The composition health specs time out the same way.

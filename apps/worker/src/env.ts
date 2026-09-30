@@ -72,11 +72,6 @@ const Schema = z.object({
   // A driver plus the connection detail it needs, so adopting a store is these variables
   // and nothing else.
   VECTOR_DRIVER: z.enum(["pgvector"]).default("pgvector"),
-  // Unset means no `LogReader`. Logs are still written to stdout and shipped by Alloy
-  // either way.
-  LOKI_URL: z.url().optional(),
-  LOKI_TENANT_ID: z.string().optional(),
-
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   LOG_PRETTY: z
     .enum(["true", "false"])
@@ -211,9 +206,6 @@ export class Env {
         streamMaxAgeSeconds: e.REALTIME_STREAM_MAX_AGE_SECONDS,
       },
       vector: { driver: e.VECTOR_DRIVER },
-      logs: e.LOKI_URL
-        ? { driver: "loki" as const, url: e.LOKI_URL, tenantId: e.LOKI_TENANT_ID }
-        : undefined,
       logging: { level: e.LOG_LEVEL, pretty: e.LOG_PRETTY, app: e.APP, env: e.ENV },
     } as const;
   }

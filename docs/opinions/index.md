@@ -98,7 +98,7 @@ See [Comments](comments.md).
 | No flag outlives its expiry, and none goes unread | `check-architecture.mjs` §31 |
 | No `lazy()` in `feature` or `apps/web` | ESLint `no-restricted-syntax` |
 | One range per dependency across packages | `syncpack lint` |
-| Loki labels stay within `app, env, level, event_code` | `infra/alloy.config.alloy` — the pipeline promotes exactly four |
+| Loki labels stay within `app, env, level, event_code` | `upstream:infra/alloy.config.alloy` — the pipeline promotes exactly four |
 | A query that cannot be scoped to a tenant | Review |
 | Everything else on these pages | Review |
 

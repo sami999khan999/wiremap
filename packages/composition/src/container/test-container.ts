@@ -1,7 +1,6 @@
 import {
   DirectUnitOfWork,
   InMemoryCacheStore,
-  InMemoryLogReader,
   InMemoryOrganizationReader,
   InMemoryOutboxGateway,
   InMemoryRateLimitStore,
@@ -40,7 +39,6 @@ import {
   type EmbeddingProvider,
   FixedClock,
   type Logger,
-  type LogReader,
   type MailPublisher,
   type MailRenderer,
   type MaintenanceGateway,
@@ -82,7 +80,6 @@ export interface TestPorts {
   readonly events: DomainEventPublisher;
   readonly email: EmailSender;
   readonly embeddings: EmbeddingProvider;
-  readonly logs: LogReader;
   readonly mailPublisher: MailPublisher;
   readonly mailRenderer: MailRenderer;
   readonly markdownRenderer: MarkdownRenderer;
@@ -147,7 +144,6 @@ export class TestContainer {
       email: overrides.email ?? new RecordingEmailSender(),
       events: overrides.events ?? new RecordingDomainEventPublisher(),
       embeddings: overrides.embeddings ?? new StubEmbeddingProvider(),
-      logs: overrides.logs ?? new InMemoryLogReader(),
       mailPublisher: overrides.mailPublisher ?? new RecordingMailPublisher(),
       mailRenderer: overrides.mailRenderer ?? new StubMailRenderer(),
       markdownRenderer: overrides.markdownRenderer ?? new StubMarkdownRenderer(),

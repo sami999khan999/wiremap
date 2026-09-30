@@ -631,7 +631,7 @@ falls over — the most common way a Loki deployment fails, and entirely avoidab
 is not a convention: `LogQuery` has no field that could produce one. High-cardinality fields go in
 `contains`, which becomes a line filter applied *after* the selector has narrowed the streams.
 
-Details in [reference/loki](../../packages/infrastructure/docs/reference/loki.md).
+Details in [reference/loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/loki.md).
 
 ---
 

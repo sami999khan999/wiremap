@@ -217,7 +217,7 @@ that died quietly on a Tuesday is not something a probe finds.
 ### The one thing that gets simpler in production
 
 **The applications are containers here, and they were not locally.** `pnpm dev` runs on the host, so
-Alloy needed the `infra/logs` file tail to see anything ([alloy](reference/alloy.md)).
+Alloy needed the `upstream:infra/logs` file tail to see anything ([alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md)).
 
 In production `web`, `worker` and `realtime` are in the same Compose project, so `discovery.docker` picks them up
 with **no configuration change at all** — the `com.docker.compose.project=ratchet` filter already

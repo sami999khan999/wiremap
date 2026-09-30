@@ -12,7 +12,7 @@ import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const FILE = "infra/docker-compose.yml";
-const PROFILES = ["--profile", "observability"];
+const PROFILES = [];
 const TIMEOUT_MS = 180_000;
 const INTERVAL_MS = 3_000;
 

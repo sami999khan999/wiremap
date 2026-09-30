@@ -1549,7 +1549,6 @@ const PORT_PAIRS = [
   ["REDIS_CACHE_PORT", "REDIS_REALTIME_URL"],
   ["SMTP_PORT", "SMTP_URL"],
   ["S3_PORT", "S3_ENDPOINT"],
-  ["LOKI_PORT", "LOKI_URL"],
   // Three URLs restate the web port, and a sign-in that fails because they disagree
   // reports a CORS or origin error naming none of them.
   ["WEB_PORT", "APP_BASE_URL"],

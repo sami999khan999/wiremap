@@ -130,13 +130,6 @@ export interface EventShape {
     readonly tenants: number;
     readonly organizationIds: string;
   };
-  readonly "dependency.request.failed": {
-    readonly dependency: string;
-    readonly status: number;
-    // Truncated at the call site. The one field here that is read rather than
-    // filtered on, because a vendor body is the whole diagnostic.
-    readonly detail: string;
-  };
 
   // No recipient: the address is what the failing send was about, and a log line is
   // not where it belongs. The reason is truncated at the call site.

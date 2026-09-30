@@ -88,21 +88,12 @@ export interface ContainerConfig {
     readonly streamMaxAgeSeconds: number;
   };
   // ── the swappable stores ───────────────────────────────────────────────────
-  // Two blocks, each naming a `driver` the container switches on. Lite has no analytics
-  // store, so no third block. See docs/reference/container.md.
+  // One block, naming the `driver` the container switches on. Lite has no analytics or log
+  // store, so no second or third. See docs/reference/container.md.
   readonly vector: {
     // `pgvector` today. Rebuildable by re-embedding the sources, which is why a
     // dedicated store can be adopted without a migration plan.
     readonly driver: "pgvector";
-  };
-  // Absent means no `LogReader`. Diagnostics are still written to stdout either way;
-  // this only decides whether anything in-process can read them back.
-  readonly logs?: {
-    readonly driver: "loki";
-    readonly url: string;
-    // Loki's multi-tenancy header. Unset locally, set on Grafana Cloud — which is why
-    // this is a config field rather than a migration.
-    readonly tenantId?: string;
   };
   readonly logging: {
     readonly level: LogLevel;

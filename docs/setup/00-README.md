@@ -146,7 +146,7 @@ Every package is `@loadbearing/*` so these documents line up with the architectu
 - `noExternal: [/^@loadbearing\//]` in `apps/web/vite.config.ts`
 - the `@loadbearing/*` entries in `noRestrictedImports` in `tooling/eslint-config/src/index.js` and in `tooling/biome-config/src/base.json`
 - `name: ratchet` and the credentials in `infra/docker-compose.yml`
-- the `com.docker.compose.project=ratchet` filter in `infra/alloy.config.alloy` — it must match the
+- the `com.docker.compose.project=ratchet` filter in `upstream:infra/alloy.config.alloy` — it must match the
   compose project name, or Alloy silently collects nothing
 
 **Then the three defaults that are baked into shipped code rather than into local config**, none of

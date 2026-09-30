@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import { EVENT_CATALOG } from "../../src/catalog/index.js";
 import { JsonLogger } from "../../src/logger/json.logger.js";
 
-// The shape `infra/alloy/config.alloy` parses, and the only place that contract is
-// checked: the Alloy config lives outside the workspace and no compiler spans both.
+// The shape the big kit's Alloy config parses. Lite ships logs to stdout only, and this
+// is what keeps a line readable by that pipeline the day it is ported back.
 
 const AT = new Date("2026-01-01T00:00:00.000Z");
 
@@ -24,7 +24,7 @@ function capture(bound?: Record<string, string>) {
   return { logger, lines };
 }
 
-describe("the wire contract Alloy depends on", () => {
+describe("the wire contract a log shipper depends on", () => {
   it("puts `level` and `event` at the top level, where stage.json reads them", () => {
     const { logger, lines } = capture();
     logger.emit("queue.job.failed", { queue: "embedding", jobId: "j1", attempt: 2 });

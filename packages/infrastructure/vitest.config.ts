@@ -14,7 +14,7 @@ export default defineConfig({
   resolve: { conditions: ["development"] },
   test: {
     include: ["tests/**/*.spec.ts"],
-    // `tests/smoke/` needs S3 and Loki as well as the two this suite
+    // `tests/smoke/` needs S3 as well as the two this suite
     // already assumes. `pnpm smoke` runs it, against a stack that is actually up.
     exclude: ["**/node_modules/**", "tests/smoke/**"],
     // One scratch database, and several specs here assert on state no tenant owns: the

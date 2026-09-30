@@ -58,10 +58,6 @@ export const coreEvents = {
   "shard.resolution.failed": { level: "error" },
   "shard.assignment.created": { level: "info" },
 
-  // The vendor body, which `UnavailableError` deliberately does not carry: a ClickHouse
-  // or Loki failure echoes the offending row, and the wire is not where that belongs.
-  "dependency.request.failed": { level: "warn" },
-
   // The transport's own reason, which `UnavailableError("smtp")` deliberately does not
   // carry. Without it a bounced invitation is a 200 and nothing else.
   "email.send.failed": { level: "error" },

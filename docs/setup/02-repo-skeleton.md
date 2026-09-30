@@ -90,7 +90,7 @@ infra/logs/*
 ```
 > `.env.*` is ignored and `.env.example` is force-included. That asymmetry is what stops `.env.production` reaching the repo while keeping the template versioned.
 >
-> `infra/logs/` is the only ignored path under `infra/`. Everything else there is configuration that must be committed — a Loki retention policy or an Alloy label pipeline living only on one machine is the same problem as an uncommitted migration.
+> `upstream:infra/logs/` is the only ignored path under `infra/`. Everything else there is configuration that must be committed — a Loki retention policy or an Alloy label pipeline living only on one machine is the same problem as an uncommitted migration.
 
 ### `.env.example`
 

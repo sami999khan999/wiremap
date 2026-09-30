@@ -29,7 +29,6 @@ const routed = numbers("ROUTED_SCALE");
 
 const shard1Url = optional("DATABASE_SHARD_1_URL");
 const replicaUrl = optional("DATABASE_REPLICA_URL");
-const lokiUrl = optional("LOKI_URL");
 
 export default defineConfig({
   resolve: { conditions: ["development"] },
@@ -77,7 +76,6 @@ export default defineConfig({
         ...(tenantCeiling?.length ? { tenantCeiling } : {}),
         ...(fanOut?.length ? { fanOut } : {}),
         ...(routed?.length ? { routed } : {}),
-        ...(lokiUrl ? { loki: { url: lokiUrl, tenantId: optional("LOKI_TENANT_ID") } } : {}),
       },
     },
   },

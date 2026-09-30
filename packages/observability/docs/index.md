@@ -155,7 +155,7 @@ frozen timestamp and a deterministic sampling draw — no stdout capture, no fak
 wires `SilentLogger`.
 
 **`wire-contract.spec.ts` is the one test that exists for something outside the workspace.** The
-Alloy pipeline in `infra/alloy.config.alloy` addresses `level` and `event` by bare name at the top
+Alloy pipeline in `upstream:infra/alloy.config.alloy` addresses `level` and `event` by bare name at the top
 level of each line, and no compiler spans both files. That spec pins the shape: rename the field,
 nest it under `fields`, or turn on pretty-printing, and it fails here rather than producing
 unlabelled streams nobody notices until an incident.

@@ -79,8 +79,6 @@ import {
   ListRolesUseCase,
   ListTenantExportsUseCase,
   type Logger,
-  type LogReader,
-  LokiLogReader,
   type MailPublisher,
   type MailRenderer,
   type MaintenanceGateway,
@@ -356,11 +354,6 @@ export class Container {
   // loop the worker runs starts from it.
   public readonly organizations: OrganizationReader;
   public readonly partitionArchive: PartitionArchiveGateway;
-
-  // ── the derived stores, absent unless configured ─────────
-  // An optional field rather than a no-op implementation: a reader that answers nothing
-  // is indistinguishable from one with nothing to find.
-  private readonly logReader: LogReader | undefined;
 
   // ── auth, absent in a process that never authenticates ────
   private readonly authInstance: AuthInstance | undefined;
@@ -648,10 +641,6 @@ export class Container {
     // switch a compiler checks, not in a document.
     this.vectors = Container.buildVectorStore(config, this.cluster, this.transactions, this.shards);
     this.embeddings = new OpenAiEmbeddingProvider(config.embedding, this.logger);
-
-    // Its absence changes nothing about what is written: `JsonLogger` goes to stdout
-    // either way.
-    this.logReader = config.logs ? new LokiLogReader(config.logs, this.logger) : undefined;
 
     // The only catalog carrying the `email` namespace the worker's digests read. A
     // client bundle cannot reach it.
@@ -1272,15 +1261,6 @@ export class Container {
       throw new Error("This container was built without an auth config.");
     }
     return this.principalBuilder;
-  }
-
-  public get logs(): LogReader {
-    if (!this.logReader) throw new Error("This container was built without a logs config.");
-    return this.logReader;
-  }
-
-  public get hasLogs(): boolean {
-    return this.logReader !== undefined;
   }
 
   // **The one place a request or a job is placed.** Both run once, here, so

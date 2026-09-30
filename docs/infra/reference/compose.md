@@ -13,7 +13,7 @@ name: lite
 
 **The project name, and it appears in two places.** It prefixes every container (`lite-loki-1`),
 every volume (`lite_pgdata`) and the network (`lite_default`) — and it is what
-[`alloy.config.alloy`](alloy.md) filters on to decide which containers to collect. Change one without
+[`alloy.config.alloy`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) filters on to decide which containers to collect. Change one without
 the other and Alloy silently collects nothing: no error, no logs, and a debugging session that starts
 in the wrong place.
 
@@ -56,8 +56,8 @@ project default would keep starting a container whose whole job is to finish.
 
 | Service | Image | Notes |
 |---|---|---|
-| `loki` | `grafana/loki:3.3.2` | [loki](loki.md) |
-| `alloy` | `grafana/alloy:v1.5.1` | [alloy](alloy.md) |
+| `loki` | `grafana/loki:3.3.2` | [loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md) |
+| `alloy` | `grafana/alloy:v1.5.1` | [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
 
 #### Why there is no log UI
 
@@ -72,7 +72,7 @@ dashboard absorbs for the same reason.
 
 The cost is accepted knowingly: **until the dashboard ships there is no log viewer**, and the
 fallbacks are `docker compose logs -f <service>` and curl against Loki's `query_range` endpoint
-([loki](loki.md)). Both stay useful afterwards — a log query that needs the app running is no use
+([loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md)). Both stay useful afterwards — a log query that needs the app running is no use
 during the incident where the app is down.
 
 ### Analytics, profile `analytics`

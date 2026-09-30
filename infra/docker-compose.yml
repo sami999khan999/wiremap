@@ -211,60 +211,12 @@ services:
       /bin/sh -c "
       until mc alias set local http://minio:9000 ratchet ratchetsecret; do sleep 2; done &&
       mc mb --ignore-existing local/ratchet &&
-      mc mb --ignore-existing local/loki &&
       mc anonymous set none local/ratchet &&
-      mc anonymous set none local/loki &&
       echo 'buckets ready'
       "
-
-  loki:
-    image: grafana/loki:3.3.2
-    profiles: ["observability"]
-    restart: unless-stopped
-    command: ["-config.file=/etc/loki/config.yml"]
-    ports: ["${LOKI_PORT:-23100}:3100"]
-    depends_on:
-      minio-init:
-        condition: service_completed_successfully
-    volumes:
-      - ./loki.config.yml:/etc/loki/config.yml:ro
-      - lokidata:/loki
-    healthcheck:
-      test:
-        ["CMD-SHELL", "wget -q -O- http://localhost:3100/ready | grep -q ready"]
-      interval: 10s
-      timeout: 3s
-      retries: 20
-
-  alloy:
-    image: grafana/alloy:v1.5.1
-    profiles: ["observability"]
-    restart: unless-stopped
-    command:
-      - run
-      - --server.http.listen-addr=0.0.0.0:12345
-      - /etc/alloy/config.alloy
-    ports: ["${ALLOY_PORT:-12345}:12345"]
-    depends_on:
-      loki:
-        condition: service_healthy
-    # The socket below is root:docker on Linux and Alloy does not run as root, so
-    # without the group it collects nothing and says nothing about why.
-    group_add:
-      - ${DOCKER_GID:-999}
-    volumes:
-      - ./alloy.config.alloy:/etc/alloy/config.alloy:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./logs:/var/log/app:ro
-    healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/12345"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
 
 volumes:
   pgdata:
   pgreplicadata:
   redisqueuedata:
   miniodata:
-  lokidata:

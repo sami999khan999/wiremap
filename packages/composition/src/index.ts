@@ -17,7 +17,6 @@ export {
   type EnsuredPartitions,
   InMemoryCacheStore,
   InMemoryFlagRepository,
-  InMemoryLogReader,
   InMemoryOrganizationReader,
   InMemoryOutboxGateway,
   InMemoryPlatformPolicyRepository,

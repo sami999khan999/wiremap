@@ -10,7 +10,6 @@
     "notification-recipients",
     "cold-storage",
     "storage-policy",
-    "loki",
     "realtime",
     "fan-out",
     "doc-renderer"

@@ -103,20 +103,6 @@ describe("Container — what a process built without auth cannot reach", () => {
 });
 
 describe("Container — the derived stores", () => {
-  it("has no log reader and says so before it is asked for one", () => {
-    const container = build();
-
-    expect(container.hasLogs).toBe(false);
-    expect(() => container.logs).toThrow("without a logs config");
-  });
-
-  it("builds the log reader when Loki is configured", () => {
-    const container = build({ logs: { driver: "loki", url: "http://localhost:23100" } });
-
-    expect(container.hasLogs).toBe(true);
-    expect(container.logs).toBeDefined();
-  });
-
   it("builds the archive with no derived store configured", () => {
     const container = build();
 

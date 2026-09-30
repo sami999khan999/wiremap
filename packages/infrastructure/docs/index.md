@@ -281,7 +281,7 @@ variable came back undefined — which looks exactly like an unconfigured stack.
   configuration" is an error code, and why the app owns the whole configuration rather than a rule.
 - [ClickHouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md) — no client library, two adapters, and the order it is
   adopted in.
-- [Loki](reference/loki.md) — why only a reader exists, and the query shapes the port refuses to
+- [Loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/loki.md) — why only a reader exists, and the query shapes the port refuses to
   offer.
 - [Realtime](reference/realtime.md) — one subscriber connection per process, ref-counted channels,
   and why the overflow is a `resync`.

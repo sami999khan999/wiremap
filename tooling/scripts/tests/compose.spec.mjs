@@ -40,8 +40,6 @@ describe("composeArgs", () => {
   });
 
   it("passes a profile through untouched", () => {
-    expect(composeArgs(["--profile", "observability", "up", "-d"], false)).toContain(
-      "observability",
-    );
+    expect(composeArgs(["--profile", "replica", "up", "-d"], false)).toContain("replica");
   });
 });

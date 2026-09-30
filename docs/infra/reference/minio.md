@@ -50,7 +50,7 @@ server.
 key; MinIO holds the bytes. That is why deleting a resource is two operations, and why the two can
 disagree if one half fails ([12](../../setup/12-application-package.md)).
 
-**`loki` is Loki's storage backend**, configured in [loki.config.yml](loki.md). Pointing Loki at
+**`loki` is Loki's storage backend**, configured in [loki.config.yml](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md). Pointing Loki at
 object storage rather than a local volume is what makes retention a config line and what makes the
 local topology match production, where the same setting names S3.
 
@@ -120,7 +120,7 @@ Loki buffers them in its write-ahead log and flushes on a timer, so a `fake/` pr
 used when `auth_enabled: false` — only shows up after the first flush, not after the first log line.
 
 An empty `loki` bucket with a healthy Loki means Loki is running but nothing has been shipped to it —
-check [alloy](alloy.md). An `index/` but no `fake/` after a few minutes of traffic is normal.
+check [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md). An `index/` but no `fake/` after a few minutes of traffic is normal.
 
 The console at `http://localhost:29001` signs in with the same credentials and is the fastest way to
 look at an uploaded object.

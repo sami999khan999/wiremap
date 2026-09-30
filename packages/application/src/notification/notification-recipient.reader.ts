@@ -7,8 +7,8 @@ export interface Recipient {
   readonly locale: Locale;
 }
 
-// A read seam and never a write one, for the reason `LogReader` names: a write method
-// here would make a derived view of membership authoritative.
+// A read seam and never a write one: a write method here would make a derived view of
+// membership authoritative.
 export abstract class NotificationRecipientReader {
   // Every method takes the tenant first. A recipient list that cannot be scoped is a
   // cross-tenant leak with an email address attached.

@@ -46,7 +46,6 @@ describe("TestContainer", () => {
       "embeddings",
       "events",
       "logger",
-      "logs",
       "mailPublisher",
       "mailRenderer",
       "maintenance",

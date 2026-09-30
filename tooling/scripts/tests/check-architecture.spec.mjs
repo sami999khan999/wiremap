@@ -1152,8 +1152,8 @@ describe("27 — every host port is stated once", () => {
 
   // Commented out is still documented, and the port beside it is still published.
   it("checks a commented URL too", () => {
-    const tree = { ".env.example": "LOKI_PORT=23100\n# LOKI_URL=http://localhost:3100\n" };
-    fails(run(tree), NAME, "LOKI_URL");
+    const tree = { ".env.example": "SMTP_PORT=21025\n# SMTP_URL=smtp://localhost:1025\n" };
+    fails(run(tree), NAME, "SMTP_URL");
   });
 
   // CI has no `.env`, so the compose default is what CI gets. One that disagrees with

@@ -23,8 +23,8 @@ export class OpenAiEmbeddingProvider extends EmbeddingProvider {
 
   public override readonly dimensions: number;
 
-  // Optional, like `LokiLogReader`'s: the vendor's own reason belongs in the log and
-  // never on the wire, and a provider built without one still works.
+  // Optional: the vendor's own reason belongs in the log and never on the wire, and a
+  // provider built without one still works.
   public constructor(
     private readonly config: OpenAiEmbeddingConfig,
     private readonly logger?: Logger,

@@ -83,9 +83,6 @@ export {
   type InvitationRepository,
   type JobOptions,
   type LifecycleRule,
-  type LogEntry,
-  type LogQuery,
-  LogReader,
   type MaintenanceGateway,
   // A value: the unified adapter extends it.
   MarkdownRenderer,

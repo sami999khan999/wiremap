@@ -30,9 +30,9 @@ on a VPS, and the order to move them to managed services in when one box stops f
 | `docker-compose.yml` | `docker compose` | [compose](reference/compose.md) |
 | `postgres.init.sql` | Postgres, on first boot only | [postgres](reference/postgres.md) |
 | *(no file)* | pgBouncer, from compose env | [pgbouncer](reference/pgbouncer.md) |
-| `loki.config.yml` | Loki, at startup | [loki](reference/loki.md) |
-| `alloy.config.alloy` | Alloy, at startup | [alloy](reference/alloy.md) |
-| `logs/` | Alloy, tailed continuously | [alloy](reference/alloy.md) |
+| `loki.config.yml` | Loki, at startup | [loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md) |
+| `alloy.config.alloy` | Alloy, at startup | [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
+| `logs/` | Alloy, tailed continuously | [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
 | `.env` | `docker compose` | [compose](reference/compose.md#host-ports) |
 
 Redis and Mailpit have no config file — every setting is a command-line flag or a default. See
@@ -87,7 +87,7 @@ network **a container reaches another by its service name** — Docker's embedde
 
 **Nothing connects to the applications.** Traffic runs the other way: the apps dial Postgres, Redis
 and MinIO from the host, and Alloy *reads* their output rather than being told anything. That is what
-makes the log platform swappable — see [alloy](reference/alloy.md).
+makes the log platform swappable — see [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md).
 
 **MinIO has two unrelated consumers.** The application stores uploads in the `ratchet` bucket; Loki
 stores its chunks and index in the `loki` bucket. They share a server and nothing else
@@ -95,14 +95,14 @@ stores its chunks and index in the `loki` bucket. They share a server and nothin
 
 **No container in this stack reads the logs back, and none will.** Loki is storage plus a
 `query_range` HTTP API; the reader is application code —
-[`LokiLogReader`](../../packages/infrastructure/docs/reference/loki.md), built when `LOKI_URL` is
+[`LokiLogReader`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/loki.md), built when `LOKI_URL` is
 set — because the surface that matters is the super-admin dashboard, which already knows what an
 organization is. Grafana used to fill this slot and was removed deliberately: two consoles for one
 operator, and the query that mattered was the one it could not express
 ([compose](reference/compose.md#why-there-is-no-log-ui)).
 
 `docker compose logs` and curl against the API stay the break-glass path regardless
-([loki](reference/loki.md)) — a log query that needs the application running is no use during the
+([loki](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/loki.md)) — a log query that needs the application running is no use during the
 incident where the application is down.
 
 **Only Alloy touches the Docker socket**, read-only, and only to read container stdout.
@@ -217,8 +217,8 @@ Per-service checks are on each reference page. The most common failures across a
 | Symptom | Usually |
 |---|---|
 | `connection refused` from inside a container | Used the host port instead of the container port |
-| Alloy healthy, no logs in Loki | Project-name filter mismatch — [alloy](reference/alloy.md) |
+| Alloy healthy, no logs in Loki | Project-name filter mismatch — [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
 | Loki unhealthy on first boot | Waiting on `minio-init`; give it the twenty retries |
-| A fifth label appears | Loki or a source component invented it — [alloy](reference/alloy.md) |
+| A fifth label appears | Loki or a source component invented it — [alloy](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/alloy.md) |
 | ClickHouse table "missing" | It is in `default`, not `ratchet` — [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md) |
 | Port already allocated | Something else owns it — [compose](reference/compose.md#host-ports) |

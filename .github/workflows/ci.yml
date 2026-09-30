@@ -41,7 +41,7 @@ jobs:
       REDIS_CACHE_URL: redis://localhost:6379
       REDIS_QUEUE_URL: redis://localhost:6380
       # Read by every `env.ts` like any other config, so a missing one is a startup
-      # crash. Loki and Alloy are Tier 0 and deliberately absent.
+      # crash.
       APP: ci
       ENV: test
       PGPASSWORD: ratchet
@@ -150,8 +150,8 @@ jobs:
 
   # The stack a developer actually boots, rather than the service containers `verify`
   # pins. Those two drift — an image tag, a healthcheck, an init script — and nothing
-  # else in this workflow can tell. It is also the only job that reaches Loki, Alloy and
-  # Mailpit at all, because a `services:` block cannot express what they need.
+  # else in this workflow can tell. It is also the only job that reaches Mailpit at all,
+  # because a `services:` block cannot express what it needs.
   compose:
     runs-on: ubuntu-latest
 
@@ -168,9 +168,6 @@ jobs:
       S3_ACCESS_KEY: ratchet
       S3_SECRET_KEY: ratchetsecret
       S3_FORCE_PATH_STYLE: "true"
-      # The one service no other job can reach. The smoke suite skips the log reader
-      # by name when this is unset, so naming it here is what makes that half run.
-      LOKI_URL: http://localhost:23100
       APP: ci
       ENV: test
       PGPASSWORD: ratchet
@@ -202,8 +199,8 @@ jobs:
       - run: pnpm db:migrate
       - run: pnpm db:seed
 
-      # Redis, S3 and BullMQ against real containers, plus Loki. Adapters tested against
-      # a fake test the fake.
+      # Redis, S3 and BullMQ against real containers. Adapters tested against a fake
+      # test the fake.
       - run: pnpm smoke
 
       # Both built, because the web smoke boots the artefacts rather than the sources:
