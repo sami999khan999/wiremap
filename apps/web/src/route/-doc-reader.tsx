@@ -1,5 +1,6 @@
 import { Link, useNavigate, useRouteContext } from "@tanstack/react-router";
 import {
+  buttonClassName,
   DocReaderPanel,
   type DocReadingDto,
   type DocSearchHit,
@@ -66,7 +67,7 @@ export function DocReaderRoute({
           },
         }}
         brand={
-          <Link to={back.href} className="ui-button ui-button--ghost">
+          <Link to={back.href} className={buttonClassName("ghost")}>
             {back.label}
           </Link>
         }

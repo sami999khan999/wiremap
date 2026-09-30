@@ -1,3 +1,4 @@
+import { buttonClassName } from "../button/index.js";
 import { type ReactNode, useEffect, useId, useRef, useState } from "../import.js";
 
 export type PopoverAlign = "start" | "end";
@@ -59,7 +60,7 @@ export function Popover({ label, trigger, children, align = "end", className }: 
       <button
         ref={control}
         type="button"
-        className="ui-button ui-button--ghost ui-popover__trigger"
+        className={buttonClassName("ghost", "ui-popover__trigger")}
         aria-label={label}
         aria-haspopup="dialog"
         aria-expanded={open}

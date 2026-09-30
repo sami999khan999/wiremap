@@ -3,7 +3,6 @@
    the tokens and its own design drops this one link and keeps everything else. */
 
 @import "./class/base.css";
-@import "./class/button.css";
 @import "./class/input.css";
 @import "./class/textarea.css";
 @import "./class/field.css";

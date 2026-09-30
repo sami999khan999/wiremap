@@ -2,6 +2,7 @@ import { useErrorMessage } from "../error/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
   Button,
+  buttonClassName,
   Callout,
   DocMutations,
   type DocPageDraftDto,
@@ -243,7 +244,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
             >
               {t("doc.editor.preview")}
             </Button>
-            <label className="ui-button ui-button--ghost">
+            <label className={buttonClassName("ghost")}>
               {upload.isPending ? t("doc.editor.imageUploading") : t("doc.editor.image")}
               <input
                 type="file"

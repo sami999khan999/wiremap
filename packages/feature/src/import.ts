@@ -105,6 +105,7 @@ export {
   type BadgeTone,
   Button,
   ByteFormat,
+  buttonClassName,
   Callout,
   Can,
   Card,

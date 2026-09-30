@@ -138,6 +138,7 @@ export {
   type BadgeTone,
   Button,
   type ButtonVariant,
+  buttonClassName,
   Callout,
   type CalloutTone,
   Can,
