@@ -126,71 +126,6 @@ services:
       timeout: 3s
       retries: 30
 
-  # The second node, behind the `sharded` profile. Same image and same `init.sql`, so
-  # `migrate.ts` applies the identical schema to it — see docs/reference/sharding.md.
-  postgres-shard-1:
-    image: pgvector/pgvector:pg17
-    restart: unless-stopped
-    profiles: ["sharded"]
-    # Same settings as the catalog, for the same reasons: a shard is not a smaller
-    # database, and a rehearsal on different settings rehearses the settings.
-    command:
-      [
-        "postgres",
-        "-c",
-        "shared_preload_libraries=pg_stat_statements",
-        "-c",
-        "track_io_timing=on",
-        "-c",
-        "max_connections=200",
-        "-c",
-        "max_locks_per_transaction=1024",
-      ]
-    environment:
-      POSTGRES_USER: ratchet
-      POSTGRES_PASSWORD: ratchet
-      POSTGRES_DB: ratchet
-    ports: ["${POSTGRES_SHARD_1_PORT:-25433}:5432"]
-    # Its own volume, and that is the point: a shard sharing the catalog's data
-    # directory would rehearse nothing.
-    volumes:
-      - pgshard1data:/var/lib/postgresql/data
-      - ./postgres.init.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ratchet -d ratchet"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  pgbouncer-shard-1:
-    image: edoburu/pgbouncer:v1.24.1-p1
-    restart: unless-stopped
-    profiles: ["sharded"]
-    depends_on:
-      postgres-shard-1:
-        condition: service_healthy
-    environment:
-      DB_HOST: postgres-shard-1
-      DB_PORT: "5432"
-      DB_USER: ratchet
-      DB_PASSWORD: ratchet
-      DB_NAME: ratchet
-      POOL_MODE: transaction
-      AUTH_TYPE: scram-sha-256
-      MAX_CLIENT_CONN: "1000"
-      DEFAULT_POOL_SIZE: "20"
-      MIN_POOL_SIZE: "0"
-      RESERVE_POOL_SIZE: "5"
-      SERVER_RESET_QUERY: DISCARD ALL
-      IGNORE_STARTUP_PARAMETERS: statement_timeout,lock_timeout,idle_in_transaction_session_timeout,extra_float_digits
-      ADMIN_USERS: ratchet
-    ports: ["${PGBOUNCER_SHARD_1_PORT:-26433}:5432"]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U ratchet"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   redis-cache:
     image: redis:7-alpine
     restart: unless-stopped
@@ -364,7 +299,6 @@ services:
 
 volumes:
   pgdata:
-  pgshard1data:
   pgreplicadata:
   redisqueuedata:
   miniodata:

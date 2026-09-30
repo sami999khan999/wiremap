@@ -152,8 +152,6 @@ export {
   type RoleRepository,
   type SearchHit,
   Shard,
-  type ShardAssignment,
-  type ShardAssignmentRepository,
   type ShardKey,
   type ShardMapReader,
   type ShardNode,
@@ -168,9 +166,7 @@ export {
   type SweepOutcome,
   // A value: the move gateway treats a `local` table differently from a routed one.
   TablePlacement,
-  type TableRowCount,
   type TenantExport,
-  TenantMoveGateway,
   type TenantRecord,
   type TenantRepository,
   type TenantRetentionPolicyRecord,

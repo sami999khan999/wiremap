@@ -82,18 +82,9 @@ export {
   PurgeOrganizationUseCase,
 } from "./purge-organization.use-case.js";
 export {
-  type ReclaimedSources,
-  ReclaimMoveSourcesUseCase,
-} from "./reclaim-move-sources.use-case.js";
-export {
   type ReinstateAccountInput,
   ReinstateAccountUseCase,
 } from "./reinstate-account.use-case.js";
-export {
-  type RelocatedTenant,
-  type RelocateTenantInput,
-  RelocateTenantUseCase,
-} from "./relocate-tenant.use-case.js";
 export { RetentionRules } from "./retention.rules.js";
 export {
   type ColdMode,

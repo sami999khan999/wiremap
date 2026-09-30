@@ -62,9 +62,6 @@ const Schema = z
     // Serial by default: these jobs take table-level locks and can deadlock on the same
     // partition.
     WORKER_MAINTENANCE_CONCURRENCY: z.coerce.number().int().positive().default(1),
-    // The deployment's own answer for how long a moved tenant's rows stay behind. An
-    // operator overrides it on `platform_policy`; this is what an unset row means.
-    SHARD_MOVE_GRACE_DAYS: z.coerce.number().int().min(0).default(7),
     WORKER_MAIL_CONCURRENCY: z.coerce.number().int().positive().default(4),
     WORKER_EVENT_CONCURRENCY: z.coerce.number().int().positive().default(8),
     // Two. The digest fan-out is one job a day and each tenant's digest is I/O bound
@@ -178,10 +175,6 @@ export class Env {
     return Env.parsed.WORKER_MAINTENANCE_CONCURRENCY;
   }
 
-  public static get moveGraceDays(): number {
-    return Env.parsed.SHARD_MOVE_GRACE_DAYS;
-  }
-
   public static get mailConcurrency(): number {
     return Env.parsed.WORKER_MAIL_CONCURRENCY;
   }
@@ -217,7 +210,6 @@ export class Env {
         poolIdleTimeoutMs: e.DATABASE_POOL_IDLE_TIMEOUT_MS,
         poolConnectTimeoutMs: e.DATABASE_POOL_CONNECT_TIMEOUT_MS,
         statementTimeoutMs: e.DATABASE_STATEMENT_TIMEOUT_MS,
-        moveGraceDays: e.SHARD_MOVE_GRACE_DAYS,
         shards: shardsFromEnv(),
       },
       redis: {

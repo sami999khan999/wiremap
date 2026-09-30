@@ -26,11 +26,9 @@ export {
   InMemoryPlatformPolicyRepository,
   InMemoryRateLimitStore,
   InMemoryRetentionPolicyRepository,
-  InMemoryShardAssignmentRepository,
   InMemoryShardResolver,
   InMemoryStorageGateway,
   InMemoryStoragePolicyGateway,
-  InMemoryTenantMoveGateway,
   InMemoryTenantRetentionPolicyRepository,
   InMemoryVectorStore,
   type PublishedEvent,
@@ -52,7 +50,6 @@ export {
   StubMailRenderer,
   StubMarkdownRenderer,
   StubSessionResolver,
-  type TenantMoveStep,
 } from "./fake/index.js";
 // `TestHarness.clock` is one, so a consumer naming that type needs it — and a spec that
 // wants a different instant replaces it rather than reaching for `@loadbearing/core`.

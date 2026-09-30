@@ -40,14 +40,6 @@ interface PurgeJob {
   readonly actorId: UserId;
 }
 
-// What `tenant-move` carries. Nothing in lite queues one, since the move request left
-// with the shard page. The actor rides along for the audit row, as on a delete.
-interface MoveJob {
-  readonly organizationId: OrganizationId;
-  readonly toNode: number;
-  readonly actorId: UserId;
-}
-
 // The consumer whose absence meant `cleanup-daily` registered every boot and never ran,
 // accumulating silently. See docs/reference/consumers.md.
 export class MaintenanceConsumer {
@@ -152,8 +144,6 @@ export class MaintenanceConsumer {
         return this.export(job.data as ExportJob);
       case "tenant-delete":
         return this.purge(job.data as PurgeJob);
-      case "tenant-move":
-        return this.relocate(job.data as MoveJob);
       default:
         throw new Error(`Unknown maintenance job: ${job.name}`);
     }
@@ -255,19 +245,6 @@ export class MaintenanceConsumer {
     });
   }
 
-  // **Placed on nothing.** A move is the one job that is not on one node, and every
-  // call inside it names the node it means — see relocate-tenant.use-case.ts.
-  private async relocate(data: MoveJob): Promise<void> {
-    const moved = await this.container.platformAdmin.relocateTenant.execute(data);
-
-    this.container.logger.emit("tenant.move.completed", {
-      organizationId: data.organizationId,
-      fromNode: moved.fromNode,
-      toNode: moved.toNode,
-      rows: moved.rows,
-    });
-  }
-
   // Silent when the pool was full, which is every run but the ones after a burst.
   private async spares(): Promise<void> {
     const created = await this.container.maintenance.topUpSpareTenants(
@@ -315,11 +292,6 @@ export class MaintenanceConsumer {
       adjustments: expired.adjustments,
       overrides: lapsed.overrides,
     });
-
-    // Here rather than on a schedule of its own: a grace period is days long, and one
-    // nightly pass is all the precision it has ever had.
-    const reclaimed = await this.container.platformAdmin.reclaimMoveSources.execute();
-    if (reclaimed.tenants > 0) this.container.logger.emit("tenant.source.reclaimed", reclaimed);
   }
 
   // Every month-partitioned table from the allowlist, on every node: a partition is

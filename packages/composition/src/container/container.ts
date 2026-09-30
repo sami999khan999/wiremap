@@ -131,10 +131,8 @@ import {
   PgPlatformReader,
   PgRetentionPolicyRepository,
   PgRoleRepository,
-  PgShardAssignmentRepository,
   PgShardMapReader,
   PgShardResolver,
-  PgTenantMoveGateway,
   PgTenantRepository,
   PgTenantRetentionPolicyRepository,
   PgUnitOfWork,
@@ -153,7 +151,6 @@ import {
   ReadPlatformDocUseCase,
   type RealtimePublisher,
   type RealtimeSubscriber,
-  ReclaimMoveSourcesUseCase,
   RedisCacheStore,
   RedisConnection,
   RedisRateLimitStore,
@@ -161,7 +158,6 @@ import {
   RedisRealtimeSubscriber,
   ReinstateAccountUseCase,
   type RelayedActivityStore,
-  RelocateTenantUseCase,
   type ReplicaHealth,
   ResendInvitationUseCase,
   RestoreDocRevisionUseCase,
@@ -184,7 +180,6 @@ import {
   SendNotificationDigestUseCase,
   type SessionResolver,
   SetMemberActiveUseCase,
-  type ShardAssignmentRepository,
   type ShardConfig,
   type ShardingStrategy,
   type ShardResolver,
@@ -198,7 +193,6 @@ import {
   SwitchModuleUseCase,
   SystemClock,
   type TenantMembershipReader,
-  type TenantMoveGateway,
   type TenantRetentionPolicyRepository,
   ToggleReplicaReadsUseCase,
   TransactionScope,
@@ -301,14 +295,6 @@ export class Container {
   // as a user, and a placement-only principal is never an actor anyway.
   private static readonly PLACEMENT_USER_ID = "00000000-0000-7000-8000-000000000001";
 
-  // The fallback behind the fallback: `platform_policy` overrides this, and the worker
-  // passes its own from the environment. This is what a container built without one gets.
-  private static readonly DEFAULT_MOVE_GRACE_DAYS = 7;
-
-  // A minute, against requests that finish in seconds. A job placed before the freeze
-  // and still opening transactions after it is the case this does not cover.
-  private static readonly DEFAULT_MOVE_SETTLE_MS = 60_000;
-
   // ── infrastructure, private ───────────────────────────────
   private readonly database: Database;
   private readonly poolProbe: ReturnType<typeof setInterval>;
@@ -326,7 +312,6 @@ export class Container {
   private readonly shards: ShardScope;
   private readonly cluster: DatabaseCluster;
   private readonly shardResolver: ShardResolver;
-  public readonly shardAssignments: ShardAssignmentRepository;
   public readonly sharding: ShardingStrategy;
 
   // ── shared primitives ─────────────────────────────────────
@@ -366,7 +351,6 @@ export class Container {
   // consumer holds the gateway and the registry directly.
   public readonly eventPublisher: DomainEventPublisher;
   public readonly outbox: OutboxGateway;
-  public readonly tenantMove: TenantMoveGateway;
   public readonly realtime: RealtimePublisher;
   // Public because the web router holds it directly: a stream is the one thing a
   // procedure reads from a port rather than from a use-case.
@@ -439,8 +423,6 @@ export class Container {
     // The job half of the delete. Reachable from the worker only — nothing on a
     // request path may run it, which is the whole point of `19.20`.
     readonly purgeOrganization: PurgeOrganizationUseCase;
-    readonly relocateTenant: RelocateTenantUseCase;
-    readonly reclaimMoveSources: ReclaimMoveSourcesUseCase;
     readonly exportOrganization: ExportOrganizationUseCase;
     readonly listExports: ListTenantExportsUseCase;
     readonly inspectStatus: InspectPlatformStatusUseCase;
@@ -610,12 +592,6 @@ export class Container {
       ],
       this.shardResolver,
     );
-    this.shardAssignments = new PgShardAssignmentRepository(
-      this.cluster,
-      this.transactions,
-      this.shards,
-      this.shardResolver,
-    );
     // One line, and the fork's swap point: the organization is the shard.
     this.sharding = new OrganizationShardingStrategy();
 
@@ -722,13 +698,6 @@ export class Container {
       this.transactions,
       this.shards,
       this.clock,
-    );
-    this.tenantMove = new PgTenantMoveGateway(
-      this.cluster,
-      this.transactions,
-      this.shards,
-      this.shardResolver,
-      { settleMs: config.database.moveSettleMs ?? Container.DEFAULT_MOVE_SETTLE_MS },
     );
     this.outbox = new PgOutboxGateway(this.cluster, this.transactions, this.shards);
     this.realtime = new RedisRealtimePublisher(this.redis.realtimeClient(), this.logger);
@@ -1048,23 +1017,6 @@ export class Container {
         this.tenantRetentionPolicies,
         this.shardResolver,
         new DocImageSweep(this.storage),
-      ),
-      // The job half. Reachable from the worker only — nothing on a request path may
-      // run it, which is what makes the placement correct by construction.
-      relocateTenant: new RelocateTenantUseCase(
-        this.shardAssignments,
-        this.tenantMove,
-        this.platformPolicy,
-        this.platform,
-        this.activity,
-        this.clock,
-        config.database.moveGraceDays ?? Container.DEFAULT_MOVE_GRACE_DAYS,
-      ),
-      // Worker-only as well: the nightly cleanup is its one caller.
-      reclaimMoveSources: new ReclaimMoveSourcesUseCase(
-        this.shardAssignments,
-        this.tenantMove,
-        this.clock,
       ),
       exportOrganization: new ExportOrganizationUseCase(
         this.authorizer,

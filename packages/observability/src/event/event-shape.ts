@@ -133,16 +133,6 @@ export interface EventShape {
     readonly partitions: number;
     readonly outboxRows: number;
   };
-  readonly "tenant.move.completed": {
-    readonly organizationId: string;
-    readonly fromNode: number;
-    readonly toNode: number;
-    readonly rows: number;
-  };
-  readonly "tenant.source.reclaimed": {
-    readonly tenants: number;
-    readonly partitions: number;
-  };
   readonly "tenant.spares.replenished": {
     readonly created: number;
     readonly target: number;

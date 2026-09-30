@@ -8,12 +8,10 @@ import {
   InMemoryRateLimitStore,
   InMemoryRealtimeHub,
   InMemoryRealtimeSubscriber,
-  InMemoryShardAssignmentRepository,
   InMemoryShardResolver,
   InMemoryStorageGateway,
   InMemoryStoragePolicyGateway,
   InMemoryTenantMembershipReader,
-  InMemoryTenantMoveGateway,
   InMemoryUserReader,
   InMemoryVectorStore,
   RecordingActivityLogger,
@@ -61,7 +59,6 @@ import {
   SERVER_CATALOG,
   type SessionGateway,
   type SessionResolver,
-  type ShardAssignmentRepository,
   type ShardingStrategy,
   type ShardResolver,
   SilentLogger,
@@ -69,7 +66,6 @@ import {
   type StorageGateway,
   type StoragePolicyGateway,
   type TenantMembershipReader,
-  type TenantMoveGateway,
   type UnitOfWork,
   type UserReader,
   type VectorStore,
@@ -102,9 +98,7 @@ export interface TestPorts {
   readonly queue: QueuePublisher;
   readonly sessions: SessionResolver;
   readonly signOuts: SessionGateway;
-  readonly shardAssignments: ShardAssignmentRepository;
   readonly shardResolver: ShardResolver;
-  readonly tenantMove: TenantMoveGateway;
   readonly sharding: ShardingStrategy;
   readonly storage: StorageGateway;
   readonly storagePolicy: StoragePolicyGateway;
@@ -173,9 +167,7 @@ export class TestContainer {
       queue: overrides.queue ?? new RecordingQueuePublisher(),
       sessions: overrides.sessions ?? new StubSessionResolver(),
       signOuts: overrides.signOuts ?? new RecordingSessionGateway(),
-      shardAssignments: overrides.shardAssignments ?? new InMemoryShardAssignmentRepository(),
       shardResolver: overrides.shardResolver ?? new InMemoryShardResolver(),
-      tenantMove: overrides.tenantMove ?? new InMemoryTenantMoveGateway(),
       sharding: overrides.sharding ?? new OrganizationShardingStrategy(),
       storage: overrides.storage ?? new InMemoryStorageGateway(),
       storagePolicy: overrides.storagePolicy ?? new InMemoryStoragePolicyGateway(),

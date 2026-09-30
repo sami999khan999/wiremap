@@ -63,11 +63,6 @@ export const coreEvents = {
   // The delete is a job now (`19.20`), so this is the only line that says it finished.
   // `outboxRows` is on it because `24.1` moved that sweep out of the database.
   "tenant.purge.completed": { level: "info" },
-  // A move is a job, so this is the only line that says the flip happened. The audit
-  // row says who asked; this says how many rows it carried.
-  "tenant.move.completed": { level: "info" },
-  // The end of a grace period. Silent on a night with nothing due.
-  "tenant.source.reclaimed": { level: "info" },
   // The spare pool refilled after signups drew on it. Silent when it was already full.
   "tenant.spares.replenished": { level: "info" },
   // `warn`, not `info`: a non-zero count is a tenant delete that did not finish, and

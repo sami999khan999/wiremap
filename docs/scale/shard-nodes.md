@@ -34,6 +34,13 @@ The machinery for **moving** an organization between nodes, and the admin screen
 upstream:packages/application/src/port/tenant-move.gateway.ts
 upstream:packages/infrastructure/src/pg/repository/pg-tenant-move.gateway.ts
 upstream:packages/composition/src/fake/in-memory-tenant-move.gateway.ts
+upstream:packages/application/src/port/shard-assignment.repository.ts
+upstream:packages/infrastructure/src/pg/repository/pg-shard-assignment.repository.ts
+upstream:packages/composition/src/fake/in-memory-shard-assignment.repository.ts
+upstream:packages/application/src/platform/move-tenant.use-case.ts
+upstream:packages/application/src/platform/relocate-tenant.use-case.ts
+upstream:packages/application/src/platform/reclaim-move-sources.use-case.ts
+upstream:packages/application/src/platform/locate-tenant.use-case.ts
 upstream:packages/application/src/platform/inspect-shard-map.use-case.ts
 upstream:packages/application/src/platform/shard-map.reader.ts
 upstream:packages/infrastructure/src/pg/repository/pg-shard-map.reader.ts
@@ -54,7 +61,19 @@ against lite's copy; lite should already have them unchanged.
 for each extra node, and `SHARD_MOVE_GRACE_DAYS`. `upstream:packages/infrastructure/shard-env.ts`
 reads them; lite's copy should already match.
 
-**Compose, for rehearsing locally:** `postgres-shard-1` and `pgbouncer-shard-1`, profile `sharded`.
+**Compose, for rehearsing locally:** `postgres-shard-1` and `pgbouncer-shard-1`, profile `sharded`,
+their `pgshard1data` volume, the root `infra:up:sharded` script, and `POSTGRES_SHARD_1_PORT` and
+`PGBOUNCER_SHARD_1_PORT` in `.env.example` with their two pairs in `check-architecture.mjs`.
+
+**And the wiring lite removed in `LT2.1`:** the worker's `tenant-move` job and the source reclaim in
+its nightly `cleanup`; `tenantMove`, `shardAssignments`, `relocateTenant`, `reclaimMoveSources` and
+the two move defaults on the container, with `moveGraceDays` and `moveSettleMs` in its database
+config; `SHARD_MOVE_GRACE_DAYS` in the worker's `env.ts`; and the `tenant.move.completed` and
+`tenant.source.reclaimed` event codes.
+
+**What lite kept, so none of this needs a migration:** the `shard_assignments` columns a move
+writes (`moving_to`, `moved_from`, `moved_at`, `source_droppable_at`), the write freeze that reads
+`moving_to` in `PgShardResolver` and `PgUnitOfWork`, and `platform_policy.move_grace_days`.
 
 > [!WARNING]
 > **Rehearse a tenant move on a copy of production data before doing it for real.** And be honest

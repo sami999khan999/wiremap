@@ -24,12 +24,6 @@ export interface ContainerConfig {
       readonly replicaUrl?: string;
     }[];
     readonly statementTimeoutMs?: number;
-    // How long a moved tenant's rows stay on the node it left, when the operator has
-    // set no number on `platform_policy`. Days — decision `24.2`.
-    readonly moveGraceDays?: number;
-    // How long a move waits, once the tenant is frozen, for writers that placed
-    // themselves before it. A spec passes zero; see sharding.md, "The tenant move".
-    readonly moveSettleMs?: number;
   };
   readonly redis: {
     // Two instances, different durability. Neither is optional: a missing

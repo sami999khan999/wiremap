@@ -36,7 +36,6 @@
     "check:comments": "node tooling/scripts/comment-density.mjs",
     "check:contrast": "node tooling/scripts/check-contrast.mjs",
     "infra:up": "node tooling/scripts/compose.mjs --profile observability up -d",
-    "infra:up:sharded": "node tooling/scripts/compose.mjs --profile observability --profile sharded up -d",
     "infra:up:replica": "node tooling/scripts/compose.mjs --profile observability --profile replica up -d",
     "infra:up:cold-tier": "node tooling/scripts/compose.mjs --profile observability --profile cold-tier up -d",
     "infra:core": "node tooling/scripts/compose.mjs up -d",
