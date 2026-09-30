@@ -1,15 +1,5 @@
 {
   "title": "Reference",
   "description": "One page per file and the service it configures",
-  "pages": [
-    "compose",
-    "postgres",
-    "pgbouncer",
-    "redis",
-    "mailpit",
-    "minio",
-    "loki",
-    "alloy",
-    "clickhouse"
-  ]
+  "pages": ["compose", "postgres", "pgbouncer", "redis", "mailpit", "minio", "loki", "alloy"]
 }

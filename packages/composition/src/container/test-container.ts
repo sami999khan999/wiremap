@@ -1,7 +1,5 @@
 import {
   DirectUnitOfWork,
-  InMemoryActivityReplayReader,
-  InMemoryAnalyticsProjector,
   InMemoryCacheStore,
   InMemoryColdArchiveReader,
   InMemoryLogReader,
@@ -36,8 +34,6 @@ import {
 } from "../fake/index.js";
 import {
   type ActivityLogger,
-  type ActivityReplayReader,
-  type AnalyticsProjector,
   Authorizer,
   type CacheStore,
   type CapabilityInvalidator,
@@ -84,11 +80,7 @@ import { OrganizationShardingStrategy } from "../shard/index.js";
 // a compile error here until it is written.
 export interface TestPorts {
   readonly activity: ActivityLogger;
-  readonly activityReplay: ActivityReplayReader;
   readonly relayedActivity: RelayedActivityStore;
-  // Present even though the real container leaves them absent: a test has no opinion
-  // about the deployment, and a consumer spec needs both sides.
-  readonly analyticsProjector: AnalyticsProjector;
   readonly cache: CacheStore;
   readonly rateLimits: RateLimitStore;
   readonly capabilities: CapabilityInvalidator;
@@ -154,9 +146,7 @@ export class TestContainer {
       eachShard: (work) => work(0),
 
       activity: overrides.activity ?? new RecordingActivityLogger(),
-      activityReplay: overrides.activityReplay ?? new InMemoryActivityReplayReader(),
       relayedActivity: overrides.relayedActivity ?? new RecordingRelayedActivityStore(),
-      analyticsProjector: overrides.analyticsProjector ?? new InMemoryAnalyticsProjector(),
       cache: overrides.cache ?? new InMemoryCacheStore(),
       rateLimits: overrides.rateLimits ?? new InMemoryRateLimitStore(),
       capabilities: overrides.capabilities ?? new RecordingCapabilityInvalidator(),

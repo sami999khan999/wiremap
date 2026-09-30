@@ -150,7 +150,7 @@ describe("PgMemberRepository and PgRoleRepository — exceptions", () => {
 
   it("counts live overrides only, on the member and on the role", async () => {
     await database.client.insert(permissionOverrides).values([
-      row("analytics.activity.read", "grant", new Date(Date.now() + 3_600_000)),
+      row("apikey.read", "grant", new Date(Date.now() + 3_600_000)),
       row("member.invite", "deny", null),
       // A minute, not a second: `now()` is the database's clock, and Docker's VM drifts
       // a second behind the host after a sleep, which made a one-second lapse read live.

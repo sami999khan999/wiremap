@@ -1,11 +1,4 @@
 export {
-  type ActivityDto,
-  type ActivityPointDto,
-  type ActivityQuery,
-  AnalyticsContract,
-  AnalyticsProcedures,
-} from "./analytics/index.js";
-export {
   ApiKeyContract,
   type ApiKeyDto,
   ApiKeyEntity,

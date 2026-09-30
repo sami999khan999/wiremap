@@ -100,7 +100,7 @@ store that is not running looks identical to a working one.
 Read the checkpoint **out of the destination**, walk forward in keyset batches, stop when a batch
 comes back short. The checkpoint advances because rows landed, never because a batch was
 acknowledged, so a projector that failed mid-insert resumes from what is actually in the table. See
-[`infrastructure/docs/reference/clickhouse.md`](../../../../packages/infrastructure/docs/reference/clickhouse.md).
+[`infrastructure/docs/reference/clickhouse.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md).
 
 | Constant | Why |
 |---|---|

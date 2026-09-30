@@ -20,11 +20,6 @@ export class QueryKeys {
     sessions: () => ["account", "session", "list"] as const,
   };
 
-  public static readonly analytics = {
-    all: () => ["analytics"] as const,
-    activity: (days: number) => ["analytics", "activity", days] as const,
-  };
-
   // Mirrors the two procedure groups. `reading` is keyed by slug and path, which is what
   // a reader has; the editor's keys are by id, which is what an author has.
   public static readonly doc = {

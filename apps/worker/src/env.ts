@@ -73,9 +73,6 @@ const Schema = z
     // A provider's cap, expressed once. Ten a second is under every managed sender's
     // free tier and well under a self-hosted relay's.
     WORKER_MAIL_RATE_PER_MINUTE: z.coerce.number().int().positive().default(600),
-    // Serial, and not a dial worth turning: correctness rests on there being exactly one
-    // writer, not on the insert being idempotent.
-    WORKER_ANALYTICS_CONCURRENCY: z.coerce.number().int().positive().max(1).default(1),
 
     // The same block the web app parses: a worker with no log output cannot be operated.
 
@@ -83,14 +80,6 @@ const Schema = z
     // A driver plus the connection detail it needs, so adopting a store is these variables
     // and nothing else.
     VECTOR_DRIVER: z.enum(["pgvector"]).default("pgvector"),
-    // Their absence keeps ClickHouse stopped. Present, the projection and its
-    // reconciliation run; no feature reads the store back yet.
-    CLICKHOUSE_URL: z.url().optional(),
-    // ClickHouse's own out-of-the-box values: a default naming the project would be a
-    // credential baked into shipped code.
-    CLICKHOUSE_DATABASE: z.string().min(1).default("default"),
-    CLICKHOUSE_USER: z.string().min(1).default("default"),
-    CLICKHOUSE_PASSWORD: z.string().default(""),
     // Unset means no `LogReader`. Logs are still written to stdout and shipped by Alloy
     // either way.
     LOKI_URL: z.url().optional(),
@@ -108,8 +97,7 @@ const Schema = z
 
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   })
-  // Two cross-field rules: the compose container is `ratchet/ratchet` and these default
-  // to ClickHouse's own `default/default`, and a cold tier is two keys or none.
+  // The cold tier's two rules: two keys or none, and a class read without a restore.
   .superRefine((env, ctx) => {
     // One without the other is a transition that silently never happens.
     if (!env.S3_COLD_STORAGE_CLASS !== !env.S3_COLD_TRANSITION_DAYS) {
@@ -127,18 +115,6 @@ const Schema = z
         path: ["S3_COLD_STORAGE_CLASS"],
         message: "Use a class read without a restore: STANDARD_IA, ONEZONE_IA or GLACIER_IR.",
       });
-    }
-
-    if (!env.CLICKHOUSE_URL) return;
-
-    for (const key of ["CLICKHOUSE_DATABASE", "CLICKHOUSE_USER"] as const) {
-      if (env[key] === "default") {
-        ctx.addIssue({
-          code: "custom",
-          path: [key],
-          message: "Set it explicitly when CLICKHOUSE_URL is set.",
-        });
-      }
     }
   });
 
@@ -206,10 +182,6 @@ export class Env {
     return Env.parsed.SHARD_MOVE_GRACE_DAYS;
   }
 
-  public static get analyticsConcurrency(): number {
-    return Env.parsed.WORKER_ANALYTICS_CONCURRENCY;
-  }
-
   public static get mailConcurrency(): number {
     return Env.parsed.WORKER_MAIL_CONCURRENCY;
   }
@@ -274,18 +246,6 @@ export class Env {
       realtime: {
         maxStreamsPerUser: e.REALTIME_MAX_STREAMS_PER_USER,
         streamMaxAgeSeconds: e.REALTIME_STREAM_MAX_AGE_SECONDS,
-      },
-      // Undefined unless a URL was given, which is what `Container` branches on: a
-      // partly-filled object builds a connection pointed at nothing.
-      analytics: {
-        clickhouse: e.CLICKHOUSE_URL
-          ? {
-              url: e.CLICKHOUSE_URL,
-              database: e.CLICKHOUSE_DATABASE,
-              username: e.CLICKHOUSE_USER,
-              password: e.CLICKHOUSE_PASSWORD,
-            }
-          : undefined,
       },
       vector: { driver: e.VECTOR_DRIVER },
       logs: e.LOKI_URL

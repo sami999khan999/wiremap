@@ -48,9 +48,6 @@ export const coreEvents = {
   // An archive index row whose object the bucket has already expired. Deleted here, so
   // an archived-notifications read is an empty list rather than a `NotFoundError`.
   "retention.rows.expired": { level: "info" },
-  // The ClickHouse TTL, same shape. Separate from the two above because it is a
-  // different store with a different failure — `MODIFY TTL` rewrites every part.
-  "analytics.retention.applied": { level: "info" },
   // One per tenant-month restored. Into a scratch table unless the month is inside
   // the hot window, which the line says so a reader knows where to look.
   "cold.partition.restored": { level: "info" },
@@ -76,9 +73,6 @@ export const coreEvents = {
   // `warn`, not `info`: a non-zero count is a tenant delete that did not finish, and
   // since `24.1` the database will not say so on its own.
   "maintenance.orphans.found": { level: "warn" },
-  // One per tenant-month refilled from cold storage. Idempotent through the
-  // `ReplacingMergeTree`, so a second run over the same month is a no-op.
-  "cold.partition.reprojected": { level: "info" },
   // The directory has no row for a key. Today every node is zero and guessing would
   // work; after a split it would place a tenant somewhere else entirely.
   "shard.resolution.failed": { level: "error" },
@@ -119,17 +113,7 @@ export const coreEvents = {
   "cache.entry.corrupt": { level: "warn" },
   "embedding.request.failed": { level: "error" },
 
-  // `lagged` is the one that matters: the realistic failure is a consumer that died
-  // quietly, not one that threw.
-  "analytics.projection.completed": { level: "debug" },
-  "analytics.projection.failed": { level: "error" },
-  "analytics.projection.lagged": { level: "warn" },
-  // A tenant with no directory row, passed over so every other tenant still projects —
-  // `23.21`. Error, because the row should not exist and somebody has to fix it.
-  "analytics.tenant.skipped": { level: "error" },
   // A tenant-month that left Postgres without reaching ClickHouse. Recorded rather than
   // blocking the drop: a forgotten switch costs a known hole, never an unbounded table.
   "analytics.projection.gap": { level: "warn" },
-  "analytics.reconciliation.completed": { level: "info" },
-  "analytics.reconciliation.drifted": { level: "error" },
 } as const satisfies Record<string, EventMeta>;

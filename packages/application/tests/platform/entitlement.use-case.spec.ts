@@ -453,7 +453,7 @@ describe("ExpireEntitlementAdjustmentsUseCase", () => {
     entitlements.adjustments.push(
       {
         organizationId: ACME,
-        permission: "analytics.activity.read",
+        permission: "apikey.read",
         effect: "add",
         reason: "trial",
         expiresAt: new Date(NOW.getTime() - 1),
@@ -542,7 +542,7 @@ describe("GetOrganizationEntitlementUseCase", () => {
               description: null,
               scope: "org",
               isSystem: false,
-              permissions: ["member.read", "analytics.activity.read", "core.activity.write"],
+              permissions: ["member.read", "apikey.read", "core.activity.write"],
             },
           ],
         }),

@@ -47,7 +47,7 @@ describe("EntitlementRules", () => {
 
   it("offers every maskable key and nothing outside the mask", () => {
     const keys = EntitlementRules.maskableKeys();
-    expect(keys).toContain("analytics.activity.read");
+    expect(keys).toContain("apikey.read");
     expect(keys.some((key) => key.startsWith("core.") || key.startsWith("platform."))).toBe(false);
   });
 });

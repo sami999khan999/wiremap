@@ -5,12 +5,6 @@ ServerOnly.assert("@loadbearing/infrastructure");
 // One folder per external system, so `ls src/` answers "what does this depend on?". A
 // folder says the seam is implemented, not that the container is started.
 export { BullMqQueuePublisher } from "./bullmq/index.js";
-export {
-  ClickHouseAnalyticsProjector,
-  ClickHouseAnalyticsReader,
-  type ClickHouseConfig,
-  ClickHouseConnection,
-} from "./clickhouse/index.js";
 export { type LokiConfig, LokiLogReader } from "./loki/index.js";
 export { type OpenAiEmbeddingConfig, OpenAiEmbeddingProvider } from "./openai/index.js";
 export {
@@ -24,7 +18,6 @@ export {
   type OpenTransaction,
   PgAccountRepository,
   PgActivityLogger,
-  PgActivityReplayReader,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
@@ -50,7 +43,6 @@ export {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
-  PgProjectionPolicyRepository,
   PgRetentionPolicyRepository,
   PgRoleRepository,
   PgShardAssignmentRepository,

@@ -21,7 +21,7 @@ const ACCOUNT: AccountDto = {
     {
       id: "deny-1",
       organizationId: ACME,
-      permission: "analytics.activity.read",
+      permission: "apikey.read",
       reason: "abuse",
       createdAt: new Date("2026-09-29T00:00:00Z"),
     },
@@ -78,7 +78,7 @@ describe("AccountPanel", () => {
     // Twice: the tenant it belongs to, and the tenant the deny lives in.
     expect(screen.getAllByText("Acme")).toHaveLength(2);
     expect(screen.getByText("Deactivated by the organization")).toBeTruthy();
-    expect(screen.getByText("analytics.activity.read")).toBeTruthy();
+    expect(screen.getByText("apikey.read")).toBeTruthy();
     expect(screen.getByText("Active")).toBeTruthy();
   });
 

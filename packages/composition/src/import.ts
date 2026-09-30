@@ -4,11 +4,8 @@
 // ── @loadbearing/application ─────────────────────────────────────────────────
 export {
   ActivityLogger,
-  type ActivityRecord,
   ActivityRelaySubscriber,
-  ActivityReplayReader,
   AdjustEntitlementUseCase,
-  AnalyticsProjector,
   type ArchivedObject,
   type ArchivedPartition,
   AssignPlanUseCase,
@@ -28,7 +25,6 @@ export {
   CreateDocPageUseCase,
   CreateDocSpaceUseCase,
   CreateRoleUseCase,
-  type DailyCount,
   DeleteDocPageUseCase,
   DeleteDocSpaceUseCase,
   type DeletedTenantSweep,
@@ -58,7 +54,6 @@ export {
   FlagCache,
   type FlagRecord,
   FlagRepository,
-  GetActivityTrendUseCase,
   GetDocPageUseCase,
   GetDocRevisionUseCase,
   GetDocSpaceUseCase,
@@ -121,10 +116,7 @@ export {
   PreviewDocPageUseCase,
   // A value: `placedAt` builds the empty principal a placement-only read needs.
   Principal,
-  type ProjectionCheckpoint,
   type ProjectionGap,
-  type ProjectionPolicyRecord,
-  ProjectionPolicyRepository,
   PublishDocPageUseCase,
   PurgeOrganizationUseCase,
   QueueDocumentIndexUseCase,
@@ -240,7 +232,6 @@ export {
 // Only the branded ids two port signatures name, without which `test-container.ts`
 // cannot override them.
 export type {
-  ActivityAction,
   DomainEvent,
   DomainEventInput,
   DomainEventName,
@@ -264,9 +255,6 @@ export { ConflictError, NotFoundError } from "@loadbearing/errors";
 // whole outside-world side of the ports below.
 export {
   BullMqQueuePublisher,
-  ClickHouseAnalyticsProjector,
-  ClickHouseAnalyticsReader,
-  ClickHouseConnection,
   Database,
   DatabaseCluster,
   type DatabaseStats,
@@ -275,7 +263,6 @@ export {
   OrdinalCursor,
   PgAccountRepository,
   PgActivityLogger,
-  PgActivityReplayReader,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
@@ -301,7 +288,6 @@ export {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
-  PgProjectionPolicyRepository,
   PgRetentionPolicyRepository,
   PgRoleRepository,
   PgShardAssignmentRepository,

@@ -109,7 +109,7 @@ reads as two different things; `pg/repository/pg-analytics.reader.ts` beside
 > **A folder here means the seam is implemented, not that the store is running.** `clickhouse/` and
 > `loki/` are behind opt-in compose profiles, and `Container` builds neither unless its config block
 > is present. Those are two separate decisions and only the second one costs anything to be wrong
-> about — see [reference/clickhouse](../../packages/infrastructure/docs/reference/clickhouse.md).
+> about — see [reference/clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md).
 
 **`packages/infrastructure/src/index.ts`**
 
@@ -611,7 +611,7 @@ Three things `ClickHouseConnection` does that are easy to get wrong by hand:
 - **`DateTime64(3)` is `YYYY-MM-DD HH:MM:SS.mmm`.** An ISO string's `T` and `Z` are rejected.
 
 The full mechanics — the checkpoint, the keyset, the `ReplacingMergeTree` dedup, the reconciliation —
-are in [reference/clickhouse](../../packages/infrastructure/docs/reference/clickhouse.md).
+are in [reference/clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md).
 
 ### `src/loki/` — the read side of the diagnostic stream
 

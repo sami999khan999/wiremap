@@ -279,7 +279,7 @@ variable came back undefined — which looks exactly like an unconfigured stack.
   `partition_archive` as the index a read starts from, and the restore that proves the difference.
 - [The bucket's lifecycle policy](reference/storage-policy.md) — why a second gateway, why "no
   configuration" is an error code, and why the app owns the whole configuration rather than a rule.
-- [ClickHouse](reference/clickhouse.md) — no client library, two adapters, and the order it is
+- [ClickHouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md) — no client library, two adapters, and the order it is
   adopted in.
 - [Loki](reference/loki.md) — why only a reader exists, and the query shapes the port refuses to
   offer.

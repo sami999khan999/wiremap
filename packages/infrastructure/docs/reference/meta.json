@@ -10,7 +10,6 @@
     "notification-recipients",
     "cold-storage",
     "storage-policy",
-    "clickhouse",
     "loki",
     "realtime",
     "fan-out",

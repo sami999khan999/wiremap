@@ -181,7 +181,7 @@ pnpm infra:logs            # tail every service
 |---|---|---|
 | *(none)* | `postgres`, `pgbouncer`, `redis-cache`, `redis-queue`, `mailpit`, `minio`, `minio-init` | always |
 | `observability` | `loki`, `alloy` | **on** — the diagnostic stream is live today |
-| `analytics` | `clickhouse` | **off** — see [clickhouse](reference/clickhouse.md) |
+| `analytics` | `clickhouse` | **off** — see [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md) |
 
 **Starting the container and feeding it are two separate switches.** `pnpm infra:up:analytics` runs
 ClickHouse; `CLICKHOUSE_URL` in `.env` is what makes the application build a projector and the worker
@@ -220,5 +220,5 @@ Per-service checks are on each reference page. The most common failures across a
 | Alloy healthy, no logs in Loki | Project-name filter mismatch — [alloy](reference/alloy.md) |
 | Loki unhealthy on first boot | Waiting on `minio-init`; give it the twenty retries |
 | A fifth label appears | Loki or a source component invented it — [alloy](reference/alloy.md) |
-| ClickHouse table "missing" | It is in `default`, not `ratchet` — [clickhouse](reference/clickhouse.md) |
+| ClickHouse table "missing" | It is in `default`, not `ratchet` — [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md) |
 | Port already allocated | Something else owns it — [compose](reference/compose.md#host-ports) |

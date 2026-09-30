@@ -1,5 +1,4 @@
 import {
-  AnalyticsConsumer,
   EmbeddingConsumer,
   MailConsumer,
   MaintenanceConsumer,
@@ -14,8 +13,6 @@ import {
   OrphansSchedule,
   OutboxDrainSchedule,
   PartitionsSchedule,
-  ProjectionSchedule,
-  ReconcileSchedule,
   RetentionSchedule,
   SparesSchedule,
 } from "../schedule/index.js";
@@ -73,18 +70,6 @@ export class WorkerBootstrap {
       ).start(),
     );
 
-    // The branch is the point: without a ClickHouse config no consumer starts and no
-    // schedule registers. See docs/reference/consumers.md.
-    if (this.container.hasProjector) {
-      this.workers.push(
-        new AnalyticsConsumer(
-          this.container,
-          this.redis.queueClient(),
-          Env.analyticsConcurrency,
-        ).start(),
-      );
-    }
-
     // Once at boot, before the schedules: the monthly cron only helps a worker that was
     // awake on the first, and the runway running out is every write in the system failing.
     await new PartitionsSchedule(this.container, this.redis.queueClient()).runOnce();
@@ -97,23 +82,16 @@ export class WorkerBootstrap {
     await new OrphansSchedule(this.container, this.redis.queueClient()).register();
     await new SparesSchedule(this.container, this.redis.queueClient()).register();
 
-    if (this.container.hasProjector) {
-      await new ProjectionSchedule(this.container, this.redis.queueClient()).register();
-      await new ReconcileSchedule(this.container, this.redis.queueClient()).register();
-    }
-
     this.warnIfOversubscribed();
 
     this.container.logger.emit("process.started", {
       service: "worker",
-      // The only difference on the wire between a worker running the analytics pipeline
-      // and one built without a store to project into.
       consumers: this.workers.length,
     });
   }
 
-  // Off the workers that actually started, never the consumers in the tree: without a
-  // ClickHouse config the analytics consumer is not running and must not be counted.
+  // Off the workers that actually started, never the consumers in the tree: a consumer
+  // that did not start holds no connection and must not be counted.
   private warnIfOversubscribed(): void {
     // `?? 1` is BullMQ's own default. Mail is left out: a send holds an SMTP socket, never
     // a database connection, and counting it made the defaults sum to the pool exactly.

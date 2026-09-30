@@ -36,8 +36,6 @@ describe("TestContainer", () => {
     expect(Object.keys(harness)).toHaveLength(ports.length + NOT_PORTS.length);
     expect(Object.keys(harness).sort()).toEqual([
       "activity",
-      "activityReplay",
-      "analyticsProjector",
       "authorizer",
       "cache",
       "capabilities",

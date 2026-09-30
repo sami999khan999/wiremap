@@ -6,7 +6,6 @@ import type { TenantRecord, TenantRepository } from "../../src/platform/tenant.r
 import type { TenantRetentionPolicyRepository } from "../../src/platform/tenant-retention-policy.repository.js";
 import type {
   ActivityLogger,
-  AnalyticsProjector,
   ArchivedPartition,
   CapabilityInvalidator,
   MaintenanceGateway,
@@ -114,15 +113,6 @@ class FakeInvalidator implements Partial<CapabilityInvalidator> {
   }
 }
 
-class FakeProjector implements Partial<AnalyticsProjector> {
-  public readonly forgotten: string[] = [];
-
-  public deleteTenant(organizationId: string): Promise<void> {
-    this.forgotten.push(organizationId);
-    return Promise.resolve();
-  }
-}
-
 // Records the keys it was asked to forget. The placement cache has a deliberately long
 // TTL, so "was it invalidated" is the whole behaviour and a double that shrugged would
 // ──
@@ -157,7 +147,6 @@ interface Parts {
   readonly outbox: FakeOutbox;
   readonly activity: FakeActivity;
   readonly capabilities: FakeInvalidator;
-  readonly projector: FakeProjector | null;
   readonly tenantRetention: FakeTenantRetention;
   readonly shards: FakeShards;
 }
@@ -170,7 +159,6 @@ const build = (overrides: Partial<Parts> = {}) => {
     outbox: new FakeOutbox(),
     activity: new FakeActivity(),
     capabilities: new FakeInvalidator(),
-    projector: new FakeProjector(),
     tenantRetention: new FakeTenantRetention(),
     shards: new FakeShards(),
     ...overrides,
@@ -194,7 +182,6 @@ const build = (overrides: Partial<Parts> = {}) => {
       parts.activity,
       unitOfWork,
       { now: () => NOW },
-      parts.projector as unknown as AnalyticsProjector | null,
       parts.tenantRetention as unknown as TenantRetentionPolicyRepository,
       parts.shards as unknown as ShardResolver,
     ),
@@ -264,18 +251,15 @@ describe("PurgeOrganizationUseCase", () => {
     expect(parts.activity.rows).toEqual([{ organizationId: PLATFORM, action: "tenant.deleted" }]);
   });
 
-  it("flushes the capability cache and forgets the tenant in the derived store", async () => {
+  it("flushes the capability cache", async () => {
     const { parts, useCase } = build();
     await useCase.execute(input);
 
     expect(parts.capabilities.flushed).toEqual([TENANT]);
-    expect(parts.projector?.forgotten).toEqual([TENANT]);
   });
 
-  // Skipped rather than failed: with no analytics store there is no derived copy to
-  // forget, and a deployment running without one must still be able to delete a tenant.
-  it("completes with no analytics store configured", async () => {
-    const { useCase } = build({ projector: null });
+  it("reports what it archived, dropped and flushed", async () => {
+    const { useCase } = build();
     await expect(useCase.execute(input)).resolves.toEqual({
       archived: 0,
       partitions: 3,

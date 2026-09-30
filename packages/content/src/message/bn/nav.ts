@@ -17,7 +17,6 @@ export const nav: NamespaceBundle<"nav"> = {
   "nav.apiKeys": "API কী",
   "nav.documents": "নথি",
   "nav.notifications": "বিজ্ঞপ্তি",
-  "nav.analytics": "কার্যকলাপ",
   "nav.platform": "প্ল্যাটফর্ম",
   "nav.docs": "ডক",
 

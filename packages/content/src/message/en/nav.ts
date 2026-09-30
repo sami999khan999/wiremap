@@ -22,7 +22,6 @@ export const nav = {
   "nav.apiKeys": "API keys",
   "nav.documents": "Documents",
   "nav.notifications": "Notifications",
-  "nav.analytics": "Activity",
   "nav.platform": "Platform",
   "nav.docs": "Docs",
 

@@ -1,5 +1,4 @@
 import { RealtimeRouter } from "../import.js";
-import { AnalyticsRouter } from "./analytics.router.js";
 import { ApiKeyRouter } from "./api-key.router.js";
 import { DocGrantRouter } from "./doc-grant.router.js";
 import { DocPageRouter } from "./doc-page.router.js";
@@ -21,7 +20,6 @@ export const appRouter = {
   notification: NotificationRouter.all,
   realtime: RealtimeRouter.all,
   platform: PlatformRouter.all,
-  analytics: AnalyticsRouter.all,
   override: OverrideRouter.all,
   docSpace: DocSpaceRouter.all,
   docPage: DocPageRouter.all,

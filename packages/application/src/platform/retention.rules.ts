@@ -1,6 +1,4 @@
-import type { ActivityAction } from "../import.js";
 import type { ColdTier, LifecycleRule } from "../port/index.js";
-import type { ProjectionPolicyRecord } from "./projection-policy.repository.js";
 import type { RetentionPolicyRecord } from "./retention-policy.repository.js";
 
 // The average Gregorian month. S3 counts days and the policy is written in months, so
@@ -16,24 +14,10 @@ const COLD_PREFIX = "cold/";
 const EXPORT_PREFIX = "export/";
 const EXPORT_DAYS = 7;
 
-// ClickHouse's own spelling: it rewrites `INTERVAL 5 MONTH` as `toIntervalMonth(5)`, so
-// emitting the readable form would make the daily comparison rewrite the table forever.
-const TTL_COLUMN = "toDateTime(occurred_at)";
-
-// One action kept for a different number of months than the rest.
-export interface ActionTtl {
-  readonly action: ActivityAction;
-  readonly months: number;
-}
-
-// Pure. Every number the screen shows and every expression either store receives is
-// composed here, so the screen and the worker cannot drift.
+// Pure. Every number the screen shows and every rule the bucket receives is composed
+// here, so the screen and the worker cannot drift.
 export class RetentionRules {
   private constructor() {}
-
-  // Five years, matching the shipped `0000` migration — the default an absent
-  // `clickhouse` row falls back to, as an absent postgres row falls back to the allowlist.
-  public static readonly DEFAULT_CLICKHOUSE_MONTHS = 60;
 
   // Sorted by prefix, so two runs over the same rows compare equal — otherwise the daily
   // job rewrites the bucket every time the row order changes.
@@ -58,53 +42,6 @@ export class RetentionRules {
 
     return [...cold, { prefix: EXPORT_PREFIX, expireAfterDays: EXPORT_DAYS }].sort((left, right) =>
       left.prefix.localeCompare(right.prefix),
-    );
-  }
-
-  // In the form ClickHouse reads back: `toIntervalMonth(n)` rather than `INTERVAL n
-  // MONTH`, and **no `DELETE`** — the store accepts both and echoes neither.
-  public static clickhouseTtlFor(months: number, perAction: readonly ActionTtl[] = []): string {
-    const base = `${TTL_COLUMN} + toIntervalMonth(${months})`;
-    if (perAction.length === 0) return base;
-
-    // Sorted, so two runs over the same rows compose the same string: an unstable
-    // order would make the daily comparison rewrite a years-deep table every night.
-    const sorted = [...perAction].sort((left, right) => left.action.localeCompare(right.action));
-    const clauses = sorted.map(
-      (row) => `${TTL_COLUMN} + toIntervalMonth(${row.months}) WHERE action = '${row.action}'`,
-    );
-
-    // The `NOT IN` is load-bearing: an unconditioned clause matches every row and
-    // deletes the ones a longer per-action clause was keeping. See clickhouse.md.
-    const excluded = sorted.map((row) => `'${row.action}'`).join(", ");
-    clauses.push(`${base} WHERE action NOT IN (${excluded})`);
-
-    return clauses.join(", ");
-  }
-
-  // The whole expression, from the two tables it is composed of. Here rather than at
-  // each caller: the screen, the save and the nightly job must compose the same string.
-  public static clickhouseTtlFrom(
-    retention: readonly RetentionPolicyRecord[],
-    projection: readonly ProjectionPolicyRecord[],
-  ): string {
-    const months = RetentionRules.clickhouseMonthsFrom(retention);
-
-    return RetentionRules.clickhouseTtlFor(
-      months,
-      // An excluded action needs no clause: nothing writes it, so a TTL over it is a
-      // window on rows that do not arrive.
-      projection
-        .filter((row) => row.projected && row.ttlMonths !== null)
-        .map((row) => ({ action: row.action, months: row.ttlMonths ?? months })),
-    );
-  }
-
-  // The default window, from the `clickhouse` row or the constant it falls back to.
-  public static clickhouseMonthsFrom(retention: readonly RetentionPolicyRecord[]): number {
-    return (
-      retention.find((row) => row.store === "clickhouse")?.hotMonths ??
-      RetentionRules.DEFAULT_CLICKHOUSE_MONTHS
     );
   }
 

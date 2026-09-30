@@ -97,22 +97,12 @@ export interface ContainerConfig {
     readonly streamMaxAgeSeconds: number;
   };
   // ── the swappable stores ───────────────────────────────────────────────────
-  // Three blocks. `vector` and `logs` name a `driver` the container switches on;
-  // `analytics` has no reader to switch. See docs/reference/container.md.
+  // Two blocks, each naming a `driver` the container switches on. Lite has no analytics
+  // store, so no third block. See docs/reference/container.md.
   readonly vector: {
     // `pgvector` today. Rebuildable by re-embedding the sources, which is why a
     // dedicated store can be adopted without a migration plan.
     readonly driver: "pgvector";
-  };
-  readonly analytics: {
-    // No `driver`: the projection is write-only until a feature reads it, and its
-    // presence alone decides whether the pipeline exists, so nothing runs half-wired.
-    readonly clickhouse?: {
-      readonly url: string;
-      readonly database: string;
-      readonly username: string;
-      readonly password: string;
-    };
   };
   // Absent means no `LogReader`. Diagnostics are still written to stdout either way;
   // this only decides whether anything in-process can read them back.

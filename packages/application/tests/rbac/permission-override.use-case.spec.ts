@@ -198,7 +198,7 @@ const admin = (...grants: readonly PermissionKey[]) =>
     }),
   );
 
-const holder = admin("member.read", "member.invite", "rbac.role.read", "analytics.activity.read");
+const holder = admin("member.read", "member.invite", "rbac.role.read", "rbac.effective.inspect");
 
 describe("GrantPermissionOverrideUseCase", () => {
   it("defaults to thirty days, and brings what the key needs and the person lacks", async () => {
@@ -222,7 +222,7 @@ describe("GrantPermissionOverrideUseCase", () => {
 
   it("refuses an expiry past ninety days, one in the past, and a grant with no reason", async () => {
     const { grant } = harness();
-    const base = { userId: MEMBER, permission: "analytics.activity.read", reason: "x" };
+    const base = { userId: MEMBER, permission: "rbac.effective.inspect", reason: "x" };
 
     await expect(
       grant.execute(holder, { ...base, expiresAt: new Date(NOW.getTime() + 91 * DAY) }),
@@ -243,7 +243,7 @@ describe("GrantPermissionOverrideUseCase", () => {
     await expect(
       grant.execute(admin("member.read"), {
         userId: MEMBER,
-        permission: "analytics.activity.read",
+        permission: "rbac.effective.inspect",
         reason: "x",
         expiresAt: null,
       }),
@@ -261,7 +261,7 @@ describe("GrantPermissionOverrideUseCase", () => {
 
   it("refuses the actor themselves, someone who outranks them, and core or platform keys", async () => {
     const { grant } = harness();
-    const base = { permission: "analytics.activity.read", reason: "x", expiresAt: null };
+    const base = { permission: "rbac.effective.inspect", reason: "x", expiresAt: null };
 
     await expect(grant.execute(holder, { ...base, userId: ADMIN })).rejects.toBeInstanceOf(
       ConflictError,
@@ -282,7 +282,7 @@ describe("GrantPermissionOverrideUseCase", () => {
     await expect(
       grant.execute(holder, {
         userId: Identifiers.userId.parse("018f8c00-0000-7000-8000-0000000000ff"),
-        permission: "analytics.activity.read",
+        permission: "rbac.effective.inspect",
         reason: "x",
         expiresAt: null,
       }),
@@ -313,12 +313,12 @@ describe("ClearPermissionOverrideUseCase", () => {
     const { deny, clear, overrides, flushed } = harness();
     await deny.execute(holder, {
       userId: MEMBER,
-      permission: "analytics.activity.read",
+      permission: "rbac.effective.inspect",
       reason: null,
     });
     flushed.length = 0;
 
-    await clear.execute(holder, { overrideId: "analytics.activity.read:org" });
+    await clear.execute(holder, { overrideId: "rbac.effective.inspect:org" });
 
     expect(overrides.rows).toEqual([]);
     expect(flushed).toEqual([`${ORG}:${MEMBER}`]);
@@ -332,7 +332,7 @@ describe("ClearPermissionOverrideUseCase", () => {
       MEMBER,
       [
         {
-          permission: "analytics.activity.read",
+          permission: "rbac.effective.inspect",
           effect: "deny",
           reason: null,
           expiresAt: null,
@@ -343,7 +343,7 @@ describe("ClearPermissionOverrideUseCase", () => {
     );
 
     await expect(
-      clear.execute(holder, { overrideId: "analytics.activity.read:platform" }),
+      clear.execute(holder, { overrideId: "rbac.effective.inspect:platform" }),
     ).rejects.toBeInstanceOf(ConflictError);
     expect(overrides.rows).toHaveLength(1);
   });
@@ -354,7 +354,7 @@ describe("ExpirePermissionOverridesUseCase", () => {
     const { grant, expire, overrides, recorded, flushed } = harness();
     await grant.execute(holder, {
       userId: MEMBER,
-      permission: "analytics.activity.read",
+      permission: "rbac.effective.inspect",
       reason: "trial",
       expiresAt: new Date(NOW.getTime() + DAY),
     });

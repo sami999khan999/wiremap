@@ -141,7 +141,7 @@ describe("PermissionMatrix — keys outside the plan", () => {
             id: "member",
             label: "Member",
             editable: true,
-            capabilities: CapabilitySet.from(capabilitiesWith(["analytics.activity.read"])),
+            capabilities: CapabilitySet.from(capabilitiesWith(["apikey.read"])),
           },
         ]}
         onToggle={() => undefined}
@@ -153,10 +153,10 @@ describe("PermissionMatrix — keys outside the plan", () => {
     );
 
   it("disables a blocked key's checkbox and says it is not in the plan", async () => {
-    await editable(new Set(["analytics.activity.read"]));
+    await editable(new Set(["apikey.read"]));
 
     const box = screen.getByRole<HTMLInputElement>("checkbox", {
-      name: "Member — analytics.activity.read",
+      name: "Member — apikey.read",
     });
     expect(box.disabled).toBe(true);
     // Still ticked: the grant is kept, which is what makes an upgrade restore it.
@@ -168,8 +168,7 @@ describe("PermissionMatrix — keys outside the plan", () => {
     await editable();
 
     expect(
-      screen.getByRole<HTMLInputElement>("checkbox", { name: "Member — analytics.activity.read" })
-        .disabled,
+      screen.getByRole<HTMLInputElement>("checkbox", { name: "Member — apikey.read" }).disabled,
     ).toBe(false);
     expect(screen.queryByText("Not included in your plan")).toBeNull();
   });

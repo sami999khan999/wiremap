@@ -1,11 +1,4 @@
 export { ActivityLogger } from "./activity.logger.js";
-export {
-  type ActivityRecord,
-  ActivityReplayReader,
-  type DailyCount,
-  type ProjectionCheckpoint,
-} from "./activity-replay.reader.js";
-export { AnalyticsProjector } from "./analytics.projector.js";
 export { CacheStore } from "./cache.store.js";
 export { CapabilityInvalidator } from "./capability.invalidator.js";
 export {

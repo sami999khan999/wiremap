@@ -1,11 +1,3 @@
-export {
-  type ActivityCount,
-  type ActivityTrend,
-  AnalyticsReader,
-  type GetActivityTrendInput,
-  GetActivityTrendUseCase,
-} from "./analytics/index.js";
-
 import { ServerOnly } from "./import.js";
 
 ServerOnly.assert("@loadbearing/application");
@@ -153,7 +145,6 @@ export {
   type AccountRecord,
   AccountRepository,
   AccountRules,
-  type ActionTtl,
   type AdjustEntitlementInput,
   AdjustEntitlementUseCase,
   type AdjustmentInput,
@@ -203,8 +194,6 @@ export {
   PlatformPolicyRepository,
   PlatformReader,
   type PlatformStatus,
-  type ProjectionPolicyRecord,
-  ProjectionPolicyRepository,
   type PurgedOrganization,
   type PurgeOrganizationInput,
   PurgeOrganizationUseCase,
@@ -247,9 +236,6 @@ export {
 } from "./platform/index.js";
 export {
   ActivityLogger,
-  type ActivityRecord,
-  ActivityReplayReader,
-  AnalyticsProjector,
   type ArchivedObject,
   type ArchivedPartition,
   CacheStore,
@@ -257,7 +243,6 @@ export {
   ColdArchiveReader,
   type ColdPage,
   type ColdTier,
-  type DailyCount,
   type DeletedTenantSweep,
   type DocumentChunk,
   DomainEventPublisher,
@@ -282,7 +267,6 @@ export {
   type PartitionArchiveEntry,
   PartitionArchiveGateway,
   type PartitionEstimate,
-  type ProjectionCheckpoint,
   type ProjectionGap,
   type QueuedJob,
   QueuePublisher,
@@ -320,7 +304,6 @@ export {
   VectorStore,
 } from "./port/index.js";
 export {
-  ActivitySubject,
   Authorizer,
   type CancellationSignal,
   type PartitionColumn,

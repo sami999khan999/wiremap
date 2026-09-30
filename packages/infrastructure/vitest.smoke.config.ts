@@ -32,7 +32,6 @@ const replicaUrl = optional("DATABASE_REPLICA_URL");
 const coldClass = optional("S3_COLD_STORAGE_CLASS");
 const coldDays = numbers("S3_COLD_TRANSITION_DAYS")?.[0];
 const lokiUrl = optional("LOKI_URL");
-const clickhouseUrl = optional("CLICKHOUSE_URL");
 
 export default defineConfig({
   resolve: { conditions: ["development"] },
@@ -84,18 +83,6 @@ export default defineConfig({
         ...(fanOut?.length ? { fanOut } : {}),
         ...(routed?.length ? { routed } : {}),
         ...(lokiUrl ? { loki: { url: lokiUrl, tenantId: optional("LOKI_TENANT_ID") } } : {}),
-        ...(clickhouseUrl
-          ? {
-              clickhouse: {
-                url: clickhouseUrl,
-                // Named explicitly, the rule both `env.ts` schemas enforce. A default
-                // that guesses the project name is a credential in shipped code.
-                database: required("CLICKHOUSE_DATABASE"),
-                username: required("CLICKHOUSE_USER"),
-                password: process.env.CLICKHOUSE_PASSWORD ?? "",
-              },
-            }
-          : {}),
       },
     },
   },

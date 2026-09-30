@@ -11,7 +11,6 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Database } from "../../src/pg/primitive/index.js";
 import { DatabaseCluster, KeysetCursor } from "../../src/pg/primitive/index.js";
-import { PgActivityReplayReader } from "../../src/pg/repository/pg-activity-replay.reader.js";
 import { PgMaintenanceGateway } from "../../src/pg/repository/pg-maintenance.gateway.js";
 import { PgNotificationRepository } from "../../src/pg/repository/pg-notification.repository.js";
 import { PgNotificationPreferenceRepository } from "../../src/pg/repository/pg-notification-preference.repository.js";
@@ -68,7 +67,6 @@ let explain: Pool;
 let inbox: PgNotificationRepository;
 let preferences: PgNotificationPreferenceRepository;
 let corpus: PgVectorStore;
-let replay: PgActivityReplayReader;
 let outbox: PgOutboxGateway;
 let organizationId: OrganizationId;
 let neighbour: OrganizationId;
@@ -164,7 +162,6 @@ beforeAll(async () => {
     shards,
   );
   corpus = new PgVectorStore(DatabaseCluster.single(database), scope, shards);
-  replay = new PgActivityReplayReader(DatabaseCluster.single(database), scope, shards);
   outbox = new PgOutboxGateway(DatabaseCluster.single(database), scope, shards);
 
   reader = Identifiers.userId.parse(Uuid.v7());
@@ -401,19 +398,6 @@ describe("exactly one month, for the reads carrying an equality or a closed rang
     oneTenant(leaves, "notifications");
     expect(leaves.map((leaf) => leaf.month)).toEqual([monthIndex(FIRST)]);
   });
-
-  it("the activity rollup plans against the one month its range falls inside", async () => {
-    const statement = await capture(
-      () => replay.dailyCounts(organizationId, FIRST, new Date("2032-05-02T00:00:00.000Z")),
-      /from "activity_log"/i,
-    );
-
-    // Cross-tenant by design until `16.6` makes the projection per tenant, so this one
-    // asserts the month level alone: one month, in every tenant that has one.
-    const leaves = await scanned(statement, PartitionedTable.ACTIVITY_LOG);
-    expect(leaves.length).toBeGreaterThan(0);
-    expect([...new Set(leaves.map((leaf) => leaf.month))]).toEqual([monthIndex(FIRST)]);
-  });
 });
 
 describe("the retention tail is pruned, for the reads that carry a floor", () => {
@@ -430,26 +414,6 @@ describe("the retention tail is pruned, for the reads that carry a floor", () =>
     oneTenant(leaves, "notifications");
     expect(olderThan(leaves, SECOND)).toEqual([]);
     // And not vacuously: the floor's own month is still there to be read.
-    expect(leaves.map((leaf) => leaf.month)).toContain(monthIndex(SECOND));
-  });
-
-  it("the projection walk leaves out every month before its checkpoint", async () => {
-    const statement = await capture(
-      () =>
-        replay.since(
-          organizationId,
-          { lastOccurredAt: SECOND, lastId: "00000000-0000-0000-0000-000000000000" },
-          100,
-          [],
-          // Past every month this spec plants: the claim is about the floor pruning the
-          // tail, and a horizon would prune the head instead and prove nothing.
-          new Date("2099-01-01T00:00:00.000Z"),
-        ),
-      /from "activity_log"/i,
-    );
-
-    const leaves = await scanned(statement, PartitionedTable.ACTIVITY_LOG);
-    expect(olderThan(leaves, SECOND)).toEqual([]);
     expect(leaves.map((leaf) => leaf.month)).toContain(monthIndex(SECOND));
   });
 });

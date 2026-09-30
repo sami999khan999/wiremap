@@ -3,7 +3,7 @@
 
 import { Queue, Redis } from "./src/import.js";
 
-const QUEUES = ["mail", "event", "notification", "embedding", "maintenance", "analytics"];
+const QUEUES = ["mail", "event", "notification", "embedding", "maintenance"];
 
 const [name, jobName] = process.argv.slice(2);
 if (!name || !QUEUES.includes(name)) {

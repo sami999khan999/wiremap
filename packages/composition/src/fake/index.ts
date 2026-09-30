@@ -1,6 +1,4 @@
 export { DirectUnitOfWork } from "./direct.unit-of-work.js";
-export { InMemoryActivityReplayReader } from "./in-memory-activity-replay.reader.js";
-export { InMemoryAnalyticsProjector } from "./in-memory-analytics.projector.js";
 export { InMemoryCacheStore } from "./in-memory-cache.store.js";
 export { InMemoryColdArchiveReader } from "./in-memory-cold-archive.reader.js";
 export { InMemoryFlagRepository } from "./in-memory-flag.repository.js";
@@ -8,7 +6,6 @@ export { InMemoryLogReader } from "./in-memory-log.reader.js";
 export { InMemoryOrganizationReader } from "./in-memory-organization.reader.js";
 export { InMemoryOutboxGateway } from "./in-memory-outbox.gateway.js";
 export { InMemoryPlatformPolicyRepository } from "./in-memory-platform-policy.repository.js";
-export { InMemoryProjectionPolicyRepository } from "./in-memory-projection-policy.repository.js";
 export { InMemoryRateLimitStore } from "./in-memory-rate-limit.store.js";
 export { InMemoryRealtimeHub } from "./in-memory-realtime.hub.js";
 export { InMemoryRealtimeSubscriber } from "./in-memory-realtime.subscriber.js";

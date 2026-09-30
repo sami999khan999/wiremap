@@ -45,7 +45,6 @@ export { Identifiers } from "@loadbearing/contracts";
 export {
   AccountPanel,
   ActiveSessionList,
-  ActivityTrendPanel,
   ApiKeyList,
   ArchivedNotificationList,
   ChangeEmailForm,
@@ -122,7 +121,6 @@ export {
 
 // ── @loadbearing/query ───────────────────────────────────────────────────────
 export {
-  AnalyticsQueries,
   ApiClientProvider,
   ApiKeyQueries,
   createQueryClient,

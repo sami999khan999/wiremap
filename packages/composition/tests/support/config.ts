@@ -13,8 +13,8 @@ export const DATABASE_URL =
   process.env.DATABASE_URL ??
   "postgres://ratchet:ratchet@localhost:25432/ratchet";
 
-// Everything a container needs and nothing a deployment would decide. `auth`,
-// `analytics` and `logs` are absent, which is the shape the throwing getters are about.
+// Everything a container needs and nothing a deployment would decide. `auth` and `logs`
+// are absent, which is the shape the throwing getters are about.
 export const baseConfig = (): ContainerConfig => ({
   database: { url: DATABASE_URL },
   redis: { cacheUrl: REDIS_CACHE_URL, queueUrl: REDIS_QUEUE_URL },
@@ -34,7 +34,6 @@ export const baseConfig = (): ContainerConfig => ({
   embedding: { apiKey: "sk-not-used", model: "text-embedding-3-small", dimensions: 1536 },
   realtime: { maxStreamsPerUser: 8, streamMaxAgeSeconds: 1800 },
   vector: { driver: "pgvector" },
-  analytics: {},
   logging: { level: "error", pretty: false, app: "spec", env: "test" },
 });
 

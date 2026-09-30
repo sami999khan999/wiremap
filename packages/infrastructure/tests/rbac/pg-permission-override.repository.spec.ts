@@ -111,7 +111,7 @@ describe("PgPermissionOverrideRepository", () => {
       organizationId,
       userId,
       goalId: null,
-      permission: "analytics.activity.read",
+      permission: "apikey.read",
       effect: "grant",
       reason: "trial",
       expiresAt: new Date(Date.now() - 60_000),
@@ -121,7 +121,7 @@ describe("PgPermissionOverrideRepository", () => {
     const expired = (await overrides.findExpired(new Date())).filter(
       (row) => row.userId === userId,
     );
-    expect(expired.map((row) => row.permission)).toEqual(["analytics.activity.read"]);
+    expect(expired.map((row) => row.permission)).toEqual(["apikey.read"]);
 
     await overrides.delete(organizationId, expired[0]?.id ?? "");
     expect(

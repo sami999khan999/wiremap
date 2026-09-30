@@ -32,7 +32,7 @@ const APPS = {
     started: "Listening on:",
     // `/`, not `/api/health`. The health route renders no JSX and reports its
     // dependencies, so it answers 200 through the bug this exists to catch and 503
-    // through a ClickHouse nobody started. See docs/setup/26-hygiene-and-ci.md, step 26.4d.
+    // through a dependency nobody started. See docs/setup/26-hygiene-and-ci.md, step 26.4d.
     probe: "/",
   },
   realtime: {

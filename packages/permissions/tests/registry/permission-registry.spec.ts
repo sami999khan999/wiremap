@@ -31,7 +31,6 @@ describe("PermissionRegistry", () => {
       "notification",
       "apikey",
       "ai",
-      "analytics",
       "platform",
       "doc",
     ]);

@@ -103,31 +103,6 @@ describe("Container — what a process built without auth cannot reach", () => {
 });
 
 describe("Container — the derived stores", () => {
-  // Absent, not no-op: a null projector is indistinguishable from a working pipeline
-  // until a quarterly report comes out wrong.
-  it("has no projector and says so before it is asked for one", () => {
-    const container = build();
-
-    expect(container.hasProjector).toBe(false);
-    expect(() => container.projector).toThrow("without an analytics.clickhouse config");
-  });
-
-  it("builds the projector when ClickHouse is configured", () => {
-    const container = build({
-      analytics: {
-        clickhouse: {
-          url: "http://localhost:28123",
-          database: "loadbearing",
-          username: "default",
-          password: "",
-        },
-      },
-    });
-
-    expect(container.hasProjector).toBe(true);
-    expect(container.projector).toBeDefined();
-  });
-
   it("has no log reader and says so before it is asked for one", () => {
     const container = build();
 
@@ -142,12 +117,9 @@ describe("Container — the derived stores", () => {
     expect(container.logs).toBeDefined();
   });
 
-  // Built either way: replaying the audit trail is useful with or without a derived
-  // store behind it, and a reconciliation against nothing is simply a count.
-  it("builds the replay reader and the archive with no analytics config at all", () => {
+  it("builds the archive with no derived store configured", () => {
     const container = build();
 
-    expect(container.activityReplay).toBeDefined();
     expect(container.partitionArchive).toBeDefined();
   });
 });

@@ -5,15 +5,12 @@
 // The principal a consumer runs as. `SystemPrincipal` narrows it; nothing here
 // constructs a user's.
 export {
-  type ActivityRecord,
-  ActivitySubject,
   type ArchivedPartition,
   type ColdMode,
   PartitionedTable,
   type PartitionedTableEntry,
   type PartitionedTableName,
   Principal,
-  type ProjectionCheckpoint,
   QueueName,
   type RetentionPolicyRecord,
   RetentionRules,

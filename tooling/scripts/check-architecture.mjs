@@ -205,7 +205,7 @@ const ENV_EXEMPT = [
   // The web smoke's `globalSetup`: it spawns the built server, so it composes that
   // child's whole environment out of the one it was given.
   /^apps\/web\/tests\/smoke\/support\/server\.ts$/,
-  /^packages\/infrastructure\/(clickhouse-migrate|migrate|partitions|platform-grant|queue-replay|seed|shard-env|smoke)\.ts$/,
+  /^packages\/infrastructure\/(migrate|partitions|platform-grant|queue-replay|seed|shard-env|smoke)\.ts$/,
 ];
 
 assert("only `env.ts` reads `process.env`", (failures) => {
@@ -1550,7 +1550,6 @@ const PORT_PAIRS = [
   ["SMTP_PORT", "SMTP_URL"],
   ["S3_PORT", "S3_ENDPOINT"],
   ["LOKI_PORT", "LOKI_URL"],
-  ["CLICKHOUSE_HTTP_PORT", "CLICKHOUSE_URL"],
   // Three URLs restate the web port, and a sign-in that fails because they disagree
   // reports a CORS or origin error naming none of them.
   ["WEB_PORT", "APP_BASE_URL"],

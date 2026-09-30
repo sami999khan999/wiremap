@@ -521,7 +521,7 @@ rather than decorative.
 Only read when you start the `analytics` profile. It exists so the profile is runnable rather than a
 stub.
 
-**`packages/infrastructure/clickhouse-migrations/0000_activity_events.sql`**, applied by `pnpm ch:migrate`
+**`upstream:packages/infrastructure/clickhouse-migrations/0000_activity_events.sql`**, applied by `pnpm ch:migrate`
 
 ```sql
 -- Derived, and rebuildable by replaying the activity log. Nothing here is a

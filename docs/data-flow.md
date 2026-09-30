@@ -126,10 +126,10 @@ copies can all be rebuilt, and that is what makes them safe to lose.
 | The permission check every use-case runs | `packages/application/src/primitive/authorizer.ts` |
 | Which tables are split by month, and for how long | `packages/application/src/primitive/partitioned-table.ts` |
 | The outbox sweep and the email path | `apps/worker/src/consumer/outbox.consumer.ts` |
-| The copy into ClickHouse and the nightly comparison | `apps/worker/src/consumer/analytics.consumer.ts` |
+| The copy into ClickHouse and the nightly comparison | `upstream:apps/worker/src/consumer/analytics.consumer.ts` |
 | Partition creation, expiry sweeps, and the archive | `apps/worker/src/consumer/maintenance.consumer.ts` |
 | Writing a month out to S3 | `packages/infrastructure/src/pg/repository/pg-partition-archive.gateway.ts` |
-| The ClickHouse table and its expiry | `packages/infrastructure/clickhouse-migrations/0000_activity_events.sql` |
+| The ClickHouse table and its expiry | `upstream:packages/infrastructure/clickhouse-migrations/0000_activity_events.sql` |
 
 The positions behind all of this are in [`docs/opinions/data-and-scale.md`](opinions/data-and-scale.md).
 What is planned and not yet built is in [`docs/plans/BACKLOG.md`](plans/BACKLOG.md). The

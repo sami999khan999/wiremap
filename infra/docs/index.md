@@ -74,7 +74,7 @@ configured, what breaks, what to check — is its reference page.
 | [minio-init](../../docs/infra/reference/minio.md) | — | nothing; creates buckets and exits | always |
 | [loki](../../docs/infra/reference/loki.md) | `localhost:23100` | `LokiLogReader`, when `LOKI_URL` is set | `observability` |
 | [alloy](../../docs/infra/reference/alloy.md) | `localhost:12345` | nothing — it reads, it is not called | `observability` |
-| [clickhouse](../../docs/infra/reference/clickhouse.md) | `localhost:28123`, native `:9002` | the worker's projector, when `CLICKHOUSE_URL` is set | `analytics` |
+| [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md) | `localhost:28123`, native `:9002` | the worker's projector, when `CLICKHOUSE_URL` is set | `analytics` |
 
 Three of those rows are worth a sentence, because each looks like a mistake:
 

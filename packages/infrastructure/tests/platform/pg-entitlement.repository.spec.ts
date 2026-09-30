@@ -130,7 +130,7 @@ describe("PgEntitlementRepository — adjustments", () => {
       organizationId,
       [
         {
-          permission: "analytics.activity.read",
+          permission: "apikey.read",
           effect: "add",
           reason: "trial",
           expiresAt: new Date(now.getTime() - 1_000),
@@ -148,14 +148,10 @@ describe("PgEntitlementRepository — adjustments", () => {
     const expired = (await entitlements.findExpired(now)).filter(
       (row) => row.organizationId === organizationId,
     );
-    expect(expired.map((row) => row.permission)).toEqual(["analytics.activity.read"]);
+    expect(expired.map((row) => row.permission)).toEqual(["apikey.read"]);
 
-    expect(await entitlements.deleteAdjustment(organizationId, "analytics.activity.read")).toBe(
-      true,
-    );
-    expect(await entitlements.deleteAdjustment(organizationId, "analytics.activity.read")).toBe(
-      false,
-    );
+    expect(await entitlements.deleteAdjustment(organizationId, "apikey.read")).toBe(true);
+    expect(await entitlements.deleteAdjustment(organizationId, "apikey.read")).toBe(false);
   });
 });
 

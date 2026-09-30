@@ -14,7 +14,6 @@ export {
 export {
   PgAccountRepository,
   PgActivityLogger,
-  PgActivityReplayReader,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
@@ -40,7 +39,6 @@ export {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
-  PgProjectionPolicyRepository,
   PgRetentionPolicyRepository,
   PgRoleRepository,
   PgShardAssignmentRepository,

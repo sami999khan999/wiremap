@@ -397,11 +397,11 @@ describe("DenyAccountPermissionUseCase", () => {
     const keys = await deny.execute(manager, {
       userId: TARGET,
       organizationId: ACME,
-      permission: "analytics.activity.read",
+      permission: "apikey.read",
       reason: "abuse",
     });
 
-    expect(keys).toContain("analytics.activity.read");
+    expect(keys).toContain("apikey.read");
     expect(overrides.rows.every((row) => row.authority === "platform")).toBe(true);
     expect(overrides.rows.every((row) => row.organizationId === ACME)).toBe(true);
     expect(overrides.rows.every((row) => row.expiresAt === null)).toBe(true);
@@ -420,7 +420,7 @@ describe("DenyAccountPermissionUseCase", () => {
       deny.execute(manager, {
         userId: TARGET,
         organizationId: TIER,
-        permission: "analytics.activity.read",
+        permission: "apikey.read",
         reason: "x",
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
@@ -443,7 +443,7 @@ describe("DenyAccountPermissionUseCase", () => {
       deny.execute(manager, {
         userId: TARGET,
         organizationId: TIER,
-        permission: "analytics.activity.read",
+        permission: "apikey.read",
         reason: "x",
       }),
     ).rejects.toBeInstanceOf(ValidationError);
@@ -465,7 +465,7 @@ describe("DenyAccountPermissionUseCase", () => {
       deny.execute(manager, {
         userId: ADMIN,
         organizationId: ACME,
-        permission: "analytics.activity.read",
+        permission: "apikey.read",
         reason: "x",
       }),
     ).rejects.toBeInstanceOf(ConflictError);
@@ -505,7 +505,7 @@ describe("ClearAccountDenyUseCase", () => {
     await deny.execute(manager, {
       userId: TARGET,
       organizationId: ACME,
-      permission: "analytics.activity.read",
+      permission: "apikey.read",
       reason: "x",
     });
 

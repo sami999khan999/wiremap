@@ -3,7 +3,6 @@
 
 export { PgAccountRepository } from "./pg-account.repository.js";
 export { PgActivityLogger } from "./pg-activity.logger.js";
-export { PgActivityReplayReader } from "./pg-activity-replay.reader.js";
 export { PgApiKeyRepository } from "./pg-api-key.repository.js";
 export { PgBootstrapMembershipEnroller } from "./pg-bootstrap-membership.enroller.js";
 export { PgCapabilityRepository } from "./pg-capability.repository.js";
@@ -29,7 +28,6 @@ export { PgPermissionOverrideRepository } from "./pg-permission-override.reposit
 export { PgPersonalOrganizationEnroller } from "./pg-personal-organization.enroller.js";
 export { PgPlatformReader } from "./pg-platform.reader.js";
 export { PgPlatformPolicyRepository } from "./pg-platform-policy.repository.js";
-export { PgProjectionPolicyRepository } from "./pg-projection-policy.repository.js";
 export { PgRetentionPolicyRepository } from "./pg-retention-policy.repository.js";
 export { PgRoleRepository } from "./pg-role.repository.js";
 export { PgShardResolver } from "./pg-shard.resolver.js";

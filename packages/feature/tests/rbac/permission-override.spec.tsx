@@ -43,7 +43,7 @@ describe("PermissionOverrideList", () => {
   // The org admin sees the tier's deny and cannot lift it, and is told who can.
   it("locks a platform deny and offers a clear only on the org's own rows", async () => {
     const { client } = fakeClient([
-      row({ id: "p", authority: "platform", permission: "analytics.activity.read" }),
+      row({ id: "p", authority: "platform", permission: "apikey.read" }),
       row({ id: "o", authority: "org", permission: "member.invite" }),
     ]);
     await renderWithFakes(
@@ -87,7 +87,7 @@ describe("PermissionOverrideForm", () => {
     const submit = screen.getByRole<HTMLButtonElement>("button", { name: "Add exception" });
     expect(submit.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText("Permission"), {
-      target: { value: "analytics.activity.read" },
+      target: { value: "apikey.read" },
     });
     fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "covering" } });
     fireEvent.click(submit);
@@ -97,7 +97,7 @@ describe("PermissionOverrideForm", () => {
       procedure: "grant",
       input: {
         userId: USER,
-        permission: "analytics.activity.read",
+        permission: "apikey.read",
         reason: "covering",
         expiresAt: null,
       },
@@ -134,7 +134,7 @@ describe("EffectivePermissionsInspector — sources", () => {
         goals: {},
       },
       explanation: {
-        roleGrants: ["member.read", "analytics.activity.read"],
+        roleGrants: ["member.read", "apikey.read"],
         goalGrants: {},
         overrides: [
           {
@@ -172,7 +172,7 @@ describe("EffectivePermissionsInspector — sources", () => {
       (await screen.findByText(key)).closest("li")?.textContent ?? "";
     expect(await line("member.read")).toContain("from their role");
     expect(await line("rbac.role.read")).toContain("an exception");
-    expect(await line("analytics.activity.read")).toContain("not in your plan");
+    expect(await line("apikey.read")).toContain("not in your plan");
     expect(await line("member.invite")).toContain("denied by the platform");
   });
 });

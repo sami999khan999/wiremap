@@ -28,7 +28,6 @@ const CATALOG = Object.freeze([
   // Later than decision D14, which predates Phases 19 and 20.
   "retention_policy",
   "tenant_retention_policy",
-  "projection_policy",
   "platform_policy",
   // Deployment-wide switches, read before a request knows its shard.
   "feature_flags",

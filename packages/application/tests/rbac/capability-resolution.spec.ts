@@ -67,7 +67,7 @@ describe("CapabilityResolution.fold", () => {
   it("masks grants the plan leaves out, and keeps every deny", () => {
     const set = CapabilityResolution.fold(
       explanation({
-        roleGrants: ["member.read", "analytics.activity.read"],
+        roleGrants: ["member.read", "apikey.read"],
         overrides: [override({ permission: "member.invite", effect: "deny" })],
         entitlement: EntitlementMask.from({
           plan: ["member.read"],

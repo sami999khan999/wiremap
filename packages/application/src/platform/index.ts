@@ -77,10 +77,6 @@ export {
   PlatformPolicyRepository,
 } from "./platform-policy.repository.js";
 export {
-  type ProjectionPolicyRecord,
-  ProjectionPolicyRepository,
-} from "./projection-policy.repository.js";
-export {
   type PurgedOrganization,
   type PurgeOrganizationInput,
   PurgeOrganizationUseCase,
@@ -98,7 +94,7 @@ export {
   type RelocateTenantInput,
   RelocateTenantUseCase,
 } from "./relocate-tenant.use-case.js";
-export { type ActionTtl, RetentionRules } from "./retention.rules.js";
+export { RetentionRules } from "./retention.rules.js";
 export {
   type ColdMode,
   type RetentionPolicyRecord,

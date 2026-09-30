@@ -97,14 +97,6 @@ const Schema = z
     // A driver plus the connection detail it needs, so adopting a store is these
     // variables and nothing else.
     VECTOR_DRIVER: z.enum(["pgvector"]).default("pgvector"),
-    // Its absence keeps ClickHouse stopped. Present, the projection and its
-    // reconciliation run; no feature reads the store back yet.
-    CLICKHOUSE_URL: z.url().optional(),
-    // ClickHouse's own out-of-the-box values: a default naming the project would be a
-    // credential baked into shipped code.
-    CLICKHOUSE_DATABASE: z.string().min(1).default("default"),
-    CLICKHOUSE_USER: z.string().min(1).default("default"),
-    CLICKHOUSE_PASSWORD: z.string().default(""),
     // Unset means no `LogReader`. Logs are still written to stdout and shipped by Alloy
     // either way.
     LOKI_URL: z.url().optional(),
@@ -125,8 +117,8 @@ const Schema = z
     // finish after SIGTERM. Read here so the container is disposed only once that is over.
     SERVER_SHUTDOWN_TIMEOUT: z.coerce.number().int().positive().default(5),
   })
-  // Three cross-field rules, and each earns the exception: `bootstrap` with no slug
-  // enrols nobody, ClickHouse's defaults cannot reach its container, a tier needs both keys.
+  // Two cross-field rules, and each earns the exception: `bootstrap` with no slug enrols
+  // nobody, and a tier needs both keys.
   .superRefine((env, ctx) => {
     // One without the other is a transition that silently never happens.
     if (!env.S3_COLD_STORAGE_CLASS !== !env.S3_COLD_TRANSITION_DAYS) {
@@ -152,20 +144,6 @@ const Schema = z
         path: ["BOOTSTRAP_ORGANIZATION_SLUG"],
         message: 'Required when AUTH_ENROLMENT_MODE is "bootstrap".',
       });
-    }
-
-    // The compose container is `ratchet/ratchet`; these default to ClickHouse's own
-    // `default/default`, which cannot authenticate against it. See docs/reference/env.md.
-    if (env.CLICKHOUSE_URL) {
-      for (const key of ["CLICKHOUSE_DATABASE", "CLICKHOUSE_USER"] as const) {
-        if (env[key] === "default") {
-          ctx.addIssue({
-            code: "custom",
-            path: [key],
-            message: "Set it explicitly when CLICKHOUSE_URL is set.",
-          });
-        }
-      }
     }
   });
 
@@ -296,18 +274,6 @@ export class Env {
       realtime: {
         maxStreamsPerUser: e.REALTIME_MAX_STREAMS_PER_USER,
         streamMaxAgeSeconds: e.REALTIME_STREAM_MAX_AGE_SECONDS,
-      },
-      // Undefined unless a URL was given, which is what `Container` branches on: a
-      // partly-filled object builds a connection pointed at nothing.
-      analytics: {
-        clickhouse: e.CLICKHOUSE_URL
-          ? {
-              url: e.CLICKHOUSE_URL,
-              database: e.CLICKHOUSE_DATABASE,
-              username: e.CLICKHOUSE_USER,
-              password: e.CLICKHOUSE_PASSWORD,
-            }
-          : undefined,
       },
       vector: { driver: e.VECTOR_DRIVER },
       logs: e.LOKI_URL

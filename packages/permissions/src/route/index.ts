@@ -1,5 +1,4 @@
 import { accountRoutes } from "./account.routes.js";
-import { analyticsRoutes } from "./analytics.routes.js";
 import { docRoutes } from "./doc.routes.js";
 import { documentRoutes } from "./document.routes.js";
 import { notificationRoutes } from "./notification.routes.js";
@@ -20,7 +19,6 @@ export const ROUTES = {
   organization: organizationRoutes,
   document: documentRoutes,
   notification: notificationRoutes,
-  analytics: analyticsRoutes,
   platform: platformRoutes,
   doc: docRoutes,
 } as const;

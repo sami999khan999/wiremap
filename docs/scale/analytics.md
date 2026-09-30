@@ -39,6 +39,11 @@ upstream:packages/feature/src/analytics/
 upstream:packages/feature/src/platform/projection-*.tsx
 upstream:apps/worker/src/consumer/analytics.consumer.ts
 upstream:apps/worker/src/schedule/projection.schedule.ts
+upstream:apps/worker/src/schedule/reconcile.schedule.ts
+upstream:packages/application/src/port/activity-replay.reader.ts
+upstream:packages/application/src/primitive/activity-subject.ts
+upstream:packages/infrastructure/src/pg/repository/pg-activity-replay.reader.ts
+upstream:packages/composition/src/fake/in-memory-activity-replay.reader.ts
 upstream:apps/web/src/server/orpc/analytics.router.ts
 upstream:apps/web/src/route/(app)/_authenticated/analytics.tsx
 upstream:apps/web/src/route/(app)/_authenticated/platform/analytics.tsx
@@ -51,7 +56,28 @@ and `0039_analytics_grants.sql`.
 `CLICKHOUSE_HTTP_PORT`, `CLICKHOUSE_NATIVE_PORT`, `WORKER_ANALYTICS_CONCURRENCY`. The app builds the
 ClickHouse adapter only when `CLICKHOUSE_URL` is set.
 
-**Compose:** the `clickhouse` service, profile `analytics`. **Script:** `ch:migrate`.
+**Compose:** the `clickhouse` service and its volume, profile `analytics`, and the root
+`infra:up:analytics` script. **Script:** `ch:migrate`, plus `clickhouse-migrate.ts` in the two
+lists in `tooling/biome-config/src/base.json`.
+
+**And the pieces outside those files**, which lite removed or rewrote in `LT1.4`:
+
+- `QueueName.ANALYTICS`, and `analytics` in `queue-replay.ts`'s list;
+- the `projectionPolicy` table in `pg/schema/platform.schema.ts` and its `projection_policy` entry
+  in `primitive/shard.ts`;
+- the ClickHouse half of `RetentionRules` (`clickhouseTtlFor`, `clickhouseTtlFrom`,
+  `clickhouseMonthsFrom`, `ActionTtl`) and the maintenance consumer's TTL converger;
+- the projector branch of the archive job's `stampProjected`, which lite reduced to a `disabled`
+  gap line;
+- the projector argument of `PurgeOrganizationUseCase`, and `hasProjector`, `projector`,
+  `activityReplay`, `analytics` and `projectionPolicies` on the container, with its `analytics`
+  config block;
+- seven `analytics.*` event codes and `cold.partition.reprojected` in the observability catalog;
+- `analytics.activity.read` in the admin seed, and the `analytics` module in the nav;
+- the `CLICKHOUSE_HTTP_PORT` / `CLICKHOUSE_URL` pair in `check-architecture.mjs`'s port list.
+
+The status page kept its ClickHouse row: `health.analytics` is always `null`, which it shows as
+"not configured".
 
 > [!IMPORTANT]
 > Only the projection consumer writes to ClickHouse. The moment anything else does, it has become a

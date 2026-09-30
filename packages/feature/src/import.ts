@@ -24,7 +24,6 @@ export {
   type AccountDenyDto,
   type AccountDto,
   type AccountMembershipDto,
-  type ActivityPointDto,
   type AdjustmentDto,
   type ApiKeyDto,
   ApiKeyEntity,
@@ -78,7 +77,6 @@ export {
 export {
   AccountMutations,
   AccountQueries,
-  AnalyticsQueries,
   ApiKeyMutations,
   ApiKeyQueries,
   DocMutations,

@@ -105,7 +105,7 @@ side (`LogReader`) have working adapters, a projection consumer, and a nightly r
 the container builds none of them unless `CLICKHOUSE_URL` / `LOKI_URL` are set. *The seam being
 implemented* and *the store being started* are separate decisions, and only the second costs anything
 to be wrong about. See
-[reference/clickhouse](packages/infrastructure/docs/reference/clickhouse.md).
+[reference/clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/infrastructure/docs/reference/clickhouse.md).
 
 ## Documentation
 

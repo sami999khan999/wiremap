@@ -343,7 +343,6 @@ export class MaintenanceConsumer {
     const rows = await this.container.retentionPolicies.all();
 
     await this.convergeLifecycle(rows);
-    await this.convergeClickHouse(rows);
     await this.expireArchiveRows(rows);
     await this.sweepDeletedTenants();
   }
@@ -362,24 +361,6 @@ export class MaintenanceConsumer {
 
     await this.container.storagePolicy.applyLifecycle(expected);
     this.container.logger.emit("retention.lifecycle.applied", { rules: expected.length });
-  }
-
-  // Compared before it is written, because `MODIFY TTL` materialises on every existing
-  // part — on a years-deep table that is a rewrite, and a daily one would never finish.
-  private async convergeClickHouse(rows: readonly RetentionPolicyRecord[]): Promise<void> {
-    if (!this.container.hasProjector) return;
-
-    // Both tables, composed by the same function the screen and the save use: three
-    // callers composing the same string by hand is three places for it to drift.
-    const expression = RetentionRules.clickhouseTtlFrom(
-      rows,
-      await this.container.projectionPolicies.all(),
-    );
-
-    if ((await this.container.projector.retention()) === expression) return;
-
-    await this.container.projector.applyRetention(expression);
-    this.container.logger.emit("analytics.retention.applied", { expression });
   }
 
   // A row pointing at an object the bucket already expired is a `NotFoundError` on the
@@ -677,56 +658,20 @@ export class MaintenanceConsumer {
         this.container.logger.emit("maintenance.partition.dropped", { table, partition });
       }
 
-      await this.stampProjected(table, period, archived);
+      this.stampProjected(table, archived);
     } catch (error: unknown) {
       this.container.logger.failure(error, { table, period: period.toISOString() });
     }
   }
 
-  // Only the audit trail reaches ClickHouse, so only its months can have a hole — and a
-  // month is archived and dropped either way, so a forgotten switch costs a known gap.
-  private async stampProjected(
-    table: PartitionedTableName,
-    period: Date,
-    archived: ArchivedPartition,
-  ): Promise<void> {
+  // Only the audit trail reaches ClickHouse, so only its months can have a hole. Lite
+  // runs no projection, so every archived month of it is one, recorded as `disabled`.
+  private stampProjected(table: PartitionedTableName, archived: ArchivedPartition): void {
     if (table !== PartitionedTable.ACTIVITY_LOG || archived.objects.length === 0) return;
 
-    // Paused counts as disabled here, and asking for a checkpoint while paused is a
-    // query whose answer cannot have moved since the pause.
-    const paused =
-      this.container.hasProjector && !(await this.container.platformPolicy.get()).projectionEnabled;
-
-    if (!this.container.hasProjector || paused) {
-      this.container.logger.emit("analytics.projection.gap", {
-        period: archived.period,
-        reason: "disabled",
-      });
-      return;
-    }
-
-    // Strictly after the month, because a checkpoint inside it has projected part of the
-    // month and stamping that row would claim the whole of it.
-    const end = new Date(Date.UTC(period.getUTCFullYear(), period.getUTCMonth() + 1, 1));
-    let behind = false;
-
-    for (const object of archived.objects) {
-      const checkpoint = await this.container.projector.checkpoint(object.organizationId);
-      const at = checkpoint.lastOccurredAt;
-
-      if (at === null || at.getTime() < end.getTime()) {
-        behind = true;
-        continue;
-      }
-
-      await this.container.partitionArchive.markProjected(table, period, object.organizationId);
-    }
-
-    if (behind) {
-      this.container.logger.emit("analytics.projection.gap", {
-        period: archived.period,
-        reason: "behind",
-      });
-    }
+    this.container.logger.emit("analytics.projection.gap", {
+      period: archived.period,
+      reason: "disabled",
+    });
   }
 }

@@ -112,10 +112,6 @@ export class ApiClient {
     return this.rpc.override;
   }
 
-  public get analytics(): AppClient["analytics"] {
-    return this.rpc.analytics;
-  }
-
   public get docSpace(): AppClient["docSpace"] {
     return this.rpc.docSpace;
   }

@@ -29,7 +29,6 @@
     "platform:grant": "tsx --env-file-if-exists=../../.env platform-grant.ts",
     "queue:replay": "tsx --env-file-if-exists=../../.env queue-replay.ts",
     "db:seed": "tsx --env-file-if-exists=../../.env seed.ts",
-    "ch:migrate": "tsx --env-file-if-exists=../../.env clickhouse-migrate.ts",
     "smoke": "vitest run -c vitest.smoke.config.ts"
   },
   "devDependencies": {

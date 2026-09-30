@@ -2,7 +2,6 @@ import type {
   ArchivedObject,
   PartitionArchiveEntry,
   PartitionEstimate,
-  ProjectionPolicyRecord,
   RetentionPolicyRecord,
   TenantRetentionPolicyRecord,
 } from "@loadbearing/application";
@@ -16,11 +15,9 @@ import {
 import type { Container } from "@loadbearing/composition";
 import {
   FixedClock,
-  InMemoryAnalyticsProjector,
   InMemoryOrganizationReader,
   InMemoryOutboxGateway,
   InMemoryPlatformPolicyRepository,
-  InMemoryProjectionPolicyRepository,
   InMemoryRetentionPolicyRepository,
   InMemoryShardAssignmentRepository,
   InMemoryStoragePolicyGateway,
@@ -108,20 +105,12 @@ function harness(
     monthsAhead?: number;
     estimates?: readonly PartitionEstimate[];
     objects?: readonly ArchivedObject[];
-    hasProjector?: boolean;
-    projectedTo?: Date;
     // Empty by default, which is the state that matters: an absent row is the code
     // default, so most of these cases assert the allowlist's own numbers.
     policies?: readonly RetentionPolicyRecord[];
     // An override is what makes the prune pass walk tenants rather than months, so
     // most cases here stage none and assert the table-month path.
     tenantPolicies?: readonly TenantRetentionPolicyRecord[];
-    // Empty for every case but the per-action TTL: an absent row is "projected, with
-    // the default", so staging nothing asserts the behaviour before the table existed.
-    projections?: readonly ProjectionPolicyRecord[];
-    // Paused counts as disabled for the gap: a stamp needs a projection that is
-    // running, and asking for a checkpoint while paused answers nothing.
-    projectionEnabled?: boolean;
     lifecycle?: InMemoryStoragePolicyGateway;
     // The directory the move jobs read. Empty by default: nothing has ever moved.
     assignments?: InMemoryShardAssignmentRepository;
@@ -133,13 +122,9 @@ function harness(
     options.estimates,
   );
   const partitionArchive = new RecordingPartitionArchiveGateway(options.objects);
-  const projector = new InMemoryAnalyticsProjector();
   const outbox = new InMemoryOutboxGateway();
   const retentionPolicies = new InMemoryRetentionPolicyRepository(options.policies);
-  const projectionPolicies = new InMemoryProjectionPolicyRepository(options.projections);
-  const platformPolicy = new InMemoryPlatformPolicyRepository({
-    projectionEnabled: options.projectionEnabled ?? true,
-  });
+  const platformPolicy = new InMemoryPlatformPolicyRepository();
   const tenantRetentionPolicies = new InMemoryTenantRetentionPolicyRepository(
     options.tenantPolicies,
   );
@@ -199,17 +184,9 @@ function harness(
       },
     },
     retentionPolicies,
-    projectionPolicies,
     platformPolicy,
     tenantRetentionPolicies,
     storagePolicy,
-    // The **instance** with one method shadowed, never a spread: spreading a class
-    // instance into a literal copies own properties and drops every method it has.
-    projector: Object.assign(projector, {
-      checkpoint: () =>
-        Promise.resolve({ lastOccurredAt: options.projectedTo ?? null, lastId: null }),
-    }),
-    hasProjector: options.hasProjector ?? false,
     logger,
     placed: <T>(principal: { organizationId: string }, work: () => Promise<T>): Promise<T> => {
       placements.push(principal.organizationId);
@@ -225,7 +202,6 @@ function harness(
     partitionArchive,
     outbox,
     retentionPolicies,
-    projectionPolicies,
     tenantRetentionPolicies,
     storagePolicy,
     logger,
@@ -443,7 +419,7 @@ describe("MaintenanceConsumer", () => {
 
   // A month is archived and dropped whether or not the derived store has it. A forgotten
   // switch costs a known hole, never an unbounded table.
-  it("records a projection gap when no projector is configured", async () => {
+  it("records a projection gap for every archived month of the audit trail", async () => {
     const period = new Date(Date.UTC(2024, 0, 1));
     const { container, partitionArchive, logger } = harness({
       estimates: [estimate(period)],
@@ -456,64 +432,6 @@ describe("MaintenanceConsumer", () => {
       { period: "2024-01-01", reason: "disabled" },
     ]);
     expect(partitionArchive.projected()).toEqual([]);
-  });
-
-  it("records a gap rather than a stamp when the projection has not reached the month", async () => {
-    const period = new Date(Date.UTC(2024, 0, 1));
-    const { container, partitionArchive, logger } = harness({
-      estimates: [estimate(period)],
-      objects: [archived(FIRST)],
-      hasProjector: true,
-      projectedTo: new Date(Date.UTC(2024, 0, 20)),
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(emitted(logger, "analytics.projection.gap")).toEqual([
-      { period: "2024-01-01", reason: "behind" },
-    ]);
-    expect(partitionArchive.projected()).toEqual([]);
-  });
-
-  // A paused projection is a gap with a known reason, not a checkpoint to chase: the
-  // month is archived and dropped either way, so a forgotten switch costs a known hole.
-  it("records the gap as disabled when the projection is paused", async () => {
-    const period = new Date(Date.UTC(2024, 0, 1));
-    const { container, partitionArchive, logger } = harness({
-      estimates: [estimate(period)],
-      objects: [archived(FIRST)],
-      hasProjector: true,
-      projectionEnabled: false,
-      // Past the month, so a running projection would stamp: the pause is the only
-      // thing between this and a stamp.
-      projectedTo: new Date(Date.UTC(2024, 2, 1)),
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(emitted(logger, "analytics.projection.gap")).toEqual([
-      { period: "2024-01-01", reason: "disabled" },
-    ]);
-    expect(partitionArchive.projected()).toEqual([]);
-  });
-
-  // Stamped only once the checkpoint is past the end of the month: a checkpoint inside
-  // it has projected part of the month, and the row claims the whole of it.
-  it("stamps the tenant-month once the projection is past it", async () => {
-    const period = new Date(Date.UTC(2024, 0, 1));
-    const { container, partitionArchive, logger } = harness({
-      estimates: [estimate(period)],
-      objects: [archived(FIRST)],
-      hasProjector: true,
-      projectedTo: new Date(Date.UTC(2024, 1, 1)),
-    });
-
-    await consumerFor(container).handle(job("partitions"));
-
-    expect(emitted(logger, "analytics.projection.gap")).toEqual([]);
-    expect(partitionArchive.projected()).toEqual([
-      { table: PartitionedTable.ACTIVITY_LOG, period, organizationId: FIRST },
-    ]);
   });
 });
 
@@ -700,38 +618,6 @@ describe("MaintenanceConsumer — the retention job", () => {
     ]);
   });
 
-  // `20.4`: the nightly job composes from **both** tables. Three callers composing the
-  // same string by hand is three places for it to drift.
-  it("composes the ClickHouse TTL from the projection rows as well", async () => {
-    const { container, logger } = harness({
-      hasProjector: true,
-      projections: [{ action: "role.created", projected: true, ttlMonths: 120 }],
-    });
-
-    await consumerFor(container).handle(job("retention"));
-
-    expect(emitted(logger, "analytics.retention.applied")).toEqual([
-      {
-        expression:
-          "toDateTime(occurred_at) + toIntervalMonth(120) WHERE action = 'role.created', " +
-          "toDateTime(occurred_at) + toIntervalMonth(60) WHERE action NOT IN ('role.created')",
-      },
-    ]);
-  });
-
-  // An excluded action gets no clause: nothing writes it, so a window over it is a
-  // rule on rows that do not arrive.
-  it("gives an excluded action no TTL clause", async () => {
-    const { container, logger } = harness({
-      hasProjector: true,
-      projections: [{ action: "ai.document.searched", projected: false, ttlMonths: 3 }],
-    });
-
-    await consumerFor(container).handle(job("retention"));
-
-    expect(emitted(logger, "analytics.retention.applied")).toEqual([]);
-  });
-
   // Thirty days, and the line says why they went: a sweep for a deleted tenant reads
   // differently from the bucket expiring a month on its own.
   it("sweeps a deleted tenant's objects thirty days after they were archived", async () => {
@@ -762,37 +648,6 @@ describe("MaintenanceConsumer — the retention job", () => {
     await consumerFor(container).handle(job("retention"));
 
     expect(partitionArchive.forgets()).toEqual([]);
-  });
-
-  // `MODIFY TTL` materialises on every existing part, which on a years-deep table is a
-  // rewrite. Compared before it is written, and the comparison is what this pins.
-  it("leaves the ClickHouse TTL alone when it already matches", async () => {
-    const { container, logger } = harness({ hasProjector: true });
-
-    await consumerFor(container).handle(job("retention"));
-
-    expect(emitted(logger, "analytics.retention.applied")).toEqual([]);
-  });
-
-  it("applies the ClickHouse TTL when a row changes it", async () => {
-    const { container, logger } = harness({
-      hasProjector: true,
-      policies: [
-        {
-          store: "clickhouse",
-          tableName: "activity_events",
-          hotMonths: 36,
-          coldMonths: null,
-          coldMode: "archive",
-        },
-      ],
-    });
-
-    await consumerFor(container).handle(job("retention"));
-
-    expect(emitted(logger, "analytics.retention.applied")).toEqual([
-      { expression: "toDateTime(occurred_at) + toIntervalMonth(36)" },
-    ]);
   });
 });
 

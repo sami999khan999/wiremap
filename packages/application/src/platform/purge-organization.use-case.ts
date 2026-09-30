@@ -2,7 +2,6 @@ import { DocImageKey, type DocImageSweep } from "../doc/index.js";
 import { CapabilitySet, type OrganizationId, type UserId } from "../import.js";
 import type {
   ActivityLogger,
-  AnalyticsProjector,
   CapabilityInvalidator,
   MaintenanceGateway,
   OutboxGateway,
@@ -41,9 +40,6 @@ export class PurgeOrganizationUseCase {
     private readonly activity: ActivityLogger,
     private readonly unitOfWork: UnitOfWork,
     private readonly clock: { now(): Date },
-    // Absent on a deployment running no analytics store. Skipped rather than failed:
-    // there is no derived copy to forget.
-    private readonly projector: AnalyticsProjector | null,
     // The overrides. No foreign key on that table — the schema says so, and says
     // the delete path sweeps it — and `deleteFor` had no caller anywhere.
     private readonly tenantRetention: TenantRetentionPolicyRepository,
@@ -109,7 +105,6 @@ export class PurgeOrganizationUseCase {
     // ──
     // it answers from Redis without the join, for as long as its TTL holds.
     await this.shards.invalidate(Shard.keyOf(input.organizationId));
-    await this.projector?.deleteTenant(input.organizationId);
 
     return { archived, partitions: partitions.length, outboxRows };
   }

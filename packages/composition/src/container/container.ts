@@ -1,9 +1,7 @@
 import {
   type ActivityLogger,
   ActivityRelaySubscriber,
-  type ActivityReplayReader,
   AdjustEntitlementUseCase,
-  type AnalyticsProjector,
   ApiKeyResolver,
   AssignPlanUseCase,
   AuthFactory,
@@ -19,9 +17,6 @@ import {
   ClearAccountDenyUseCase,
   ClearEntitlementAdjustmentUseCase,
   ClearPermissionOverrideUseCase,
-  ClickHouseAnalyticsProjector,
-  ClickHouseAnalyticsReader,
-  ClickHouseConnection,
   type Clock,
   type ColdArchiveReader,
   type ContentSource,
@@ -54,7 +49,6 @@ import {
   ExportOrganizationUseCase,
   FindAccountUseCase,
   FlagCache,
-  GetActivityTrendUseCase,
   GetDocPageUseCase,
   GetDocRevisionUseCase,
   GetDocSpaceUseCase,
@@ -110,7 +104,6 @@ import {
   type PartitionArchiveGateway,
   PgAccountRepository,
   PgActivityLogger,
-  PgActivityReplayReader,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
@@ -136,7 +129,6 @@ import {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
-  PgProjectionPolicyRepository,
   PgRetentionPolicyRepository,
   PgRoleRepository,
   PgShardAssignmentRepository,
@@ -152,7 +144,6 @@ import {
   PreviewDocPageUseCase,
   Principal,
   PrincipalBuilder,
-  type ProjectionPolicyRepository,
   PublishDocPageUseCase,
   PurgeOrganizationUseCase,
   QueueDocumentIndexUseCase,
@@ -276,7 +267,8 @@ export interface HealthReport {
   readonly database: Readonly<Record<number, boolean>>;
   readonly cache: boolean;
   readonly queue: boolean;
-  // `null` when this deployment runs no ClickHouse — absent, rather than passing.
+  // `null` when this deployment runs no ClickHouse — absent, rather than passing. Lite
+  // runs none, so it is always `null` until analytics is ported back.
   readonly analytics: boolean | null;
   // `null` in a process that has opened no subscriber connection, which is every worker.
   // Not a failure, and not something to open a connection in order to report on.
@@ -336,9 +328,6 @@ export class Container {
   private readonly shardResolver: ShardResolver;
   public readonly shardAssignments: ShardAssignmentRepository;
   public readonly sharding: ShardingStrategy;
-  // Held so `health()` can ping it and `dispose()` can close it, without handing the
-  // connection out.
-  private readonly clickhouse: ClickHouseConnection | undefined;
 
   // ── shared primitives ─────────────────────────────────────
   public readonly clock: Clock;
@@ -367,8 +356,7 @@ export class Container {
   // Catalog-placed here meant the loop ran, and every iteration wrote to node 0.
   public readonly localUnitOfWork: UnitOfWork;
   public readonly content: ContentSource;
-  // Built unconditionally: a missing analytics store means a feature is not deployed, a
-  // missing mail transport means every sign-up is a dead end.
+  // Built unconditionally: a missing mail transport means every sign-up is a dead end.
   public readonly email: EmailSender;
   // Public because Phase 3's notification subscriber holds one. The renderer stays
   // private: only `mail.send` below has any business calling it.
@@ -391,14 +379,10 @@ export class Container {
   // loop the worker runs starts from it.
   public readonly organizations: OrganizationReader;
   public readonly partitionArchive: PartitionArchiveGateway;
-  // Always built: replaying the audit trail is useful with or without a derived store
-  // behind it, and a reconciliation against nothing is simply a count.
-  public readonly activityReplay: ActivityReplayReader;
 
   // ── the derived stores, absent unless configured ─────────
-  // Optional fields rather than no-op implementations: a null projector is
-  // indistinguishable from a working pipeline until a quarterly report comes out wrong.
-  private readonly analyticsProjector: AnalyticsProjector | undefined;
+  // An optional field rather than a no-op implementation: a reader that answers nothing
+  // is indistinguishable from one with nothing to find.
   private readonly logReader: LogReader | undefined;
 
   // ── auth, absent in a process that never authenticates ────
@@ -431,9 +415,6 @@ export class Container {
   // Outside the `auth` block on purpose. The worker is the process that sends mail and it
   // has no auth config — which is exactly what building the old mailer in there got wrong.
   public readonly mail: { readonly send: SendMailUseCase };
-  public readonly analytics: {
-    readonly activity: GetActivityTrendUseCase;
-  };
   // In every process: the worker delivers and digests, the web tier reads. Neither
   // half needs an auth config, which is why this sits outside that branch too.
   public readonly notification: {
@@ -486,11 +467,8 @@ export class Container {
   // Cold storage read back. Whole-object and verified, which is what makes a restore
   // and a re-projection read the same bytes the archive wrote.
   public readonly coldArchive: ColdArchiveReader;
-  // Read once per analytics run and once per retention run. Usually empty: an absent
-  // row is "projected, with the default TTL".
-  public readonly projectionPolicies: ProjectionPolicyRepository;
-  // One row, read at the top of every analytics job. An absent row is the defaults,
-  // so a deployment that never opens the screen behaves as it always did.
+  // One row. An absent row is the defaults, so a deployment that never opens the screen
+  // behaves as it always did.
   public readonly platformPolicy: PlatformPolicyRepository;
   // Whether a flag is on for an org. Read by `fetchSession` on every document request,
   // and by a use-case before its permission check when a flag guards it.
@@ -712,28 +690,6 @@ export class Container {
     // switch a compiler checks, not in a document.
     this.vectors = Container.buildVectorStore(config, this.cluster, this.transactions, this.shards);
     this.embeddings = new OpenAiEmbeddingProvider(config.embedding, this.logger);
-
-    // Opt-in and stopped by default. Building the connection only when configured is
-    // what keeps the seam honest rather than aspirational.
-    this.clickhouse = config.analytics.clickhouse
-      ? new ClickHouseConnection(config.analytics.clickhouse, this.logger)
-      : undefined;
-
-    // The projector follows the connection and nothing else. There is no read driver to
-    // flip: one store is written and reconciled, and the dashboard reads the same one.
-    this.analyticsProjector = this.clickhouse
-      ? new ClickHouseAnalyticsProjector(this.clickhouse)
-      : undefined;
-
-    // `23.14`. Null without ClickHouse, which the use-case answers as "not configured"
-    // rather than as a tenant that did nothing.
-    this.analytics = {
-      activity: new GetActivityTrendUseCase(
-        this.authorizer,
-        this.clickhouse ? new ClickHouseAnalyticsReader(this.clickhouse) : null,
-        this.clock,
-      ),
-    };
 
     // Its absence changes nothing about what is written: `JsonLogger` goes to stdout
     // either way.
@@ -1047,15 +1003,8 @@ export class Container {
       };
     }
 
-    this.activityReplay = new PgActivityReplayReader(this.cluster, this.transactions, this.shards);
-
     // `this` is fully assigned by here, and `report()` is only ever called on a
     // request — the reader holds the container, it does not read it during the build.
-    this.projectionPolicies = new PgProjectionPolicyRepository(
-      this.cluster,
-      this.transactions,
-      this.shards,
-    );
     this.platformPolicy = new PgPlatformPolicyRepository(
       this.cluster,
       this.transactions,
@@ -1086,8 +1035,6 @@ export class Container {
         this.platform,
         this.activity,
       ),
-      // The projector is optional: with no analytics store there is no derived copy of the
-      // tenant to forget.
       purgeOrganization: new PurgeOrganizationUseCase(
         new PgTenantRepository(this.cluster, this.transactions, this.shards),
         this.partitionArchive,
@@ -1098,7 +1045,6 @@ export class Container {
         this.activity,
         this.catalogUnitOfWork,
         this.clock,
-        this.analyticsProjector ?? null,
         this.tenantRetentionPolicies,
         this.shardResolver,
         new DocImageSweep(this.storage),
@@ -1410,21 +1356,6 @@ export class Container {
     return this.principalBuilder;
   }
 
-  // A getter, so a process reaching it without ClickHouse configured fails with a
-  // sentence rather than at the first insert with a `TypeError`.
-  public get projector(): AnalyticsProjector {
-    if (!this.analyticsProjector) {
-      throw new Error("This container was built without an analytics.clickhouse config.");
-    }
-    return this.analyticsProjector;
-  }
-
-  // What the worker branches on: registering a projection consumer against a store that
-  // is not running is the failure this prevents.
-  public get hasProjector(): boolean {
-    return this.analyticsProjector !== undefined;
-  }
-
   public get logs(): LogReader {
     if (!this.logReader) throw new Error("This container was built without a logs config.");
     return this.logReader;
@@ -1509,29 +1440,23 @@ export class Container {
   // Postgres and both Redis instances, as a breakdown rather than one boolean: the body
   // of a failing probe is what an operator reads. See docs/reference/container.md.
   public async health(): Promise<HealthReport> {
-    const [database, cache, queue, analytics, realtime] = await Promise.all([
+    const [database, cache, queue, realtime] = await Promise.all([
       this.cluster.isHealthy(),
       this.redis.healthy("cache"),
       this.redis.healthy("queue"),
-      // `null` rather than `true` when absent: it is not healthy and not degraded, it
-      // is not running one. Loki is absent from this list on purpose.
-      this.clickhouse ? this.clickhouse.healthy() : Promise.resolve(null),
       // Asked only of a connection that exists. `healthy()` would create one, and a
       // worker reporting on a subscriber it opened to answer this is reporting on itself.
       this.redis.opened("subscriber") ? this.redis.healthy("subscriber") : Promise.resolve(null),
     ]);
 
     return {
-      healthy:
-        Object.values(database).every(Boolean) &&
-        cache &&
-        queue &&
-        analytics !== false &&
-        realtime !== false,
+      healthy: Object.values(database).every(Boolean) && cache && queue && realtime !== false,
       database,
       cache,
       queue,
-      analytics,
+      // `null` rather than `true`: lite runs no analytics store, which is neither healthy
+      // nor degraded. Loki is absent from this report on purpose.
+      analytics: null,
       realtime,
       // Not part of `healthy`: a saturated pool is a load signal, not a broken
       // dependency, and a health check that fails under load takes the process out.
@@ -1593,7 +1518,6 @@ export class Container {
     // Each step on its own: one close that rejects must not leave the pools after it open.
     await this.closing("queue", () => this.queuePublisher.close());
     await this.closing("redis", () => this.redis.close());
-    await this.closing("clickhouse", async () => this.clickhouse?.close());
     // Before Postgres only because nothing else depends on it: an unclosed transport is
     // its own reason to be here, not a step in the ordering above.
     await this.closing("smtp", () => this.emailSender.close());

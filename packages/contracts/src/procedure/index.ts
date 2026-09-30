@@ -1,4 +1,3 @@
-import { AnalyticsProcedures } from "../analytics/index.js";
 import { ApiKeyProcedures } from "../apikey/index.js";
 import { DocGrantProcedures, DocPageProcedures, DocSpaceProcedures } from "../doc/index.js";
 import { DocumentProcedures } from "../document/index.js";
@@ -20,7 +19,6 @@ export const contract = {
   notification: NotificationProcedures.all,
   realtime: RealtimeProcedures.all,
   platform: PlatformProcedures.all,
-  analytics: AnalyticsProcedures.all,
   override: OverrideProcedures.all,
   docSpace: DocSpaceProcedures.all,
   docPage: DocPageProcedures.all,

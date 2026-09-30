@@ -1,4 +1,3 @@
-export { ActivitySubject } from "./activity-subject.js";
 export { Authorizer } from "./authorizer.js";
 export type { CancellationSignal } from "./cancellation.js";
 export { JobKey } from "./job-key.js";

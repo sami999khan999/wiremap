@@ -10,19 +10,19 @@ describe("EntitlementMask", () => {
     const mask = EntitlementMask.from({ ...nothing, plan: ["member.read"] });
 
     expect(mask.isEntitled("member.read")).toBe(true);
-    expect(mask.isEntitled("analytics.activity.read")).toBe(false);
+    expect(mask.isEntitled("apikey.read")).toBe(false);
   });
 
   // A trial is an expiring add; a removal is an explicit "not this org", and it wins.
   it("lets an add widen the plan and a remove beat both", () => {
     const mask = EntitlementMask.from({
       plan: ["member.read"],
-      added: ["analytics.activity.read", "member.invite"],
+      added: ["apikey.read", "member.invite"],
       removed: ["member.read", "member.invite"],
       disabledModules: [],
     });
 
-    expect(mask.isEntitled("analytics.activity.read")).toBe(true);
+    expect(mask.isEntitled("apikey.read")).toBe(true);
     expect(mask.isEntitled("member.read")).toBe(false);
     expect(mask.isEntitled("member.invite")).toBe(false);
   });
@@ -65,15 +65,15 @@ describe("EntitlementMask", () => {
   it("narrows grants, and leaves denies, the wildcard and the platform axis alone", () => {
     const dto: CapabilitySetDto = {
       wildcard: false,
-      org: { grants: ["member.read", "analytics.activity.read"], denies: ["member.invite"] },
-      goals: { g1: { grants: ["analytics.activity.read"], denies: ["analytics.activity.read"] } },
+      org: { grants: ["member.read", "apikey.read"], denies: ["member.invite"] },
+      goals: { g1: { grants: ["apikey.read"], denies: ["apikey.read"] } },
       platform: { grants: ["platform.status.read"], denies: [] },
     };
 
     const narrowed = EntitlementMask.from({ ...nothing, plan: ["member.read"] }).narrow(dto);
 
     expect(narrowed.org).toEqual({ grants: ["member.read"], denies: ["member.invite"] });
-    expect(narrowed.goals.g1).toEqual({ grants: [], denies: ["analytics.activity.read"] });
+    expect(narrowed.goals.g1).toEqual({ grants: [], denies: ["apikey.read"] });
     expect(narrowed.platform).toEqual(dto.platform);
     expect(narrowed.wildcard).toBe(false);
   });

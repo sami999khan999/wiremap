@@ -105,9 +105,6 @@ export interface EventShape {
     readonly table: string;
     readonly rows: number;
   };
-  readonly "analytics.retention.applied": {
-    readonly expression: string;
-  };
   readonly "cold.objects.swept": {
     // Why they went, so a sweep for a deleted tenant is distinguishable from the
     // bucket expiring a month on its own.
@@ -121,11 +118,6 @@ export interface EventShape {
   readonly "shard.assignment.created": {
     readonly key: string;
     readonly node: number;
-  };
-  readonly "cold.partition.reprojected": {
-    readonly period: string;
-    readonly organizationId: string;
-    readonly rows: number;
   };
   readonly "cold.tenant.exported": {
     readonly organizationId: string;
@@ -211,70 +203,11 @@ export interface EventShape {
   readonly "cache.entry.corrupt": { readonly key: string };
   readonly "embedding.request.failed": { readonly model: string; readonly chunks: number };
 
-  readonly "analytics.projection.completed": {
-    readonly projection: string;
-    // How many tenants the run reached before its budget ran out. Per tenant since `0023`, so a
-    // count of events alone cannot say whether the loop reached the end.
-    readonly tenants: number;
-    readonly events: number;
-    readonly durationMs: number;
-    // On the success line, not only the warning one: a field that appears only when
-    // something is wrong has no baseline to be wrong against.
-    readonly lagSeconds: number;
-    // Tenants passed over for having no directory row. Zero on the success line too, so
-    // a dashboard has a baseline the day it is not.
-    readonly skipped: number;
-    // Tenants whose walk threw. Each has its own `analytics.projection.failed` line, and
-    // the run still fails after the others have had their turn.
-    readonly failed: number;
-    // True when the run stopped at its batch ceiling rather than because it caught up —
-    // which separates "behind and closing" from "behind every run for a week".
-    readonly capped: boolean;
-  };
-  readonly "analytics.projection.failed": {
-    readonly projection: string;
-    // Whose walk failed. The checkpoint is per tenant, so there is no global "where the
-    // replay resumes" left to report.
-    readonly organizationId: string;
-    readonly eventId: string;
-  };
-  readonly "analytics.projection.lagged": {
-    readonly projection: string;
-    readonly lagSeconds: number;
-    // The threshold that fired, so the line explains itself without the reader having
-    // to find the constant.
-    readonly thresholdSeconds: number;
-  };
-  readonly "analytics.tenant.skipped": {
-    readonly organizationId: string;
-    // `project` or `reconcile`: both walk every tenant, and both skip the same way.
-    readonly job: string;
-  };
   readonly "analytics.projection.gap": {
     readonly period: string;
     // `disabled` is no projector at all; `behind` is one that has not caught up to the
     // end of the month. The first is a decision, the second is a backlog.
     readonly reason: string;
-  };
-  readonly "analytics.reconciliation.completed": {
-    readonly days: number;
-    readonly durationMs: number;
-    // Emitted whether or not anything drifted. A `completed` line that appears only on a
-    // clean run makes "the reconciliation is failing" and "it never ran" the same gap.
-    readonly drifted: number;
-  };
-  // One line per drifting day, not one listing them: a field is something you filter on,
-  // and a day is the grain an operator groups by.
-  readonly "analytics.reconciliation.drifted": {
-    readonly organizationId: string;
-    // Which comparison found it. `hot` is a day of `activity_log`; `cold` is a whole
-    // archived month, and the two have different replay sources and deadlines.
-    readonly source: "hot" | "cold";
-    // The day for `hot`, the month's first for `cold`. One field, because the grain a
-    // replay window is picked from is the grain the drift was found at.
-    readonly day: string;
-    readonly expected: number;
-    readonly actual: number;
   };
 }
 

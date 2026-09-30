@@ -138,7 +138,7 @@ describe("PgCapabilityRepository", () => {
 describe("PgCapabilityRepository — entitlement", () => {
   const run = Uuid.v7();
   const PLAN = `spec-plan-${run}`;
-  const ROLE_KEYS = ["rbac.role.read", "analytics.activity.read", "doc.page.read"];
+  const ROLE_KEYS = ["rbac.role.read", "apikey.read", "doc.page.read"];
   const founded: string[] = [];
 
   const repository = () =>
@@ -231,17 +231,13 @@ describe("PgCapabilityRepository — entitlement", () => {
       .update(organizations)
       .set({ planKey: PLAN })
       .where(eq(organizations.id, organizationId));
-    expect(
-      (await repository().resolveFor(organizationId, userId)).can("analytics.activity.read"),
-    ).toBe(false);
+    expect((await repository().resolveFor(organizationId, userId)).can("apikey.read")).toBe(false);
 
     await database.client
       .update(organizations)
       .set({ planKey: "unlimited" })
       .where(eq(organizations.id, organizationId));
-    expect(
-      (await repository().resolveFor(organizationId, userId)).can("analytics.activity.read"),
-    ).toBe(true);
+    expect((await repository().resolveFor(organizationId, userId)).can("apikey.read")).toBe(true);
   });
 
   it("lets a remove mask a role grant and an override grant alike", async () => {
@@ -262,11 +258,11 @@ describe("PgCapabilityRepository — entitlement", () => {
       .update(organizations)
       .set({ planKey: PLAN })
       .where(eq(organizations.id, organizationId));
-    await adjust(organizationId, "analytics.activity.read", "add", new Date(Date.now() - 60_000));
+    await adjust(organizationId, "apikey.read", "add", new Date(Date.now() - 60_000));
 
     const set = await repository().resolveFor(organizationId, userId);
 
-    expect(set.can("analytics.activity.read")).toBe(false);
+    expect(set.can("apikey.read")).toBe(false);
   });
 
   it("honours a live add on top of the plan — a trial", async () => {
@@ -275,11 +271,9 @@ describe("PgCapabilityRepository — entitlement", () => {
       .update(organizations)
       .set({ planKey: PLAN })
       .where(eq(organizations.id, organizationId));
-    await adjust(organizationId, "analytics.activity.read", "add", new Date(Date.now() + 60_000));
+    await adjust(organizationId, "apikey.read", "add", new Date(Date.now() + 60_000));
 
-    expect(
-      (await repository().resolveFor(organizationId, userId)).can("analytics.activity.read"),
-    ).toBe(true);
+    expect((await repository().resolveFor(organizationId, userId)).can("apikey.read")).toBe(true);
   });
 
   it("masks every key of a disabled module, and never a core key", async () => {
@@ -314,7 +308,7 @@ describe("PgCapabilityRepository — overrides", () => {
       organizationId,
       userId,
       goalId: null,
-      permission: "analytics.activity.read",
+      permission: "apikey.read",
       effect: "grant",
       reason: "spec",
       expiresAt: new Date(Date.now() + 3_600_000),
@@ -333,9 +327,7 @@ describe("PgCapabilityRepository — overrides", () => {
     expect(counter.count).toBe(4);
     expect(explanation.overrides.map((row) => row.permission)).toEqual(["member.read"]);
     expect((await repository().resolveFor(organizationId, userId)).can("member.read")).toBe(true);
-    expect(
-      (await repository().resolveFor(organizationId, userId)).can("analytics.activity.read"),
-    ).toBe(false);
+    expect((await repository().resolveFor(organizationId, userId)).can("apikey.read")).toBe(false);
 
     await database.client.delete(permissionOverrides).where(eq(permissionOverrides.userId, userId));
   });
@@ -354,9 +346,7 @@ describe("PgCapabilityRepository — overrides", () => {
 
     const explanation = await repository().explainFor(organizationId, userId);
     expect(explanation.overrides.map((row) => row.authority).sort()).toEqual(["org", "platform"]);
-    expect(
-      (await repository().resolveFor(organizationId, userId)).can("analytics.activity.read"),
-    ).toBe(false);
+    expect((await repository().resolveFor(organizationId, userId)).can("apikey.read")).toBe(false);
 
     await database.client.delete(permissionOverrides).where(eq(permissionOverrides.userId, userId));
   });

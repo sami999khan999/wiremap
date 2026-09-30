@@ -77,7 +77,7 @@ during the incident where the app is down.
 
 ### Analytics, profile `analytics`
 
-`clickhouse`, deliberately not started. See [clickhouse](clickhouse.md).
+`clickhouse`, deliberately not started. See [clickhouse](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/docs/infra/reference/clickhouse.md).
 
 ### The second node, profile `sharded`
 

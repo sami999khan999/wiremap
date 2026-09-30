@@ -31,15 +31,9 @@ export interface Stack {
   // Row counts the routed measurement runs at, from `ROUTED_SCALE=10000`. Needs `shard1`
   // as well: one node measures routing against nothing.
   readonly routed?: readonly number[];
-  // Absent when the stack is not running one, which is the case the two `skipIf` blocks
-  // are about — not a missing variable, a service nobody started.
+  // Absent when the stack is not running one, which is the case the `skipIf` block is
+  // about — not a missing variable, a service nobody started.
   readonly loki?: { readonly url: string; readonly tenantId?: string };
-  readonly clickhouse?: {
-    readonly url: string;
-    readonly database: string;
-    readonly username: string;
-    readonly password: string;
-  };
 }
 
 declare module "vitest" {
