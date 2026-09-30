@@ -17,7 +17,6 @@ const ITEMS = [
   { module: "apikey", labelKey: "nav.apiKeys", icon: "key", order: 30 },
   { module: "document", labelKey: "nav.documents", icon: "check", order: 40 },
   { module: "notification", labelKey: "nav.notifications", icon: "bell", order: 50 },
-  { module: "messaging", labelKey: "nav.messages", icon: "chat", order: 60 },
   { module: "analytics", labelKey: "nav.analytics", icon: "check", order: 70 },
   { module: "widget", labelKey: "nav.widgets", icon: "check", order: 80 },
   { module: "doc", labelKey: "nav.docs", icon: "book", order: 85 },

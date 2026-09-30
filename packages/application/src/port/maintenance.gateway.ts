@@ -9,13 +9,6 @@ export interface SweepOutcome {
   readonly invitations: number;
 }
 
-// Conversation ids that `messages` or `conversation_members` name and `conversations` does
-// not hold — distinct ids, not rows. Zero on a healthy node.
-export interface DanglingConversations {
-  readonly members: number;
-  readonly messages: number;
-}
-
 // One tenant's line of a runway pass. `monthsAhead` is read *before* anything is created,
 // because afterwards the run has fixed what it found and there is nothing to report.
 export interface TenantRunway {
@@ -57,10 +50,6 @@ export abstract class MaintenanceGateway {
   // Tenants with rows on this node whose `organizations` row is gone. Since `24.1` no
   // foreign key notices, so this is the nightly proof the delete path is keeping up.
   public abstract orphanedTenants(): Promise<readonly OrganizationId[]>;
-
-  // The same guarantee one level down: `PF.1` dropped the two keys into `conversations`,
-  // so this count is what notices a row whose conversation is gone.
-  public abstract danglingConversations(): Promise<DanglingConversations>;
 
   // `months` counts partitions from the month `from` falls in, so three is the current
   // month and two of runway. `organizationId` is null only for a table with no tenant.

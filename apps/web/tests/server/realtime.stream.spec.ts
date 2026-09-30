@@ -6,7 +6,7 @@ import { ForbiddenError } from "@loadbearing/errors";
 import { SilentLogger } from "@loadbearing/observability";
 import { CapabilitySet } from "@loadbearing/permissions";
 import { RPCHandler } from "@orpc/server/fetch";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Cors } from "../../src/server/cors.js";
 import { RealtimeRouter } from "../../src/server/import.js";
 
@@ -176,85 +176,5 @@ describe("the realtime stream over RPCHandler", () => {
     expect(body).toContain("FORBIDDEN");
     expect(body).not.toContain("INTERNAL_SERVER_ERROR");
     expect(failures).toHaveLength(1);
-  });
-});
-
-// `RV.1`. The check used to re-run with the principal captured at open, and asked only
-// `conversation_members`, so a deactivated member kept receiving frames for thirty minutes.
-describe("the conversation stream's revalidation", () => {
-  const CONVERSATION = "00000000-0000-7000-8000-0000000000c1";
-
-  function held(refreshed: Principal | null, watched: Principal[]): Container {
-    const container = containerWith([], []);
-    Object.assign(container, {
-      principals: {
-        fromHeaders: () => Promise.resolve(new Principal(ORG, USER, CapabilitySet.empty())),
-        refresh: () => Promise.resolve(refreshed),
-      },
-      messaging: {
-        watch: {
-          execute: (principal: Principal) => {
-            watched.push(principal);
-            return Promise.resolve();
-          },
-        },
-      },
-      realtimeSubscriber: {
-        // Open until the stream's own signal aborts, which is what a revocation does.
-        subscribe: async function* (_channels: readonly string[], signal: AbortSignal) {
-          yield frame("00000000-0000-7000-8000-00000000000e");
-          await new Promise((resolve) => signal.addEventListener("abort", resolve));
-        },
-      },
-    });
-    return container;
-  }
-
-  async function open(container: Container): Promise<Response> {
-    const handler = new RPCHandler({ realtime: RealtimeRouter.all });
-    const { response } = await handler.handle(
-      new Request("http://localhost/api/rpc/realtime/conversation", {
-        method: "POST",
-        headers: new Headers({ "content-type": "application/json" }),
-        body: JSON.stringify({ json: { conversationId: CONVERSATION } }),
-      }),
-      { prefix: "/api/rpc", context: { container, headers: new Headers() } },
-    );
-    if (!response) throw new Error("the conversation procedure did not match");
-    return response;
-  }
-
-  it("ends the stream once the principal no longer resolves", async () => {
-    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
-    try {
-      const body = (await open(held(null, []))).text();
-      let ended = false;
-      void body.then(() => {
-        ended = true;
-      });
-
-      await vi.advanceTimersByTimeAsync(60_000);
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(ended).toBe(true);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("asks the participant question with the re-read principal", async () => {
-    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
-    const fresh = new Principal(ORG, USER, CapabilitySet.empty());
-    const watched: Principal[] = [];
-    try {
-      void (await open(held(fresh, watched))).text();
-
-      await vi.advanceTimersByTimeAsync(60_000);
-
-      expect(watched).toHaveLength(2);
-      expect(watched[1]).toBe(fresh);
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });

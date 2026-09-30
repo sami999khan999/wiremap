@@ -687,7 +687,7 @@ job someone has to remember to write.
 A message in a conversation of N members is one row and N realtime publishes — the
 `MessagingRealtimeSubscriber` loop that keeps every member's inbox ordered. That is the
 amplification to watch, and it is bounded deliberately in three places.
-[`packages/application/docs/reference/messaging.md`](../../packages/application/docs/reference/messaging.md)
+[`upstream:packages/application/docs/reference/messaging.md`](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/application/docs/reference/messaging.md)
 carries the whole argument; the shape is: the **body** rides the conversation channel and is
 published once, the **user** channels get a compact "something changed" frame and only for the
 three events that reorder a list, and the notification policy stops at direct conversations

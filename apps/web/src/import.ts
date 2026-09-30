@@ -37,9 +37,9 @@ export type {
   UserId,
 } from "@loadbearing/contracts";
 // ── @loadbearing/contracts ───────────────────────────────────────────────────
-// The two branded ids `session.fn.ts` casts to, and the one entity a route asks a
-// question of. The shapes a component renders arrive through `@loadbearing/query`.
-export { ConversationEntity, Identifiers } from "@loadbearing/contracts";
+// The branded ids a route casts to. The shapes a component renders arrive through
+// `@loadbearing/query`.
+export { Identifiers } from "@loadbearing/contracts";
 
 // ── @loadbearing/feature ─────────────────────────────────────────────────────
 export {
@@ -50,7 +50,6 @@ export {
   ArchivedNotificationList,
   ChangeEmailForm,
   ChangePasswordForm,
-  ConversationList,
   CreateApiKeyForm,
   CreateOrganizationForm,
   CreateRoleForm,
@@ -77,8 +76,6 @@ export {
   LinkedAccountList,
   MemberAccessPanel,
   MemberList,
-  MessageComposer,
-  MessageList,
   MessageProvider,
   ModuleNav,
   ModuleSwitchPanel,
@@ -113,7 +110,6 @@ export {
   TwoFactorForm,
   TwoFactorPanel,
   TwoFactorSetup,
-  TypingNotice,
   useCapabilities,
   useErrorMessage,
   useIsPlatformOrganization,
@@ -146,14 +142,12 @@ export {
   createQueryClient,
   DocQueries,
   MemberQueries,
-  MessagingQueries,
   NotificationQueries,
   PlatformQueries,
   RealtimeProvider,
   RoleQueries,
   useApiClient,
   useAppQuery,
-  useConversationStream,
   WidgetQueries,
 } from "@loadbearing/query";
 

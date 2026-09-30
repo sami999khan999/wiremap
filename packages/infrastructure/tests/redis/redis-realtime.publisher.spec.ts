@@ -40,7 +40,7 @@ const CHANNEL = "user:a" as RealtimeChannel;
 const MESSAGE: RealtimeMessage = {
   kind: "event",
   id: "01a0ee7c-4f0f-71c6-841b-cf29e351a522",
-  name: "message.sent",
+  name: "notification.created",
   at: new Date("2026-09-30T00:00:00Z"),
   payload: {},
 };
@@ -72,12 +72,14 @@ describe("RedisRealtimePublisher", () => {
         [null, 1],
         [null, 1],
       ]),
-    ).resolves.toEqual([{ event: "realtime.publish.failed", fields: { event: "message.sent" } }]);
+    ).resolves.toEqual([
+      { event: "realtime.publish.failed", fields: { event: "notification.created" } },
+    ]);
   });
 
   it("emits realtime.publish.failed when the transaction is aborted", async () => {
     await expect(publish(null)).resolves.toEqual([
-      { event: "realtime.publish.failed", fields: { event: "message.sent" } },
+      { event: "realtime.publish.failed", fields: { event: "notification.created" } },
     ]);
   });
 });

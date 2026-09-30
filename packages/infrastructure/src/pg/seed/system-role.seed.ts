@@ -30,15 +30,6 @@ const NOTIFICATION: readonly PermissionKey[] = Object.freeze([
   "notification.preference.update",
 ]);
 
-// The four everyone in a conversation needs. `manage` is not here: renaming a channel
-// and removing people from it is administration, and it goes to `admin` alone.
-const MESSAGING: readonly PermissionKey[] = Object.freeze([
-  "messaging.conversation.read",
-  "messaging.conversation.create",
-  "messaging.message.send",
-  "messaging.message.update",
-]);
-
 // Reading is everyone's; writing, publishing and arranging spaces is `admin`'s, the same
 // line the roles themselves are drawn on.
 const DOC_AUTHOR: readonly PermissionKey[] = Object.freeze([
@@ -64,8 +55,6 @@ const ROLES: readonly SystemRole[] = Object.freeze([
       "member.read",
       "member.invite",
       ...NOTIFICATION,
-      ...MESSAGING,
-      "messaging.conversation.manage",
       // The tenant's own activity is an administrator's view, not a member's.
       "analytics.activity.read",
       // Hiding a card for everyone. Cosmetic, and still an administrator's call (`RV.12`).
@@ -77,10 +66,10 @@ const ROLES: readonly SystemRole[] = Object.freeze([
     key: "member",
     name: "Member",
     scope: "org",
-    permissions: ["member.read", ...NOTIFICATION, ...MESSAGING, "doc.page.read"],
+    permissions: ["member.read", ...NOTIFICATION, "doc.page.read"],
   },
-  // Never `guest`: an inbox and a conversation are both things you hold, and a guest
-  // holds no memberships to be notified about or to talk in.
+  // Never `guest`: an inbox is something you hold, and a guest holds no memberships to
+  // be notified about.
   { key: "guest", name: "Guest", scope: "org", permissions: [] },
 ]);
 

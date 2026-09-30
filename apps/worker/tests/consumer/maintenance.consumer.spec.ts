@@ -75,7 +75,7 @@ const RUNS: readonly Run[] = PartitionedTable.MONTH_PARTITIONED.flatMap((entry) 
     : [{ table: entry.name, organizationId: null }],
 );
 
-// Every table the calendar drops something from. `messages` is domain data and is never
+// Every table the calendar drops something from. `doc_revision` is an archive path and is never
 // dropped, so a prune pass that touched it would be the bug.
 const RETAINED = PartitionedTable.MONTH_PARTITIONED.filter(
   (entry) => entry.retentionMonths !== null,
@@ -542,23 +542,6 @@ describe("MaintenanceConsumer — the orphan count", () => {
     expect(found[0]?.tenants).toBe(TENANTS.length);
     expect(found[0]?.organizationIds).toBe(TENANTS.join(","));
     expect(found[0]?.node).toBe(0);
-    expect(found[0]?.members).toBe(0);
-  });
-
-  // `PF.1`: the keys into `conversations` are gone, so a leaked member or message is
-  // reported here even on a node where every tenant is live.
-  it("reports a conversation that members or messages name and nothing holds", async () => {
-    const { container, logger, maintenance } = harness();
-    maintenance.orphans = [];
-    maintenance.dangling = { members: 1, messages: 2 };
-
-    await consumerFor(container).handle(job("orphans"));
-
-    const found = emitted(logger, "maintenance.orphans.found");
-    expect(found).toHaveLength(1);
-    expect(found[0]?.tenants).toBe(0);
-    expect(found[0]?.members).toBe(1);
-    expect(found[0]?.messages).toBe(2);
   });
 });
 
@@ -823,7 +806,7 @@ describe("MaintenanceConsumer — prune reads the row", () => {
     await consumerFor(container).handle(job("partitions"));
 
     // `activity_log` at thirteen months and `notifications` at twelve, from the
-    // allowlist alone. `messages` is never retired and contributes nothing.
+    // allowlist alone. `doc_revision` is never retired and contributes nothing.
     expect(partitionArchive.archived().map(({ table }) => table)).toEqual(
       RETAINED.map((entry) => entry.name),
     );
@@ -837,7 +820,7 @@ describe("MaintenanceConsumer — prune reads the row", () => {
       policies: [
         {
           store: "postgres",
-          tableName: "messages",
+          tableName: "doc_revision",
           hotMonths: 6,
           coldMonths: null,
           coldMode: "archive",
@@ -847,7 +830,7 @@ describe("MaintenanceConsumer — prune reads the row", () => {
 
     await consumerFor(container).handle(job("partitions"));
 
-    expect(partitionArchive.archived().map(({ table }) => table)).toContain("messages");
+    expect(partitionArchive.archived().map(({ table }) => table)).toContain("doc_revision");
   });
 
   // `drop` destroys the month rather than archiving it — a table of transport rows
@@ -925,12 +908,12 @@ describe("MaintenanceConsumer — a per-tenant retention override", () => {
   it("does not retire a table whose default is never, even with a row", async () => {
     const { container, partitionArchive } = harness({
       estimates: [estimate(period)],
-      tenantPolicies: [{ ...override(FIRST, 3), tableName: "messages" }],
+      tenantPolicies: [{ ...override(FIRST, 3), tableName: "doc_revision" }],
     });
 
     await consumerFor(container).handle(job("partitions"));
 
-    expect(partitionArchive.archived().map(({ table }) => table)).not.toContain("messages");
+    expect(partitionArchive.archived().map(({ table }) => table)).not.toContain("doc_revision");
   });
 });
 

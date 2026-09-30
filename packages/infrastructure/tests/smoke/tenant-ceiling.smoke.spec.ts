@@ -57,8 +57,9 @@ interface Reading {
   readonly probeMs: number;
   readonly tableMs: number;
   readonly attachMs: number;
-  // Every lock mode another backend held on `conversations` while those signups ran.
-  readonly conversationsLocks: string;
+  // Every lock mode another backend held on `activity_log`, a tenant-partitioned parent,
+  // while those signups attached under it.
+  readonly parentLocks: string;
   // One fresh tenant dropped at this ceiling, and what its backend waited on meanwhile.
   readonly dropMs: number;
   readonly dropWaits: string;
@@ -134,11 +135,11 @@ const sampled = async <T>(
 const signups = async (target: number) => {
   await database.client.execute(sql`select pg_stat_statements_reset()`);
 
-  const [, conversationsLocks] = await sampled(
+  const [, parentLocks] = await sampled(
     sql`
       select l.mode as key from pg_locks l
       join pg_class c on c.oid = l.relation
-      where c.relname = 'conversations' and l.pid <> pg_backend_pid()
+      where c.relname = 'activity_log' and l.pid <> pg_backend_pid()
     `,
     async () => {
       for (let n = 0; n < SAMPLE; n += 1) await mint();
@@ -185,7 +186,7 @@ const signups = async (target: number) => {
   }
 
   const per = (total: number) => Math.round(total / SAMPLE);
-  return { probeMs: per(probe), tableMs: per(table), attachMs: per(attach), conversationsLocks };
+  return { probeMs: per(probe), tableMs: per(table), attachMs: per(attach), parentLocks };
 };
 
 // One tenant founded and dropped by the production path, timed, with its backend's
@@ -212,7 +213,8 @@ const drop = async () => {
 const RUNWAY_PAGE = 200;
 
 const runway = async (): Promise<void> => {
-  for (const name of ["activity_log", "notifications", "messages"] as const) {
+  const tenantMonths = PartitionedTable.MONTH_PARTITIONED.filter((entry) => entry.tenantKey);
+  for (const { name } of tenantMonths) {
     for (let at = 0; at < created.length; at += RUNWAY_PAGE) {
       await maintenance.ensureMonthlyPartitionsFor(
         name,
@@ -287,7 +289,7 @@ const dropOrphans = async (): Promise<number> => {
 };
 
 // A key on a partitioned table hangs off every one of its partitions, so a referenced
-// parent's children cannot be dropped without detaching first. Only `conversations` is.
+// parent's children cannot be dropped without detaching first. None is since `PF.1`.
 const isReferenced = async (parent: string): Promise<boolean> => {
   const found = await database.client.execute<{ referenced: boolean }>(sql`
     select exists (

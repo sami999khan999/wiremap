@@ -342,7 +342,7 @@ unread counts — carry a bound of their own, and the spec asserts each one prun
 key, and it cannot exist on a partitioned table without `created_at` in it — with `created_at` in it
 every retry inserts a second row instead of colliding. The dedupe is a Redis `SET … EX … NX` now, and
 `client_id` stays as a column with no index. See
-[messaging](../../../application/docs/reference/messaging.md).
+[messaging](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/application/docs/reference/messaging.md).
 
 ## Converting a table that already holds rows
 

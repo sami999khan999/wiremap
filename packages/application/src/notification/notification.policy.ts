@@ -13,10 +13,7 @@ import type {
 export type RecipientRule =
   | { readonly kind: "none" }
   | { readonly kind: "subject" }
-  | { readonly kind: "organizationMembers"; readonly holding: PermissionKey }
-  // The people in the conversation, minus the author. No permission: membership of the
-  // room is the authorization, and everyone in one can already read it.
-  | { readonly kind: "conversationMembers" };
+  | { readonly kind: "organizationMembers"; readonly holding: PermissionKey };
 
 export interface PolicyRow {
   readonly kind: NotificationKind;
@@ -27,8 +24,8 @@ export interface PolicyRow {
   // What the notification is *about*, when that is narrower than the event. Set, it also
   // means "one unread of this kind about this subject at a time" — see `subjectOf`.
   readonly subject?: (event: DomainEvent) => string | null;
-  // Not every event of a name produces one. A message in a channel is the §6 write
-  // amplification case, and it produces nothing until a mention feature exists.
+  // Not every event of a name produces one. A busy shared channel is the §6 write
+  // amplification case, and a row for one narrows here rather than notifying everyone.
   readonly when?: (event: DomainEvent) => boolean;
 }
 
@@ -61,23 +58,6 @@ const ROWS = Object.freeze({
     recipients: { kind: "subject" },
     defaultMode: { in_app: "immediate", email: "immediate" },
     link: () => "/settings/members",
-  },
-  "message.sent": {
-    kind: "message.received",
-    category: "messaging",
-    recipients: { kind: "conversationMembers" },
-    // In-app at once, email once a day. A DM is worth interrupting a screen for and is
-    // almost never worth interrupting an inbox for.
-    defaultMode: { in_app: "immediate", email: "digest" },
-    link: (event) =>
-      "conversationId" in event.payload ? `/messages/${event.payload.conversationId}` : null,
-    // One unread bell item per conversation. Without this a burst of ten messages is ten
-    // rows, ten frames and ten digest lines for one thing the reader already knows about.
-    subject: (event) => ("conversationId" in event.payload ? event.payload.conversationId : null),
-    // Direct only. A busy channel notifying every member per message is the write
-    // amplification `data-and-scale.md` §6 exists to warn about.
-    when: (event) =>
-      "conversationKind" in event.payload && event.payload.conversationKind === "direct",
   },
 } as const satisfies Partial<Record<DomainEventName, PolicyRow>>);
 
@@ -166,7 +146,7 @@ export class NotificationPolicy {
   }
 
   // Null means "no narrower subject", and the delivery is then deduped on the event
-  // alone — the behaviour every row but the messaging one wants.
+  // alone — the behaviour every row in lite wants.
   public static subjectOf(event: DomainEvent): string | null {
     return NotificationPolicy.rowFor(event.name)?.subject?.(event) ?? null;
   }

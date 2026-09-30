@@ -200,9 +200,9 @@ describe("PreviewRetentionChangeUseCase for one tenant", () => {
   });
 
   // The same predicate `UpdateTenantRetentionUseCase` refuses on, so the screen cannot
-  // offer a preview of an override that would not save. `messages` is `retentionMonths:
+  // offer a preview of an override that would not save. `doc_revision` is
   // ──
-  // null` by decision D47 — the calendar never retires it.
+  // `retentionMonths: null` — the calendar never retires it.
   it("refuses a tenant preview of a table the calendar never retires", async () => {
     const useCase = new PreviewRetentionChangeUseCase(
       new Authorizer(),
@@ -212,7 +212,7 @@ describe("PreviewRetentionChangeUseCase for one tenant", () => {
 
     await expect(
       useCase.execute(actor("platform.retention.read"), {
-        tableName: "messages",
+        tableName: "doc_revision",
         hotMonths: 3,
         organizationId: OTHER,
       }),
@@ -229,10 +229,10 @@ describe("PreviewRetentionChangeUseCase for one tenant", () => {
     );
 
     const preview = await useCase.execute(actor("platform.retention.read"), {
-      tableName: "messages",
+      tableName: "doc_revision",
       hotMonths: 3,
     });
 
-    expect(preview.tableName).toBe("messages");
+    expect(preview.tableName).toBe("doc_revision");
   });
 });

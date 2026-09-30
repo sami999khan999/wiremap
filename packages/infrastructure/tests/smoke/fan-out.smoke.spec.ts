@@ -13,7 +13,6 @@ import {
 } from "../../src/import.js";
 import { Database, DatabaseCluster } from "../../src/pg/primitive/index.js";
 import {
-  PgConversationRepository,
   PgMaintenanceGateway,
   PgNotificationRecipientReader,
   PgNotificationRepository,
@@ -40,8 +39,8 @@ const direct = new Database({ url: stack.database.directUrl });
 const cluster = DatabaseCluster.single(database, direct);
 
 const notifications = new PgNotificationRepository(cluster, scope, shards);
-// The recipient reader and its conversation repository are built on `countedCluster`
-// below: the measurement is statement counts, so an uncounted pair reads nothing.
+// The recipient reader is built on `countedCluster` below: the measurement is statement
+// counts, so an uncounted reader measures nothing.
 const maintenance = new PgMaintenanceGateway(
   DatabaseCluster.single(direct),
   scope,
@@ -65,7 +64,7 @@ const DIGEST_PAGE = 200;
 const WRITE_CHUNK = 1_000;
 
 // How many frames go out together in the chunked reading below. Bounded rather than
-// `Promise.all` over every member: a room of a hundred thousand is not a write buffer.
+// `Promise.all` over every member: a tenant of a hundred thousand is not a write buffer.
 const PUBLISH_CHUNK = 500;
 
 const created: OrganizationId[] = [];
@@ -84,7 +83,7 @@ interface Reading {
   readonly digestMs: number;
   readonly digestPages: number;
   readonly digestStatements: number;
-  // §6 "Message fan-out": one conversation publish, then one per member.
+  // The realtime fan-out: one frame per member, each on that member's own channel.
   readonly publishMs: number;
   readonly perPublishUs: number;
   // The same frames in chunks. The difference between the two is the whole finding.
@@ -114,15 +113,10 @@ const counter = new StatementCounter();
 const counted = new Database({ url: stack.database.url, logger: counter });
 const countedCluster = DatabaseCluster.single(counted, direct);
 const countedNotifications = new PgNotificationRepository(countedCluster, scope, shards);
-const countedRecipients = new PgNotificationRecipientReader(
-  countedCluster,
-  scope,
-  shards,
-  new PgConversationRepository(countedCluster, scope, shards),
-);
+const countedRecipients = new PgNotificationRecipientReader(countedCluster, scope, shards);
 
-// Deterministic, and **never deleted**: a `users` delete costs a `conversation_members`
-// scan per tenant partition. See docs/reference/fan-out.md.
+// Deterministic, and **never deleted**: the next run finds the same people already there.
+// See docs/reference/fan-out.md.
 const personId = (index: number): UserId =>
   Identifiers.userId.parse(
     `018f8c00-fa00-7000-8000-${index.toString(16).padStart(12, "0")}`,
@@ -188,9 +182,9 @@ const notificationsFor = (
     organizationId,
     userId,
     eventId,
-    kind: "message.received" as const,
-    category: "messaging" as const,
-    params: { conversation: "Fan-out" },
+    kind: "member.joined" as const,
+    category: "membership" as const,
+    params: { organization: "Fan-out" },
     link: null,
     subjectId: null,
     createdAt: at,
@@ -262,15 +256,15 @@ describe.skipIf(!stack.fanOut)("the three fan-out paths", () => {
         const { id, members } = await tenantOf(size);
         const at = new Date();
 
-        // The compact "something changed" frame a member's own channel gets. Not the body:
-        // that rides the conversation channel and is published once.
-        const frame = (conversationId: string) =>
+        // The compact "something changed" frame a member's own channel gets. Not the row:
+        // the client refetches its inbox on it.
+        const frame = () =>
           ({
             kind: "event",
             id: Uuid.v7(),
-            name: "conversation.changed",
+            name: "notification.created",
             at,
-            payload: { conversationId },
+            payload: { kind: "member.joined" },
           }) as const;
         // A uuid, because `event_id` is one: the column is the outbox event this delivery
         // came from, and the dedupe index is on it.
@@ -296,33 +290,21 @@ describe.skipIf(!stack.fanOut)("the three fan-out paths", () => {
         const [digestPages, digestMs] = await timed(() => digestScan(countedRecipients, id));
         const digestStatements = counter.count;
 
-        // One frame on the conversation channel, then one per member on theirs. The body
-        // rides the first; the rest are "something changed".
+        // One frame per member, each on that member's own channel, one at a time.
         const [, publishMs] = await timed(async () => {
-          const conversationId = Uuid.v7();
-
-          await publisher.publish(RealtimeChannels.conversation(id, conversationId), {
-            ...frame(conversationId),
-            name: "message.sent",
-          });
-
           for (const userId of members) {
-            await publisher.publish(RealtimeChannels.user(id, userId), frame(conversationId));
+            await publisher.publish(RealtimeChannels.user(id, userId), frame());
           }
         });
 
         // The same frames, issued in chunks rather than one at a time. ioredis multiplexes
         // one socket, so a chunk leaves as one write rather than as `chunk` round trips.
         const [, chunkedMs] = await timed(async () => {
-          const conversationId = Uuid.v7();
-
           for (let index = 0; index < members.length; index += PUBLISH_CHUNK) {
             await Promise.all(
               members
                 .slice(index, index + PUBLISH_CHUNK)
-                .map((userId) =>
-                  publisher.publish(RealtimeChannels.user(id, userId), frame(conversationId)),
-                ),
+                .map((userId) => publisher.publish(RealtimeChannels.user(id, userId), frame())),
             );
           }
         });
@@ -338,7 +320,7 @@ describe.skipIf(!stack.fanOut)("the three fan-out paths", () => {
           digestPages,
           digestStatements,
           publishMs,
-          perPublishUs: Math.round((publishMs * 1_000) / (size + 1)),
+          perPublishUs: Math.round((publishMs * 1_000) / size),
           chunkedMs,
           perChunkedUs: Math.round((chunkedMs * 1_000) / size),
         });

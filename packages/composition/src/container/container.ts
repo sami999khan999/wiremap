@@ -2,7 +2,6 @@ import {
   type ActivityLogger,
   ActivityRelaySubscriber,
   type ActivityReplayReader,
-  AddConversationMemberUseCase,
   AdjustEntitlementUseCase,
   type AnalyticsProjector,
   ApiKeyResolver,
@@ -26,11 +25,8 @@ import {
   type Clock,
   type ColdArchiveReader,
   type ContentSource,
-  ConversationAccess,
-  ConversationNaming,
   CountUnreadNotificationsUseCase,
   CreateApiKeyUseCase,
-  CreateConversationUseCase,
   CreateDocPageUseCase,
   CreateDocSpaceUseCase,
   CreateRoleUseCase,
@@ -39,7 +35,6 @@ import {
   type DatabaseStats,
   DeleteDocPageUseCase,
   DeleteDocSpaceUseCase,
-  DeleteMessageUseCase,
   DeleteOrganizationUseCase,
   DeletePlanUseCase,
   DeleteRoleUseCase,
@@ -52,7 +47,6 @@ import {
   DocSearch,
   DocTree,
   type DomainEventPublisher,
-  EditMessageUseCase,
   type EmailSender,
   type EmbeddingProvider,
   ExpireEntitlementAdjustmentsUseCase,
@@ -61,7 +55,6 @@ import {
   FindAccountUseCase,
   FlagCache,
   GetActivityTrendUseCase,
-  GetConversationUseCase,
   GetDocPageUseCase,
   GetDocRevisionUseCase,
   GetDocSpaceUseCase,
@@ -80,10 +73,8 @@ import {
   InvitationClaimingEnroller,
   InviteMemberUseCase,
   JsonLogger,
-  LeaveConversationUseCase,
   ListApiKeysUseCase,
   ListArchivedNotificationsUseCase,
-  ListConversationsUseCase,
   ListDocGrantsUseCase,
   ListDocPagesUseCase,
   ListDocRevisionsUseCase,
@@ -91,7 +82,6 @@ import {
   ListFlagsUseCase,
   ListInvitationsUseCase,
   ListMembersUseCase,
-  ListMessagesUseCase,
   ListModuleSwitchesUseCase,
   ListNotificationsUseCase,
   ListPermissionOverridesUseCase,
@@ -111,13 +101,11 @@ import {
   type MailRenderer,
   type MaintenanceGateway,
   MarkAllNotificationsReadUseCase,
-  MarkConversationReadUseCase,
   type MarkdownRenderer,
   MarkNotificationReadUseCase,
   MemberRealtimeSubscriber,
   type MembershipEnroller,
   type MembershipReader,
-  MessagingRealtimeSubscriber,
   MoveDocPageUseCase,
   MoveTenantUseCase,
   NotificationSubscriber,
@@ -135,7 +123,6 @@ import {
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
-  PgConversationRepository,
   PgDocGrantRepository,
   PgDocPageRepository,
   PgDocSpaceRepository,
@@ -146,7 +133,6 @@ import {
   PgMaintenanceGateway,
   PgMemberRepository,
   PgMembershipReader,
-  PgMessageRepository,
   PgNotificationPreferenceRepository,
   PgNotificationRecipientReader,
   PgNotificationRepository,
@@ -170,7 +156,6 @@ import {
   PgTenantRetentionPolicyRepository,
   PgTenantStorageReader,
   PgUnitOfWork,
-  PgUserReader,
   PgVectorStore,
   PgWidgetPreferenceRepository,
   type PlatformPolicyRepository,
@@ -198,8 +183,6 @@ import {
   ReinstateAccountUseCase,
   type RelayedActivityStore,
   RelocateTenantUseCase,
-  RemoveConversationMemberUseCase,
-  RenameConversationUseCase,
   type ReplicaHealth,
   ReprojectPartitionUseCase,
   ResendInvitationUseCase,
@@ -221,7 +204,6 @@ import {
   SearchDocumentsUseCase,
   SearchPlatformDocsUseCase,
   SendMailUseCase,
-  SendMessageUseCase,
   SendNotificationDigestUseCase,
   type SessionResolver,
   SetMemberActiveUseCase,
@@ -230,7 +212,6 @@ import {
   type ShardingStrategy,
   type ShardResolver,
   ShardScope,
-  SignalTypingUseCase,
   SmtpEmailSender,
   StaticContentSource,
   type StorageGateway,
@@ -261,7 +242,6 @@ import {
   UploadDocImageUseCase,
   type UserId,
   type VectorStore,
-  WatchConversationUseCase,
 } from "../import.js";
 import {
   ContentMailRenderer,
@@ -400,7 +380,7 @@ export class Container {
   // RBAC, members, API keys, the enrollers and the platform screens. The catalog is
   // the last single primary, so this one is always node 0.
   public readonly catalogUnitOfWork: UnitOfWork;
-  // Notifications, messaging and documents: everything a tenant produces. Opens on
+  // Notifications and documents: everything a tenant produces. Opens on
   // whichever node the ambient `ShardScope` names.
   public readonly routedUnitOfWork: UnitOfWork;
   // The partition runway and the outbox drain, which `eachShard` walks node by node.
@@ -486,22 +466,6 @@ export class Container {
     readonly updatePreference: UpdateNotificationPreferenceUseCase;
     readonly deliver: DeliverNotificationUseCase;
     readonly sendDigest: SendNotificationDigestUseCase;
-  };
-  public readonly messaging: {
-    readonly listConversations: ListConversationsUseCase;
-    readonly getConversation: GetConversationUseCase;
-    readonly createConversation: CreateConversationUseCase;
-    readonly addMember: AddConversationMemberUseCase;
-    readonly removeMember: RemoveConversationMemberUseCase;
-    readonly leave: LeaveConversationUseCase;
-    readonly rename: RenameConversationUseCase;
-    readonly markRead: MarkConversationReadUseCase;
-    readonly listMessages: ListMessagesUseCase;
-    readonly send: SendMessageUseCase;
-    readonly edit: EditMessageUseCase;
-    readonly remove: DeleteMessageUseCase;
-    readonly typing: SignalTypingUseCase;
-    readonly watch: WatchConversationUseCase;
   };
   // Inside `auth`'s block below, because a key is issued *by* someone: without an auth
   // config there is no principal to be the issuer.
@@ -876,18 +840,10 @@ export class Container {
       this.transactions,
       this.shards,
     );
-    // Built here rather than with the messaging slice below, because the recipient
-    // reader takes it: `conversationMembers` is a routed read and a catalog resolve.
-    const conversations = new PgConversationRepository(
-      this.cluster,
-      this.transactions,
-      this.shards,
-    );
     const notificationRecipients = new PgNotificationRecipientReader(
       this.cluster,
       this.transactions,
       this.shards,
-      conversations,
     );
 
     this.notification = {
@@ -942,110 +898,6 @@ export class Container {
     this.memberships = memberships;
     this.tenantMemberships = memberships;
 
-    const messages = new PgMessageRepository(this.cluster, this.transactions, this.shards);
-    // One instance, shared: the membership check is the same question every messaging
-    // use-case asks, and a second copy is a second place for it to drift.
-    const conversationAccess = new ConversationAccess(conversations);
-    // Catalog-placed, beside a routed repository on purpose: a conversation's members
-    // are routed and their names are not, so the two are read apart and joined here.
-    const conversationNaming = new ConversationNaming(
-      new PgUserReader(this.cluster, this.transactions, this.shards),
-    );
-
-    this.messaging = {
-      listConversations: new ListConversationsUseCase(
-        this.authorizer,
-        conversations,
-        messages,
-        conversationNaming,
-      ),
-      watch: new WatchConversationUseCase(this.authorizer, conversationAccess),
-      getConversation: new GetConversationUseCase(
-        this.authorizer,
-        conversationAccess,
-        messages,
-        conversationNaming,
-      ),
-      createConversation: new CreateConversationUseCase(
-        this.authorizer,
-        conversations,
-        this.eventPublisher,
-        this.routedUnitOfWork,
-        this.tenantMemberships,
-        conversationNaming,
-      ),
-      addMember: new AddConversationMemberUseCase(
-        this.authorizer,
-        conversationAccess,
-        conversations,
-        this.eventPublisher,
-        this.tenantMemberships,
-        this.routedUnitOfWork,
-      ),
-      removeMember: new RemoveConversationMemberUseCase(
-        this.authorizer,
-        conversationAccess,
-        conversations,
-        this.eventPublisher,
-        this.routedUnitOfWork,
-      ),
-      leave: new LeaveConversationUseCase(
-        this.authorizer,
-        conversationAccess,
-        conversations,
-        this.eventPublisher,
-        this.routedUnitOfWork,
-      ),
-      rename: new RenameConversationUseCase(
-        this.authorizer,
-        conversationAccess,
-        conversations,
-        this.eventPublisher,
-        this.routedUnitOfWork,
-      ),
-      markRead: new MarkConversationReadUseCase(
-        this.authorizer,
-        conversationAccess,
-        conversations,
-        this.realtime,
-        this.routedUnitOfWork,
-      ),
-      listMessages: new ListMessagesUseCase(this.authorizer, conversationAccess, messages),
-      send: new SendMessageUseCase(
-        this.authorizer,
-        conversationAccess,
-        conversations,
-        messages,
-        this.eventPublisher,
-        this.realtime,
-        this.routedUnitOfWork,
-        this.cache,
-        this.clock,
-      ),
-      edit: new EditMessageUseCase(
-        this.authorizer,
-        conversationAccess,
-        messages,
-        this.eventPublisher,
-        this.clock,
-        this.routedUnitOfWork,
-      ),
-      remove: new DeleteMessageUseCase(
-        this.authorizer,
-        conversationAccess,
-        messages,
-        this.eventPublisher,
-        this.clock,
-        this.routedUnitOfWork,
-      ),
-      typing: new SignalTypingUseCase(
-        this.authorizer,
-        conversationAccess,
-        this.realtime,
-        this.cache,
-      ),
-    };
-
     // A frozen list, and the registry rejects a duplicate name or an unknown event at
     // construction — so a wiring mistake is a startup crash rather than a lost event.
     this.subscribers = new SubscriberRegistry([
@@ -1053,7 +905,6 @@ export class Container {
       new ActivityRelaySubscriber(this.relayedActivity),
       new MemberRealtimeSubscriber(this.realtime),
       new NotificationSubscriber(this.notification.deliver),
-      new MessagingRealtimeSubscriber(this.realtime, conversations),
     ]);
 
     // Where `infrastructure`'s adapters bind to the ports `auth` declares. The binding

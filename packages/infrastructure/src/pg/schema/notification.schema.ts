@@ -31,7 +31,7 @@ export const notifications = pgTable(
     category: text("category").notNull(),
     params: jsonb("params").$type<Record<string, string>>().notNull().default({}),
     link: text("link"),
-    // What the row is about when that is narrower than the event — a conversation id.
+    // What the row is about when that is narrower than the event — a document id, say.
     // Null for the rows whose subject is the event itself.
     subjectId: text("subject_id"),
     readAt: timestamp("read_at", { withTimezone: true }),

@@ -7,9 +7,6 @@ export const notification = {
   "notification.kind.member.role.changed.body":
     "An administrator changed what you can do here. Open the members page to see your new role.",
 
-  "notification.kind.message.received.title": "New message",
-  "notification.kind.message.received.body": "You have unread messages in a conversation.",
-
   "notification.archived.title": "Older than a year",
   "notification.archived.description":
     "Read straight out of cold storage. Nothing to restore and nothing to wait for.",
@@ -44,7 +41,6 @@ export const notification = {
   "notification.preference.description":
     "Choose how each kind of update reaches you. In-app notifications always appear in this list; these settings decide whether you are interrupted and whether we email you.",
   "notification.preference.category.membership": "People and roles",
-  "notification.preference.category.messaging": "Messages",
   "notification.preference.channel.in_app": "In the app",
   "notification.preference.channel.email": "By email",
   "notification.preference.mode.immediate": "Straight away",

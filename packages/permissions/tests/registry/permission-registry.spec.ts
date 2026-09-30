@@ -28,7 +28,6 @@ describe("PermissionRegistry", () => {
       "core",
       "rbac",
       "member",
-      "messaging",
       "notification",
       "apikey",
       "ai",

@@ -204,7 +204,7 @@ Three of its lessons are worth having before you write a slice of your own:
   row instead of two on a partitioned table. A rule and a constraint disagreeing is not settled by
   satisfying the rule and losing the guarantee: the table is partitioned and the dedupe is a Redis
   `SET … EX … NX` the use-case holds, which costs one round trip on a path that already opens a
-  transaction. See [messaging](../../packages/application/docs/reference/messaging.md).
+  transaction. See [messaging](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/application/docs/reference/messaging.md).
 
 The organization plugin (switch, create, accept) is deliberately **not** a slice, and reading it as
 one is a mistake: those actions are identity-gated, no permission a non-owner holds could gate them,

@@ -1,5 +1,4 @@
 import {
-  type ConversationId,
   type DomainEvent,
   type NotificationChannel,
   type NotificationMode,
@@ -83,17 +82,6 @@ export class DeliverNotificationUseCase {
         const recipient = await this.recipients.user(organizationId, subject);
         return recipient ? [recipient] : [];
       }
-      case "conversationMembers": {
-        const conversationId = DeliverNotificationUseCase.conversationOf(event);
-        if (!conversationId) return [];
-
-        const all = await this.recipients.conversationMembers(
-          organizationId,
-          conversationId,
-          RECIPIENT_LIMIT,
-        );
-        return all.filter((recipient) => recipient.userId !== event.actorId);
-      }
       case "organizationMembers": {
         const all = await this.recipients.organizationMembers(
           organizationId,
@@ -109,7 +97,7 @@ export class DeliverNotificationUseCase {
   }
 
   // Drops anyone who already has an unread one about this subject, in one query for the
-  // whole audience — a channel message used to ask once per member, up to five hundred.
+  // whole audience — asking once per member would be up to five hundred queries.
   private async suppressed(
     event: DomainEvent,
     audience: readonly Recipient[],
@@ -126,10 +114,6 @@ export class DeliverNotificationUseCase {
     );
 
     return audience.filter((recipient) => !holding.has(recipient.userId));
-  }
-
-  private static conversationOf(event: DomainEvent): ConversationId | null {
-    return "conversationId" in event.payload ? event.payload.conversationId : null;
   }
 
   // Best effort, and after the row is written: a failed publish is a missing frame, and

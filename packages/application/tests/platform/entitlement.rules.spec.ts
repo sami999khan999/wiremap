@@ -30,7 +30,7 @@ describe("EntitlementRules", () => {
   });
 
   it("switches only a module the mask reaches", () => {
-    expect(EntitlementRules.assertSwitchable("messaging")).toBe("messaging");
+    expect(EntitlementRules.assertSwitchable("doc")).toBe("doc");
     for (const module of ["core", "platform", "finance"]) {
       expect(() => EntitlementRules.assertSwitchable(module)).toThrow(ValidationError);
     }

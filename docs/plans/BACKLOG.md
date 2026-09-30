@@ -16,4 +16,5 @@ Checkboxes: `[ ]` todo, `[~]` in progress, `[!]` blocked, `[x]` done, `[-]` drop
   Vitest reports `Error: [vitest-worker]: Timeout calling "onTaskUpdate"` and the run exits 1. A
   spec blocks the worker's event loop long enough (the fixture harness runs the architecture
   check synchronously) that the progress RPC times out. Seen twice on 2026-09-30, both times with
-  other packages testing in parallel. Check whether the big kit at the cut commit shows the same.
+  other packages testing in parallel. **The big kit shows the same at the cut commit** (run alone,
+  2026-09-30): pre-existing upstream, so fix it there and port the fix.

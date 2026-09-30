@@ -81,7 +81,7 @@ describe("RealtimeProvider", () => {
 
     await waitFor(() => {
       expect(invalidate).toHaveBeenCalledWith({ queryKey: QueryKeys.member.all() });
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: QueryKeys.conversation.all() });
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: QueryKeys.notification.lists() });
     });
   });
 

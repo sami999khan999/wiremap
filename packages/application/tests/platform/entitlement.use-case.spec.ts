@@ -492,16 +492,16 @@ describe("the module kill switch", () => {
   it("switches a module off with a reason, lists it, and flushes every tenant", async () => {
     const { switchModule, listSwitches, invalidator } = harness();
 
-    await switchModule.execute(admin, { module: "messaging", enabled: false, reason: "incident" });
+    await switchModule.execute(admin, { module: "doc", enabled: false, reason: "incident" });
 
-    const messaging = (await listSwitches.execute(admin)).find((row) => row.module === "messaging");
-    expect(messaging).toMatchObject({ enabled: false, reason: "incident" });
+    const doc = (await listSwitches.execute(admin)).find((row) => row.module === "doc");
+    expect(doc).toMatchObject({ enabled: false, reason: "incident" });
     expect(invalidator.flushed).toEqual(["*"]);
 
-    await switchModule.execute(admin, { module: "messaging", enabled: true, reason: "" });
-    expect(
-      (await listSwitches.execute(admin)).find((row) => row.module === "messaging")?.enabled,
-    ).toBe(true);
+    await switchModule.execute(admin, { module: "doc", enabled: true, reason: "" });
+    expect((await listSwitches.execute(admin)).find((row) => row.module === "doc")?.enabled).toBe(
+      true,
+    );
   });
 
   it("refuses core and platform, and a switch-off with no reason", async () => {
@@ -513,7 +513,7 @@ describe("the module kill switch", () => {
       ).rejects.toBeInstanceOf(ValidationError);
     }
     await expect(
-      switchModule.execute(admin, { module: "messaging", enabled: false, reason: "" }),
+      switchModule.execute(admin, { module: "doc", enabled: false, reason: "" }),
     ).rejects.toBeInstanceOf(ValidationError);
   });
 });

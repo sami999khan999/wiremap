@@ -1,19 +1,10 @@
 import { Shard } from "@loadbearing/application";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
-import {
-  type ConversationId,
-  type MessageId,
-  migrate,
-  type OrganizationId,
-  sql,
-  type UserId,
-  Uuid,
-} from "../../src/import.js";
+import { migrate, type OrganizationId, sql, type UserId, Uuid } from "../../src/import.js";
 import { Database, DatabaseCluster } from "../../src/pg/primitive/index.js";
 import {
-  PgConversationRepository,
   PgMaintenanceGateway,
-  PgMessageRepository,
+  PgNotificationRepository,
   PgShardResolver,
 } from "../../src/pg/repository/index.js";
 import { TenantPartitionSeed } from "../../src/pg/seed/index.js";
@@ -177,12 +168,11 @@ describe.skipIf(!shard1 || !stack.routed)("routed writes under load", () => {
   const shards = new ShardScope();
   const scope = new TransactionScope();
   const routed = new PgUnitOfWork(cluster, scope, shards, "routed");
-  const messages = new PgMessageRepository(cluster, scope, shards);
-  const conversations = new PgConversationRepository(cluster, scope, shards);
+  const notifications = new PgNotificationRepository(cluster, scope, shards);
 
-  const author = Uuid.v7() as UserId;
-  const tenants: { id: OrganizationId; node: number; conversation: ConversationId }[] = [];
-  const acknowledged = new Map<OrganizationId, MessageId[]>();
+  const reader = Uuid.v7() as UserId;
+  const tenants: { id: OrganizationId; node: number }[] = [];
+  const acknowledged = new Map<OrganizationId, string[]>();
   const readings: Record<string, string | number>[] = [];
 
   const placed = async <T>(organizationId: OrganizationId, work: () => Promise<T>) => {
@@ -213,17 +203,7 @@ describe.skipIf(!shard1 || !stack.routed)("routed writes under load", () => {
         const direct = node === 0 ? catalogDirect : node1Direct;
         await new TenantPartitionSeed(DatabaseCluster.single(direct), scope, shards).run(id);
 
-        const conversation = (await placed(id, () =>
-          conversations.save({
-            organizationId: id,
-            kind: "channel",
-            title: "load",
-            directKey: null,
-            createdBy: author,
-            memberIds: [author],
-          }),
-        )) as ConversationId;
-        tenants.push({ id, node, conversation });
+        tenants.push({ id, node });
         acknowledged.set(id, []);
       }
     }
@@ -263,20 +243,25 @@ describe.skipIf(!shard1 || !stack.routed)("routed writes under load", () => {
         for (let at = next++; at < writes; at = next++) {
           const tenant = tenants[at % tenants.length];
           if (!tenant) continue;
-          const id = Uuid.v7() as MessageId;
+          // One event per write, so the dedupe index never folds two of them into one row.
+          const id = Uuid.v7();
           const started = performance.now();
           try {
             await placed(tenant.id, () =>
               routed.run(() =>
-                messages.save({
-                  id,
-                  createdAt: new Date(),
-                  organizationId: tenant.id,
-                  conversationId: tenant.conversation,
-                  authorId: author,
-                  clientId: Uuid.v7(),
-                  body: `${label} ${at}`,
-                }),
+                notifications.saveMany([
+                  {
+                    organizationId: tenant.id,
+                    userId: reader,
+                    eventId: id,
+                    kind: "member.joined",
+                    category: "membership",
+                    params: { level: `${label} ${at}` },
+                    link: null,
+                    subjectId: null,
+                    createdAt: new Date(),
+                  },
+                ]),
               ),
             );
             latencies.push(performance.now() - started);
@@ -316,7 +301,7 @@ describe.skipIf(!shard1 || !stack.routed)("routed writes under load", () => {
       Number(
         (
           await database.client.execute<{ count: string }>(sql`
-            select count(*)::text as count from messages where organization_id = ${organizationId}::uuid
+            select count(*)::text as count from notifications where organization_id = ${organizationId}::uuid
           `)
         ).rows[0]?.count ?? 0,
       );

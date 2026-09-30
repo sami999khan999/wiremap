@@ -15,8 +15,6 @@ export class Identifiers {
   public static readonly apiKeyId = z.uuid().brand<"ApiKeyId">();
   public static readonly invitationId = z.uuid().brand<"InvitationId">();
   public static readonly notificationId = z.uuid().brand<"NotificationId">();
-  public static readonly conversationId = z.uuid().brand<"ConversationId">();
-  public static readonly messageId = z.uuid().brand<"MessageId">();
   public static readonly docSpaceId = z.uuid().brand<"DocSpaceId">();
   public static readonly docPageId = z.uuid().brand<"DocPageId">();
 }
@@ -29,7 +27,5 @@ export type TaskId = z.infer<typeof Identifiers.taskId>;
 export type ApiKeyId = z.infer<typeof Identifiers.apiKeyId>;
 export type InvitationId = z.infer<typeof Identifiers.invitationId>;
 export type NotificationId = z.infer<typeof Identifiers.notificationId>;
-export type ConversationId = z.infer<typeof Identifiers.conversationId>;
-export type MessageId = z.infer<typeof Identifiers.messageId>;
 export type DocSpaceId = z.infer<typeof Identifiers.docSpaceId>;
 export type DocPageId = z.infer<typeof Identifiers.docPageId>;

@@ -138,7 +138,7 @@ describe("PgCapabilityRepository", () => {
 describe("PgCapabilityRepository — entitlement", () => {
   const run = Uuid.v7();
   const PLAN = `spec-plan-${run}`;
-  const ROLE_KEYS = ["rbac.role.read", "analytics.activity.read", "messaging.conversation.read"];
+  const ROLE_KEYS = ["rbac.role.read", "analytics.activity.read", "doc.page.read"];
   const founded: string[] = [];
 
   const repository = () =>
@@ -196,7 +196,7 @@ describe("PgCapabilityRepository — entitlement", () => {
   beforeAll(async () => {
     await database.client.insert(plans).values({ key: PLAN, name: "Spec plan" });
     await database.client.insert(planPermissions).values(
-      ["rbac.role.read", "messaging.conversation.read", "member.read"].map((permission) => ({
+      ["rbac.role.read", "doc.page.read", "member.read"].map((permission) => ({
         planKey: PLAN,
         permission,
       })),
@@ -253,7 +253,7 @@ describe("PgCapabilityRepository — entitlement", () => {
 
     expect(set.can("rbac.role.read")).toBe(false);
     expect(set.can("member.read")).toBe(false);
-    expect(set.can("messaging.conversation.read")).toBe(true);
+    expect(set.can("doc.page.read")).toBe(true);
   });
 
   it("ignores an adjustment past its expiry", async () => {
@@ -285,15 +285,15 @@ describe("PgCapabilityRepository — entitlement", () => {
   it("masks every key of a disabled module, and never a core key", async () => {
     const { organizationId, userId } = await tenant();
 
-    await database.client.insert(disabledModules).values({ module: "messaging", reason: "spec" });
+    await database.client.insert(disabledModules).values({ module: "doc", reason: "spec" });
     try {
       const set = await repository().resolveFor(organizationId, userId);
 
-      expect(set.can("messaging.conversation.read")).toBe(false);
+      expect(set.can("doc.page.read")).toBe(false);
       expect(set.can("rbac.role.read")).toBe(true);
       expect(set.can("core.realtime.subscribe")).toBe(true);
     } finally {
-      await database.client.delete(disabledModules).where(eq(disabledModules.module, "messaging"));
+      await database.client.delete(disabledModules).where(eq(disabledModules.module, "doc"));
     }
   });
 });

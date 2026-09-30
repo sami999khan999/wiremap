@@ -1,23 +1,11 @@
-import {
-  Identifiers,
-  type MessageId,
-  type OrganizationId,
-  type UserId,
-} from "@loadbearing/contracts";
+import { Identifiers, type OrganizationId } from "@loadbearing/contracts";
 import { Uuid } from "@loadbearing/core";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "../../src/pg/primitive/index.js";
 import { DatabaseCluster } from "../../src/pg/primitive/index.js";
 import { PgMaintenanceGateway } from "../../src/pg/repository/pg-maintenance.gateway.js";
-import {
-  conversationMembers,
-  conversations,
-  messages,
-  organizations,
-  spareTenants,
-  users,
-} from "../../src/pg/schema/index.js";
+import { organizations, spareTenants } from "../../src/pg/schema/index.js";
 import { TenantPartitionSeed } from "../../src/pg/seed/index.js";
 import { PgUnitOfWork, ShardScope, TransactionScope } from "../../src/pg/transaction/index.js";
 import { openDatabase } from "../support/database.js";
@@ -28,7 +16,6 @@ const shards = new ShardScope();
 let database: Database;
 let gateway: PgMaintenanceGateway;
 let seed: TenantPartitionSeed;
-let author: UserId;
 
 const founded: OrganizationId[] = [];
 
@@ -54,11 +41,6 @@ beforeAll(async () => {
     shards,
     new PgUnitOfWork(cluster, scope, shards, "catalog"),
   );
-
-  author = Identifiers.userId.parse(Uuid.v7());
-  await database.client
-    .insert(users)
-    .values({ id: author, name: "Ada", email: `${author}@example.test`, emailVerified: true });
 });
 
 afterAll(async () => {
@@ -67,7 +49,6 @@ afterAll(async () => {
     await database.client.delete(organizations).where(eq(organizations.id, organizationId));
   }
 
-  await database.client.delete(users).where(eq(users.id, author));
   await database.close();
 });
 
@@ -111,52 +92,6 @@ describe("PgMaintenanceGateway.orphanedTenants", () => {
     await database.client
       .insert(organizations)
       .values({ id: abandoned, slug: `orphan-${abandoned}`, name: "Orphan" });
-  });
-});
-
-// `PF.1` dropped the keys into `conversations`, so a row naming a conversation that is
-// gone is accepted by the database. This count is what notices.
-describe("PgMaintenanceGateway.danglingConversations", () => {
-  it("counts a member and a message whose conversation does not exist", async () => {
-    const organizationId = await tenant();
-    const missing = Identifiers.conversationId.parse(Uuid.v7());
-    const before = await gateway.danglingConversations();
-
-    await database.client.insert(conversationMembers).values({
-      id: Uuid.v7(),
-      organizationId,
-      conversationId: missing,
-      userId: author,
-      role: "owner",
-    });
-    await database.client.insert(messages).values({
-      id: Uuid.v7() as MessageId,
-      organizationId,
-      conversationId: missing,
-      authorId: author,
-      clientId: Uuid.v7(),
-      body: "dangling",
-    });
-
-    const after = await gateway.danglingConversations();
-    expect(after.members).toBe(before.members + 1);
-    expect(after.messages).toBe(before.messages + 1);
-  });
-
-  // Distinct conversations, not rows: ten messages in one lost conversation is one leak.
-  it("does not count a conversation that is there", async () => {
-    const organizationId = await tenant();
-    const conversationId = Identifiers.conversationId.parse(Uuid.v7());
-    const before = await gateway.danglingConversations();
-
-    await database.client
-      .insert(conversations)
-      .values({ id: conversationId, organizationId, kind: "channel", createdBy: author });
-    await database.client
-      .insert(conversationMembers)
-      .values({ id: Uuid.v7(), organizationId, conversationId, userId: author, role: "owner" });
-
-    expect(await gateway.danglingConversations()).toEqual(before);
   });
 });
 

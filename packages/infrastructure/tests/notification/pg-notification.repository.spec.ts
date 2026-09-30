@@ -60,19 +60,14 @@ const makeTenant = async (slug: string): Promise<OrganizationId> => {
   return id;
 };
 
-const notify = (
-  tenant: OrganizationId,
-  userId: UserId,
-  createdAt: Date,
-  kind = "message.received" as const,
-) =>
+const notify = (tenant: OrganizationId, userId: UserId, createdAt: Date) =>
   repository.saveMany([
     {
       organizationId: tenant,
       userId,
       eventId: Uuid.v7(),
-      kind,
-      category: kind === "message.received" ? "messaging" : "membership",
+      kind: "member.joined",
+      category: "membership",
       params: {},
       link: null,
       subjectId: null,
@@ -248,8 +243,8 @@ describe("PgNotificationRepository.unreadSubjectHolders", () => {
         organizationId,
         userId: holder,
         eventId: Uuid.v7(),
-        kind: "message.received",
-        category: "messaging",
+        kind: "member.role.changed",
+        category: "membership",
         params: {},
         link: null,
         subjectId,
@@ -260,7 +255,7 @@ describe("PgNotificationRepository.unreadSubjectHolders", () => {
     const found = await repository.unreadSubjectHolders(
       organizationId,
       [holder, fresh],
-      "message.received",
+      "member.role.changed",
       subjectId,
     );
 

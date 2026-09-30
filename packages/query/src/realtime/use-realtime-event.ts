@@ -2,7 +2,7 @@ import { type RealtimeEventName, type RealtimeMessage, useEffect, useRef } from 
 import { subscribeToFrames } from "./realtime.context.js";
 
 // For a component that wants the frame itself rather than the invalidation the route
-// table already did — a typing indicator, which has no cache entry to invalidate.
+// table already did — a toast, say, which has no cache entry to invalidate.
 export function useRealtimeEvent(
   name: RealtimeEventName,
   handler: (message: RealtimeMessage) => void,

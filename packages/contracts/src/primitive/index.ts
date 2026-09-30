@@ -1,13 +1,11 @@
 export { Envelope } from "./envelope.js";
 export {
   type ApiKeyId,
-  type ConversationId,
   type DocPageId,
   type DocSpaceId,
   type GoalId,
   Identifiers,
   type InvitationId,
-  type MessageId,
   type NotificationId,
   type OrganizationId,
   type RoleId,

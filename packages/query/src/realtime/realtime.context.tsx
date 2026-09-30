@@ -62,8 +62,8 @@ export function RealtimeProvider({
         if (!controller.signal.aborted) setConnected(value);
       },
       onFrame: (message) => {
-        // A resync means frames were lost, so everything the table names is suspect. A
-        // typing frame invalidates nothing and expires on its own — it goes to listeners.
+        // A resync means frames were lost, so everything the table names is suspect.
+        // Listeners get every frame either way.
         if (message.kind === "resync") RealtimeRoutes.resync(request);
         else if (message.kind === "event")
           RealtimeRoutes.apply(request, message.name, message.payload);

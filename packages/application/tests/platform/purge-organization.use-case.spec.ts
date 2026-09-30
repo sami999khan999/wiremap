@@ -218,11 +218,10 @@ describe("PurgeOrganizationUseCase", () => {
     expect(maintenance.cutoffs.map((call) => call.table)).toEqual([
       "activity_log",
       "notifications",
-      "messages",
       "doc_revision",
     ]);
     expect(parts.archive.calls.every((call) => call.organizationId === TENANT)).toBe(true);
-    expect(result.archived).toBe(4);
+    expect(result.archived).toBe(3);
   });
 
   // The order is the behaviour: archive, then drop, then delete the row. A drop before

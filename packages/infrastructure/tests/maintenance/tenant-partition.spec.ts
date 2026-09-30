@@ -1,8 +1,7 @@
 import { PartitionedTable } from "@loadbearing/application";
 import {
-  type ConversationId,
+  type DocSpaceId,
   Identifiers,
-  type MessageId,
   type OrganizationId,
   type UserId,
 } from "@loadbearing/contracts";
@@ -13,9 +12,9 @@ import type { Database } from "../../src/pg/primitive/index.js";
 import { DatabaseCluster } from "../../src/pg/primitive/index.js";
 import { PgMaintenanceGateway } from "../../src/pg/repository/pg-maintenance.gateway.js";
 import {
-  conversationMembers,
-  conversations,
-  messages,
+  activityLog,
+  docSpaces,
+  notifications,
   organizations,
   users,
 } from "../../src/pg/schema/index.js";
@@ -40,24 +39,26 @@ const tenant = async (): Promise<OrganizationId> => {
   return organizationId;
 };
 
-// Rows in all three conversation tables, so the drop is proved on a tenant holding data:
-// with a key between them, detaching a partition something points into is refused.
+// Rows in two ranged tables and a tenant-only one, so the drop is proved on a tenant
+// holding data: detaching a partition something points into is refused.
 const populate = async (organizationId: OrganizationId): Promise<void> => {
-  const conversationId = Identifiers.conversationId.parse(Uuid.v7());
-
   await database.client
-    .insert(conversations)
-    .values({ id: conversationId, organizationId, kind: "channel", createdBy: author });
-  await database.client
-    .insert(conversationMembers)
-    .values({ id: Uuid.v7(), organizationId, conversationId, userId: author, role: "owner" });
-  await database.client.insert(messages).values({
-    id: Uuid.v7() as MessageId,
+    .insert(activityLog)
+    .values({ id: Uuid.v7(), organizationId, actorId: author, action: "drop.tested" });
+  await database.client.insert(notifications).values({
+    id: Uuid.v7(),
     organizationId,
-    conversationId,
-    authorId: author,
-    clientId: Uuid.v7(),
-    body: "hello",
+    userId: author,
+    eventId: Uuid.v7(),
+    kind: "member.joined",
+    category: "membership",
+  });
+  await database.client.insert(docSpaces).values({
+    id: Uuid.v7() as DocSpaceId,
+    organizationId,
+    slug: "drop",
+    title: "Drop",
+    createdBy: author,
   });
 };
 
@@ -179,12 +180,9 @@ describe("a tenant with no partitions", () => {
       .values({ id: organizationId, slug: `bare-${organizationId}`, name: "Bare" });
 
     try {
-      const write = database.client.insert(conversations).values({
-        id: Uuid.v7() as ConversationId,
-        organizationId,
-        kind: "channel",
-        createdBy: author,
-      });
+      const write = database.client
+        .insert(activityLog)
+        .values({ id: Uuid.v7(), organizationId, actorId: author, action: "bare.tested" });
 
       // The cause, not the message: drizzle wraps every failure as "Failed query", and
       // asserting on that would pass for a typo as readily as for the missing partition.
@@ -194,7 +192,7 @@ describe("a tenant with no partitions", () => {
       );
 
       expect(error?.cause?.code).toBe("23514");
-      expect(error?.cause?.message).toMatch(/no partition of relation "conversations" found/i);
+      expect(error?.cause?.message).toMatch(/no partition of relation "activity_log" found/i);
     } finally {
       await database.client.delete(organizations).where(eq(organizations.id, organizationId));
     }
@@ -222,8 +220,8 @@ describe("PgMaintenanceGateway.dropTenantPartitions", () => {
     await database.client.delete(organizations).where(eq(organizations.id, organizationId));
   });
 
-  // `PF.1` dropped the last two, `messages` and `conversation_members` into
-  // `conversations`. A new one brings back the attach lock — docs/reference/partitions.md.
+  // `PF.1` dropped the last of them. A new one brings back the attach lock —
+  // docs/reference/partitions.md.
   it("has no foreign key into any tenant-partitioned table, before or after a drop", async () => {
     expect(await keysIntoPartitionedTables()).toEqual([]);
 

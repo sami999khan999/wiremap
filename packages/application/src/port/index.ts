@@ -20,7 +20,6 @@ export { type LogEntry, type LogQuery, LogReader } from "./log.reader.js";
 export { MailPublisher, type MailRequest } from "./mail.publisher.js";
 export { MailRenderer, type RenderedMail } from "./mail.renderer.js";
 export {
-  type DanglingConversations,
   MaintenanceGateway,
   type PartitionEstimate,
   type SweepOutcome,

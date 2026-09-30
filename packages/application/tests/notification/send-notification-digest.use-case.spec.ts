@@ -27,7 +27,7 @@ const ACTOR = new Principal(
   CapabilitySet.from({ wildcard: false, org: { grants: [], denies: [] }, goals: {} }),
 );
 
-// `message.received` defaults to `email: "digest"`, which is the case this file is
+// `member.joined` defaults to `email: "digest"`, which is the case this file is
 // about: nobody has to store a row for the daily mail to be the right behaviour.
 const unread = (kind: NotificationRecord["kind"], category: NotificationRecord["category"]) =>
   ({
@@ -177,7 +177,7 @@ describe("SendNotificationDigestUseCase", () => {
   // The defect this file exists for: the recipient list came from stored `digest` rows,
   // and the shipped default is `digest` with no row — so nobody was ever selected.
   it("sends to a reader who has stored nothing at all", async () => {
-    const published = await run([unread("message.received", "messaging")]);
+    const published = await run([unread("member.joined", "membership")]);
 
     expect(published).toHaveLength(1);
     expect(published[0]?.template).toBe("notification.digest");
@@ -186,8 +186,8 @@ describe("SendNotificationDigestUseCase", () => {
 
   it("does not send when the reader turned that category off", async () => {
     const published = await run(
-      [unread("message.received", "messaging")],
-      [{ userId: USER, category: "messaging", channel: "email", mode: "off" }],
+      [unread("member.joined", "membership")],
+      [{ userId: USER, category: "membership", channel: "email", mode: "off" }],
     );
 
     expect(published).toHaveLength(0);
@@ -197,8 +197,8 @@ describe("SendNotificationDigestUseCase", () => {
   // it here would mail the same thing twice.
   it("does not send when the reader chose immediate", async () => {
     const published = await run(
-      [unread("message.received", "messaging")],
-      [{ userId: USER, category: "messaging", channel: "email", mode: "immediate" }],
+      [unread("member.joined", "membership")],
+      [{ userId: USER, category: "membership", channel: "email", mode: "immediate" }],
     );
 
     expect(published).toHaveLength(0);
@@ -218,13 +218,13 @@ describe("SendNotificationDigestUseCase", () => {
     expect(published).toHaveLength(1);
   });
 
-  // A stored `digest` on one category is enough, and the rows that earned it are the
-  // ones that resolve to digest — not every unread row the reader holds.
-  it("sends when one of several categories resolves to digest", async () => {
-    const published = await run(
-      [unread("member.role.changed", "membership"), unread("message.received", "messaging")],
-      [{ userId: USER, category: "membership", channel: "email", mode: "off" }],
-    );
+  // One row resolving to digest is enough, and the rows that earned it are the ones that
+  // resolve to digest — not every unread row the reader holds.
+  it("sends when one of several unread rows resolves to digest", async () => {
+    const published = await run([
+      unread("member.role.changed", "membership"),
+      unread("member.joined", "membership"),
+    ]);
 
     expect(published).toHaveLength(1);
   });
@@ -236,25 +236,25 @@ describe("SendNotificationDigestUseCase", () => {
   // The dedupe key is organization, person and day, so a redelivered job sends one
   // message rather than a second copy of the same morning.
   it("keys the send on the day, so a retry is one message", async () => {
-    const published = await run([unread("message.received", "messaging")]);
+    const published = await run([unread("member.joined", "membership")]);
 
     expect(published[0]?.dedupeKey).toBe(`digest_${ORG}_${USER}_${DAY}`);
   });
   // The id went into the copy before this: every digest ended "…because you belong to
   // 018f8c00-0000-7000-…", which is the tenant nobody recognises.
   it("names the organization rather than printing its id", async () => {
-    const published = await run([unread("message.received", "messaging")]);
+    const published = await run([unread("member.joined", "membership")]);
 
     expect(published[0]?.params).toMatchObject({ organization: "Acme" });
   });
 
-  // A reader on `membership: immediate` and `messaging: digest` had the membership rows
-  // counted too — items they had already been emailed about one at a time.
+  // A reader with one immediate kind and one digest kind had both counted — items they
+  // had already been emailed about one at a time.
   it("counts only the rows that earned the digest", async () => {
-    const published = await run(
-      [unread("member.role.changed", "membership"), unread("message.received", "messaging")],
-      [{ userId: USER, category: "membership", channel: "email", mode: "immediate" }],
-    );
+    const published = await run([
+      unread("member.role.changed", "membership"),
+      unread("member.joined", "membership"),
+    ]);
 
     expect(published).toHaveLength(1);
     expect(published[0]?.params).toMatchObject({ count: 1 });
@@ -263,7 +263,7 @@ describe("SendNotificationDigestUseCase", () => {
   // `CP4.4`: the day before, half-open, so a row is in exactly one morning's digest — and
   // the page's mail leaves as one batch rather than one enqueue per person.
   it("reads a half-open day and sends the page as one batch", async () => {
-    const notifications = new Notifications([unread("message.received", "messaging")]);
+    const notifications = new Notifications([unread("member.joined", "membership")]);
     const mail = new Mail();
 
     await new SendNotificationDigestUseCase(

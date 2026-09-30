@@ -216,13 +216,13 @@ describe("PrincipalBuilder — the platform axis", () => {
 describe("PrincipalBuilder.refresh", () => {
   it("rebuilds a user principal from the current capabilities", async () => {
     const { builder } = await build({ session: true });
-    const stale = new Principal(ORG, COOKIE_USER, holding("messaging.conversation.read"));
+    const stale = new Principal(ORG, COOKIE_USER, holding("doc.page.write"));
 
     const fresh = await builder.refresh(stale);
 
     expect(fresh?.kind).toBe("user");
     expect(fresh?.can("rbac.role.manage")).toBe(true);
-    expect(fresh?.can("messaging.conversation.read")).toBe(false);
+    expect(fresh?.can("doc.page.write")).toBe(false);
   });
 
   it("returns null for a user whose membership was deactivated", async () => {

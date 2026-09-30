@@ -3,7 +3,7 @@ import type { CancellationSignal, RealtimeChannel } from "../primitive/index.js"
 
 export interface SubscribeOptions {
   // Whose stream this is, for the per-person cap: the user channel of the principal that
-  // opened it. Without it only user channels count, and conversation streams go uncapped.
+  // opened it. Without it only user channels count, and shared streams go uncapped.
   readonly owner?: RealtimeChannel;
   // The last frame id the client saw, on a resume. What came after it is replayed when the
   // adapter still holds it, and a `resync` says it does not — `26.5`.

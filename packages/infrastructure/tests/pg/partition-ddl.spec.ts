@@ -14,10 +14,10 @@ describe("the partition DDL generator", () => {
   // level under a tenant is the seed's, at migrate time and at signup.
   it("writes LIST on a table with a tenant level", () => {
     const { sql, partitioned } = rewrite(
-      created("messages", TIMED, '"id","organization_id","created_at"'),
+      created("notifications", TIMED, '"id","organization_id","created_at"'),
     );
 
-    expect(partitioned).toEqual(["messages"]);
+    expect(partitioned).toEqual(["notifications"]);
     expect(sql).toContain('\n) PARTITION BY LIST ("organization_id");');
     expect(sql).not.toContain("RANGE");
   });
@@ -41,7 +41,9 @@ describe("the partition DDL generator", () => {
   // Idempotent, because `db:generate` is run again the moment somebody edits the schema
   // and the file it just wrote is the file it opens.
   it("skips a statement that already carries the clause", () => {
-    const once = rewrite(created("messages", TIMED, '"id","organization_id","created_at"')).sql;
+    const once = rewrite(
+      created("notifications", TIMED, '"id","organization_id","created_at"'),
+    ).sql;
     const twice = rewrite(once);
 
     expect(twice.partitioned).toEqual([]);
@@ -51,12 +53,14 @@ describe("the partition DDL generator", () => {
   // The generator does not synthesize keys. Drizzle emits the composite form only when
   // the schema declares `primaryKey({ columns })`, so this is a schema change.
   it("refuses a primary key that omits a partition key", () => {
-    expect(() => rewrite(created("messages", TIMED, '"id"'))).toThrow(PartitionKeyMissing);
-    expect(() => rewrite(created("messages", TIMED, '"id"'))).toThrow("does not synthesize keys");
+    expect(() => rewrite(created("notifications", TIMED, '"id"'))).toThrow(PartitionKeyMissing);
+    expect(() => rewrite(created("notifications", TIMED, '"id"'))).toThrow(
+      "does not synthesize keys",
+    );
   });
 
   it("refuses a two-level table whose key carries the tenant and not the month", () => {
-    expect(() => rewrite(created("messages", TIMED, '"id","organization_id"'))).toThrow(
+    expect(() => rewrite(created("notifications", TIMED, '"id","organization_id"'))).toThrow(
       'does not carry "created_at"',
     );
   });
@@ -64,12 +68,12 @@ describe("the partition DDL generator", () => {
   // Converting a table that already exists is the copy-and-swap in partitions.md, and a
   // hand-written migration — `0023` is exactly that case.
   it("refuses a table an earlier migration created unpartitioned", () => {
-    const earlier = [{ name: "0000_base.sql", sql: created("messages", TIMED, '"id"') }];
+    const earlier = [{ name: "0000_base.sql", sql: created("notifications", TIMED, '"id"') }];
     const live = liveTables(earlier);
 
-    expect(live.has("messages")).toBe(true);
+    expect(live.has("notifications")).toBe(true);
     expect(() =>
-      rewrite(created("messages", TIMED, '"id","organization_id","created_at"'), live),
+      rewrite(created("notifications", TIMED, '"id","organization_id","created_at"'), live),
     ).toThrow(TableAlreadyLive);
   });
 
@@ -77,10 +81,12 @@ describe("the partition DDL generator", () => {
   // sense that matters: this is the same migration being regenerated.
   it("does not count an already-partitioned earlier statement as live", () => {
     const partitioned = rewrite(
-      created("messages", TIMED, '"id","organization_id","created_at"'),
+      created("notifications", TIMED, '"id","organization_id","created_at"'),
     ).sql;
 
-    expect(liveTables([{ name: "0000_base.sql", sql: partitioned }]).has("messages")).toBe(false);
+    expect(liveTables([{ name: "0000_base.sql", sql: partitioned }]).has("notifications")).toBe(
+      false,
+    );
   });
 
   // The temper against `CREATE TABLE` in the statement pattern: without it a lazy match
@@ -89,13 +95,13 @@ describe("the partition DDL generator", () => {
     const input =
       created("tasks", ID, '"id"') +
       "--> statement-breakpoint\n" +
-      created("conversations", ID, '"id","organization_id"') +
+      created("doc_spaces", ID, '"id","organization_id"') +
       "--> statement-breakpoint\n" +
       created("goals", ID, '"id"');
 
     const { sql, partitioned } = rewrite(input);
 
-    expect(partitioned).toEqual(["conversations"]);
+    expect(partitioned).toEqual(["doc_spaces"]);
     expect(sql.match(/PARTITION BY/g)).toHaveLength(1);
     expect(sql).toContain(created("tasks", ID, '"id"'));
     expect(sql).toContain(created("goals", ID, '"id"'));

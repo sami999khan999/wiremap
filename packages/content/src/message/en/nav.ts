@@ -21,7 +21,6 @@ export const nav = {
   "nav.members": "Members",
   "nav.apiKeys": "API keys",
   "nav.documents": "Documents",
-  "nav.messages": "Messages",
   "nav.notifications": "Notifications",
   "nav.analytics": "Activity",
   "nav.widgets": "Dashboard cards",

@@ -45,8 +45,8 @@ export class RealtimeStream {
 
         for await (const frame of stream) {
           if (signal.aborted) return;
-          // Only an event is in the server's replay log. A typing or resync id resumed from
-          // nothing, so every reopen in a busy conversation became a full resync.
+          // Only an event is in the server's replay log. A resync id resumes from nothing,
+          // so remembering one would turn every reopen into a full resync.
           if (frame.kind === "event") lastEventId = frame.id;
           options.onFrame(frame);
         }

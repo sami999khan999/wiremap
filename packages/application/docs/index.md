@@ -189,7 +189,7 @@ back what an admin hid: `WidgetRules` holds both rules.
   its health seam is a slice port, and the audit rebase that keeps a global change out of a
   customer's trail
 
-- [Messaging](reference/messaging.md) — the direct key, unread computed rather than
+- [Messaging](https://github.com/prodicle/loadbearing_tanstack_start_kit/blob/3fafa78c2f42d2d718236d7666429b858199118a/packages/application/docs/reference/messaging.md) — the direct key, unread computed rather than
   counted, and where the send dedupe went when `messages` took a month level.
 
 - [Docs](reference/doc.md) — why the platform's docs are the platform organization's rows, a

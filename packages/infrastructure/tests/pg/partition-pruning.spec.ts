@@ -1,8 +1,6 @@
 import { PartitionedTable, type PartitionedTableName } from "@loadbearing/application";
 import {
-  type ConversationId,
   Identifiers,
-  type MessageId,
   type NotificationId,
   type OrganizationId,
   type UserId,
@@ -14,17 +12,13 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Database } from "../../src/pg/primitive/index.js";
 import { DatabaseCluster, KeysetCursor } from "../../src/pg/primitive/index.js";
 import { PgActivityReplayReader } from "../../src/pg/repository/pg-activity-replay.reader.js";
-import { PgConversationRepository } from "../../src/pg/repository/pg-conversation.repository.js";
 import { PgMaintenanceGateway } from "../../src/pg/repository/pg-maintenance.gateway.js";
-import { PgMessageRepository } from "../../src/pg/repository/pg-message.repository.js";
 import { PgNotificationRepository } from "../../src/pg/repository/pg-notification.repository.js";
 import { PgNotificationPreferenceRepository } from "../../src/pg/repository/pg-notification-preference.repository.js";
 import { PgOutboxGateway } from "../../src/pg/repository/pg-outbox.gateway.js";
 import { PgVectorStore } from "../../src/pg/repository/pg-vector.store.js";
 import {
   activityLog,
-  conversations,
-  messages,
   notifications,
   organizations,
   outboxEvent,
@@ -72,8 +66,6 @@ const recorder = new RecordingLogger();
 let database: Database;
 let explain: Pool;
 let inbox: PgNotificationRepository;
-let chat: PgMessageRepository;
-let rooms: PgConversationRepository;
 let preferences: PgNotificationPreferenceRepository;
 let corpus: PgVectorStore;
 let replay: PgActivityReplayReader;
@@ -81,9 +73,7 @@ let outbox: PgOutboxGateway;
 let organizationId: OrganizationId;
 let neighbour: OrganizationId;
 let reader: UserId;
-let conversationId: ConversationId;
 let written: { id: NotificationId; createdAt: Date };
-let sent: { id: MessageId; createdAt: Date };
 
 // A unit vector, the shape `pg-vector.store.spec.ts` uses. The values do not matter
 // here: this file asserts on plans, not on what came back.
@@ -94,15 +84,13 @@ const axis = (index: number): number[] =>
 // creates every partition it reads and drops every one it created.
 const FIRST = new Date("2032-05-01T00:00:00.000Z");
 const SECOND = new Date("2032-06-01T00:00:00.000Z");
-// Years before any unread floor, so a floor that prunes has something to prune.
-const ANCIENT = new Date("2020-01-01T00:00:00.000Z");
 
 const notification = (organization: OrganizationId, createdAt: Date) => ({
   organizationId: organization,
   userId: reader,
   eventId: Uuid.v7(),
-  kind: "message.received" as const,
-  category: "messaging" as const,
+  kind: "member.joined" as const,
+  category: "membership" as const,
   params: {},
   link: null,
   subjectId: null,
@@ -111,7 +99,7 @@ const notification = (organization: OrganizationId, createdAt: Date) => ({
 
 // Rows in both months, under both tenants. The neighbour is what makes "one tenant
 // partition" an assertion rather than a tautology on a database holding one tenant.
-const writeRows = async (organization: OrganizationId, conversation: ConversationId) => {
+const writeRows = async (organization: OrganizationId) => {
   await inbox.saveMany([notification(organization, FIRST), notification(organization, SECOND)]);
 
   for (const at of [FIRST, SECOND]) {
@@ -135,23 +123,12 @@ const writeRows = async (organization: OrganizationId, conversation: Conversatio
       // these rows and no other spec's view of the queue moves underneath it.
       publishedAt: at,
     });
-
-    await chat.save({
-      id: Uuid.v7() as MessageId,
-      createdAt: at,
-      organizationId: organization,
-      conversationId: conversation,
-      authorId: reader,
-      clientId: Uuid.v7(),
-      body: "hello",
-    });
   }
 
-  // The four tables with a tenant level and no month level. One row each is enough:
-  // what these cases assert is which subtree the planner reads, not what it found.
-  await rooms.saveMember(organization, conversation, reader, "owner");
+  // The tables with a tenant level and no month level that a read below plans against.
+  // One row each is enough: the cases assert which subtree is read, not what it found.
   await preferences.save(organization, reader, {
-    category: "messaging",
+    category: "membership",
     channel: "email",
     mode: "digest",
   });
@@ -174,19 +151,6 @@ const founded = async (name: string): Promise<OrganizationId> => {
   return id;
 };
 
-const conversationFor = async (organization: OrganizationId): Promise<ConversationId> => {
-  const id = Identifiers.conversationId.parse(Uuid.v7());
-  await database.client.insert(conversations).values({
-    id,
-    organizationId: organization,
-    kind: "channel",
-    title: "Pruning",
-    directKey: null,
-    createdBy: reader,
-  });
-  return id;
-};
-
 beforeAll(async () => {
   database = openDatabase(recorder);
   explain = new Pool({ connectionString: DATABASE_URL });
@@ -194,8 +158,6 @@ beforeAll(async () => {
   const scope = new TransactionScope();
   const unitOfWork = new PgUnitOfWork(DatabaseCluster.single(database), scope, shards, "catalog");
   inbox = new PgNotificationRepository(DatabaseCluster.single(database), scope, shards);
-  chat = new PgMessageRepository(DatabaseCluster.single(database), scope, shards);
-  rooms = new PgConversationRepository(DatabaseCluster.single(database), scope, shards);
   preferences = new PgNotificationPreferenceRepository(
     DatabaseCluster.single(database),
     scope,
@@ -226,11 +188,8 @@ beforeAll(async () => {
     }
   }
 
-  await maintenance.ensureMonthlyPartitions(PartitionedTable.MESSAGES, organizationId, ANCIENT, 1);
-
-  conversationId = await conversationFor(organizationId);
-  await writeRows(organizationId, conversationId);
-  await writeRows(neighbour, await conversationFor(neighbour));
+  await writeRows(organizationId);
+  await writeRows(neighbour);
 
   const [row] = await database.client
     .select({ id: notifications.id, createdAt: notifications.createdAt })
@@ -241,16 +200,6 @@ beforeAll(async () => {
 
   if (!row) throw new Error("expected the two notifications above to have been written");
   written = { id: row.id as NotificationId, createdAt: row.createdAt };
-
-  const [first] = await database.client
-    .select({ id: messages.id, createdAt: messages.createdAt })
-    .from(messages)
-    .where(eq(messages.conversationId, conversationId))
-    .orderBy(asc(messages.createdAt))
-    .limit(1);
-
-  if (!first) throw new Error("expected the two messages above to have been written");
-  sent = { id: first.id, createdAt: first.createdAt };
 });
 
 afterAll(async () => {
@@ -403,53 +352,14 @@ describe("one tenant partition, for every read there is", () => {
     oneTenant(await scanned(statement, PartitionedTable.NOTIFICATIONS), "notifications");
   });
 
-  it("prunes the neighbour's subtree out of a conversation page", async () => {
-    const statement = await capture(
-      () => chat.list(organizationId, { conversationId, limit: 20 }),
-      /from "messages"/i,
-    );
-
-    oneTenant(await scanned(statement, PartitionedTable.MESSAGES), "messages");
-  });
-
-  // The four tables with a tenant level and no month level under it, so "one tenant
-  // partition" is the whole assertion: there is nothing narrower to prune to.
+  // Tables with a tenant level and no month level under it, so "one tenant partition"
+  // is the whole assertion: there is nothing narrower to prune to.
   const tenantOnly: readonly [string, PartitionedTableName, RegExp, () => Promise<unknown>][] = [
-    [
-      "the conversation list",
-      PartitionedTable.CONVERSATIONS,
-      /from "conversations"/i,
-      () => rooms.listByMember(organizationId, reader, { limit: 20 }),
-    ],
-    [
-      "a conversation by id",
-      PartitionedTable.CONVERSATIONS,
-      /from "conversations"/i,
-      () => rooms.findById(organizationId, conversationId),
-    ],
-    [
-      "the direct-key lookup",
-      PartitionedTable.CONVERSATIONS,
-      /from "conversations"/i,
-      () => rooms.findByDirectKey(organizationId, `${reader}_${reader}`),
-    ],
-    [
-      "the membership check",
-      PartitionedTable.CONVERSATION_MEMBERS,
-      /from "conversation_members"/i,
-      () => rooms.isMember(organizationId, conversationId, reader),
-    ],
-    [
-      "the member list",
-      PartitionedTable.CONVERSATION_MEMBERS,
-      /from "conversation_members"/i,
-      () => rooms.memberIds(organizationId, conversationId),
-    ],
     [
       "the preference lookup",
       PartitionedTable.NOTIFICATION_PREFERENCES,
       /from "notification_preferences"/i,
-      () => preferences.findFor(organizationId, [reader], "messaging"),
+      () => preferences.findFor(organizationId, [reader], "membership"),
     ],
     [
       "the preference list",
@@ -480,35 +390,6 @@ describe("one tenant partition, for every read there is", () => {
   }
 });
 
-// The month level under one tenant, for the reads `16.1` did not already carry.
-describe("one tenant partition and one month, for the message reads that carry both", () => {
-  const oneMonth = async (
-    run: () => Promise<unknown>,
-    match: RegExp,
-    month: Date,
-  ): Promise<void> => {
-    const leaves = await scanned(await capture(run, match), PartitionedTable.MESSAGES);
-    oneTenant(leaves, PartitionedTable.MESSAGES);
-    expect(leaves.map((leaf) => leaf.month)).toEqual([monthIndex(month)]);
-  };
-
-  it("edit plans against the one month its createdAt names", async () => {
-    await oneMonth(
-      () => chat.edit(organizationId, sent.id, sent.createdAt, "edited", new Date()),
-      /update "messages"/i,
-      FIRST,
-    );
-  });
-
-  it("softDelete plans against the one month its createdAt names", async () => {
-    await oneMonth(
-      () => chat.softDelete(organizationId, sent.id, sent.createdAt, new Date()),
-      /update "messages"/i,
-      FIRST,
-    );
-  });
-});
-
 describe("exactly one month, for the reads carrying an equality or a closed range", () => {
   it("markRead plans against the one month its createdAt names", async () => {
     const statement = await capture(
@@ -519,25 +400,6 @@ describe("exactly one month, for the reads carrying an equality or a closed rang
     const leaves = await scanned(statement, PartitionedTable.NOTIFICATIONS);
     oneTenant(leaves, "notifications");
     expect(leaves.map((leaf) => leaf.month)).toEqual([monthIndex(FIRST)]);
-  });
-
-  it("findById plans against the one month its createdAt names", async () => {
-    const [row] = await database.client
-      .select({ id: messages.id, createdAt: messages.createdAt })
-      .from(messages)
-      .where(eq(messages.conversationId, conversationId))
-      .orderBy(asc(messages.createdAt))
-      .limit(1);
-    if (!row) throw new Error("expected this spec to have written two messages");
-
-    const statement = await capture(
-      () => chat.findById(organizationId, conversationId, row.id, row.createdAt),
-      /from "messages"/i,
-    );
-
-    const leaves = await scanned(statement, PartitionedTable.MESSAGES);
-    oneTenant(leaves, "messages");
-    expect(leaves).toHaveLength(1);
   });
 
   it("the activity rollup plans against the one month its range falls inside", async () => {
@@ -638,53 +500,6 @@ describe("bounded by the cursor's month, for the pages after the first", () => {
     expect(cursorIn).toHaveLength(leaves.length);
     for (const condition of cursorIn) expect(condition).toContain("ROW(created_at, id) <");
   });
-
-  it("the conversation's older page drops every month newer than its cursor", async () => {
-    const older = await capture(
-      () =>
-        chat.list(organizationId, {
-          conversationId,
-          limit: 20,
-          before: KeysetCursor.encode(FIRST, sent.id),
-        }),
-      /from "messages"/i,
-    );
-
-    const leaves = await scanned(older, PartitionedTable.MESSAGES);
-    oneTenant(leaves, "messages");
-    expect(leaves.map((leaf) => leaf.month)).not.toContain(monthIndex(SECOND));
-    expect(leaves.every((leaf) => (leaf.month ?? 0) <= monthIndex(FIRST))).toBe(true);
-    const cursorIn = await conditions(older);
-    expect(cursorIn).toHaveLength(leaves.length);
-    for (const condition of cursorIn) expect(condition).toContain("ROW(created_at, id) <");
-  });
-});
-
-// `CP2.2` and `CP2.3`: the message reads a conversation list and a room open make on every
-// render carry a bound of their own now, because `messages` is never retired.
-describe("bounded by the conversation's own dates, for the message reads", () => {
-  it("the conversation's first page drops every month after its newest message", async () => {
-    const statement = await capture(
-      () => chat.list(organizationId, { conversationId, limit: 20, upTo: FIRST }),
-      /from "messages"/i,
-    );
-
-    const leaves = await scanned(statement, PartitionedTable.MESSAGES);
-    oneTenant(leaves, "messages");
-    expect(leaves.map((leaf) => leaf.month)).toContain(monthIndex(FIRST));
-    expect(leaves.map((leaf) => leaf.month)).not.toContain(monthIndex(SECOND));
-  });
-
-  it("the unread counts leave out every month before their floor", async () => {
-    const statement = await capture(
-      () => chat.unreadCounts(organizationId, reader, [conversationId]),
-      /from messages m/i,
-    );
-
-    const leaves = await scanned(statement, PartitionedTable.MESSAGES);
-    expect(leaves.map((leaf) => leaf.month)).not.toContain(monthIndex(ANCIENT));
-    expect(leaves.map((leaf) => leaf.month)).toContain(monthIndex(FIRST));
-  });
 });
 
 // Today's behaviour, asserted on purpose: a first page has no cursor, so nothing bounds
@@ -706,15 +521,6 @@ describe("pinned at every month of the tenant, for the reads that carry no bound
     await pinned(first, PartitionedTable.NOTIFICATIONS);
   });
 
-  it("the conversation's first page reads every month of the tenant", async () => {
-    const statement = await capture(
-      () => chat.list(organizationId, { conversationId, limit: 20 }),
-      /from "messages"/i,
-    );
-
-    await pinned(statement, PartitionedTable.MESSAGES);
-  });
-
   it("the bell count reads every month", async () => {
     const statement = await capture(
       () => inbox.countUnread(organizationId, reader, 99),
@@ -726,7 +532,7 @@ describe("pinned at every month of the tenant, for the reads that carry no bound
 
   it("the suppression check reads every month", async () => {
     const statement = await capture(
-      () => inbox.unreadSubjectHolders(organizationId, [reader], "message.received", Uuid.v7()),
+      () => inbox.unreadSubjectHolders(organizationId, [reader], "member.role.changed", Uuid.v7()),
       /from "notifications"/i,
     );
 

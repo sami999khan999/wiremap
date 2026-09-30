@@ -3,8 +3,6 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import {
   CacheStore,
   CapabilitySet,
-  type ConversationId,
-  type MessageId,
   migrate,
   type OrganizationId,
   Principal,
@@ -14,9 +12,8 @@ import {
 } from "../../src/import.js";
 import { Database, DatabaseCluster } from "../../src/pg/primitive/index.js";
 import {
-  PgConversationRepository,
   PgMaintenanceGateway,
-  PgMessageRepository,
+  PgNotificationRepository,
   PgOutboxGateway,
   PgOutboxPublisher,
   PgShardResolver,
@@ -94,8 +91,23 @@ describe.skipIf(!shard1)("a two-node cluster", () => {
   const onNodeOne = Uuid.v7() as OrganizationId;
   const author = Uuid.v7() as UserId;
 
-  const conversations = new PgConversationRepository(cluster, scope, shards);
-  const messages = new PgMessageRepository(cluster, scope, shards);
+  const notifications = new PgNotificationRepository(cluster, scope, shards);
+
+  // One routed row, told apart by its event id: the dedupe index makes that id unique.
+  const notify = (organizationId: OrganizationId, eventId: string) =>
+    notifications.saveMany([
+      {
+        organizationId,
+        userId: author,
+        eventId,
+        kind: "member.joined",
+        category: "membership",
+        params: {},
+        link: null,
+        subjectId: null,
+        createdAt: new Date(),
+      },
+    ]);
 
   const place = async (organizationId: OrganizationId, node: number) => {
     await catalog.client.execute(sql`
@@ -175,16 +187,9 @@ describe.skipIf(!shard1)("a two-node cluster", () => {
     return found.rows[0]?.present === true;
   };
 
-  const messageRowsOn = async (database: Database, messageId: MessageId) => {
+  const notificationRowsOn = async (database: Database, eventId: string) => {
     const found = await database.client.execute<{ count: string }>(
-      sql`select count(*)::text as count from messages where id = ${messageId}::uuid`,
-    );
-    return Number(found.rows[0]?.count ?? 0);
-  };
-
-  const conversationRowsOn = async (database: Database, conversationId: ConversationId) => {
-    const found = await database.client.execute<{ count: string }>(
-      sql`select count(*)::text as count from conversations where id = ${conversationId}::uuid`,
+      sql`select count(*)::text as count from notifications where event_id = ${eventId}::uuid`,
     );
     return Number(found.rows[0]?.count ?? 0);
   };
@@ -226,14 +231,14 @@ describe.skipIf(!shard1)("a two-node cluster", () => {
     const routedWork = new PgUnitOfWork(cluster, scope, shards, "routed");
     const publisher = new PgOutboxPublisher(cluster, scope, shards, { now: () => new Date() });
     const outbox = new PgOutboxGateway(cluster, scope, shards);
-    const conversationId = Uuid.v7() as ConversationId;
+    const entryId = Uuid.v7();
     const actor = new Principal(onNodeOne, author, CapabilitySet.empty());
 
     await placedOn(onNodeOne, () =>
       routedWork.run(() =>
         publisher.publish(actor, {
-          name: "conversation.created",
-          payload: { conversationId, kind: "channel" },
+          name: "activity.recorded",
+          payload: { entryId, action: "rehearsal.drained", payload: {} },
         }),
       ),
     );
@@ -242,7 +247,7 @@ describe.skipIf(!shard1)("a two-node cluster", () => {
       const found = await database.client.execute<{ published: boolean }>(sql`
         select published_at is not null as published from outbox_event
         where organization_id = ${onNodeOne}::uuid
-          and payload ->> 'conversationId' = ${conversationId}
+          and payload ->> 'entryId' = ${entryId}
       `);
       return found.rows;
     };
@@ -254,13 +259,13 @@ describe.skipIf(!shard1)("a two-node cluster", () => {
     await shards.atNode(1, () =>
       outbox.drain(100, async (events) => {
         for (const event of events) {
-          const payload = event.payload as { conversationId?: string };
-          if (payload.conversationId) relayed.push(payload.conversationId);
+          const payload = event.payload as { entryId?: string };
+          if (payload.entryId) relayed.push(payload.entryId);
         }
       }),
     );
 
-    expect(relayed).toContain(conversationId);
+    expect(relayed).toContain(entryId);
     expect(await pendingOn(node1Direct)).toEqual([{ published: true }]);
 
     await node1Direct.client.execute(
@@ -288,31 +293,12 @@ describe.skipIf(!shard1)("a two-node cluster", () => {
   });
 
   it("writes a routed row to the node the tenant is placed on, and to no other", async () => {
-    const messageId = Uuid.v7() as MessageId;
+    const eventId = Uuid.v7();
 
-    await placedOn(onNodeZero, async () => {
-      const conversationId = await conversations.save({
-        organizationId: onNodeZero,
-        kind: "channel",
-        title: "rehearsal",
-        directKey: null,
-        createdBy: author,
-        memberIds: [author],
-      });
+    await placedOn(onNodeZero, () => notify(onNodeZero, eventId));
 
-      await messages.save({
-        id: messageId,
-        createdAt: new Date(),
-        organizationId: onNodeZero,
-        conversationId: conversationId as ConversationId,
-        authorId: author,
-        clientId: Uuid.v7(),
-        body: "node zero",
-      });
-    });
-
-    expect(await messageRowsOn(catalog, messageId)).toBe(1);
-    expect(await messageRowsOn(node1, messageId)).toBe(0);
+    expect(await notificationRowsOn(catalog, eventId)).toBe(1);
+    expect(await notificationRowsOn(node1, eventId)).toBe(0);
   });
 
   // **The split's first real cost, paid.** This case used to assert the `23503`: ten
@@ -321,24 +307,15 @@ describe.skipIf(!shard1)("a two-node cluster", () => {
   // `24.1` dropped them, so the assertion inverts — the write succeeds, on node 1, with
   // the catalog untouched. It fails on the old schema, which is the point of keeping it.
   it("writes a routed row on node 1 with no key reaching back to the catalog", async () => {
-    const conversationId = await placedOn(onNodeOne, () =>
-      conversations.save({
-        organizationId: onNodeOne,
-        kind: "channel",
-        title: "rehearsal",
-        directKey: null,
-        createdBy: author,
-        memberIds: [author],
-      }),
-    );
+    const eventId = Uuid.v7();
 
-    expect(conversationId).toBeDefined();
-    expect(await conversationRowsOn(node1, conversationId)).toBe(1);
-    expect(await conversationRowsOn(catalog, conversationId)).toBe(0);
+    expect(await placedOn(onNodeOne, () => notify(onNodeOne, eventId))).toEqual([author]);
+    expect(await notificationRowsOn(node1, eventId)).toBe(1);
+    expect(await notificationRowsOn(catalog, eventId)).toBe(0);
   });
 
   // The other half of the same decision: `author` is a `users` row that exists only on
-  // the catalog, and the write above accepted it precisely because nothing checks.
+  // the catalog, and the write above named it precisely because nothing checks.
   it("accepts an author the shard has never heard of", async () => {
     const strangers = await node1.client.execute<{ count: string }>(
       sql`select count(*)::text as count from users where id = ${author}`,

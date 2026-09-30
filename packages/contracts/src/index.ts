@@ -91,31 +91,6 @@ export {
   type SetMemberActiveInput,
 } from "./member/index.js";
 export {
-  ConversationContract,
-  type ConversationDto,
-  ConversationEntity,
-  type ConversationKind,
-  type ConversationMemberDto,
-  type ConversationMemberInput,
-  type ConversationMemberRole,
-  ConversationProcedures,
-  type CreateConversationInput,
-  type DeleteMessageInput,
-  type EditMessageInput,
-  type LeaveConversationInput,
-  type ListConversationsInput,
-  type ListMessagesInput,
-  type MarkConversationReadInput,
-  MessageContract,
-  type MessageDto,
-  MessageEntity,
-  type MessagePage,
-  MessageProcedures,
-  type RenameConversationInput,
-  type SendMessageInput,
-  type TypingInput,
-} from "./messaging/index.js";
-export {
   type ArchivedMonthDto,
   type ArchivedNotificationQuery,
   type ListNotificationsInput,
@@ -207,7 +182,6 @@ export {
 } from "./platform/index.js";
 export {
   type ApiKeyId,
-  type ConversationId,
   type DocPageId,
   type DocSpaceId,
   Envelope,
@@ -216,7 +190,6 @@ export {
   type InvitationId,
   Keyset,
   type KeysetQuery,
-  type MessageId,
   type NotificationId,
   type OrganizationId,
   Pagination,

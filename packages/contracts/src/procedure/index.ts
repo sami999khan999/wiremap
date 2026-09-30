@@ -4,7 +4,6 @@ import { DocGrantProcedures, DocPageProcedures, DocSpaceProcedures } from "../do
 import { DocumentProcedures } from "../document/index.js";
 import type { AnyContractRouter } from "../import.js";
 import { MemberProcedures } from "../member/index.js";
-import { ConversationProcedures, MessageProcedures } from "../messaging/index.js";
 import { NotificationProcedures } from "../notification/index.js";
 import { OverrideProcedures } from "../override/index.js";
 import { PlatformProcedures } from "../platform/index.js";
@@ -20,8 +19,6 @@ export const contract = {
   apiKey: ApiKeyProcedures.all,
   document: DocumentProcedures.all,
   notification: NotificationProcedures.all,
-  conversation: ConversationProcedures.all,
-  message: MessageProcedures.all,
   realtime: RealtimeProcedures.all,
   platform: PlatformProcedures.all,
   analytics: AnalyticsProcedures.all,

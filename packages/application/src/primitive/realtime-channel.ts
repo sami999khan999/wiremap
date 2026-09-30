@@ -15,13 +15,7 @@ export class RealtimeChannels {
     return `org:${organizationId}:user:${userId}` as RealtimeChannel;
   }
 
-  // Opened only for the conversation on screen. Full message frames ride here rather
-  // than fanning out per member: N members would be N publishes of the same body.
-  public static conversation(organizationId: string, conversationId: string): RealtimeChannel {
-    return `org:${organizationId}:conversation:${conversationId}` as RealtimeChannel;
-  }
-
-  // The per-user stream cap counts only these. A conversation channel is one channel with
+  // The per-user stream cap counts only these. A shared channel, once one exists, has
   // many readers, and counting it the same way would cap the room rather than the person.
   public static isUser(channel: RealtimeChannel): boolean {
     return /^org:[^:]+:user:[^:]+$/.test(channel);

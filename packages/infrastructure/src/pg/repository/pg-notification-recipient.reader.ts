@@ -1,8 +1,6 @@
 import {
   and,
   asc,
-  type ConversationId,
-  type ConversationRepository,
   eq,
   exists,
   gt,
@@ -24,17 +22,11 @@ export class PgNotificationRecipientReader
   extends BaseRepository
   implements NotificationRecipientReader
 {
-  // Catalog, and now wholly so: the one routed read it had is `22.10`'s split.
+  // Catalog, and wholly so. A recipient list whose ids live on a routed table reads them
+  // there first and resolves them here — two statements, never one join.
   protected override readonly placement: Placement = "catalog";
 
-  public constructor(
-    cluster: DatabaseCluster,
-    scope: TransactionScope,
-    shards: ShardScope,
-    // The routed half of `conversationMembers`, which this reader cannot query itself
-    // — a repository has one placement, and that is the rule this split exists for.
-    private readonly conversations: ConversationRepository,
-  ) {
+  public constructor(cluster: DatabaseCluster, scope: TransactionScope, shards: ShardScope) {
     super(cluster, scope, shards);
   }
 
@@ -69,24 +61,6 @@ export class PgNotificationRecipientReader
       .limit(limit);
 
     return rows.map((row) => PgNotificationRecipientReader.toRecipient(row));
-  }
-
-  // **Two statements, not one join.** `conversation_members` is routed and `users` and
-  // `memberships` are catalog, so the single query this was had no plan across a split.
-  public async conversationMembers(
-    organizationId: OrganizationId,
-    conversationId: ConversationId,
-    limit: number,
-  ): Promise<readonly Recipient[]> {
-    // The routed half, capped here rather than after the join: `limit` is a fan-out
-    // ceiling, so a conversation past it is outside what this supports either way.
-    const memberIds = await this.conversations.memberIds(organizationId, conversationId, limit);
-
-    // The catalog half is `users`, already written, already one statement, and already
-    // applying the `deactivatedAt` filter that keeps a removed member unnotified.
-    const recipients = await this.users(organizationId, memberIds);
-
-    return [...recipients].sort((left, right) => left.userId.localeCompare(right.userId));
   }
 
   public async user(organizationId: OrganizationId, userId: UserId): Promise<Recipient | null> {

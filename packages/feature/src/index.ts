@@ -93,16 +93,6 @@ export {
   MemberList,
   type MemberListProps,
 } from "./member/index.js";
-export {
-  ConversationList,
-  type ConversationListProps,
-  MessageComposer,
-  type MessageComposerProps,
-  MessageList,
-  type MessageListProps,
-  TypingNotice,
-  type TypingNoticeProps,
-} from "./messaging/index.js";
 export { ModuleNav, type ModuleNavProps } from "./nav/index.js";
 export {
   ArchivedNotificationList,

@@ -25,7 +25,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 // The categories a preference can be stored against. Read per page rather than per
 // person, so the page costs one query each instead of one per recipient.
-const CATEGORIES: readonly NotificationCategory[] = Object.freeze(["membership", "messaging"]);
+const CATEGORIES: readonly NotificationCategory[] = Object.freeze(["membership"]);
 
 const storedKey = (userId: UserId, category: NotificationCategory) => `${userId}:${category}`;
 
