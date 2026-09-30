@@ -1,1 +1,0 @@
-CREATE INDEX "invitations_expires_idx" ON "invitations" USING btree ("expires_at");

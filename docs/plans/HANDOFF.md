@@ -25,11 +25,12 @@ state of the tree and the traps that cost time.
 | `aa41dba` | `LT2.4`: Loki, Alloy and the log reader removed |
 | `d7ba5b3` | `LT2.5`: compose down to five containers, one Redis, no pooler |
 | `a3973f7` | `LT2.6`: verified, no code change; `TESTS.md` added |
-| after `a3973f7` | `LT2.7`: verified, no code change |
+| `0e82b69` | `LT2.7`: verified, no code change |
+| after `0e82b69` | `LT2.8`: the migrations squashed into `0000_lite_baseline.sql`; `check-architecture` 30 of 30 |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, `LT2.7`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, `LT2.3`, `LT2.4`, `LT2.5`, `LT2.6`, `LT2.7`, `LT2.8`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT2.8` the migration baseline; `LT1.6`, the docs sweep, after it.
+**Next, in order:** `LT1.6` the docs sweep, then Phase 3 (`owner` audience), Phase 4 (search) and Phase 5 (tooling, CI).
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
@@ -119,6 +120,9 @@ CI= node tooling/scripts/check-architecture.mjs
 
 ## Traps that cost time
 
+- **A database migrated before `LT2.8` cannot take the baseline**: its drizzle journal names the
+  old 52 migrations and `0000_lite_baseline` would recreate tables that exist. Run
+  `pnpm infra:reset`, then `pnpm infra:up && pnpm db:migrate && pnpm db:seed`.
 - **`.env.example` ships `AUTH_SECRET=change-me`**, which the web app's schema refuses (it wants
   32 characters), so `/` answers 500. Put `openssl rand -hex 32` in the local `.env`.
 - **`boot-smoke.mjs` reads no `.env`**: CI passes the environment. Locally it is

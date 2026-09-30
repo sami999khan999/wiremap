@@ -1087,14 +1087,9 @@ assert("every package with tests typechecks them", (failures) => {
 // an empty table and abort halfway through a deploy on a populated one. See
 // docs/setup/13, "Writing a unique-index migration".
 
-// The three that predate the rule, named with what each would do. They have run
-// everywhere they are going to run: this repository's history is applied to an empty
-// database, which is the decision, not an oversight.
-const REPLAY_EXEMPT = new Map([
-  ["0003_wise_shadowcat.sql", "organizations_slug_uq over existing duplicate slugs"],
-  ["0004_awesome_wraith.sql", "memberships_uq dropped and recreated in one transaction"],
-  ["0008_dry_mattie_franklin.sql", "invitations.token_hash NOT NULL with no default"],
-]);
+// Empty in lite: its baseline creates every table it indexes, so nothing predates the
+// rule. The big kit exempts three migrations of its own history here.
+const REPLAY_EXEMPT = new Map();
 
 assert("every migration is safe on a table that already holds rows", (failures) => {
   const dir = join(ROOT, "packages/infrastructure/migrations");
