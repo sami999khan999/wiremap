@@ -1,7 +1,8 @@
-import { type DocSpaceRefInput, NotFoundError } from "../import.js";
+import type { DocSpaceRefInput } from "../import.js";
 import type { ActivityLogger, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
 import type { DocCache } from "./doc.cache.js";
+import { DocRules } from "./doc.rules.js";
 import type { DocAccess } from "./doc-access.js";
 import type { DocGrantRepository } from "./doc-grant.repository.js";
 import { DocImageKey } from "./doc-image-key.js";
@@ -27,8 +28,12 @@ export class DeleteDocSpaceUseCase {
     this.authorizer.assert(actor, "doc.space.manage");
 
     const space = await this.unitOfWork.run(async () => {
-      const found = await this.spaces.findById(actor.organizationId, input.spaceId);
-      if (!found) throw new NotFoundError("doc.space", input.spaceId);
+      const found = DocRules.assertVisible(
+        await this.spaces.findById(actor.organizationId, input.spaceId),
+        actor.userId,
+        "doc.space",
+        input.spaceId,
+      );
 
       await this.pages.deleteBySpace(actor.organizationId, input.spaceId);
       await this.spaces.delete(actor.organizationId, input.spaceId);

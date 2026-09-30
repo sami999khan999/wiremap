@@ -2,6 +2,7 @@ import { type DocSpaceId, NotFoundError, type OrganizationId } from "../import.j
 import type { PlatformReader } from "../platform/index.js";
 import type { StorageGateway } from "../port/index.js";
 import type { Principal } from "../primitive/index.js";
+import { DocRules } from "./doc.rules.js";
 import type { DocAccess } from "./doc-access.js";
 import { DocImageKey } from "./doc-image-key.js";
 import type { DocSpaceRepository } from "./doc-space.repository.js";
@@ -46,12 +47,13 @@ export class OpenDocImageUseCase {
     const space = await this.spaces.findById(input.organizationId, input.spaceId);
     if (!space) throw missing;
 
-    // A member reads their own organization's images, whatever the audience. Anyone else
-    // only the platform's, and only through the same check its pages use.
+    // A member reads their own organization's images, whatever the audience but another
+    // author's `owner` space. Anyone else only the platform's, through the check its pages use.
     const member =
       viewer !== null &&
       viewer.organizationId === input.organizationId &&
-      viewer.can("doc.page.read");
+      viewer.can("doc.page.read") &&
+      DocRules.isVisible(space, viewer.userId);
     const platformOrganizationId = await this.platform.organizationId();
     const outsider =
       !member &&

@@ -16,6 +16,8 @@ const PLATFORM = Identifiers.organizationId.parse("018f8c00-0000-7000-8000-00000
 const TENANT = Identifiers.organizationId.parse("018f8c00-0000-7000-8000-000000000002");
 const SPACE = Identifiers.docSpaceId.parse("018f8c00-0000-7000-8000-000000000010");
 const USER = Identifiers.userId.parse("018f8c00-0000-7000-8000-000000000020");
+// Not `USER`: an `owner` space's author, so every viewer built from `viewer()` is someone else.
+const AUTHOR = Identifiers.userId.parse("018f8c00-0000-7000-8000-000000000030");
 
 const space = (audience: DocSpaceSummary["audience"]): DocSpaceSummary => ({
   id: SPACE,
@@ -26,6 +28,7 @@ const space = (audience: DocSpaceSummary["audience"]): DocSpaceSummary => ({
   icon: null,
   audience,
   theme: null,
+  createdBy: AUTHOR,
   position: 0,
   version: 1,
   updatedAt: new Date(0),
@@ -114,6 +117,23 @@ describe("DocAccess", () => {
     expect(
       await a.canRead(viewer(TENANT, [], ["platform.doc.grant"]), space("granted"), PLATFORM),
     ).toBe(true);
+  });
+
+  // `LT3.5`: the author, and nobody else — not the platform's staff, not a platform admin,
+  // not a grant, not a signed-out visitor. Each gets the same false a missing space does.
+  it("lets only the author read an owner space", async () => {
+    const { access: a } = access([SPACE]);
+    const author = new Principal(PLATFORM, AUTHOR, CapabilitySet.empty());
+
+    expect(await a.canRead(author, space("owner"), PLATFORM)).toBe(true);
+    expect(await a.canRead(null, space("owner"), PLATFORM)).toBe(false);
+    expect(await a.canRead(viewer(PLATFORM, ["doc.page.read"]), space("owner"), PLATFORM)).toBe(
+      false,
+    );
+    expect(
+      await a.canRead(viewer(TENANT, [], ["platform.doc.grant"]), space("owner"), PLATFORM),
+    ).toBe(false);
+    expect(await a.canRead(viewer(TENANT), space("owner"), PLATFORM)).toBe(false);
   });
 
   it("reads the grants once per viewer until they change, then again", async () => {

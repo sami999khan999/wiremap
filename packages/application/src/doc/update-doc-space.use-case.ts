@@ -29,8 +29,13 @@ export class UpdateDocSpaceUseCase {
     DocRules.assertAudience(input.audience, isPlatform);
 
     const { before, after } = await this.unitOfWork.run(async () => {
-      const current = await this.spaces.findById(actor.organizationId, input.spaceId);
-      if (!current) throw new NotFoundError("doc.space", input.spaceId);
+      const current = DocRules.assertVisible(
+        await this.spaces.findById(actor.organizationId, input.spaceId),
+        actor.userId,
+        "doc.space",
+        input.spaceId,
+      );
+      DocRules.assertAudienceChange(current, input.audience, actor.userId);
 
       const saved = await this.spaces.save(
         actor.organizationId,

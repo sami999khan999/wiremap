@@ -23,6 +23,7 @@ const SUMMARY = {
   description: docSpaces.description,
   icon: docSpaces.icon,
   audience: docSpaces.audience,
+  createdBy: docSpaces.createdBy,
   theme: docSpaces.theme,
   position: docSpaces.position,
   version: docSpaces.version,

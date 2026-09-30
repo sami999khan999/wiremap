@@ -45,13 +45,34 @@ A space has an **audience**:
 | `members` | holders of `doc.page.read` in the owning organization | any organization |
 | `public` | anyone, signed in or not | the platform organization only |
 | `granted` | platform admins, and anyone a grant reaches | the platform organization only |
+| `owner` | its author, and nobody else | any organization |
 
 `DocRules.assertAudience` refuses `public` and `granted` anywhere else, so a tenant can never
 publish to the world.
 
-Inside an organization, the permission is the whole answer. A member with `doc.page.read` reads
-every one of the organization's spaces, whatever their audience. The audience only widens who
-*else* may read.
+Inside an organization, the permission is the answer for every audience but one. A member with
+`doc.page.read` reads every `members` space, and the other audiences only widen who *else* may
+read.
+
+**`owner` is the one audience that narrows.** An `owner` space is its author's alone, and
+`created_by` names the author. Everyone else is told it does not exist. That includes another
+member, an org admin, a platform admin and a signed-out visitor, and the answer is `NOT_FOUND`,
+never `FORBIDDEN`, so its slug cannot be probed. Every use-case that touches a space or one of its
+pages asks `DocRules.assertVisible` first. `list`, search and the tree filter with
+`DocRules.isVisible` before they rank or build anything, and `DocAccess.canRead` checks it before
+any grant. So an owner space never reaches `/llms.txt` or the public reader. A grant on one is
+refused (`error.field.private`), and only the author may switch a space to `owner`
+(`DocRules.assertAudienceChange`). `doc_spaces_owner_idx` covers the author's lookup.
+
+| Viewer | `members` | `public` | `granted` | `owner` |
+|---|---|---|---|---|
+| the author, a member | reads | reads | reads | reads |
+| another member | reads | reads | reads | `NOT_FOUND` |
+| an org or platform admin | reads | reads | reads | `NOT_FOUND` |
+| a signed-out visitor | `NOT_FOUND` | reads | `NOT_FOUND` | `NOT_FOUND` |
+
+The platform organization's `public` and `granted` spaces are read from outside through
+`DocAccess.canRead`. The table's middle two columns apply to them there.
 
 Outside it, `DocAccess.canRead` decides. A grant reaches a viewer three ways: to them by name, to
 their active organization, or to that organization's plan. **The plan is how a private space rides

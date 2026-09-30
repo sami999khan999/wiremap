@@ -48,6 +48,9 @@ export const docSpaces = pgTable(
   (t) => [
     primaryKey({ columns: [t.id, t.organizationId] }),
     uniqueIndex("doc_spaces_slug_uq").on(t.organizationId, t.slug),
+    // An author's own `owner` spaces, the one lookup that audience adds. Partial, because
+    // every other audience is found by organization alone.
+    index("doc_spaces_owner_idx").on(t.organizationId, t.createdBy).where(sql`audience = 'owner'`),
   ],
 );
 

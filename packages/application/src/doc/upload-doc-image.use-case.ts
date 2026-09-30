@@ -1,11 +1,7 @@
-import {
-  type DocImageUploadDto,
-  NotFoundError,
-  type UploadDocImageInput,
-  Uuid,
-} from "../import.js";
+import { type DocImageUploadDto, type UploadDocImageInput, Uuid } from "../import.js";
 import type { StorageGateway } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
+import { DocRules } from "./doc.rules.js";
 import { DocImageKey } from "./doc-image-key.js";
 import type { DocSpaceRepository } from "./doc-space.repository.js";
 
@@ -24,8 +20,12 @@ export class UploadDocImageUseCase {
 
   public async execute(actor: Principal, input: UploadDocImageInput): Promise<DocImageUploadDto> {
     this.authorizer.assert(actor, "doc.page.write");
-    const space = await this.spaces.findById(actor.organizationId, input.spaceId);
-    if (!space) throw new NotFoundError("doc.space", input.spaceId);
+    DocRules.assertVisible(
+      await this.spaces.findById(actor.organizationId, input.spaceId),
+      actor.userId,
+      "doc.space",
+      input.spaceId,
+    );
 
     const file = DocImageKey.file(Uuid.v7(), input.contentType);
     const uploadUrl = await this.storage.presignUpload(

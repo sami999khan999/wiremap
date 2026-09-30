@@ -14,7 +14,7 @@ later port has to work around the difference.
 | **Gemini embeddings** | `GeminiEmbeddingProvider` behind `EmbeddingProvider`, chosen by `EMBEDDING_PROVIDER` | not added |
 | **Search without an AI key** | `EMBEDDING_PROVIDER=none` falls back to Postgres full-text search through `VectorStore.searchText` | not added |
 | **Embedding model per chunk** | chunks record `embedding_model`; switching provider re-indexes instead of mixing vectors | not added |
-| **Owner-only docs** | a fourth doc space audience, `owner`, readable only by its author | not added |
+| **Owner-only docs** | a fourth doc space audience, `owner`, readable only by its author; built in lite `LT3`, migration `0001_doc_owner_audience` | not added |
 
 ## How to back-port
 

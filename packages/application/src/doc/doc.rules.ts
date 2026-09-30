@@ -3,9 +3,12 @@ import {
   type DocPageId,
   type DocPageStatus,
   type DocSpaceAudience,
+  NotFoundError,
+  type UserId,
   ValidationError,
 } from "../import.js";
 import type { DocPageNodeRecord } from "./doc-page.repository.js";
+import type { DocSpaceSummary } from "./doc-space.repository.js";
 
 // The segments `/doc/…` already spends on the editor and the settings screen. A space
 // named either would be unreachable.
@@ -16,6 +19,9 @@ const RESERVED_SPACE_SLUGS: ReadonlySet<string> = new Set(["edit", "manage"]);
 const MAX_DEPTH = 6;
 
 type Children = ReadonlyMap<DocPageId | null, readonly DocPageNodeRecord[]>;
+
+// What the `owner` rules read off a space, so a summary and a full record both qualify.
+type OwnedSpace = Pick<DocSpaceSummary, "audience" | "createdBy">;
 
 // The structural decisions, all pure: what a path is, what the published tree looks like,
 // and which trees are allowed. See packages/application/docs/reference/doc.md.
@@ -29,10 +35,48 @@ export class DocRules {
   }
 
   // `public` and `granted` put a space in front of people outside its organization, which
-  // only the platform organization may do.
+  // only the platform organization may do. `members` and `owner` never leave it.
   public static assertAudience(audience: DocSpaceAudience, isPlatform: boolean): void {
-    if (audience !== "members" && !isPlatform) {
+    if (audience !== "members" && audience !== "owner" && !isPlatform) {
       throw new ValidationError([{ field: "audience", rule: "invalid" }]);
+    }
+  }
+
+  // `owner` is the author's alone. Anyone else, an admin included, is told the space
+  // does not exist, so an owner space's slug cannot be probed.
+  public static isVisible(space: OwnedSpace, viewer: UserId | null): boolean {
+    return space.audience !== "owner" || viewer === space.createdBy;
+  }
+
+  // The same, as the guard every read and write of a space calls before it touches it.
+  // The caller names what was asked for: a page in a hidden space is a page not found.
+  public static assertVisible<T extends OwnedSpace>(
+    space: T | null,
+    viewer: UserId | null,
+    resource: "doc.space" | "doc.page",
+    ref: string,
+  ): T {
+    if (!space || !DocRules.isVisible(space, viewer)) throw new NotFoundError(resource, ref);
+    return space;
+  }
+
+  // Only the author may make a space `owner`: from anyone else it would lock the author
+  // and every other member out of a space they could all read a moment ago.
+  public static assertAudienceChange(
+    space: OwnedSpace,
+    audience: DocSpaceAudience,
+    actor: UserId,
+  ): void {
+    if (audience === "owner" && space.audience !== "owner" && actor !== space.createdBy) {
+      throw new ValidationError([{ field: "audience", rule: "invalid" }]);
+    }
+  }
+
+  // A grant widens who may read, and an owner space is the author's alone. Refused rather
+  // than ignored, so the admin learns why the grant did nothing.
+  public static assertGrantable(space: OwnedSpace): void {
+    if (space.audience === "owner") {
+      throw new ValidationError([{ field: "spaceId", rule: "private" }]);
     }
   }
 

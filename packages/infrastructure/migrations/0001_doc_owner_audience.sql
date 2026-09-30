@@ -1,0 +1,1 @@
+CREATE INDEX "doc_spaces_owner_idx" ON "doc_spaces" USING btree ("organization_id","created_by") WHERE audience = 'owner';

@@ -2,9 +2,9 @@ import { z } from "../import.js";
 import { Identifiers } from "../primitive/index.js";
 import { DocNav } from "./doc-nav.js";
 
-// Who may read a space. `public` and `granted` are the platform organization's alone:
-// a tenant's docs are its members', and `DocRules` refuses the other two anywhere else.
-const audience = z.enum(["members", "public", "granted"]);
+// Who may read a space. `public` and `granted` are the platform organization's alone, and
+// `owner` is its author's only — see packages/application/docs/reference/doc.md.
+const audience = z.enum(["members", "public", "granted", "owner"]);
 
 // Lower-case words joined by single hyphens. It is a URL segment, so nothing a browser
 // would encode is allowed in.
@@ -29,6 +29,8 @@ const entity = z.object({
   // The theme the space opens in when the reader has chosen none of their own.
   theme: z.string().nullable(),
   position: z.number().int().nonnegative(),
+  // Who created it, which is who an `owner` space belongs to.
+  createdBy: Identifiers.userId,
   // Bumped on every publish, move and delete: the cache key for the published tree.
   version: z.number().int().nonnegative(),
   updatedAt: z.date(),

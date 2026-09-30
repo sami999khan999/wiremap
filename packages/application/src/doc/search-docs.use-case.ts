@@ -1,5 +1,6 @@
 import type { DocSearchHitsDto, SearchDocsInput } from "../import.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
+import { DocRules } from "./doc.rules.js";
 import type { DocSearch } from "./doc-search.js";
 import type { DocSpaceRepository } from "./doc-space.repository.js";
 
@@ -13,7 +14,11 @@ export class SearchDocsUseCase {
 
   public async execute(actor: Principal, input: SearchDocsInput): Promise<DocSearchHitsDto> {
     this.authorizer.assert(actor, "doc.page.read");
-    const spaces = await this.spaces.list(actor.organizationId);
+    // Filtered before the search ranks anything, so another author's `owner` space can
+    // neither appear nor move where the visible hits land.
+    const spaces = (await this.spaces.list(actor.organizationId)).filter((space) =>
+      DocRules.isVisible(space, actor.userId),
+    );
     return {
       items: await this.search.run(actor.organizationId, input.query, spaces, input.limit),
     };

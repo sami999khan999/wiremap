@@ -17,6 +17,7 @@ export const error: NamespaceBundle<"error"> = {
   "error.field.range": "{field} অনুমোদিত সীমার বাইরে।",
   "error.field.min": "{field} অনুমোদিত সর্বনিম্ন মানের চেয়ে ছোট।",
   "error.field.taken": "{field} ইতিমধ্যে ব্যবহৃত হচ্ছে।",
+  "error.field.private": "{field} শুধু এর লেখকের, তাই এটি শেয়ার করা যায় না।",
   "error.conflict": "অন্য কেউ আগেই এটি পরিবর্তন করেছেন। পৃষ্ঠাটি রিলোড করে আবার চেষ্টা করুন।",
   "error.rateLimited": "অনেক বেশি চেষ্টা হয়েছে। একটু অপেক্ষা করে আবার চেষ্টা করুন।",
   "error.twoFactorRequired": "চালিয়ে যেতে আপনার অথেনটিকেটর অ্যাপের কোডটি দিন।",

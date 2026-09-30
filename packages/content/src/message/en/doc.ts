@@ -53,6 +53,8 @@ export const doc = {
   "doc.space.iconNone": "No icon",
   "doc.space.audience": "Who can read it",
   "doc.space.audience.members": "Members of this organization",
+  // Nobody else sees that the space exists, an administrator included.
+  "doc.space.audience.owner": "Only me",
   "doc.space.audience.public": "Anyone, signed in or not",
   "doc.space.audience.granted": "Only the organizations, people and plans granted access",
   // Said beside the choice, because the obvious misreading is that a tenant can publish.

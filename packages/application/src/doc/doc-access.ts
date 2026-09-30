@@ -24,6 +24,9 @@ export class DocAccess {
     space: DocSpaceSummary,
     platformOrganizationId: OrganizationId,
   ): Promise<boolean> {
+    // First, and whatever else the viewer holds: an `owner` space is its author's alone,
+    // a platform admin and a grant included.
+    if (space.audience === "owner") return viewer !== null && viewer.userId === space.createdBy;
     if (space.audience === "public") return true;
     if (!viewer) return false;
     if (viewer.organizationId === platformOrganizationId && viewer.can("doc.page.read")) {

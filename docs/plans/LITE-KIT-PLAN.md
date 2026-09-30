@@ -157,12 +157,18 @@ the big kit without a rewrite.
 
 **Goal.** Doc spaces can be `public` (anyone), `members` (the org), `granted` (named people, orgs or roles) or `owner` (the author only). Follow `add-slice.md`.
 
-- [ ] `LT3.1` **Contract:** add `"owner"` to the `audience` enum in `contracts/src/doc/doc-space.contract.ts`. Make sure `created_by` is present in the space entity.
-- [ ] `LT3.2` **Rules:** in `application/src/doc/doc-access.ts`, an `owner` space is readable and writable only when `principal.userId === space.createdBy`. The rule runs on the input set: search (`doc-search.ts`) and the tree (`doc-tree.ts`) filter before they rank. Grants are refused on `owner` spaces (a `doc.rules.ts` rule plus an error code with copy).
-- [ ] `LT3.3` **Schema:** check the `audience` column type in `doc.schema.ts`. Add a migration if it is a pg enum, and an index on `(organization_id, created_by)` when `audience = 'owner'`.
-- [ ] `LT3.4` **UI and i18n:** the audience picker in `feature/src/doc` gets its fourth option, with copy in the en and bn `doc` namespaces. Owner spaces never appear in `llms.txt` or the public `(shell)/docs` reader.
-- [ ] `LT3.5` **Tests:** specs where another member, an admin and a public visitor all get `NOT_FOUND` (not `FORBIDDEN`, so the space's existence does not leak).
-- [ ] `LT3.6` **Docs and back-port:** update `packages/application/docs/reference/doc.md` and add a big-kit `BACKLOG.md` box.
+- [x] `LT3.1` **Contract:** add `"owner"` to the `audience` enum in `contracts/src/doc/doc-space.contract.ts`. Make sure `created_by` is present in the space entity.
+  done: 2026-10-01 — `"owner"` in the `audience` enum, and `createdBy` on the space entity and on `DocSpaceSummary`.
+- [x] `LT3.2` **Rules:** in `application/src/doc/doc-access.ts`, an `owner` space is readable and writable only when `principal.userId === space.createdBy`. The rule runs on the input set: search (`doc-search.ts`) and the tree (`doc-tree.ts`) filter before they rank. Grants are refused on `owner` spaces (a `doc.rules.ts` rule plus an error code with copy).
+  done: 2026-10-01 — `DocRules.isVisible` / `assertVisible` / `assertGrantable` / `assertAudienceChange`. Every space and page use-case asserts before it reads or writes; `list`, search and `open-doc-image` filter; `DocAccess.canRead` checks `owner` first. Grants are refused with the `private` field rule and its copy, not a new error code: `ErrorCode` is a closed transport set, and field rules are where a domain refusal gets its words. Only the author may switch a space to `owner`.
+- [x] `LT3.3` **Schema:** check the `audience` column type in `doc.schema.ts`. Add a migration if it is a pg enum, and an index on `(organization_id, created_by)` when `audience = 'owner'`.
+  done: 2026-10-01 — `audience` is `text`, so no enum migration. `0001_doc_owner_audience.sql` adds `doc_spaces_owner_idx` on `(organization_id, created_by) where audience = 'owner'`.
+- [x] `LT3.4` **UI and i18n:** the audience picker in `feature/src/doc` gets its fourth option, with copy in the en and bn `doc` namespaces. Owner spaces never appear in `llms.txt` or the public `(shell)/docs` reader.
+  done: 2026-10-01 — the picker offers "Only me" in every organization, with copy in en and bn. `/llms.txt` and the public reader go through `DocAccess.canRead`, which refuses `owner` to anyone but the author, so neither can show one.
+- [x] `LT3.5` **Tests:** specs where another member, an admin and a public visitor all get `NOT_FOUND` (not `FORBIDDEN`, so the space's existence does not leak).
+  done: 2026-10-01 — written, not run (the owner runs tests, `TESTS.md`): owner cases in `doc-access.spec.ts` (author, staff, platform admin, tenant member, signed-out) and `doc.rules.spec.ts` (visibility, `NOT_FOUND` naming what was asked for, the audience change, the grant refusal).
+- [x] `LT3.6` **Docs and back-port:** update `packages/application/docs/reference/doc.md` and add a big-kit `BACKLOG.md` box.
+  done: 2026-10-01 — `packages/application/docs/reference/doc.md` has the four-audience table. The big kit is not touched from here, so the back-port is its row in `docs/scale/back-ports.md` rather than a box in the big kit's `BACKLOG.md`.
 
 **Exit.** A manual check with users alice, bob and a signed-out visitor matches the four-audience table in `doc.md`.
 

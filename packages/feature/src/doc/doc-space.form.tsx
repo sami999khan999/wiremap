@@ -24,7 +24,7 @@ export interface DocSpaceFormProps {
   readonly onDeleted?: () => void;
 }
 
-const AUDIENCES: readonly DocSpaceAudience[] = ["members", "public", "granted"];
+const AUDIENCES: readonly DocSpaceAudience[] = ["members", "owner", "public", "granted"];
 
 // Create a space, or edit one. Deleting sits behind a second press rather than a browser
 // dialog, which a keyboard reader can reach and a test can drive.
@@ -119,7 +119,8 @@ export function DocSpaceForm({ space, platform, onSaved, onDeleted }: DocSpaceFo
           onChange={(event) => setAudience(event.target.value as DocSpaceAudience)}
         >
           {AUDIENCES.filter(
-            (option) => platform || option === "members" || option === audience,
+            (option) =>
+              platform || option === "members" || option === "owner" || option === audience,
           ).map((option) => (
             <option key={option} value={option}>
               {t(`doc.space.audience.${option}`)}

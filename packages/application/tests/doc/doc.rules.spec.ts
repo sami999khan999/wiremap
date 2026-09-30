@@ -1,10 +1,12 @@
 import { type DocPageId, type DocSpaceId, Identifiers } from "@loadbearing/contracts";
-import { ValidationError } from "@loadbearing/errors";
+import { NotFoundError, ValidationError } from "@loadbearing/errors";
 import { describe, expect, it } from "vitest";
 import { DocRules } from "../../src/doc/doc.rules.js";
 import type { DocPageNodeRecord } from "../../src/doc/doc-page.repository.js";
 
 const SPACE: DocSpaceId = Identifiers.docSpaceId.parse("018f8c00-0000-7000-8000-000000000100");
+const AUTHOR = Identifiers.userId.parse("018f8c00-0000-7000-8000-000000000200");
+const OTHER = Identifiers.userId.parse("018f8c00-0000-7000-8000-000000000201");
 const id = (n: number): DocPageId =>
   Identifiers.docPageId.parse(`018f8c00-0000-7000-8000-${String(n).padStart(12, "0")}`);
 
@@ -120,6 +122,48 @@ describe("DocRules", () => {
     expect(() => DocRules.assertAudience("granted", false)).toThrow(ValidationError);
     expect(() => DocRules.assertAudience("members", false)).not.toThrow();
     expect(() => DocRules.assertAudience("public", true)).not.toThrow();
+  });
+
+  // `owner` is anyone's to choose, in a tenant as in the platform organization.
+  it("allows `owner` in any organization", () => {
+    expect(() => DocRules.assertAudience("owner", false)).not.toThrow();
+    expect(() => DocRules.assertAudience("owner", true)).not.toThrow();
+  });
+
+  it("shows an owner space to its author and to nobody else", () => {
+    const owned = { audience: "owner" as const, createdBy: AUTHOR };
+
+    expect(DocRules.isVisible(owned, AUTHOR)).toBe(true);
+    expect(DocRules.isVisible(owned, OTHER)).toBe(false);
+    expect(DocRules.isVisible(owned, null)).toBe(false);
+    expect(DocRules.isVisible({ audience: "members", createdBy: AUTHOR }, OTHER)).toBe(true);
+  });
+
+  // NOT_FOUND, never FORBIDDEN, and naming what was asked for: a page in someone else's
+  // owner space is a page that does not exist.
+  it("answers a hidden space as missing, under the resource the caller asked for", () => {
+    const owned = { audience: "owner" as const, createdBy: AUTHOR };
+
+    expect(() => DocRules.assertVisible(owned, OTHER, "doc.page", "p1")).toThrow(NotFoundError);
+    expect(() => DocRules.assertVisible(null, AUTHOR, "doc.space", "s1")).toThrow(NotFoundError);
+    expect(DocRules.assertVisible(owned, AUTHOR, "doc.space", "s1")).toBe(owned);
+  });
+
+  it("lets only the author make a space owner", () => {
+    const members = { audience: "members" as const, createdBy: AUTHOR };
+
+    expect(() => DocRules.assertAudienceChange(members, "owner", OTHER)).toThrow(ValidationError);
+    expect(() => DocRules.assertAudienceChange(members, "owner", AUTHOR)).not.toThrow();
+    expect(() => DocRules.assertAudienceChange(members, "members", OTHER)).not.toThrow();
+  });
+
+  it("refuses a grant on an owner space", () => {
+    expect(() => DocRules.assertGrantable({ audience: "owner", createdBy: AUTHOR })).toThrow(
+      ValidationError,
+    );
+    expect(() =>
+      DocRules.assertGrantable({ audience: "granted", createdBy: AUTHOR }),
+    ).not.toThrow();
   });
 
   it("refuses the space slugs the editor's own routes already spend", () => {

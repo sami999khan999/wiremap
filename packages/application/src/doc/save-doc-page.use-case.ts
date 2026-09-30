@@ -33,6 +33,12 @@ export class SaveDocPageUseCase {
     const { slug, page } = await this.unitOfWork.run(async () => {
       const current = await this.pages.findDraft(organizationId, input.pageId);
       if (!current) throw new NotFoundError("doc.page", input.pageId);
+      DocRules.assertVisible(
+        await this.spaces.findById(organizationId, current.spaceId),
+        actor.userId,
+        "doc.page",
+        input.pageId,
+      );
       if (current.kind === "link" && input.url === null) {
         throw new ValidationError([{ field: "url", rule: "required" }]);
       }

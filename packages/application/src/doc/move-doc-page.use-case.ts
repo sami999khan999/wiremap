@@ -27,6 +27,12 @@ export class MoveDocPageUseCase {
     const slug = await this.unitOfWork.run(async () => {
       const page = await this.pages.findDraft(organizationId, input.pageId);
       if (!page) throw new NotFoundError("doc.page", input.pageId);
+      DocRules.assertVisible(
+        await this.spaces.findById(organizationId, page.spaceId),
+        actor.userId,
+        "doc.page",
+        input.pageId,
+      );
 
       const nodes = await this.pages.listBySpace(organizationId, page.spaceId);
       DocRules.assertTree(

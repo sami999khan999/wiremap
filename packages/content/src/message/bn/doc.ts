@@ -51,6 +51,7 @@ export const doc: NamespaceBundle<"doc"> = {
   "doc.space.iconNone": "কোনো আইকন নয়",
   "doc.space.audience": "কারা পড়তে পারবে",
   "doc.space.audience.members": "এই প্রতিষ্ঠানের সদস্যরা",
+  "doc.space.audience.owner": "শুধু আমি",
   "doc.space.audience.public": "যে কেউ, সাইন ইন করা থাকুক বা না থাকুক",
   "doc.space.audience.granted": "শুধু যেসব প্রতিষ্ঠান, মানুষ ও প্ল্যানকে অনুমতি দেওয়া হয়েছে",
   "doc.space.audience.hint": "পাবলিক ও অনুমতিপ্রাপ্ত স্পেস শুধু প্ল্যাটফর্মের নিজস্ব ডকের জন্য।",

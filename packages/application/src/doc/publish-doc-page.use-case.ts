@@ -7,6 +7,7 @@ import {
 import type { ActivityLogger, MarkdownRenderer, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
 import type { DocCache } from "./doc.cache.js";
+import { DocRules } from "./doc.rules.js";
 import type { DocPageRepository, DocPublication } from "./doc-page.repository.js";
 import { DocShape } from "./doc-shape.js";
 import type { DocSpaceRepository } from "./doc-space.repository.js";
@@ -32,6 +33,12 @@ export class PublishDocPageUseCase {
 
     const draft = await this.pages.findDraft(organizationId, input.pageId);
     if (!draft) throw new NotFoundError("doc.page", input.pageId);
+    DocRules.assertVisible(
+      await this.spaces.findById(organizationId, draft.spaceId),
+      actor.userId,
+      "doc.page",
+      input.pageId,
+    );
     if (draft.kind !== "page") throw new ConflictError("doc.page", "not_publishable");
     // Before the render rather than only under the lock: a stale editor is told so without
     // paying for a render whose result would be thrown away.

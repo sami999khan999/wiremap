@@ -18,6 +18,7 @@ export class DocShape {
       audience: space.audience,
       theme: space.theme,
       position: space.position,
+      createdBy: space.createdBy,
       version: space.version,
       updatedAt: space.updatedAt,
     };

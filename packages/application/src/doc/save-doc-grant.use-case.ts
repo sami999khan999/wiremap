@@ -9,8 +9,10 @@ import {
 import type { PlatformReader } from "../platform/index.js";
 import type { ActivityLogger, UnitOfWork } from "../port/index.js";
 import { type Authorizer, Principal } from "../primitive/index.js";
+import { DocRules } from "./doc.rules.js";
 import type { DocAccess } from "./doc-access.js";
 import type { DocGrantRepository } from "./doc-grant.repository.js";
+import type { DocSpaceRepository } from "./doc-space.repository.js";
 
 // Opens a private platform space to an organization, a person, or everyone on a plan.
 // Audited in the platform's own trail, whichever organization the admin is acting from.
@@ -18,6 +20,7 @@ export class SaveDocGrantUseCase {
   public constructor(
     private readonly authorizer: Authorizer,
     private readonly grants: DocGrantRepository,
+    private readonly spaces: DocSpaceRepository,
     private readonly access: DocAccess,
     private readonly platform: PlatformReader,
     private readonly activity: ActivityLogger,
@@ -31,11 +34,16 @@ export class SaveDocGrantUseCase {
       throw new ValidationError([{ field: "expiresAt", rule: "past" }]);
     }
 
+    const platformOrganizationId = await this.platform.organizationId();
+    const space = await this.spaces.findById(platformOrganizationId, input.spaceId);
+    if (!space) throw new NotFoundError("doc.space", input.spaceId);
+    DocRules.assertGrantable(space);
+
     const grantee = await this.grants.findGrantee(input.kind, input.target);
     if (!grantee) throw new NotFoundError(input.kind, input.target);
 
     const auditor = new Principal(
-      await this.platform.organizationId(),
+      platformOrganizationId,
       actor.userId,
       actor.capabilities,
       actor.kind,

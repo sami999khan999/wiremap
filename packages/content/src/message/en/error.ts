@@ -21,4 +21,5 @@ export const error = {
   "error.field.range": "{field} is outside the range we allow.",
   "error.field.min": "{field} is below the smallest value we allow.",
   "error.field.taken": "{field} is already in use.",
+  "error.field.private": "{field} is private to its author, so it cannot be shared.",
 } as const;

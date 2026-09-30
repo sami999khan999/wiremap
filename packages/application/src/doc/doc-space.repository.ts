@@ -18,6 +18,8 @@ export interface DocSpaceFields {
 export interface DocSpaceSummary extends DocSpaceFields {
   readonly id: DocSpaceId;
   readonly organizationId: OrganizationId;
+  // The author, and so the only reader of an `owner` space.
+  readonly createdBy: UserId;
   readonly position: number;
   readonly version: number;
   readonly updatedAt: Date;
