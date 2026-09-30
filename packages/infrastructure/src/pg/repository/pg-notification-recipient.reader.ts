@@ -13,10 +13,9 @@ import {
   type Recipient,
   type UserId,
 } from "../../import.js";
-import { BaseRepository, type DatabaseCluster } from "../primitive/index.js";
+import { BaseRepository } from "../primitive/index.js";
 import { users } from "../schema/auth.schema.js";
 import { memberships, rolePermissions } from "../schema/rbac.schema.js";
-import type { ShardScope, TransactionScope } from "../transaction/index.js";
 
 export class PgNotificationRecipientReader
   extends BaseRepository
@@ -25,10 +24,6 @@ export class PgNotificationRecipientReader
   // Catalog, and wholly so. A recipient list whose ids live on a routed table reads them
   // there first and resolves them here — two statements, never one join.
   protected override readonly placement: Placement = "catalog";
-
-  public constructor(cluster: DatabaseCluster, scope: TransactionScope, shards: ShardScope) {
-    super(cluster, scope, shards);
-  }
 
   // Keyset on the user id, and tenant-scoped: a recipient list that cannot be narrowed
   // by organization is a cross-tenant leak with an email address attached.
