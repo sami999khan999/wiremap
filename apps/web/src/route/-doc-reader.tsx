@@ -9,6 +9,7 @@ import {
   type ReactNode,
   type ThemeKey,
   ThemeRegistry,
+  ThemeScope,
   useState,
 } from "~/import.js";
 import { DocLink } from "~/route/-doc-link.js";
@@ -47,9 +48,8 @@ export function DocReaderRoute({
   const mode = picked?.mode ?? ThemeRegistry.resolveMode(theme, appearanceSnapshot.mode);
 
   return (
-    // The palette's selectors are not anchored to <html>, so these two attributes rescope
-    // all twelve colours for everything inside.
-    <div data-theme={theme} data-mode={mode} style={{ colorScheme: mode }}>
+    // The reader's own theme, and the element its popovers and search palette portal into.
+    <ThemeScope theme={theme} mode={mode}>
       <DocReaderPanel
         reading={reading}
         spaces={spaces}
@@ -75,6 +75,6 @@ export function DocReaderRoute({
         markdownHref={markdownHref}
         {...(search ? { search } : {})}
       />
-    </div>
+    </ThemeScope>
   );
 }

@@ -68,5 +68,6 @@ export {
   type ThemeMeta,
   ThemeRegistry,
 } from "./theme/index.js";
+export { ThemeScope, type ThemeScopeProps, usePortalContainer } from "./theme-scope/index.js";
 export { ThemeToggle, type ThemeToggleProps } from "./theme-toggle/index.js";
 export { Toc, type TocItem, type TocProps } from "./toc/index.js";

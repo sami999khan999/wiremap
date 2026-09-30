@@ -164,6 +164,7 @@ export {
   StatusBadge,
   type ThemeKey,
   ThemeRegistry,
+  ThemeScope,
 } from "@loadbearing/ui";
 
 // ── @tanstack/react-query ────────────────────────────────────────────────────

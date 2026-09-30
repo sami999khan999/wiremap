@@ -2,6 +2,7 @@ import { cn } from "../class-name/index.js";
 import { Icon } from "../icon/index.js";
 import { BaseSelect, type IconName, type ReactNode } from "../import.js";
 import { inputClassName } from "../input/index.js";
+import { usePortalContainer } from "../theme-scope/index.js";
 
 export interface SelectOption {
   readonly value: string;
@@ -79,6 +80,7 @@ export function Select({
   className,
   ...association
 }: SelectProps) {
+  const container = usePortalContainer();
   const labels = Object.fromEntries(options.map((option) => [option.value, option.label]));
 
   return (
@@ -123,7 +125,7 @@ export function Select({
           <Icon name="chevron-up-down" size={16} />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
-      <BaseSelect.Portal>
+      <BaseSelect.Portal container={container}>
         <BaseSelect.Positioner
           side={placement === "above" ? "top" : "bottom"}
           align="start"

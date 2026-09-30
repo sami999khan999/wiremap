@@ -3,6 +3,7 @@
 
 // ── @base-ui/react ───────────────────────────────────────────────────────────
 // Behaviour only: focus, keyboard, dismissal and ARIA. Every part is styled here.
+export { Dialog as BaseDialog } from "@base-ui/react/dialog";
 export { Popover as BasePopover } from "@base-ui/react/popover";
 export { Radio as BaseRadio } from "@base-ui/react/radio";
 export { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
@@ -32,8 +33,10 @@ export type {
 export {
   Children,
   cloneElement,
+  createContext,
   isValidElement,
   useCallback,
+  useContext,
   useEffect,
   useId,
   useMemo,

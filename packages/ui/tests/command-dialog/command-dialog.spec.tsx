@@ -77,6 +77,13 @@ describe("CommandDialog", () => {
     expect(options()[1]?.getAttribute("aria-selected")).toBe("true");
   });
 
+  // Base UI's, not ours: Escape asks the caller to close, which owns `open`.
+  it("asks to close on Escape", () => {
+    const { onOpenChange } = mount();
+    fireEvent.keyDown(screen.getByRole("combobox", { hidden: true }), { key: "Escape" });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("says so when a query finds nothing", () => {
     mount([]);
     expect(screen.getByText("No results")).toBeDefined();

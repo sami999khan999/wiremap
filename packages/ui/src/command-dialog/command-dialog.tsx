@@ -1,5 +1,7 @@
+import { cn } from "../class-name/index.js";
 import { Icon } from "../icon/index.js";
 import {
+  BaseDialog,
   type IconName,
   type KeyboardEvent,
   type MouseEvent,
@@ -11,6 +13,7 @@ import {
   useState,
 } from "../import.js";
 import type { LinkAttributes } from "../nav-tree/index.js";
+import { usePortalContainer } from "../theme-scope/index.js";
 
 export interface CommandItem {
   readonly id: string;
@@ -48,8 +51,14 @@ export interface CommandDialogProps {
   readonly renderLink: RenderCommandLink;
 }
 
-// A search palette on the native `<dialog>`: `showModal()` is the browser's own focus
-// trap, inert background and Escape, which is why this is not the hand-rolled Dialog.
+// A search palette on Base UI's Dialog, which owns the focus trap, the inert page, Escape and
+// focus back to the opener. The result list is ours: Enter follows the caller's link.
+const STATUS = "ui-command__status m-0 px-4 py-6 text-center text-fg-muted text-sm";
+
+// A matched word the server marks with <mark> is tinted, never a fill for the text to sit on.
+const EXCERPT =
+  "ui-command__excerpt truncate text-fg-muted text-xs [&_mark]:bg-[color-mix(in_oklch,var(--primary)_18%,transparent)] [&_mark]:text-fg";
+
 export function CommandDialog({
   label,
   open,
@@ -63,7 +72,8 @@ export function CommandDialog({
   groups,
   renderLink,
 }: CommandDialogProps) {
-  const dialog = useRef<HTMLDialogElement>(null);
+  const container = usePortalContainer();
+  const input = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listId = useId();
   const [cursor, setCursor] = useState(0);
@@ -74,20 +84,6 @@ export function CommandDialog({
   useEffect(() => {
     setCursor(0);
   }, [items]);
-
-  useEffect(() => {
-    const element = dialog.current;
-    if (!element) return;
-    if (open && !element.open) {
-      // jsdom and older engines lack the method, and then the attribute is the fallback.
-      if (typeof element.showModal === "function") element.showModal();
-      else element.setAttribute("open", "");
-    }
-    if (!open && element.open) {
-      if (typeof element.close === "function") element.close();
-      else element.removeAttribute("open");
-    }
-  }, [open]);
 
   // Keeps the highlighted row visible as the arrow keys walk past the fold.
   useEffect(() => {
@@ -116,102 +112,118 @@ export function CommandDialog({
     }
   };
 
-  // A press on the backdrop lands on the dialog itself, never on its panel. A followed
-  // link closes it too, delegated so the caller's link needs no handler of its own.
-  const onDialogClick = (event: MouseEvent<HTMLDialogElement>) => {
+  // A followed link closes it, delegated so the caller's link needs no handler of its own.
+  const onPopupClick = (event: MouseEvent<HTMLDivElement>) => {
     const target = event.target;
-    if (target === event.currentTarget) onOpenChange(false);
-    else if (target instanceof Element && target.closest("a")) onOpenChange(false);
+    if (target instanceof Element && target.closest("a")) onOpenChange(false);
   };
 
   let index = -1;
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: Escape is the dialog's own, natively.
-    <dialog
-      ref={dialog}
-      aria-label={label}
-      className="ui-command"
-      onCancel={() => onOpenChange(false)}
-      onClose={() => onOpenChange(false)}
-      onClick={onDialogClick}
-    >
-      <div className="ui-command__panel">
-        <div className="ui-command__search">
-          <Icon name="search" size={18} />
-          <input
-            className="ui-command__input"
-            type="search"
-            role="combobox"
-            aria-label={label}
-            aria-expanded={items.length > 0}
-            aria-controls={listId}
-            aria-autocomplete="list"
-            aria-activedescendant={items.length > 0 ? `${listId}-${cursor}` : undefined}
-            placeholder={placeholder}
-            value={query}
-            autoFocus
-            onChange={(event) => onQueryChange(event.target.value)}
-            onKeyDown={onKeyDown}
-          />
-        </div>
-
-        <div
-          ref={listRef}
-          id={listId}
-          role="listbox"
+    <BaseDialog.Root open={open} onOpenChange={(next) => onOpenChange(next)}>
+      <BaseDialog.Portal container={container}>
+        {
+          // The page dimmed with --bg rather than black, for the reason Sidebar gives.
+        }
+        <BaseDialog.Backdrop className="ui-command__backdrop fixed inset-0 z-50 bg-[color-mix(in_oklch,var(--bg)_60%,transparent)]" />
+        <BaseDialog.Popup
           aria-label={label}
-          className="ui-command__list"
+          initialFocus={input}
+          onClick={onPopupClick}
+          className="ui-command fixed inset-x-0 top-[12vh] z-50 mx-auto flex max-h-[min(32rem,calc(100dvh-4rem))] w-[min(40rem,calc(100vw-2rem))] flex-col rounded-lg border border-border bg-surface p-0 text-fg shadow-lg outline-none"
         >
-          {loading && loadingLabel ? <p className="ui-command__status">{loadingLabel}</p> : null}
-          {!loading && query.trim().length > 0 && items.length === 0 ? (
-            <p className="ui-command__status">{emptyLabel}</p>
-          ) : null}
-          {groups.map((group) =>
-            group.items.length === 0 ? null : (
-              // biome-ignore lint/a11y/useSemanticElements: a listbox group, which no element is.
-              <div key={group.key} role="group" aria-label={group.label}>
-                <p className="ui-command__group" aria-hidden="true">
-                  {group.label}
-                </p>
-                {group.items.map((item) => {
-                  index += 1;
-                  const at = index;
-                  const active = at === cursor;
-                  return (
-                    <div
-                      key={item.id}
-                      id={`${listId}-${at}`}
-                      role="option"
-                      tabIndex={-1}
-                      aria-selected={active}
-                      data-index={at}
-                      className={["ui-command__item", active ? "ui-command__item--active" : null]
-                        .filter(Boolean)
-                        .join(" ")}
-                      onMouseMove={() => setCursor(at)}
-                    >
-                      {renderLink(
-                        item,
-                        <>
-                          <Icon name={item.icon ?? "file"} size={16} />
-                          <span className="ui-command__text">
-                            <span className="ui-command__title">{item.title}</span>
-                            {item.excerpt ? (
-                              <span className="ui-command__excerpt">{item.excerpt}</span>
-                            ) : null}
-                          </span>
-                        </>,
-                        { className: "ui-command__link" },
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ),
-          )}
-        </div>
-      </div>
-    </dialog>
+          <div className="ui-command__search flex items-center gap-2 border-border border-b px-4 text-fg-muted">
+            <Icon name="search" size={18} />
+            {
+              // The field is the dialog's whole purpose and already carries the caret, so a
+              // ring around it would frame the entire panel.
+            }
+            <input
+              ref={input}
+              className="ui-command__input h-(--control-height-lg) flex-1 border-0 bg-transparent text-base text-fg [font:inherit] placeholder:text-fg-muted placeholder:opacity-100 focus-visible:shadow-none focus-visible:outline-none"
+              type="search"
+              role="combobox"
+              aria-label={label}
+              aria-expanded={items.length > 0}
+              aria-controls={listId}
+              aria-autocomplete="list"
+              aria-activedescendant={items.length > 0 ? `${listId}-${cursor}` : undefined}
+              placeholder={placeholder}
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+              onKeyDown={onKeyDown}
+            />
+          </div>
+
+          <div
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            aria-label={label}
+            className="ui-command__list min-h-0 flex-1 overflow-y-auto p-2"
+          >
+            {loading && loadingLabel ? <p className={STATUS}>{loadingLabel}</p> : null}
+            {!loading && query.trim().length > 0 && items.length === 0 ? (
+              <p className={STATUS}>{emptyLabel}</p>
+            ) : null}
+            {groups.map((group) =>
+              group.items.length === 0 ? null : (
+                // biome-ignore lint/a11y/useSemanticElements: a listbox group, which no element is.
+                <div key={group.key} role="group" aria-label={group.label}>
+                  <p
+                    className="ui-command__group mx-2 mt-2 mb-1 font-medium text-fg-muted text-xs"
+                    aria-hidden="true"
+                  >
+                    {group.label}
+                  </p>
+                  {group.items.map((item) => {
+                    index += 1;
+                    const at = index;
+                    const active = at === cursor;
+                    return (
+                      <div
+                        key={item.id}
+                        id={`${listId}-${at}`}
+                        role="option"
+                        tabIndex={-1}
+                        aria-selected={active}
+                        data-index={at}
+                        className={cn(
+                          "ui-command__item rounded-md",
+                          active && "ui-command__item--active bg-muted",
+                        )}
+                        onMouseMove={() => setCursor(at)}
+                      >
+                        {renderLink(
+                          item,
+                          <>
+                            <Icon
+                              name={item.icon ?? "file"}
+                              size={16}
+                              className="mt-0.5 shrink-0 text-fg-muted"
+                            />
+                            <span className="ui-command__text flex min-w-0 flex-col gap-1">
+                              <span className="ui-command__title font-medium">{item.title}</span>
+                              {item.excerpt ? (
+                                <span className={EXCERPT}>{item.excerpt}</span>
+                              ) : null}
+                            </span>
+                          </>,
+                          {
+                            className:
+                              "ui-command__link flex items-start gap-3 px-3 py-2 text-fg text-sm no-underline",
+                          },
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ),
+            )}
+          </div>
+        </BaseDialog.Popup>
+      </BaseDialog.Portal>
+    </BaseDialog.Root>
   );
 }

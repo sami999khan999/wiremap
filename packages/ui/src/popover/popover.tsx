@@ -1,6 +1,7 @@
 import { buttonClassName } from "../button/index.js";
 import { cn } from "../class-name/index.js";
 import { BasePopover, type ReactNode } from "../import.js";
+import { usePortalContainer } from "../theme-scope/index.js";
 
 export type PopoverAlign = "start" | "end";
 
@@ -21,6 +22,8 @@ export interface PopoverProps {
 // A panel anchored to the control that opened it, closing on Escape, on a press outside
 // and on the trigger, on Base UI. See docs/reference/popover.md for what it is not.
 export function Popover({ label, trigger, children, align = "end", className }: PopoverProps) {
+  const container = usePortalContainer();
+
   return (
     <BasePopover.Root>
       <span className={cn("ui-popover inline-flex", className)}>
@@ -35,7 +38,7 @@ export function Popover({ label, trigger, children, align = "end", className }: 
         // Unmounted rather than hidden, Base UI's default: the panel's content is a query,
         // and a hidden one would fetch on every page that renders the trigger.
       }
-      <BasePopover.Portal>
+      <BasePopover.Portal container={container}>
         <BasePopover.Positioner side="bottom" align={align} sideOffset={4} className="z-20">
           <BasePopover.Popup
             aria-label={label}
