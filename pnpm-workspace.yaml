@@ -25,6 +25,10 @@ catalog:
   # Vite builds the apps; `tsup` builds the packages. Neither ships.
   vite: ^8.0.0
   "@vitejs/plugin-react": ^6.0.1
+  # Tailwind v4 compiles utilities at build time; the app owns the build, so the Vite
+  # plugin is the only entry point and neither ships.
+  tailwindcss: ^4.3.3
+  "@tailwindcss/vite": ^4.3.3
   tsx: ^4.19.0
   rimraf: ^6.0.1
   vitest: ^3.1.4
@@ -85,6 +89,10 @@ catalog:
   # the QR render during SSR like everything else. The alternative is asking people to
   # hand-type a base32 secret into an authenticator app.
   uqr: ^0.1.2
+  # `cn`: clsx joins conditional classes, tailwind-merge drops the losing utility of a
+  # conflicting pair, so a caller's `className` overrides a component's default.
+  clsx: ^2.1.1
+  tailwind-merge: ^3.7.0
 
   # ── node-only, framework-neutral — behind a port, never imported by the domain ──
   drizzle-orm: ^0.44.7
@@ -140,6 +148,9 @@ catalog:
   #    Inside the target set: all three front-end targets are React.
   "@tanstack/react-query": ^5.101.4
   "@orpc/tanstack-query": ^1.15.0
+  # Headless primitives for everything with hard interaction semantics: focus, keyboard
+  # and dismissal. Styling is ours, through Tailwind utilities in packages/ui.
+  "@base-ui/react": ^1.8.0
 
   # ── router-scoped — apps/ only, never a package ──
   #    Routing is app-shaped, not product-shaped. A Next app brings its own

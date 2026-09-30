@@ -4,7 +4,18 @@
 :root {
   --duration-fast: 120ms;
   --duration-base: 200ms;
+}
+
+/* The one curve is Tailwind's `ease-out`, and every `transition` utility defaults to it
+   and to --duration-base, so the reduced-motion block below reaches utilities too. */
+@theme static {
+  --ease-*: initial;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --default-transition-duration: var(--duration-base);
+  --default-transition-timing-function: var(--ease-out);
 }
 
 /* One block, and every transition in the system respects it -- rather than each

@@ -1,4 +1,5 @@
 import { type IncomingMessage, request, type ServerResponse } from "node:http";
+import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
@@ -97,6 +98,8 @@ export default defineConfig(({ command }) => {
     plugins: [
       // First, so its middleware runs before Start's.
       realtimeProxy(realtime),
+      // Compiles src/style/app.css: the theme, the component CSS and every utility used.
+      tailwindcss(),
       // The Start plugin owns route generation and must come before `viteReact()`. Two
       // things about this block are easy to get wrong and cost a confusing build failure:
       //

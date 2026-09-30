@@ -20,7 +20,7 @@ different routing shell.
 | --- | --- |
 | **Package** | `@loadbearing/ui` (private, never published) |
 | **Entrypoint** | `src/index.ts` (opens with `"use client"`), plus `./theme.css` and `./class.css` |
-| **Depends on** | `@loadbearing/asset` — **the only runtime workspace dependency** |
+| **Depends on** | `@loadbearing/asset`, the only runtime workspace dependency; `@base-ui/react` for behaviour, and `clsx` with `tailwind-merge` behind `cn` |
 | **Type-only** | `@loadbearing/permissions`, a `devDependency` because both imports are erased |
 | **Peers** | `react`, `react-dom` |
 | **Used by** | `feature`, `apps/web` |
@@ -39,7 +39,8 @@ packages/ui/
     ├── index.ts               ← "use client" on line 1
     ├── import.ts              ← two workspace entries, both type-only but one
     ├── theme/
-    │   ├── theme.css          ← entry: @imports token/ and color/
+    │   ├── theme.css          ← entry: @imports token/, color/ and tailwind.css
+    │   ├── tailwind.css       ← the twelve as Tailwind's palette; the `dark` variant
     │   ├── class.css          ← entry: @imports class/. A separate export
     │   ├── token/*.css        ← typography, space, radius, shadow, motion
     │   ├── color/*.css        ← one per theme; the twelve names, in oklch
@@ -52,6 +53,7 @@ packages/ui/
     ├── code-block/…           → CodeBlock
     ├── command-dialog/…       → CommandDialog, SearchTrigger, useHotkey
     ├── callout/…              → Callout, CalloutTone
+    ├── class-name/…           → cn
     ├── can/can.tsx            → Can
     ├── code-list/…            → CodeList
     ├── data-table/…           → DataTable, DataTable.Skeleton
@@ -87,8 +89,11 @@ One folder per exported component, which is the third folder shape in the reposi
 component. `class/` declares no literal value of its own: a hex or a pixel appearing there is a
 token that was never added. A rule in the wrong folder is visible from its content alone.
 
-`token/` and `color/` ship together as `./theme.css`; `class/` ships as `./class.css`, so an app
-that wants the tokens and its own design drops one link and keeps the rest.
+`token/` and `color/` ship together as `./theme.css`; `class/` ships as `./class.css`. Neither is
+linked on its own any more: the tokens are Tailwind `@theme` blocks, so both are `@import`ed by the
+app's Tailwind entry, [`apps/web/src/style/app.css`](../../../apps/web/src/style/app.css), which
+compiles them with the utilities into one stylesheet. `class.css` goes in the `components` layer, so
+a utility passed in `className` beats a component default.
 
 ## A theme and a mode are two axes
 
@@ -221,9 +226,11 @@ assert *behaviour* where the route shows *appearance*.
 > adding a `dev` namespace to `ClientNamespace`, `NamespaceShape` and two catalog cells would be
 > structure built for nobody to read.
 
-**No third-party design system.** Every component carries a `ui-*` class, and those class names are
-the contract: `theme/class/*.css` is what they resolve to, exported separately from `theme.css` so a
-consumer can take the tokens and write its own look. Eleven of the twelve components have a
+**No third-party design system; Tailwind for styling, Base UI for behaviour.** Every component
+carries a `ui-*` class, and those class names are the contract that specs and callers select on.
+Components are moving from `theme/class/*.css` to Tailwind utilities written in the component with
+[`cn`](../src/class-name/class-name.ts), one per commit; until a component moves, its stylesheet is
+what the hook resolves to. Eleven of the twelve components have a
 stylesheet there; `Can` renders no element of its own. Keeping the hooks and the styling in two files is what
 makes a design pass a rewrite of one directory rather than of every component.
 

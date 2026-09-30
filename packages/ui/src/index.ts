@@ -4,6 +4,7 @@ export { Button, type ButtonProps, type ButtonVariant } from "./button/index.js"
 export { Callout, type CalloutProps, type CalloutTone } from "./callout/index.js";
 export { Can, type CanProps } from "./can/index.js";
 export { Card, CardGrid, type CardGridProps, type CardProps } from "./card/index.js";
+export { cn } from "./class-name/index.js";
 export { CodeBlock, type CodeBlockProps } from "./code-block/index.js";
 export { CodeList, type CodeListProps } from "./code-list/index.js";
 export {

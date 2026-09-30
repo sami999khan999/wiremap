@@ -1,0 +1,19 @@
+/* The one stylesheet the app links. Tailwind compiles it: the kit's theme is Tailwind's
+   theme, and utilities are generated for the classes the sources below actually use.
+
+   No Preflight yet. It resets defaults the component CSS in class.css still relies on,
+   and it arrives when that file is empty. class.css sits in the components layer, so a
+   utility a caller passes in `className` beats a component default, as Tailwind users
+   expect. */
+
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@import "@loadbearing/ui/theme.css";
+@import "@loadbearing/ui/class.css" layer(components);
+
+/* Outside this app's root, so Tailwind's own detection never reaches them. */
+@source "../../../../packages/ui/src";
+@source "../../../../packages/feature/src";

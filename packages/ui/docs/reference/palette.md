@@ -96,7 +96,8 @@ Then run `pnpm check:contrast`, and open `/kitchen-sink` in `apps/web` to look a
 ## Cost
 
 Six themes, eleven mode blocks, 132 colours: **5.0 KB raw, 0.7 KB gzipped** once comments are stripped, one stylesheet, one
-request. The class layer is another 1.3 KB gzipped and is a separate link you can drop.
+request. It is compiled into the app's one Tailwind stylesheet with the class layer and the
+utilities, so it costs no request of its own.
 
 Every theme ships to every user rather than being fetched on demand, because a lazily loaded theme
 costs a round trip and a visible flash at the exact moment somebody is looking at the colours. The

@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@loadbearing/tsconfig": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "@types/react": "catalog:react",
@@ -44,6 +45,7 @@
     "@vitejs/plugin-react": "catalog:",
     "pg": "catalog:",
     "rimraf": "catalog:",
+    "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

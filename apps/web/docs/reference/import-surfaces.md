@@ -43,16 +43,13 @@ generator never reads.
 [`server-functions.md`](./server-functions.md) — a re-exported `/server` entry is a client-graph edge
 that Start's import protection denies outright.
 
-## The stylesheet pair
+## The stylesheet
 
-```ts
-export { default as classCss } from "@loadbearing/ui/class.css?url";
-export { default as themeCss } from "@loadbearing/ui/theme.css?url";
-```
-
-Two links, and **the order they are written into `<head>` matters** rather than the order they are
-named here: `class.css` reads the token names `theme.css` defines. An app supplying its own design
-drops the second.
+Not on either surface. `__root.tsx` imports its own
+[`src/style/app.css`](../../src/style/app.css) with `?url` and links it once. That file is the
+Tailwind entry: it `@import`s `@loadbearing/ui/theme.css` and `class.css`, names the package sources
+Tailwind scans with `@source`, and compiles all of it into one stylesheet. A relative file, so it is
+never re-exported from an `import.ts`.
 
 ## What the client surface deliberately does not carry
 

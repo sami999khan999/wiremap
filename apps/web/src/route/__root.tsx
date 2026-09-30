@@ -3,17 +3,16 @@ import {
   ApiClientProvider,
   ContentSource,
   type CSSProperties,
-  classCss,
   FontRegistry,
   MessageProvider,
   QueryClientProvider,
   type ReactNode,
   SessionProvider,
   ThemeRegistry,
-  themeCss,
 } from "~/import.js";
 import { fetchAppearance } from "~/server/appearance.fn.js";
 import { fetchSession } from "~/server/session.fn.js";
+import appCss from "~/style/app.css?url";
 import { ErrorBoundary, NotFound } from "./-boundary.js";
 import type { RouterContext } from "./-context.js";
 
@@ -49,10 +48,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { title: "Loadbearing" },
     ],
     links: [
-      // Tokens and colours first, the default look second: class.css reads the names
-      // theme.css defines, and an app supplying its own design drops the second link.
-      { rel: "stylesheet", href: themeCss },
-      { rel: "stylesheet", href: classCss },
+      // One stylesheet: Tailwind compiles the theme, the component CSS and the utilities
+      // into it. See src/style/app.css.
+      { rel: "stylesheet", href: appCss },
     ],
   }),
   shellComponent: RootDocument,

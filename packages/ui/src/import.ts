@@ -10,6 +10,9 @@ export { default as spriteUrl } from "@loadbearing/asset/sprite.svg";
 // `verbatimModuleSyntax` erases these and the emitted JavaScript imports nothing.
 export type { CapabilitySet, PermissionKey } from "@loadbearing/permissions";
 
+// ── clsx · tailwind-merge ────────────────────────────────────────────────────
+// Composed once, as `cn` in class-name/. Nothing else calls either directly.
+export { type ClassValue, clsx } from "clsx";
 // ── react ────────────────────────────────────────────────────────────────────
 export type {
   ButtonHTMLAttributes,
@@ -32,6 +35,7 @@ export {
   useRef,
   useState,
 } from "react";
+export { twMerge } from "tailwind-merge";
 
 // ── uqr ──────────────────────────────────────────────────────────────────────
 // The only runtime dependency other than the sprite. It computes a module matrix rather

@@ -1,0 +1,24 @@
+/* The twelve colours as Tailwind's palette, and nothing else. The reset removes every
+   default colour, so `bg-red-500` generates no CSS at all, and `inline` makes each
+   utility read the variable itself: `bg-surface` is `var(--surface)`, so a theme swap
+   on <html> reaches it with no rebuild. */
+
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-ring: var(--ring);
+}
+
+/* Dark is an attribute here, never a class: `dark:` follows `data-mode`, including a
+   nested scope such as the doc reader's. See docs/reference/theming.md. */
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));

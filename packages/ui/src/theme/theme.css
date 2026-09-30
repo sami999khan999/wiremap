@@ -1,9 +1,8 @@
 /* The tokens and the colour themes: everything a design pass builds on, and nothing
-   that decides how a component looks. That is class.css, which is a separate export
-   precisely so it can be dropped.
+   that decides how a component looks. The tokens are Tailwind theme blocks, so this file
+   is read by the app's Tailwind build (apps/web/src/style/app.css), never linked alone.
 
-   @import lines come first because CSS requires it. Vite inlines them at build, so this
-   whole tree ships as one stylesheet and one request. */
+   @import lines come first because CSS requires it. */
 
 @import "./token/typography.css";
 @import "./token/space.css";
@@ -17,3 +16,5 @@
 @import "./color/plum.css";
 @import "./color/midnight.css";
 @import "./color/graphite.css";
+
+@import "./tailwind.css";

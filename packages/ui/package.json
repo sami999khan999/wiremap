@@ -44,7 +44,10 @@
     "react-dom": "catalog:react"
   },
   "dependencies": {
+    "@base-ui/react": "catalog:",
     "@loadbearing/asset": "workspace:*",
+    "clsx": "catalog:",
+    "tailwind-merge": "catalog:",
     "uqr": "catalog:"
   },
   "sideEffects": [

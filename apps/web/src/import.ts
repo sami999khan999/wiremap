@@ -162,12 +162,6 @@ export {
   ThemeRegistry,
 } from "@loadbearing/ui";
 
-// ── @loadbearing/ui — stylesheets ────────────────────────────────────────────
-// The order they are written into <head> matters, not the order here: `class.css` reads
-// the token names `theme.css` defines.
-export { default as classCss } from "@loadbearing/ui/class.css?url";
-export { default as themeCss } from "@loadbearing/ui/theme.css?url";
-
 // ── @tanstack/react-query ────────────────────────────────────────────────────
 export {
   type DehydratedState,

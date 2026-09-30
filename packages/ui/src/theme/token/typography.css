@@ -1,12 +1,19 @@
 @import "@loadbearing/asset/font.css";
 
 /* Type. Every face carries its whole stack, fallbacks included, so no component
-   reassembles one differently. FontRegistry overrides --font-sans and nothing else. */
+   reassembles one differently. FontRegistry overrides --font-sans and nothing else.
 
-:root {
+   A Tailwind theme block, so `font-sans`, `text-sm`, `leading-tight` and `font-medium`
+   are these values and no others: each namespace is reset before it is filled. `static`
+   emits every variable whether a utility uses it or not, because the component CSS
+   still reads them by name. */
+
+@theme static {
+  --font-*: initial;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
+  --text-*: initial;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -14,10 +21,19 @@
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
 
+  --leading-*: initial;
   --leading-tight: 1.25;
   --leading-normal: 1.5;
 
-  --weight-normal: 400;
-  --weight-medium: 500;
-  --weight-semibold: 600;
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+}
+
+/* The names the component CSS was written against, until the last of it is converted. */
+:root {
+  --weight-normal: var(--font-weight-normal);
+  --weight-medium: var(--font-weight-medium);
+  --weight-semibold: var(--font-weight-semibold);
 }
