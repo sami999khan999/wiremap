@@ -46,8 +46,6 @@ upstream:packages/application/src/platform/shard-map.reader.ts
 upstream:packages/infrastructure/src/pg/repository/pg-shard-map.reader.ts
 upstream:packages/feature/src/platform/shard-map.panel.tsx
 upstream:apps/web/src/route/(app)/_authenticated/platform/shards.tsx
-upstream:apps/worker/src/schedule/reconcile.schedule.ts
-upstream:apps/worker/src/schedule/spares.schedule.ts
 ```
 
 Compare anything else under `upstream:packages/application/src/port/shard*`,

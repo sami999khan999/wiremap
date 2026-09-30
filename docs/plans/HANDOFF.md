@@ -19,11 +19,12 @@ state of the tree and the traps that cost time.
 | `4873640` | `LT1.3`: the analytics, retention, shards and storage platform pages removed |
 | `7100f81` | `LT1.4`: ClickHouse analytics removed, the tenant Activity page with it |
 | `ce72bdc` | `LT1.5`: verified, no code change |
-| after `2b67ae4` | `LT2.1`: the tenant-move machinery removed, the shard seam kept |
+| `ad78a30` | `LT2.1`: the tenant-move machinery removed, the shard seam kept |
+| after `ad78a30` | `LT2.2`: verified, no code change |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, `LT1.4`, `LT1.5`, `LT2.1`, `LT2.2`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT2.2` partitions, then the rest of Phase 2; `LT1.6`, the docs sweep, after it.
+**Next, in order:** `LT2.3` cold tier and retention, then the rest of Phase 2; `LT1.6`, the docs sweep, after it.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
