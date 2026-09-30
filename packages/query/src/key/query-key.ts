@@ -63,20 +63,7 @@ export class QueryKeys {
   public static readonly platform = {
     all: () => ["platform"] as const,
     status: () => ["platform", "status"] as const,
-    retention: () => ["platform", "retention"] as const,
-    // The typed value and the tenant are both in the key, because that is what the
-    // answer is about: the same months over two tenants are two sets of partitions.
-    retentionPreview: (table: string, months: number, organizationId?: string) =>
-      ["platform", "retention", "preview", table, months, organizationId ?? null] as const,
-    storage: (params: unknown) => ["platform", "storage", params] as const,
-    projection: () => ["platform", "projection"] as const,
-    policy: () => ["platform", "policy"] as const,
-    gaps: () => ["platform", "projection", "gap"] as const,
     exports: (organizationId: string) => ["platform", "export", organizationId] as const,
-    shardMap: (params: unknown) => ["platform", "shard", "map", params] as const,
-    // The term is the key, because that is what the answer is about: two lookups of two
-    // tenants are two answers, not one refetched.
-    tenantLocation: (term: string) => ["platform", "shard", "tenant", term] as const,
     flags: () => ["platform", "flag", "list"] as const,
     plans: () => ["platform", "plan", "list"] as const,
     // The prefix every org's entitlement shares, so a plan edit invalidates them all.

@@ -146,7 +146,7 @@ describe("PgCapabilityRepository.resolvePlatformFor", () => {
       id: crypto.randomUUID(),
       organizationId: platformOrganization,
       userId: admin,
-      permission: "platform.retention.manage",
+      permission: "platform.flag.manage",
       effect: "deny",
       goalId: null,
     });
@@ -157,7 +157,7 @@ describe("PgCapabilityRepository.resolvePlatformFor", () => {
       shards,
     ).resolvePlatformFor(admin);
 
-    expect(resolved.can("platform.retention.manage")).toBe(false);
+    expect(resolved.can("platform.flag.manage")).toBe(false);
     expect(resolved.can("platform.status.read")).toBe(true);
 
     await database.client
@@ -165,7 +165,7 @@ describe("PgCapabilityRepository.resolvePlatformFor", () => {
       .where(
         and(
           eq(permissionOverrides.userId, admin),
-          eq(permissionOverrides.permission, "platform.retention.manage"),
+          eq(permissionOverrides.permission, "platform.flag.manage"),
         ),
       );
   });

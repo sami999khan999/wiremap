@@ -61,13 +61,11 @@ import {
   GetEntitlementUseCase,
   GetNotificationPreferencesUseCase,
   GetOrganizationEntitlementUseCase,
-  GetPlatformPolicyUseCase,
   GrantPermissionOverrideUseCase,
   GrantPermissionUseCase,
   IndexDocumentUseCase,
   InspectEffectivePermissionsUseCase,
   InspectPlatformStatusUseCase,
-  InspectShardMapUseCase,
   type InvitationClaimer,
   InvitationClaimingEnroller,
   InviteMemberUseCase,
@@ -86,13 +84,8 @@ import {
   ListPermissionOverridesUseCase,
   ListPlansUseCase,
   ListPlatformDocSpacesUseCase,
-  ListProjectionGapsUseCase,
-  ListProjectionPoliciesUseCase,
-  ListRetentionPoliciesUseCase,
   ListRolesUseCase,
   ListTenantExportsUseCase,
-  ListTenantStorageUseCase,
-  LocateTenantUseCase,
   type Logger,
   type LogReader,
   LokiLogReader,
@@ -106,7 +99,6 @@ import {
   type MembershipEnroller,
   type MembershipReader,
   MoveDocPageUseCase,
-  MoveTenantUseCase,
   NotificationSubscriber,
   NullMembershipEnroller,
   OpenAiEmbeddingProvider,
@@ -153,13 +145,11 @@ import {
   PgTenantMoveGateway,
   PgTenantRepository,
   PgTenantRetentionPolicyRepository,
-  PgTenantStorageReader,
   PgUnitOfWork,
   PgVectorStore,
   type PlatformPolicyRepository,
   type PlatformReader,
   PreviewDocPageUseCase,
-  PreviewRetentionChangeUseCase,
   Principal,
   PrincipalBuilder,
   type ProjectionPolicyRepository,
@@ -182,10 +172,8 @@ import {
   type RelayedActivityStore,
   RelocateTenantUseCase,
   type ReplicaHealth,
-  ReprojectPartitionUseCase,
   ResendInvitationUseCase,
   RestoreDocRevisionUseCase,
-  RestorePartitionUseCase,
   type RetentionPolicyRepository,
   RevokeApiKeyUseCase,
   RevokeDocGrantUseCase,
@@ -221,7 +209,6 @@ import {
   type TenantMembershipReader,
   type TenantMoveGateway,
   type TenantRetentionPolicyRepository,
-  ToggleProjectionUseCase,
   ToggleReplicaReadsUseCase,
   TransactionScope,
   UnifiedMarkdownRenderer,
@@ -231,10 +218,7 @@ import {
   UpdateFlagTargetUseCase,
   UpdateFlagUseCase,
   UpdateNotificationPreferenceUseCase,
-  UpdateProjectionPolicyUseCase,
-  UpdateRetentionPolicyUseCase,
   UpdateRoleUseCase,
-  UpdateTenantRetentionUseCase,
   UploadDocImageUseCase,
   type UserId,
   type VectorStore,
@@ -474,24 +458,11 @@ export class Container {
     // The job half of the delete. Reachable from the worker only — nothing on a
     // request path may run it, which is the whole point of `19.20`.
     readonly purgeOrganization: PurgeOrganizationUseCase;
-    readonly moveTenant: MoveTenantUseCase;
     readonly relocateTenant: RelocateTenantUseCase;
     readonly reclaimMoveSources: ReclaimMoveSourcesUseCase;
     readonly exportOrganization: ExportOrganizationUseCase;
     readonly listExports: ListTenantExportsUseCase;
     readonly inspectStatus: InspectPlatformStatusUseCase;
-    readonly inspectShardMap: InspectShardMapUseCase;
-    readonly locateTenant: LocateTenantUseCase;
-    readonly getPolicy: GetPlatformPolicyUseCase;
-    readonly listGaps: ListProjectionGapsUseCase;
-    readonly listProjection: ListProjectionPoliciesUseCase;
-    readonly listRetention: ListRetentionPoliciesUseCase;
-    readonly listStorage: ListTenantStorageUseCase;
-    readonly previewRetention: PreviewRetentionChangeUseCase;
-    readonly restorePartition: RestorePartitionUseCase;
-    readonly updateTenantRetention: UpdateTenantRetentionUseCase;
-    readonly reprojectPartition: ReprojectPartitionUseCase;
-    readonly toggleProjection: ToggleProjectionUseCase;
     readonly toggleReplicaReads: ToggleReplicaReadsUseCase;
     readonly listFlags: ListFlagsUseCase;
     readonly listPlans: ListPlansUseCase;
@@ -508,8 +479,6 @@ export class Container {
     readonly switchModule: SwitchModuleUseCase;
     readonly updateFlag: UpdateFlagUseCase;
     readonly updateFlagTarget: UpdateFlagTargetUseCase;
-    readonly updateProjection: UpdateProjectionPolicyUseCase;
-    readonly updateRetention: UpdateRetentionPolicyUseCase;
   };
   // Bucket-shaped policy, beside the object-shaped `storage`. The retention screen and
   // the worker's daily reconcile are its only two readers.
@@ -1117,8 +1086,8 @@ export class Container {
         this.platform,
         this.activity,
       ),
-      // The projector is optional here for the reason it is on `listRetention`: with no
-      // analytics store there is no derived copy of the tenant to forget.
+      // The projector is optional: with no analytics store there is no derived copy of the
+      // tenant to forget.
       purgeOrganization: new PurgeOrganizationUseCase(
         new PgTenantRepository(this.cluster, this.transactions, this.shards),
         this.partitionArchive,
@@ -1133,15 +1102,6 @@ export class Container {
         this.tenantRetentionPolicies,
         this.shardResolver,
         new DocImageSweep(this.storage),
-      ),
-      moveTenant: new MoveTenantUseCase(
-        this.authorizer,
-        new PgTenantRepository(this.cluster, this.transactions, this.shards),
-        this.shardAssignments,
-        this.queuePublisher,
-        this.platform,
-        this.activity,
-        this.cluster.size,
       ),
       // The job half. Reachable from the worker only — nothing on a request path may
       // run it, which is what makes the placement correct by construction.
@@ -1169,51 +1129,11 @@ export class Container {
         this.clock,
       ),
       listExports: new ListTenantExportsUseCase(this.authorizer, this.storage),
-      // `hasShardMoves` is read while this constructor runs, so whatever replaces its
-      // literal has to be readable then — a field assigned later would be `undefined`.
-      inspectShardMap: new InspectShardMapUseCase(
-        this.authorizer,
-        new PgShardMapReader(this.cluster, this.transactions, this.shards),
-        this.hasShardMoves,
-      ),
-      locateTenant: new LocateTenantUseCase(
-        this.authorizer,
-        new PgShardMapReader(this.cluster, this.transactions, this.shards),
-        this.hasShardMoves,
-      ),
       inspectStatus: new InspectPlatformStatusUseCase(
         this.authorizer,
         this.platform,
         new ContainerHealthReader(this),
         this.platformPolicy,
-      ),
-      getPolicy: new GetPlatformPolicyUseCase(
-        this.authorizer,
-        this.platformPolicy,
-        new ContainerHealthReader(this),
-      ),
-      listGaps: new ListProjectionGapsUseCase(this.authorizer, this.partitionArchive),
-      listProjection: new ListProjectionPoliciesUseCase(
-        this.authorizer,
-        this.projectionPolicies,
-        this.retentionPolicies,
-        this.analyticsProjector ?? null,
-      ),
-      reprojectPartition: new ReprojectPartitionUseCase(
-        this.authorizer,
-        this.partitionArchive,
-        this.queuePublisher,
-        new ContainerHealthReader(this),
-        this.platform,
-        this.activity,
-      ),
-      toggleProjection: new ToggleProjectionUseCase(
-        this.authorizer,
-        this.platformPolicy,
-        new ContainerHealthReader(this),
-        this.platform,
-        this.activity,
-        this.catalogUnitOfWork,
       ),
       toggleReplicaReads: new ToggleReplicaReadsUseCase(
         this.authorizer,
@@ -1315,61 +1235,6 @@ export class Container {
         this.platform,
         this.activity,
         this.catalogUnitOfWork,
-      ),
-      updateProjection: new UpdateProjectionPolicyUseCase(
-        this.authorizer,
-        this.projectionPolicies,
-        this.retentionPolicies,
-        this.platform,
-        this.activity,
-        this.catalogUnitOfWork,
-        this.analyticsProjector ?? null,
-        (error: unknown) => this.logger.failure(error, { at: "projection.apply" }),
-      ),
-      listRetention: new ListRetentionPoliciesUseCase(
-        this.authorizer,
-        this.retentionPolicies,
-        this.storagePolicy,
-        this.analyticsProjector ?? null,
-        this.projectionPolicies,
-      ),
-      // Local rather than a field: nothing outside this use-case reads it, and a
-      // public port is a thing the worker has to be told not to use.
-      listStorage: new ListTenantStorageUseCase(
-        this.authorizer,
-        new PgTenantStorageReader(this.cluster, this.transactions, this.shards),
-      ),
-      previewRetention: new PreviewRetentionChangeUseCase(
-        this.authorizer,
-        this.maintenance,
-        this.clock,
-      ),
-      restorePartition: new RestorePartitionUseCase(
-        this.authorizer,
-        this.partitionArchive,
-        this.queuePublisher,
-        this.platform,
-        this.activity,
-      ),
-      updateTenantRetention: new UpdateTenantRetentionUseCase(
-        this.authorizer,
-        this.tenantRetentionPolicies,
-        this.platform,
-        this.activity,
-        this.catalogUnitOfWork,
-      ),
-      updateRetention: new UpdateRetentionPolicyUseCase(
-        this.authorizer,
-        this.retentionPolicies,
-        this.storagePolicy,
-        this.platform,
-        this.activity,
-        this.catalogUnitOfWork,
-        this.analyticsProjector ?? null,
-        this.projectionPolicies,
-        // Logged, never rethrown: the row is the truth and the daily job closes the
-        // gap, so a bucket that was unreachable must not fail a save that committed.
-        (error: unknown) => this.logger.failure(error, { at: "retention.apply" }),
       ),
     };
 
@@ -1558,15 +1423,6 @@ export class Container {
   // is not running is the failure this prevents.
   public get hasProjector(): boolean {
     return this.analyticsProjector !== undefined;
-  }
-
-  // **Read while the constructor runs**, so it is derived from the cluster rather than
-  // assigned later — a field set after this point would be `undefined` at the call site.
-  // ──
-  // One node is nowhere to move a tenant to, so the screen says "unavailable" rather
-  // than offering a button whose every press is a `ConflictError`.
-  public get hasShardMoves(): boolean {
-    return this.cluster.size > 1;
   }
 
   public get logs(): LogReader {

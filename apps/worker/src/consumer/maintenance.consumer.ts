@@ -40,8 +40,8 @@ interface PurgeJob {
   readonly actorId: UserId;
 }
 
-// What `tenant-move` carries: `MoveTenantUseCase`'s request, checked there. The actor
-// rides along for the audit row, as on a delete.
+// What `tenant-move` carries. Nothing in lite queues one, since the move request left
+// with the shard page. The actor rides along for the audit row, as on a delete.
 interface MoveJob {
   readonly organizationId: OrganizationId;
   readonly toNode: number;

@@ -15,26 +15,27 @@ state of the tree and the traps that cost time.
 |---|---|
 | `43bc2a6` | Phase 0: the big kit at `3fafa78c`, renamed, ports on `2xxxx`, docs adapted |
 | `7f88b41` | `LT1.1`: messaging removed from every layer |
-| after `25cd0b0` | `LT1.2`: widgets and zones removed from every layer; the dashboard is static |
+| `3af3b00` | `LT1.2`: widgets and zones removed from every layer; the dashboard is static |
+| after `3af3b00` | `LT1.3`: the analytics, retention, shards and storage platform pages removed |
 
-**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, and the `docs/plans/` exemption from `LT5.1`.
+**Done:** Phase 0 (`LT0.1`–`LT0.5`), `LT0.3`, `LT5.4`, `LT1.1`, `LT1.2`, `LT1.3`, and the `docs/plans/` exemption from `LT5.1`.
 
-**Next, in order:** `LT1.3` platform pages, `LT1.4` analytics, `LT1.5`
+**Next, in order:** `LT1.4` analytics, `LT1.5`
 permission catalog, `LT1.6` the docs sweep, then Phase 2.
 
 **The remote is `origin`** (GitHub). `main` matched it at `25cd0b0`; nothing after that is pushed.
 
-## What is verified after `LT1.2`
+## What is verified after `LT1.3`
 
 Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:migrate` and `db:seed`.
 
 - Typecheck clean in every package; `pnpm lint` clean apart from one warning that was already
   there (an unused import in `feature/src/rbac/effective-permissions.inspector.tsx`).
   `check:contrast`, `deps:check` and `repo:check` green.
-- Tests, per package: application 399, infrastructure 357 (one known failure, below), query 64,
-  web 65, worker 95, permissions 69, contracts 58, composition 70, feature 172, auth 71, ui 103,
+- Tests, per package: application 347, infrastructure 357 (one known failure, below), query 64,
+  web 65, worker 95, permissions 69, contracts 58, composition 70, feature 165, auth 71, ui 103,
   tooling 140, and every other package green. The drop since `7f88b41` is the widget, zone and
-  dashboard specs.
+  dashboard specs, then the specs of the four platform pages' use-cases and the shard-map panel.
 - `check:architecture`: 29 of 30. §30 left with widgets and §31 kept its number. **The red one is
   expected** — "every partitioned table is on the allowlist" reads migrations `0023` (the three
   messaging tables) and `0047` (`widget_preferences`). `LT2.8` regenerates the baseline and clears
@@ -61,6 +62,10 @@ Checked on Linux (Node 24, pnpm 11, Docker 29) against a fresh `infra:up`, `db:m
   `docs/opinions/visibility.md`, "thirty-one" in `docs/setup/26-hygiene-and-ci.md` (and its §30
   section), the `widget.tsx` line in `docs/setup/28-folder-structure.md`, the `widget_preferences`
   sentence in `partitions.md`, and `packages/permissions/docs/reference/flag-registry.md`.
+- **Tenant export and delete stay** (decided 2026-09-30, recorded under `LT1.3`). They moved from
+  the dropped storage page to `platform/accounts.tsx`.
+- **A permission key leaves with its last procedure**, not in `LT1.5`: §28 fails on a key nothing
+  asserts. `LT1.3` removed seven platform keys this way; `LT1.5` covers the rest.
 - **A flag spec declares its own flag.** Lite has none, so `application/tests/support/example-flag.ts`
   stubs `FlagRegistry.instance` with `example.rollout`. `FlagRegistry` itself stays the big kit's file.
 

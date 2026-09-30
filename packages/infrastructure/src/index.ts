@@ -59,7 +59,6 @@ export {
   PgTenantMoveGateway,
   PgTenantRepository,
   PgTenantRetentionPolicyRepository,
-  PgTenantStorageReader,
   PgUnitOfWork,
   type PgUnitOfWorkConfig,
   PgUserReader,

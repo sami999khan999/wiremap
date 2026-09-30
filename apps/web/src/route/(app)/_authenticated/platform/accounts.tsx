@@ -1,5 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AccountPanel, type ClientNamespace, useMessages } from "~/import.js";
+import {
+  AccountPanel,
+  Can,
+  type ClientNamespace,
+  DeleteTenantPanel,
+  TenantExportPanel,
+  useCapabilities,
+  useMessages,
+} from "~/import.js";
 import { RouteGuard } from "~/route/-guard.js";
 
 const MESSAGES = ["platform"] as const satisfies readonly ClientNamespace[];
@@ -15,12 +23,21 @@ export const Route = createFileRoute("/(app)/_authenticated/platform/accounts")(
 
 function PlatformAccounts() {
   const { t } = useMessages("platform");
+  const capabilities = useCapabilities();
 
   return (
     <main>
       <h1>{t("platform.accounts.title")}</h1>
       <p>{t("platform.accounts.description")}</p>
       <AccountPanel />
+      {
+        // Here since lite dropped the storage page. One confirmation form that asks for
+        // the slug to be typed back, in one place that can get it wrong.
+        <Can permission="platform.tenant.manage" capabilities={capabilities}>
+          <TenantExportPanel />
+          <DeleteTenantPanel />
+        </Can>
+      }
     </main>
   );
 }

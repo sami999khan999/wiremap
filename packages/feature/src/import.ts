@@ -29,7 +29,6 @@ export {
   type ApiKeyDto,
   ApiKeyEntity,
   type CapabilitiesDto,
-  type ColdModeDto,
   type DocGrantKind,
   type DocNavNodeDto,
   type DocPageDraftDto,
@@ -54,16 +53,7 @@ export {
   type OverrideEntityDto,
   Password,
   type PlanDto,
-  type ProjectionEntryDto,
-  type RestoreRequestedDto,
-  type RetentionEntryDto,
-  type RetentionPreviewDto,
   type RoleDto,
-  type ShardMovesDto,
-  type ShardNodeDto,
-  type ShardTenantDto,
-  type TenantStorageMonthDto,
-  type TenantStorageRowDto,
 } from "@loadbearing/contracts";
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────

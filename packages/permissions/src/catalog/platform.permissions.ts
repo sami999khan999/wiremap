@@ -8,44 +8,6 @@ export const platformPermissions = {
     module: "platform",
     label: "View platform status",
   },
-  "platform.retention.read": {
-    scope: "platform",
-    module: "platform",
-    label: "View retention policy",
-  },
-  "platform.retention.manage": {
-    scope: "platform",
-    module: "platform",
-    label: "Change retention policy",
-    requires: ["platform.retention.read"],
-  },
-  "platform.analytics.read": {
-    scope: "platform",
-    module: "platform",
-    label: "View analytics policy",
-  },
-  "platform.analytics.manage": {
-    scope: "platform",
-    module: "platform",
-    label: "Change analytics policy",
-    requires: ["platform.analytics.read"],
-  },
-  "platform.storage.read": {
-    scope: "platform",
-    module: "platform",
-    label: "View tenant storage",
-  },
-  "platform.shards.read": {
-    scope: "platform",
-    module: "platform",
-    label: "View the shard map",
-  },
-  "platform.shards.manage": {
-    scope: "platform",
-    module: "platform",
-    label: "Move a tenant between nodes",
-    requires: ["platform.shards.read"],
-  },
   // Routes the worker's batch reads to a standby — `24.3`. Manage only: whether one
   // exists and how far behind it is shows on the status page under `status.read`.
   "platform.replica.manage": {

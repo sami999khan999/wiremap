@@ -49,7 +49,6 @@ export {
   PgTenantMoveGateway,
   PgTenantRepository,
   PgTenantRetentionPolicyRepository,
-  PgTenantStorageReader,
   PgUserReader,
   PgVectorStore,
 } from "./repository/index.js";
