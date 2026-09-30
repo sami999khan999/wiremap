@@ -15,11 +15,14 @@ export const container: Container = held.loadbearingContainer;
 // ──
 // Disposing at the signal would close the pools under those requests, and never disposing
 // leaves pools and sockets holding the process open until it is killed.
+// ──
+// Then exit: srvx skips its own SIGTERM handling when `CI` or `TEST` is set, and this
+// listener is what stops Node's default exit, so its socket would otherwise stay open.
 if (!held.loadbearingDisposal) {
   held.loadbearingDisposal = true;
   process.once("SIGTERM", () => {
     setTimeout(() => {
-      void container.dispose();
+      void container.dispose().finally(() => process.exit(0));
     }, Env.shutdownGraceMs);
   });
 }
