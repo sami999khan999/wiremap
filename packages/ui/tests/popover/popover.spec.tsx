@@ -1,8 +1,17 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Popover } from "../../src/popover/popover.js";
 
 const open = () => fireEvent.click(screen.getByRole("button", { name: "Notifications" }));
+
+// A whole press, not one event: Base UI dismisses on the click that ends it.
+const press = (element: Element) => {
+  fireEvent.pointerDown(element);
+  fireEvent.mouseDown(element);
+  fireEvent.pointerUp(element);
+  fireEvent.mouseUp(element);
+  fireEvent.click(element);
+};
 
 const panel = () => screen.queryByRole("dialog", { name: "Notifications" });
 
@@ -58,23 +67,25 @@ describe("Popover", () => {
     expect(panel()).toBeNull();
   });
 
-  it("closes on Escape, and gives the trigger its focus back", () => {
+  // Focus moves into the panel on open; without the return, the next Tab starts from the
+  // top of the page. Base UI restores it a tick after the close, hence the wait.
+  it("closes on Escape, and gives the trigger its focus back", async () => {
     mount();
     open();
 
-    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.keyDown(document.activeElement ?? document, { key: "Escape" });
 
     expect(panel()).toBeNull();
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Notifications" }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Notifications" })),
+    );
   });
 
-  // `pointerdown` rather than `click`: a click fires after the element under it may
-  // already be gone, and closing on the way up would swallow the first press.
   it("closes on a press outside it", () => {
     mount();
     open();
 
-    fireEvent.pointerDown(screen.getByRole("button", { name: "elsewhere" }));
+    press(screen.getByRole("button", { name: "elsewhere" }));
 
     expect(panel()).toBeNull();
   });
@@ -83,7 +94,7 @@ describe("Popover", () => {
     mount();
     open();
 
-    fireEvent.pointerDown(screen.getByText("Nothing new."));
+    press(screen.getByText("Nothing new."));
 
     expect(panel()).not.toBeNull();
   });

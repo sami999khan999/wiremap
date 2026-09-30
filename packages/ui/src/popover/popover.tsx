@@ -1,5 +1,6 @@
 import { buttonClassName } from "../button/index.js";
-import { type ReactNode, useEffect, useId, useRef, useState } from "../import.js";
+import { cn } from "../class-name/index.js";
+import { BasePopover, type ReactNode } from "../import.js";
 
 export type PopoverAlign = "start" | "end";
 
@@ -17,73 +18,37 @@ export interface PopoverProps {
   readonly className?: string;
 }
 
-// A panel anchored to the control that opened it, closing on Escape, on a click outside,
-// and on the trigger. See docs/reference/popover.md for what it is deliberately not.
+// A panel anchored to the control that opened it, closing on Escape, on a press outside
+// and on the trigger, on Base UI. See docs/reference/popover.md for what it is not.
 export function Popover({ label, trigger, children, align = "end", className }: PopoverProps) {
-  const [open, setOpen] = useState(false);
-  const panelId = useId();
-  const wrapper = useRef<HTMLDivElement>(null);
-  const control = useRef<HTMLButtonElement>(null);
-
-  // Bound only while it is open, so a page of twenty closed popovers holds no listeners.
-  useEffect(() => {
-    if (!open) return;
-
-    const close = () => {
-      setOpen(false);
-      control.current?.focus();
-    };
-
-    // `pointerdown`, not `click`: a click fires after the element under it may already
-    // have gone, and a popover that closed on the way up would swallow the first press.
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (target instanceof Node && wrapper.current?.contains(target)) return;
-      setOpen(false);
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
   return (
-    <div ref={wrapper} className={["ui-popover", className].filter(Boolean).join(" ")}>
-      <button
-        ref={control}
-        type="button"
-        className={buttonClassName("ghost", "ui-popover__trigger")}
-        aria-label={label}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={open ? panelId : undefined}
-        onClick={() => setOpen((was) => !was)}
-      >
-        {trigger}
-      </button>
-
-      {
-        // Unmounted rather than hidden. The panel's content is a query, and a hidden one
-        // would fetch on every page that renders the trigger.
-      }
-      {open ? (
-        <div
-          id={panelId}
-          role="dialog"
+    <BasePopover.Root>
+      <span className={cn("ui-popover inline-flex", className)}>
+        <BasePopover.Trigger
+          className={buttonClassName("ghost", "ui-popover__trigger")}
           aria-label={label}
-          className={`ui-popover__panel ui-popover__panel--${align}`}
         >
-          {children}
-        </div>
-      ) : null}
-    </div>
+          {trigger}
+        </BasePopover.Trigger>
+      </span>
+      {
+        // Unmounted rather than hidden, Base UI's default: the panel's content is a query,
+        // and a hidden one would fetch on every page that renders the trigger.
+      }
+      <BasePopover.Portal>
+        <BasePopover.Positioner side="bottom" align={align} sideOffset={4} className="z-20">
+          <BasePopover.Popup
+            aria-label={label}
+            className={cn(
+              "ui-popover__panel",
+              `ui-popover__panel--${align}`,
+              "min-w-72 max-w-[min(24rem,calc(100vw-1rem))] rounded-md border border-border bg-surface p-2 text-fg shadow-md outline-none",
+            )}
+          >
+            {children}
+          </BasePopover.Popup>
+        </BasePopover.Positioner>
+      </BasePopover.Portal>
+    </BasePopover.Root>
   );
 }

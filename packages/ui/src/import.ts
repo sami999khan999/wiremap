@@ -1,10 +1,12 @@
 // The boundary this package is defined by: two workspace entries, both type-only except
 // the sprite URL, and no cache library, router or contracts.
 
+// ── @base-ui/react ───────────────────────────────────────────────────────────
+// Behaviour only: focus, keyboard, dismissal and ARIA. Every part is styled here.
+export { Popover as BasePopover } from "@base-ui/react/popover";
 // ── @loadbearing/asset ───────────────────────────────────────────────────────
 export { type IconName, IconRegistry } from "@loadbearing/asset";
 export { default as spriteUrl } from "@loadbearing/asset/sprite.svg";
-
 // ── @loadbearing/permissions ─────────────────────────────────────────────────
 // Type-only, both of them. The `CapabilitySet` instance arrives as a prop, so
 // `verbatimModuleSyntax` erases these and the emitted JavaScript imports nothing.
