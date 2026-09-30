@@ -280,6 +280,14 @@ CREATE TABLE "outbox_event" (
 	CONSTRAINT "outbox_event_id_occurred_at_pk" PRIMARY KEY("id","occurred_at")
 ) PARTITION BY RANGE ("occurred_at");
 --> statement-breakpoint
+-- Hand-written, from the big kit's 0015: `outbox_event` has no tenant level, so no seed
+-- creates its months. Six of runway; `partitions` keeps three ahead from here on.
+CREATE TABLE "outbox_event_2026_09" PARTITION OF "outbox_event" FOR VALUES FROM ('2026-09-01') TO ('2026-10-01');--> statement-breakpoint
+CREATE TABLE "outbox_event_2026_10" PARTITION OF "outbox_event" FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');--> statement-breakpoint
+CREATE TABLE "outbox_event_2026_11" PARTITION OF "outbox_event" FOR VALUES FROM ('2026-11-01') TO ('2026-12-01');--> statement-breakpoint
+CREATE TABLE "outbox_event_2026_12" PARTITION OF "outbox_event" FOR VALUES FROM ('2026-12-01') TO ('2027-01-01');--> statement-breakpoint
+CREATE TABLE "outbox_event_2027_01" PARTITION OF "outbox_event" FOR VALUES FROM ('2027-01-01') TO ('2027-02-01');--> statement-breakpoint
+CREATE TABLE "outbox_event_2027_02" PARTITION OF "outbox_event" FOR VALUES FROM ('2027-02-01') TO ('2027-03-01');--> statement-breakpoint
 CREATE TABLE "platform_policy" (
 	"id" smallint PRIMARY KEY NOT NULL,
 	"projection_enabled" boolean DEFAULT true NOT NULL,
