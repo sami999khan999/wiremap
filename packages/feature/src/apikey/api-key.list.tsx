@@ -2,6 +2,7 @@ import { useCapabilities } from "../auth/index.js";
 import { useErrorMessage } from "../error/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
+  AlertDialog,
   type ApiKeyDto,
   ApiKeyEntity,
   ApiKeyMutations,
@@ -18,6 +19,7 @@ import {
   useApiClient,
   useAppQuery,
   useMemo,
+  useState,
 } from "../import.js";
 
 export interface ApiKeyListProps {
@@ -31,11 +33,14 @@ interface ApiKeyRow extends ApiKeyDto {
 
 export function ApiKeyList({ limit = 25 }: ApiKeyListProps) {
   const { t } = useMessages("apikey");
+  const shell = useMessages("common");
   const describe = useErrorMessage();
   const client = useApiClient();
   const capabilities = useCapabilities();
   const keys = useAppQuery(ApiKeyQueries.list(client, { limit, offset: 0 }));
   const revoke = ApiKeyMutations.useRevoke(client);
+  // The key being asked about, held while the question is open.
+  const [revoking, setRevoking] = useState<ApiKeyRow | null>(null);
 
   // One instant for the whole render pass: read per row, two of them disagree about
   // whether a key expiring this second is expired.
@@ -92,11 +97,7 @@ export function ApiKeyList({ limit = 25 }: ApiKeyListProps) {
                 <Button
                   variant="secondary"
                   disabled={revoke.isPending}
-                  onClick={() => {
-                    if (confirm(t("apikey.revoke.confirm", { name: row.name }))) {
-                      revoke.mutate({ apiKeyId: row.id });
-                    }
-                  }}
+                  onClick={() => setRevoking(row)}
                 >
                   {t("apikey.action.revoke")}
                 </Button>
@@ -119,6 +120,18 @@ export function ApiKeyList({ limit = 25 }: ApiKeyListProps) {
     <>
       {revoke.error ? <Callout tone="danger">{describe(revoke.error)?.message}</Callout> : null}
       <DataTable columns={columns} rows={rows} caption={t("apikey.title")} />
+      <AlertDialog
+        open={revoking !== null}
+        onOpenChange={(open) => {
+          if (!open) setRevoking(null);
+        }}
+        title={t("apikey.revoke.confirm", { name: revoking?.name ?? "" })}
+        confirmLabel={t("apikey.action.revoke")}
+        cancelLabel={shell.t("action.cancel")}
+        onConfirm={() => {
+          if (revoking) revoke.mutate({ apiKeyId: revoking.id });
+        }}
+      />
     </>
   );
 }

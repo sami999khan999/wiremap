@@ -31,6 +31,7 @@ export {
   type TableColumn,
   type TableRow,
 } from "./data-table/index.js";
+export { AlertDialog, type AlertDialogProps, Dialog, type DialogProps } from "./dialog/index.js";
 export { EmptyState, type EmptyStateProps } from "./empty-state/index.js";
 export { Field, type FieldProps, fieldClassName } from "./field/index.js";
 export { ByteFormat, DateFormat } from "./format/index.js";
@@ -72,3 +73,4 @@ export {
 export { ThemeScope, type ThemeScopeProps, usePortalContainer } from "./theme-scope/index.js";
 export { ThemeToggle, type ThemeToggleProps } from "./theme-toggle/index.js";
 export { Toc, type TocItem, type TocProps } from "./toc/index.js";
+export { Tooltip, type TooltipProps } from "./tooltip/index.js";

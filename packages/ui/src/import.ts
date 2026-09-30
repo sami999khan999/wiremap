@@ -3,11 +3,13 @@
 
 // ── @base-ui/react ───────────────────────────────────────────────────────────
 // Behaviour only: focus, keyboard, dismissal and ARIA. Every part is styled here.
+export { AlertDialog as BaseAlertDialog } from "@base-ui/react/alert-dialog";
 export { Dialog as BaseDialog } from "@base-ui/react/dialog";
 export { Popover as BasePopover } from "@base-ui/react/popover";
 export { Radio as BaseRadio } from "@base-ui/react/radio";
 export { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 export { Select as BaseSelect } from "@base-ui/react/select";
+export { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 // ── @loadbearing/asset ───────────────────────────────────────────────────────
 export { type IconName, IconRegistry } from "@loadbearing/asset";
 export { default as spriteUrl } from "@loadbearing/asset/sprite.svg";

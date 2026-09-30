@@ -102,6 +102,7 @@ export {
 
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────
 export {
+  AlertDialog,
   type BadgeTone,
   Button,
   ByteFormat,
