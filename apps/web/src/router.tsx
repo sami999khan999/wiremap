@@ -16,6 +16,7 @@ import {
 import { routeTree } from "./route-tree.gen.js";
 import { serverTransport } from "./server/rpc-transport.js";
 import { type AppearanceSnapshot, AppearanceStore } from "./store/appearance.store.js";
+import { ArticleHtmlStore } from "./store/article-html.store.js";
 import { type SessionSnapshot, SessionStore } from "./store/session.store.js";
 
 export interface RouterDehydrated {
@@ -78,7 +79,8 @@ export function getRouter() {
       messages: messages.dehydrate(),
       session: session.dehydrate(),
       appearance: appearance.dehydrate(),
-      queries: dehydrate(queryClient),
+      // Less each doc page's HTML, which the markup already carries: see article-html.store.
+      queries: ArticleHtmlStore.strip(dehydrate(queryClient)),
     }),
     hydrate: (payload: RouterDehydrated) => {
       messages.restore(payload.messages);

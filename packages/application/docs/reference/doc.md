@@ -214,8 +214,31 @@ process:
 | Search, p95 | 46 ms | 60 ms |
 | Render of the largest page | 792 ms | 563–1,201 ms, p95 7 ms |
 
-**Still open:** the article's HTML is sent twice, rendered and again in the hydration data, so the
-largest page's response is 674 KB for 292 KB of HTML. See `DS0.10` in the docs plan.
+**The numbers above were flattered.** Until 2026-10-02 the production build could not
+server-render any page that used Base UI, so most of the page was drawn in the browser. A
+CommonJS shim loaded a second React. Each request failed early and cheaply, and the body arrived
+empty. Nitro now traces `react` and `react-dom` (`apps/web/vite.config.ts`), so there is one
+React and every page renders on the server. Measured again on 2026-10-02, one production
+process, same busy machine:
+
+| Path | Req/s |
+|---|---|
+| A page in a small space | 224–239 |
+| A page in the 2,000-page space, 501 links in its sidebar | 18 → 39 |
+| Raw Markdown | 287 |
+
+Two fixes moved the large-sidebar figure:
+- **`DocLink` parsed every link's path as a UUID**, to spot manage routes. A failed `safeParse`
+  builds an error with a stack, which was half the render. It now parses only manage paths.
+- **Reader links are plain anchors.** One delegated listener (`useDocLinkNavigation`) routes a
+  click and preloads on hover or focus. A router `<Link>` builds a location while it renders.
+
+**The article's HTML is in the response once.** The hydration payload carries `html: ""` for a
+doc reading, and the browser reads the HTML back from the server's markup. That is
+`ArticleHtmlStore` in `apps/web`. It keeps what it read by page and revision, so going back to the
+page still has it. The largest page is 1.1 MB raw, mostly a sidebar repeating one set of class
+names, and 59 KB gzipped. The Node server does not compress; the proxy does
+(`docs/infra/deployment.md`).
 
 ## Two authors, one page
 

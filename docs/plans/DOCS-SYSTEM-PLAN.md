@@ -141,7 +141,7 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 - [-] `DS0.7` **Production-mode guard.** Dropped 2026-10-01. The web build bundles React's production build, and no code reads `NODE_ENV`, so it would guard nothing.
 - [x] `DS0.8` **One web process per core.** done: 2026-10-01, `apps/web/cluster.mjs`. It forwards SIGTERM, drains each worker, then disconnects it, and restarts a crashed one. Under the same load, `/docs` went from 66 to 183 req/s.
 - [x] `DS0.9` **`pnpm bench`.** done: 2026-10-01, `tooling/scripts/bench.mjs`.
-- [ ] `DS0.10` **The article HTML is sent twice**, rendered and in the hydration data: 674 KB for a 292 KB page. Fix it by keeping `page.html` out of the serialized loader data, without breaking hydration.
+- [x] `DS0.10` done: 2026-10-02. `ArticleHtmlStore` strips the HTML from dehydrated doc readings and reads it back from the DOM; `/docs` moved onto the query cache so both readers share it. Found on the way: production SSR was failing on two Reacts (fixed with Nitro `traceDeps`), and `DocLink`'s failing UUID parses were half the render. Numbers in `doc.md`. **The article HTML is sent twice**, rendered and in the hydration data: 674 KB for a 292 KB page. Fix it by keeping `page.html` out of the serialized loader data, without breaking hydration.
 
 **Exit.** `pnpm doc:bench` meets every budget in `DS0.2`. The numbers are written in `doc.md`.
 
@@ -283,8 +283,8 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 - [x] `DS7.1` done: 2026-10-02. Rows `DS0`–`DS6` in `TESTS.md`, with what was checked by hand and what is still owed. `docs/plans/TESTS.md` gets this plan's owed runs and hand checks.
 - [x] `DS7.2` done: 2026-10-02. One row in `back-ports.md`, status not added. `docs/scale/back-ports.md` gets a row: doc access links and the reader additions,
   owed to the big kit.
-- [ ] `DS7.0` **Re-run `pnpm doc:bench`** after every phase: no budget may regress.
-- [ ] `DS7.3` The full gate: typecheck, lint, every test, `check-architecture`, `check:contrast`,
+- [x] `DS7.0` done: 2026-10-02. Re-run against a production build after Phase 6: no query budget regressed (warm 0.06–0.12 queries a request). The req/s figures moved because SSR now really runs. **Re-run `pnpm doc:bench`** after every phase: no budget may regress.
+- [x] `DS7.3` done: 2026-10-02. Typecheck, lint, every suite, 31 assertions and 154 contrast pairings green locally; CI run 36935502932 green. The full gate: typecheck, lint, every test, `check-architecture`, `check:contrast`,
   then a push with CI green.
 
 ---

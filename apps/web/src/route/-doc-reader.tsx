@@ -11,9 +11,11 @@ import {
   type ThemeKey,
   ThemeRegistry,
   ThemeScope,
+  useMemo,
   useState,
 } from "~/import.js";
-import { DocLink } from "~/route/-doc-link.js";
+import { DocLink, useDocLinkNavigation } from "~/route/-doc-link.js";
+import { ArticleHtmlStore } from "~/store/article-html.store.js";
 
 export interface DocReaderRouteProps {
   readonly reading: DocReadingDto;
@@ -39,8 +41,12 @@ export function DocReaderRoute({
   loadNav,
 }: DocReaderRouteProps) {
   const navigate = useNavigate();
+  useDocLinkNavigation();
   const { appearance, appearanceSnapshot } = useRouteContext({ from: "__root__" });
   const [picked, setPicked] = useState<{ theme: ThemeKey; mode: ModeKey } | null>(null);
+
+  // The HTML the hydration payload left out, read back from the server's markup.
+  const article = useMemo(() => ArticleHtmlStore.resolve(reading), [reading]);
 
   const spaceTheme = reading.space.theme;
   const theme =
@@ -54,7 +60,7 @@ export function DocReaderRoute({
     // The reader's own theme, and the element its popovers and search palette portal into.
     <ThemeScope theme={theme} mode={mode}>
       <DocReaderPanel
-        reading={reading}
+        reading={article}
         spaces={spaces}
         root={root}
         renderLink={DocLink.render}
