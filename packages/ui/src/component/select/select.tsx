@@ -118,10 +118,14 @@ export function Select({
           );
         }}
       >
-        <BaseSelect.Value>
+        {
+          // A row, not the inline span Base UI renders by default, which stacks the icon
+          // tile above the label. The switcher shows the second line as the reference does.
+        }
+        <BaseSelect.Value className="ui-select__value flex min-w-0 items-center gap-2">
           {(current: string | null) => {
             const selected = options.find((option) => option.value === current);
-            return selected ? content(selected, false) : null;
+            return selected ? content(selected, variant === "menu") : null;
           }}
         </BaseSelect.Value>
         <BaseSelect.Icon className="ui-menu__chevron ml-auto flex shrink-0 text-fg-muted">

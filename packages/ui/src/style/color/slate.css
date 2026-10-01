@@ -8,7 +8,7 @@
 :root,
 [data-theme="slate"][data-mode="light"] {
   --bg: oklch(0.985 0.002 260); /* page */
-  --surface: oklch(1 0 0); /* cards, popovers, modals */
+  --surface: oklch(1 0 none); /* cards, popovers, modals */
   --muted: oklch(0.96 0.004 260); /* subtle fills, hover, inputs */
   --border: oklch(0.92 0.004 260);
   --fg: oklch(0.21 0.01 260); /* primary text */
@@ -16,7 +16,7 @@
      that pairing is 4.32:1 -- under AA. The two are indistinguishable side by side. */
   --fg-muted: oklch(0.535 0.012 260); /* secondary text, placeholders */
   --primary: oklch(0.55 0.19 260);
-  --primary-fg: oklch(0.99 0 0);
+  --primary-fg: oklch(0.99 0 none);
   --success: oklch(0.6 0.14 155);
   /* 0.145 rather than 0.160: at this lightness amber runs out of sRGB at 0.148, and a
      chroma the display cannot reach is one the browser silently clips. */

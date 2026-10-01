@@ -1,7 +1,7 @@
 import { cn } from "../../class-name/index.js";
 import { BasePopover, type ReactNode } from "../../import.js";
 import { usePortalContainer } from "../../theme/index.js";
-import { buttonClassName } from "../button/index.js";
+import { type ButtonVariant, buttonClassName } from "../button/index.js";
 
 export type PopoverAlign = "start" | "end";
 
@@ -16,19 +16,28 @@ export interface PopoverProps {
   // Which edge the panel lines up with. `end` is the right one for anything in a header
   // bar, which is where the first caller is.
   readonly align?: PopoverAlign;
+  // `ghost` for an icon in a bar; `secondary` beside other bordered buttons in a row.
+  readonly variant?: ButtonVariant;
   readonly className?: string;
 }
 
 // A panel anchored to the control that opened it, closing on Escape, on a press outside
 // and on the trigger, on Base UI. See docs/reference/popover.md for what it is not.
-export function Popover({ label, trigger, children, align = "end", className }: PopoverProps) {
+export function Popover({
+  label,
+  trigger,
+  children,
+  align = "end",
+  variant = "ghost",
+  className,
+}: PopoverProps) {
   const container = usePortalContainer();
 
   return (
     <BasePopover.Root>
       <span className={cn("ui-popover inline-flex", className)}>
         <BasePopover.Trigger
-          className={buttonClassName("ghost", "ui-popover__trigger")}
+          className={buttonClassName(variant, "ui-popover__trigger")}
           aria-label={label}
         >
           {trigger}

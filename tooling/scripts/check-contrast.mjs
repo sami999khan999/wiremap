@@ -98,15 +98,20 @@ function ratio(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// `oklch(0.985 0.002 260)` and `oklch(1 0 0)`. Nothing else is accepted, and that is the
+// `oklch(0.985 0.002 260)` and `oklch(1 0 none)`. Nothing else is accepted, and that is the
 // point: a hex or an rgb() slipping into a theme file is a colour this script cannot
-// reason about, so it has to be a failure rather than a skip.
-const OKLCH = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)$/;
+// reason about, so it has to be a failure rather than a skip. A grey's hue is `none`: `0`
+// is a real hue (red), and `color-mix(in oklch)` turns a tint toward it.
+const OKLCH = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+|none)\s*\)$/;
 
 function parseColor(value) {
   const match = OKLCH.exec(value.trim());
   if (match === null) return null;
-  return { l: Number(match[1]), c: Number(match[2]), h: Number(match[3]) };
+  return {
+    l: Number(match[1]),
+    c: Number(match[2]),
+    h: match[3] === "none" ? 0 : Number(match[3]),
+  };
 }
 
 // One entry per selector block, because a theme declares one per mode and the two are

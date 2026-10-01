@@ -21,6 +21,14 @@ describe("Prose", () => {
     expect(container.querySelectorAll(".ui-code-block > pre")).toHaveLength(1);
   });
 
+  // A parent re-rendering with the same HTML, such as on a theme switch, keeps the buttons.
+  it("keeps its enhancements when the parent renders again with the same HTML", async () => {
+    const view = render(<Prose html={HTML} copyLabel="Copy" copiedLabel="Copied" className="a" />);
+    await screen.findByRole("button", { name: "Copy" });
+    view.rerender(<Prose html={HTML} copyLabel="Copy" copiedLabel="Copied" className="b" />);
+    expect(screen.getAllByRole("button", { name: "Copy" })).toHaveLength(1);
+  });
+
   it("copies the block's text, not the button's", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", { clipboard: { writeText } });

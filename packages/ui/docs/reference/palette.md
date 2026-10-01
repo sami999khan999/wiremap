@@ -63,6 +63,15 @@ clip lands somewhere nobody chose.
 channel leaves `[0, 1]`. That check caught three colours on the first run, including one in the
 original hand-written palette.
 
+## A grey's hue is `none`
+
+**Write a colour with no chroma as `oklch(1 0 none)`, never `oklch(1 0 0)`.** Both draw the same
+white. But `0` is a real hue, red, and `color-mix(in oklch, …)` interpolates hue. So a tint over a
+`0`-hue surface is pulled toward red: a success callout at 10% green over white came out pink in
+every light theme. `none` tells the mix there is no hue to blend, so the tint keeps the other
+colour's hue. `check-contrast.mjs` accepts `none` and reads it as `0`, which is correct for
+contrast because chroma is zero.
+
 ## Contrast is checked, not reviewed
 
 `pnpm check:contrast` runs in CI after `check:architecture` and asserts WCAG AA over every pairing

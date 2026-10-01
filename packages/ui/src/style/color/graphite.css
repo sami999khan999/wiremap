@@ -6,13 +6,13 @@
 
 [data-theme="graphite"][data-mode="light"] {
   --bg: oklch(0.99 0.002 85);
-  --surface: oklch(1 0 0);
+  --surface: oklch(1 0 none);
   --muted: oklch(0.965 0.004 85);
   --border: oklch(0.92 0.005 85);
   --fg: oklch(0.2 0.006 85);
   --fg-muted: oklch(0.52 0.012 85);
   --primary: oklch(0.52 0.11 70);
-  --primary-fg: oklch(0.99 0 0);
+  --primary-fg: oklch(0.99 0 none);
   --success: oklch(0.6 0.14 155);
   --warning: oklch(0.7 0.145 75);
   --danger: oklch(0.56 0.21 27);

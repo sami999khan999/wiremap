@@ -14,6 +14,10 @@ description: A panel anchored to the control that opened it, on Base UI — what
 One string names both the button and the panel, because a popover whose control and dialog are
 named differently reads as two things to anyone who cannot see that they are one.
 
+The trigger is a `ghost` button by default, right for an icon in a bar. Pass
+`variant="secondary"` when it sits in a row of bordered buttons, as the doc reader's Open menu does
+beside Copy Markdown.
+
 It is Base UI's `Popover` with the kit's styles. Base UI owns the parts that are easy to get
 subtly wrong: Escape, dismissal on a press outside, focus in and back out, and `aria-expanded`
 and `aria-controls` on the trigger. The props did not change when it moved.

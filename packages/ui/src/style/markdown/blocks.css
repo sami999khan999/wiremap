@@ -41,6 +41,7 @@
   border-bottom: var(--border-width) solid var(--border);
   background: var(--muted);
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .ui-tabs__tab {
@@ -76,12 +77,22 @@
   margin-bottom: 0;
 }
 
-/* Each `###` inside is a step, numbered down a rail. */
+/* Each `###` inside is a step, numbered down a rail. The rail and numbers sit inside the
+   block's own box: `.ui-prose > *` contains paint, so anything hung outside it is cut off. */
 .ui-steps {
+  position: relative;
   margin: var(--space-6) 0;
-  padding-left: var(--space-10);
-  border-left: var(--border-width) solid var(--border);
+  padding-left: var(--space-12);
   counter-reset: ui-step;
+}
+
+.ui-steps::before {
+  content: "";
+  position: absolute;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  left: calc(var(--space-4) - var(--border-width) / 2);
+  border-left: var(--border-width) solid var(--border);
 }
 
 .ui-prose .ui-steps h3 {
@@ -92,17 +103,20 @@
 .ui-prose .ui-steps h3::before {
   content: counter(ui-step);
   position: absolute;
-  left: calc(-1 * var(--space-10) - var(--space-4) - var(--border-width) / 2);
+  top: 50%;
+  left: calc(-1 * var(--space-12));
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--space-8);
   height: var(--space-8);
+  transform: translateY(-50%);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-full);
   background: var(--muted);
   color: var(--fg);
   font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
 }
 
 .ui-accordion {

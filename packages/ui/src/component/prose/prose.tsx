@@ -4,6 +4,7 @@ import {
   type MouseEvent,
   spriteUrl,
   useEffect,
+  useMemo,
   useRef,
 } from "../../import.js";
 
@@ -23,6 +24,9 @@ const CONFIRM_MS = 1_500;
 // them served by one handler on the container rather than a listener per button.
 export function Prose({ html, copyLabel, copiedLabel, className }: ProseProps) {
   const root = useRef<HTMLDivElement>(null);
+  // One object per `html`: React rewrites the subtree whenever this object changes, which
+  // undid every enhancement below on any re-render of the parent, such as a theme switch.
+  const inner = useMemo(() => ({ __html: html }), [html]);
 
   // Rerun on a new `html`: React replaces the whole subtree then, buttons included. After
   // the first paint, while the browser is idle: a long page has hundreds of code blocks.
@@ -85,7 +89,7 @@ export function Prose({ html, copyLabel, copiedLabel, className }: ProseProps) {
       className={["ui-prose", className].filter(Boolean).join(" ")}
       onClick={onClick}
       onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => Tabs.key(event)}
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={inner}
     />
   );
 }
