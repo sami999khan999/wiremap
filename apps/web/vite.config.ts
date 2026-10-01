@@ -120,7 +120,13 @@ export default defineConfig(({ command }) => {
       // routes under `src/route/api/`, so nothing here depends on Nitro's own file
       // scanning, and swapping this line for the Cloudflare or Netlify plugin changes the
       // host and nothing else.
-      nitro(),
+      //
+      // `traceDeps` keeps one React. Base UI reaches `useSyncExternalStore` through a CJS
+      // shim whose `require("react")` the bundler cannot rewrite, so it loaded the copy in
+      // `node_modules` while the renderer used the one bundled into `_libs/`. Every page
+      // then failed to server-render and was drawn in the browser instead. Traced, both are
+      // the same file, copied into `.output/server/node_modules`.
+      nitro({ traceDeps: ["react", "react-dom"] }),
       viteReact(),
     ],
   };
