@@ -1,5 +1,13 @@
 {
   "title": "Plans",
   "description": "Live plans for the lite kit",
-  "pages": ["index", "HANDOFF", "LITE-KIT-PLAN", "UI-KIT-PLAN", "TESTS", "BACKLOG"]
+  "pages": [
+    "index",
+    "HANDOFF",
+    "LITE-KIT-PLAN",
+    "UI-KIT-PLAN",
+    "DOCS-SYSTEM-PLAN",
+    "TESTS",
+    "BACKLOG"
+  ]
 }
