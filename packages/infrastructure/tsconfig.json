@@ -16,6 +16,7 @@
     "platform-grant.ts",
     "queue-replay.ts",
     "ai-reindex.ts",
+    "doc-bench.ts",
     "seed.ts",
     "shard-env.ts"
   ]

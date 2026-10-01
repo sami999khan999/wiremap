@@ -30,7 +30,8 @@
     "queue:replay": "tsx --env-file-if-exists=../../.env queue-replay.ts",
     "ai:reindex": "tsx --env-file-if-exists=../../.env ai-reindex.ts",
     "db:seed": "tsx --env-file-if-exists=../../.env seed.ts",
-    "smoke": "vitest run -c vitest.smoke.config.ts"
+    "smoke": "vitest run -c vitest.smoke.config.ts",
+    "doc:bench": "tsx --env-file-if-exists=../../.env doc-bench.ts"
   },
   "devDependencies": {
     "@loadbearing/tsconfig": "workspace:*",

@@ -160,6 +160,25 @@ export class DocRules {
     return null;
   }
 
+  // What a page read carries: every section's pages, and the children of the pages above
+  // the one being read. Every other page's children are folded and fetched with the tree.
+  public static trimNav(
+    nav: readonly DocNavNodeDto[],
+    activeId: DocPageId | null,
+  ): DocNavNodeDto[] {
+    return nav.map((node): DocNavNodeDto => {
+      if (node.children.length === 0) return node;
+      if (node.kind === "section" || (activeId !== null && DocRules.holds(node, activeId))) {
+        return { ...node, children: DocRules.trimNav(node.children, activeId) };
+      }
+      return { ...node, children: [], folded: true };
+    });
+  }
+
+  private static holds(node: DocNavNodeDto, pageId: DocPageId): boolean {
+    return node.children.some((child) => child.id === pageId || DocRules.holds(child, pageId));
+  }
+
   // A page by id, for turning a search match back into the path a reader opens.
   public static locate(nav: readonly DocNavNodeDto[], pageId: DocPageId): DocNavNodeDto | null {
     for (const node of nav) {

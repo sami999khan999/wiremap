@@ -9,6 +9,7 @@ import {
 import type { PlatformReader } from "../platform/index.js";
 import type { ActivityLogger, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
+import type { DocCache } from "./doc.cache.js";
 import { DocRules } from "./doc.rules.js";
 import { DocShape } from "./doc-shape.js";
 import type { DocSpaceRepository } from "./doc-space.repository.js";
@@ -18,6 +19,7 @@ export class CreateDocSpaceUseCase {
     private readonly authorizer: Authorizer,
     private readonly spaces: DocSpaceRepository,
     private readonly platform: PlatformReader,
+    private readonly cache: DocCache,
     private readonly activity: ActivityLogger,
     private readonly unitOfWork: UnitOfWork,
   ) {}
@@ -38,6 +40,7 @@ export class CreateDocSpaceUseCase {
     });
 
     if (!space) throw new NotFoundError("doc.space", id);
+    await this.cache.forget(actor.organizationId, input.slug);
     return DocShape.space(space);
   }
 }

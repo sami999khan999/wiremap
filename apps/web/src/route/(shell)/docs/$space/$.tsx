@@ -1,6 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import {
   type ClientNamespace,
+  type DocNavNodeDto,
   DocNavTree,
   useCapabilities,
   useIsPlatformOrganization,
@@ -68,6 +69,14 @@ function PublicDocPage() {
         searchPlatformDocs({ data: { query, limit: 10 } }).then((items) =>
           DocNavTree.hits(items, "/docs"),
         )
+      }
+      // A plain GET with the version in the URL, so a browser and a CDN keep it for good.
+      loadNav={() =>
+        fetch(`/api/doc-nav/${reading.space.slug}?v=${reading.space.version}`)
+          .then((response) =>
+            response.ok ? response.json() : Promise.reject(new Error(String(response.status))),
+          )
+          .then((tree: { nav: readonly DocNavNodeDto[] }) => tree.nav)
       }
     />
   );

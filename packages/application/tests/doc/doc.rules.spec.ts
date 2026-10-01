@@ -172,3 +172,45 @@ describe("DocRules", () => {
     expect(() => DocRules.assertSpaceSlug("guides")).not.toThrow();
   });
 });
+
+describe("DocRules.trimNav", () => {
+  const leaf = (n: number, path: string) => ({
+    id: id(n),
+    kind: "page" as const,
+    title: path,
+    icon: null,
+    path,
+    url: null,
+    revisionNo: 1,
+    children: [],
+  });
+  const tree = [
+    {
+      id: id(1),
+      kind: "section" as const,
+      title: "Guides",
+      icon: null,
+      path: null,
+      url: null,
+      revisionNo: null,
+      children: [
+        { ...leaf(2, "a"), children: [{ ...leaf(3, "a/b"), children: [leaf(4, "a/b/c")] }] },
+        { ...leaf(5, "d"), children: [leaf(6, "d/e")] },
+      ],
+    },
+  ];
+
+  // A section's pages are always drawn, so they stay; only closed branches fold.
+  it("keeps sections and the reader's own branch, and folds every other branch", () => {
+    const [section] = DocRules.trimNav(tree, id(4));
+    const [a, d] = section?.children ?? [];
+    expect(a?.children[0]?.children.map((node) => node.id)).toEqual([id(4)]);
+    expect(d?.children).toEqual([]);
+    expect(d?.folded).toBe(true);
+  });
+
+  it("folds every branch below the sections when no page is open", () => {
+    const [section] = DocRules.trimNav(tree, null);
+    expect(section?.children.every((node) => node.folded === true)).toBe(true);
+  });
+});

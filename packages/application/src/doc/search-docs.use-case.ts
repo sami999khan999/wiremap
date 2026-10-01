@@ -1,14 +1,14 @@
 import type { DocSearchHitsDto, SearchDocsInput } from "../import.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
+import type { DocCache } from "./doc.cache.js";
 import { DocRules } from "./doc.rules.js";
 import type { DocSearch } from "./doc-search.js";
-import type { DocSpaceRepository } from "./doc-space.repository.js";
 
 // The Ctrl K palette's full-text half, over the actor's own organization's docs.
 export class SearchDocsUseCase {
   public constructor(
     private readonly authorizer: Authorizer,
-    private readonly spaces: DocSpaceRepository,
+    private readonly spaces: DocCache,
     private readonly search: DocSearch,
   ) {}
 

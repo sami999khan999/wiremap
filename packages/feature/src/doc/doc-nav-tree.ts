@@ -13,6 +13,11 @@ export class DocNavTree {
   private constructor() {}
 
   // `base` is the space's own root — `/doc/guides` or `/docs/guides`.
+  // Whether a page read left any branch out, which is when the full tree is worth fetching.
+  public static isFolded(nav: readonly DocNavNodeDto[]): boolean {
+    return nav.some((node) => node.folded === true || DocNavTree.isFolded(node.children));
+  }
+
   public static toNodes(nav: readonly DocNavNodeDto[], base: string): NavTreeNode[] {
     return nav.map((node): NavTreeNode => {
       const icon = DocNavTree.icon(node.icon);

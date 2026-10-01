@@ -50,8 +50,10 @@ export {
 } from "./open-doc-image.use-case.js";
 export { PreviewDocPageUseCase } from "./preview-doc-page.use-case.js";
 export { PublishDocPageUseCase } from "./publish-doc-page.use-case.js";
+export { ReadDocNavUseCase } from "./read-doc-nav.use-case.js";
 export { ReadDocPageUseCase } from "./read-doc-page.use-case.js";
 export { ReadPlatformDocUseCase } from "./read-platform-doc.use-case.js";
+export { ReadPlatformDocNavUseCase } from "./read-platform-doc-nav.use-case.js";
 export { RestoreDocRevisionUseCase } from "./restore-doc-revision.use-case.js";
 export { RevokeDocGrantUseCase } from "./revoke-doc-grant.use-case.js";
 export { SaveDocGrantUseCase } from "./save-doc-grant.use-case.js";

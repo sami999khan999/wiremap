@@ -57,6 +57,14 @@ export class DocSpaceContract {
 
   public static readonly list = z.object({ items: z.array(entity).readonly() });
 
+  // A space's whole published tree, asked for by slug. `version` is the space's, so a
+  // reader can cache the answer until the next publish, move or delete.
+  public static readonly navQuery = z.object({ slug });
+  public static readonly nav = z.object({
+    version: z.number().int().nonnegative(),
+    nav: z.array(DocNav.node).readonly(),
+  });
+
   public static readonly get = z.object({ spaceId: Identifiers.docSpaceId });
 
   public static readonly create = create;
@@ -72,5 +80,7 @@ export type DocSpaceDto = z.infer<typeof DocSpaceContract.entity>;
 export type DocSpaceViewDto = z.infer<typeof DocSpaceContract.view>;
 export type DocSpaceListDto = z.infer<typeof DocSpaceContract.list>;
 export type DocSpaceRefInput = z.infer<typeof DocSpaceContract.get>;
+export type DocSpaceNavInput = z.infer<typeof DocSpaceContract.navQuery>;
+export type DocSpaceNavDto = z.infer<typeof DocSpaceContract.nav>;
 export type CreateDocSpaceInput = z.infer<typeof DocSpaceContract.create>;
 export type UpdateDocSpaceInput = z.infer<typeof DocSpaceContract.update>;

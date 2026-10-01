@@ -10,6 +10,7 @@ import type {
   DocSpaceDto,
   DocSpaceId,
   DocSpaceListDto,
+  DocSpaceNavDto,
 } from "../import.js";
 import { queryOptions } from "../import.js";
 import { QueryKeys } from "../key/index.js";
@@ -32,6 +33,16 @@ export class DocQueries {
       queryKey: QueryKeys.doc.reading(space, path),
       queryFn: (): Promise<DocReadingDto> => client.docPage.read({ space, path }),
       staleTime: 30_000,
+    });
+  }
+
+  // Keyed by the space's version, so it never goes stale: a publish is a new version and
+  // therefore a new key, and an old one is simply never asked for again.
+  public static nav(client: ApiClient, space: string, version: number) {
+    return queryOptions({
+      queryKey: QueryKeys.doc.nav(space, version),
+      queryFn: (): Promise<DocSpaceNavDto> => client.docSpace.nav({ slug: space }),
+      staleTime: Number.POSITIVE_INFINITY,
     });
   }
 

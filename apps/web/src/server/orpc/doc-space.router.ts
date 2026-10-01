@@ -12,6 +12,10 @@ export class DocSpaceRouter {
     context.container.doc.getSpace.execute(context.principal, input),
   );
 
+  public static readonly nav = authed.docSpace.nav.handler(({ input, context }) =>
+    context.container.doc.readNav.execute(context.principal, input),
+  );
+
   public static readonly create = authed.docSpace.create.handler(({ input, context }) =>
     context.container.doc.createSpace.execute(context.principal, input),
   );
@@ -28,6 +32,7 @@ export class DocSpaceRouter {
   public static readonly all = {
     list: DocSpaceRouter.list,
     get: DocSpaceRouter.get,
+    nav: DocSpaceRouter.nav,
     create: DocSpaceRouter.create,
     update: DocSpaceRouter.update,
     remove: DocSpaceRouter.remove,

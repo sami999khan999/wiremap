@@ -2,6 +2,7 @@ import { type DocReadingDto, NotFoundError, type ReadDocPageInput } from "../imp
 import type { PlatformReader } from "../platform/index.js";
 import type { Principal } from "../primitive/index.js";
 import type { DocCache } from "./doc.cache.js";
+import { DocRules } from "./doc.rules.js";
 import type { DocAccess } from "./doc-access.js";
 import { DocShape } from "./doc-shape.js";
 
@@ -28,6 +29,8 @@ export class ReadPlatformDocUseCase {
     }
 
     const { page } = await this.cache.readIn(space, input.path);
-    return { space: { ...DocShape.space(space), nav: space.nav }, page };
+    // Trimmed: a large space's whole tree in every page read is what made one slow.
+    const nav = DocRules.trimNav(space.nav, page?.id ?? null);
+    return { space: { ...DocShape.space(space), nav }, page };
   }
 }

@@ -17,25 +17,35 @@ const CONFIRM_MS = 1_500;
 export function Prose({ html, copyLabel, copiedLabel, className }: ProseProps) {
   const root = useRef<HTMLDivElement>(null);
 
-  // Rerun on a new `html`: React replaces the whole subtree then, buttons included.
+  // Rerun on a new `html`: React replaces the whole subtree then, buttons included. After
+  // the first paint, while the browser is idle: a long page has hundreds of code blocks.
   useEffect(() => {
     const container = root.current;
     if (!container) return;
 
-    for (const pre of container.querySelectorAll("pre")) {
-      if (pre.parentElement?.classList.contains("ui-code-block")) continue;
+    const wire = () => {
+      for (const pre of container.querySelectorAll("pre")) {
+        if (pre.parentElement?.classList.contains("ui-code-block")) continue;
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "ui-code-block";
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "ui-code-block__copy";
-      button.dataset.copy = "";
-      button.textContent = copyLabel;
+        const wrapper = document.createElement("div");
+        wrapper.className = "ui-code-block";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "ui-code-block__copy";
+        button.dataset.copy = "";
+        button.textContent = copyLabel;
 
-      pre.replaceWith(wrapper);
-      wrapper.append(button, pre);
+        pre.replaceWith(wrapper);
+        wrapper.append(button, pre);
+      }
+    };
+
+    if ("requestIdleCallback" in globalThis) {
+      const handle = globalThis.requestIdleCallback(wire, { timeout: 1_000 });
+      return () => globalThis.cancelIdleCallback(handle);
     }
+    const handle = setTimeout(wire, 0);
+    return () => clearTimeout(handle);
   }, [html, copyLabel]);
 
   const onClick = (event: MouseEvent<HTMLDivElement>) => {

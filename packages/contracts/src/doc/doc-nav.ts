@@ -20,6 +20,9 @@ export interface DocNavNodeDto {
   // The published revision, so a reader resolves the page's cache key from the tree alone.
   readonly revisionNo: number | null;
   readonly children: readonly DocNavNodeDto[];
+  // True when `children` was left out of a page read to keep it small. The full tree comes
+  // from `docSpace.nav`, once per space version.
+  readonly folded?: boolean;
 }
 
 const node: z.ZodType<DocNavNodeDto> = z.lazy(() =>
@@ -32,6 +35,7 @@ const node: z.ZodType<DocNavNodeDto> = z.lazy(() =>
     url: z.string().nullable(),
     revisionNo: z.number().int().positive().nullable(),
     children: z.array(node).readonly(),
+    folded: z.boolean().optional(),
   }),
 );
 

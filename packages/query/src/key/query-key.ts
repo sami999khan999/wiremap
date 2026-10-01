@@ -28,6 +28,7 @@ export class QueryKeys {
     space: (spaceId: string) => ["doc", "space", spaceId] as const,
     readings: () => ["doc", "read"] as const,
     reading: (space: string, path: string) => ["doc", "read", space, path] as const,
+    nav: (space: string, version: number) => ["doc", "nav", space, version] as const,
     trees: () => ["doc", "tree"] as const,
     tree: (spaceId: string) => ["doc", "tree", spaceId] as const,
     page: (pageId: string) => ["doc", "page", pageId] as const,

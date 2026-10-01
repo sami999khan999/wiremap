@@ -208,7 +208,7 @@ const ENV_EXEMPT = [
   // The production entry that forks the web workers: it sizes the pool before any app
   // code, and so before `env.ts`, has run.
   /^apps\/web\/cluster\.mjs$/,
-  /^packages\/infrastructure\/(ai-reindex|migrate|partitions|platform-grant|queue-replay|seed|shard-env|smoke)\.ts$/,
+  /^packages\/infrastructure\/(ai-reindex|doc-bench|migrate|partitions|platform-grant|queue-replay|seed|shard-env|smoke)\.ts$/,
 ];
 
 assert("only `env.ts` reads `process.env`", (failures) => {

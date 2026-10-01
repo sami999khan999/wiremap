@@ -124,9 +124,41 @@ tree alone:
 |---|---|---|
 | `doc:space:<org>:<slug>` | the space and its tree | 60 s, deleted after each commit that changes it |
 | `doc:page:<org>:<page>:<revision>` | a published page | one day; never stale, since a new revision is a new key |
+| `doc:spaces:<org>` | every space in the organization, without trees | 60 s, deleted with any space |
 
 **A warm page is zero queries, and a cold one is two.** Cache delete after commit, never inside
 the transaction: a reader between the delete and the commit would put the old row straight back.
+The platform organization is remembered for the life of the process, so the public reader asks
+for it once, not four times a page.
+
+## A large space costs a page read nothing extra
+
+**A page read carries the tree trimmed.** `DocRules.trimNav` keeps every section's pages and the
+children of the pages above the one being read. Every other branch is `folded: true` with no
+children. The reader fetches the whole tree once the page is up:
+- from `docSpace.nav` in an organization's docs;
+- from `/api/doc-nav/<space>?v=<version>` for the platform's.
+
+The version is in the request, so the answer never changes. The public URL is served
+`immutable` to anyone not signed in, and the browser and a CDN keep it. The sidebar renders only
+open branches, and an article lays out only the sections near the viewport.
+
+`pnpm doc:bench` measures it: a public 2,000-page space whose 20 largest pages sit at the
+200,000-character cap. It reports queries per request from `pg_stat_statements`. On 2026-10-01,
+on the development machine under heavy outside load (load average 11–15 on 4 cores), one web
+process:
+
+| Path | Before | After |
+|---|---|---|
+| Page read, warm | 28 req/s, 5 queries | 59 req/s, **0 queries** |
+| Page read, cold | 28 req/s, 6.2 queries | 54 req/s, 0.9 queries |
+| Page HTML, 2,000-page space | 347 KB | 97 KB |
+| Full tree, fetched once per version | in every page | 328 KB, 48 KB gzipped, `immutable` |
+| Search, p95 | 46 ms | 60 ms |
+| Render of the largest page | 792 ms | 563–1,201 ms, p95 7 ms |
+
+**Still open:** the article's HTML is sent twice, rendered and again in the hydration data, so the
+largest page's response is 674 KB for 292 KB of HTML. See `DS0.10` in the docs plan.
 
 ## Two authors, one page
 

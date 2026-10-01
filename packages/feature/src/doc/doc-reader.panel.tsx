@@ -2,6 +2,7 @@ import { useMessages } from "../i18n/index.js";
 import {
   Button,
   DateFormat,
+  type DocNavNodeDto,
   type DocReadingDto,
   type DocSpaceDto,
   EmptyState,
@@ -41,6 +42,50 @@ export interface DocReaderPanelProps {
   readonly editHref?: string | null;
   readonly markdownHref?: string | null;
   readonly search?: (query: string) => Promise<readonly DocSearchHit[]>;
+  // The space's whole tree. A page read carries it trimmed, so a large space costs every
+  // page nothing; this fills in the folded branches once the page is up.
+  readonly loadNav?: () => Promise<readonly DocNavNodeDto[]>;
+}
+
+// Fetches the full tree once the browser is idle, only when the read was trimmed, and once
+// per space version: the same version is the same tree.
+function useFullNav(
+  nav: readonly DocNavNodeDto[],
+  slug: string,
+  version: number,
+  loadNav: (() => Promise<readonly DocNavNodeDto[]>) | undefined,
+): readonly DocNavNodeDto[] | null {
+  const [full, setFull] = useState<{ key: string; nav: readonly DocNavNodeDto[] } | null>(null);
+  const key = `${slug}@${version}`;
+  const folded = useMemo(() => DocNavTree.isFolded(nav), [nav]);
+
+  useEffect(() => {
+    if (!loadNav || !folded || full?.key === key) return;
+    let live = true;
+    const start = () => {
+      loadNav()
+        .then((tree) => {
+          if (live) setFull({ key, nav: tree });
+        })
+        // A tree that did not arrive leaves the trimmed one, which still reads correctly.
+        .catch(() => {});
+    };
+    // Safari has no idle callback; a short timeout is the same "after the first paint".
+    if ("requestIdleCallback" in globalThis) {
+      const handle = globalThis.requestIdleCallback(start, { timeout: 2_000 });
+      return () => {
+        live = false;
+        globalThis.cancelIdleCallback(handle);
+      };
+    }
+    const handle = setTimeout(start, 200);
+    return () => {
+      live = false;
+      clearTimeout(handle);
+    };
+  }, [loadNav, folded, full?.key, key]);
+
+  return full?.key === key ? full.nav : null;
 }
 
 // The whole reading screen: navigation, the page, its outline. The shell supplies links
@@ -56,11 +101,14 @@ export function DocReaderPanel({
   editHref = null,
   markdownHref = null,
   search,
+  loadNav,
 }: DocReaderPanelProps) {
   const { t } = useMessages("doc");
   const { space, page } = reading;
   const base = `${root}/${space.slug}`;
-  const nodes = useMemo(() => DocNavTree.toNodes(space.nav, base), [space.nav, base]);
+  const full = useFullNav(space.nav, space.slug, space.version, loadNav);
+  const nav = full ?? space.nav;
+  const nodes = useMemo(() => DocNavTree.toNodes(nav, base), [nav, base]);
   const [open, setOpen] = useState(false);
 
   // A drawer left open over the page just navigated to would hide the page asked for.
@@ -79,7 +127,7 @@ export function DocReaderPanel({
         <>
           {brand}
           <DocSearchPanel
-            nav={space.nav}
+            nav={nav}
             base={base}
             renderLink={renderLink}
             {...(search ? { search } : {})}

@@ -48,6 +48,8 @@
     "platform:grant": "pnpm --filter @loadbearing/infrastructure run platform:grant",
     "queue:replay": "pnpm --filter @loadbearing/infrastructure run queue:replay",
     "ai:reindex": "pnpm --filter @loadbearing/infrastructure run ai:reindex",
+    "bench": "node tooling/scripts/bench.mjs",
+    "doc:bench": "pnpm --filter @loadbearing/infrastructure run doc:bench",
     "auth:tables": "pnpm --filter @loadbearing/auth run auth:tables",
     "smoke": "pnpm --filter @loadbearing/infrastructure run smoke",
     "smoke:web": "pnpm --filter @loadbearing/web run smoke",

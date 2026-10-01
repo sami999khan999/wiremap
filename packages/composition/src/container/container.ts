@@ -141,7 +141,9 @@ import {
   QueueDocumentIndexUseCase,
   type QueuePublisher,
   type RateLimitStore,
+  ReadDocNavUseCase,
   ReadDocPageUseCase,
+  ReadPlatformDocNavUseCase,
   ReadPlatformDocUseCase,
   type RealtimePublisher,
   type RealtimeSubscriber,
@@ -452,6 +454,7 @@ export class Container {
     readonly updateSpace: UpdateDocSpaceUseCase;
     readonly deleteSpace: DeleteDocSpaceUseCase;
     readonly read: ReadDocPageUseCase;
+    readonly readNav: ReadDocNavUseCase;
     readonly tree: ListDocPagesUseCase;
     readonly getPage: GetDocPageUseCase;
     readonly createPage: CreateDocPageUseCase;
@@ -466,6 +469,7 @@ export class Container {
     // The platform's public and granted spaces. No principal required, so the caller
     // places them with `placedAt`, at the platform organization's node.
     readonly readPlatform: ReadPlatformDocUseCase;
+    readonly readPlatformNav: ReadPlatformDocNavUseCase;
     readonly listPlatformSpaces: ListPlatformDocSpacesUseCase;
     readonly listGrants: ListDocGrantsUseCase;
     readonly saveGrant: SaveDocGrantUseCase;
@@ -1461,9 +1465,16 @@ export class Container {
 
     return {
       cache,
-      listSpaces: new ListDocSpacesUseCase(auth, spaces),
+      listSpaces: new ListDocSpacesUseCase(auth, cache),
       getSpace: new GetDocSpaceUseCase(auth, spaces),
-      createSpace: new CreateDocSpaceUseCase(auth, spaces, this.platform, this.activity, uow),
+      createSpace: new CreateDocSpaceUseCase(
+        auth,
+        spaces,
+        this.platform,
+        cache,
+        this.activity,
+        uow,
+      ),
       updateSpace: new UpdateDocSpaceUseCase(
         auth,
         spaces,
@@ -1484,6 +1495,7 @@ export class Container {
         images,
       ),
       read: new ReadDocPageUseCase(auth, cache),
+      readNav: new ReadDocNavUseCase(auth, cache),
       tree: new ListDocPagesUseCase(auth, spaces, pages),
       getPage: new GetDocPageUseCase(auth, pages, spaces),
       createPage: new CreateDocPageUseCase(auth, spaces, pages, tree, cache, this.activity, uow),
@@ -1505,7 +1517,8 @@ export class Container {
       revision: new GetDocRevisionUseCase(auth, pages, spaces),
       restoreRevision: new RestoreDocRevisionUseCase(auth, pages, spaces, this.activity, uow),
       readPlatform: new ReadPlatformDocUseCase(this.platform, cache, access),
-      listPlatformSpaces: new ListPlatformDocSpacesUseCase(this.platform, spaces, access),
+      readPlatformNav: new ReadPlatformDocNavUseCase(this.platform, cache, access),
+      listPlatformSpaces: new ListPlatformDocSpacesUseCase(this.platform, cache, access),
       listGrants: new ListDocGrantsUseCase(auth, grants),
       // The catalog unit of work: a grant is a catalog row, and its audit row is written
       // in whichever transaction is open.
@@ -1519,10 +1532,10 @@ export class Container {
         this.catalogUnitOfWork,
         this.clock,
       ),
-      search: new SearchDocsUseCase(auth, spaces, search),
+      search: new SearchDocsUseCase(auth, cache, search),
       uploadImage: new UploadDocImageUseCase(auth, spaces, this.storage),
       openImage: new OpenDocImageUseCase(this.platform, spaces, access, this.storage),
-      searchPlatform: new SearchPlatformDocsUseCase(this.platform, spaces, access, search),
+      searchPlatform: new SearchPlatformDocsUseCase(this.platform, cache, access, search),
       revokeGrant: new RevokeDocGrantUseCase(
         auth,
         grants,

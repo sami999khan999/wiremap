@@ -9,6 +9,14 @@
   overflow-wrap: break-word;
 }
 
+/* Each top-level block lays out only when it is near the viewport: a page at the 200,000-
+   character cap would otherwise lay out every section before the first paint. The size it
+   last had is remembered, so the scrollbar does not jump. */
+.ui-prose > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 2.5rem;
+}
+
 .ui-prose > :first-child {
   margin-top: 0;
 }

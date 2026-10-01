@@ -7,6 +7,7 @@ import {
   useAppQuery,
   useCapabilities,
   useMessages,
+  useQueryClient,
 } from "~/import.js";
 import { DocReaderRoute } from "~/route/-doc-reader.js";
 import { RouteGuard } from "~/route/-guard.js";
@@ -33,6 +34,7 @@ function DocPage() {
   const { space, _splat } = Route.useParams();
   const { t } = useMessages("doc");
   const client = useApiClient();
+  const queryClient = useQueryClient();
   const capabilities = useCapabilities();
   const reading = useAppQuery(DocQueries.reading(client, space, _splat ?? ""));
   const spaces = useAppQuery(DocQueries.spaces(client));
@@ -56,6 +58,11 @@ function DocPage() {
         client.docPage
           .search({ query, limit: 10 })
           .then((result) => DocNavTree.hits(result.items, "/doc"))
+      }
+      loadNav={() =>
+        queryClient
+          .fetchQuery(DocQueries.nav(client, space, reading.data.space.version))
+          .then((tree) => tree.nav)
       }
     />
   );

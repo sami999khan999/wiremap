@@ -90,15 +90,20 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
             const cut = at ?? text.length;
             return `${text.slice(0, cut)}![${alt}](${url})${text.slice(cut)}`;
           });
+          edits.current += 1;
           setDirty(true);
         },
       },
     );
   };
+  // Counts edits, so a save that returns after more typing does not mark the draft clean:
+  // those keystrokes went out after the request did, and only the next save carries them.
+  const edits = useRef(0);
   const edit =
     <T,>(set: (value: T) => void) =>
     (value: T) => {
       set(value);
+      edits.current += 1;
       setDirty(true);
     };
 
@@ -114,11 +119,12 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
   });
 
   const persist = (then?: (saved: DocPageDraftDto) => void) => {
+    const sent = edits.current;
     save.mutate(input(), {
       onSuccess: (saved) => {
         setVersion(saved.draftVersion);
         setStatus(saved.status);
-        setDirty(false);
+        if (edits.current === sent) setDirty(false);
         then?.(saved);
       },
     });

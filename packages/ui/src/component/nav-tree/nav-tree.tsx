@@ -171,13 +171,19 @@ function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: Bran
         className="ui-nav-tree__children [&>ul]:my-1 [&>ul]:ml-3 [&>ul]:border-border [&>ul]:border-l [&>ul]:pl-2"
         hidden={!open}
       >
-        <Level
-          nodes={children}
-          activeId={activeId}
-          renderLink={renderLink}
-          expandLabel={expandLabel}
-          collapseLabel={collapseLabel}
-        />
+        {
+          // Rendered only while open: a 2,000-page space would otherwise render, ship and
+          // hydrate every closed branch. The element stays, as `aria-controls` names it.
+        }
+        {open ? (
+          <Level
+            nodes={children}
+            activeId={activeId}
+            renderLink={renderLink}
+            expandLabel={expandLabel}
+            collapseLabel={collapseLabel}
+          />
+        ) : null}
       </div>
     </li>
   );

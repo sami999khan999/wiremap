@@ -21,6 +21,8 @@ export class ReadDocPageUseCase {
       input.space,
     );
     const { page } = await this.cache.readIn(space, input.path);
-    return { space: { ...DocShape.space(space), nav: space.nav }, page };
+    // Trimmed: a large space's whole tree in every page read is what made one slow.
+    const nav = DocRules.trimNav(space.nav, page?.id ?? null);
+    return { space: { ...DocShape.space(space), nav }, page };
   }
 }

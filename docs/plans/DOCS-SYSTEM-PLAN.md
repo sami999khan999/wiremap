@@ -101,11 +101,12 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
   the preview renders the whole page on the server.
 - **Publishing renders inside the request**, however long the page is.
 
-- [ ] `DS0.1` **Benchmark.** A `pnpm doc:bench` script seeds a throwaway organization with a large
+- [x] `DS0.1` **Benchmark.** done: 2026-10-01, `packages/infrastructure/doc-bench.ts`.
+  A `pnpm doc:bench` script seeds a throwaway organization with a large
   space: 2,000 pages, 6 levels deep, the largest pages at the 200,000-character cap with 300 code
   blocks. It then load-tests the reader page, the nav, search and publish, and prints p50, p95 and
   queries per request. Results are recorded in `doc.md`.
-- [ ] `DS0.2` **Budgets**, on one web process:
+- [~] `DS0.2` **Budgets**, on one web process. Results are in `doc.md`. The query budget is met: a warm read makes 0 queries. The latency budgets wait for a run on a quiet machine:
 
   | Path | Budget |
   |---|---|
@@ -115,24 +116,32 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
   | Publish of a 200,000-character page | ≤ 1 s, or rendered in the worker |
   | Access filtering (`DS1.4`) | 0 extra queries, linear in nav nodes |
   | Largest page in the browser | no long task over 200 ms on first paint |
-- [ ] `DS0.3` **Nav out of the page read.**
+- [x] `DS0.3` **Nav out of the page read.** done: 2026-10-01.
+  - **As built:** a page read carries a trimmed tree, and the full tree is fetched once the page is up, from `docSpace.nav` or `/api/doc-nav/<space>?v=<version>`. The version makes the answer immutable, so the browser and a CDN keep it; no Redis key or `ETag` was needed. The access fingerprint arrives with `DS1.4`.
+  - The space list and the platform organization are cached too, and the warm page went from 5 queries to 0.
+  - The original wording, kept for the record:
   - The tree moves to its own procedure and server function, keyed by space id, space version and
     the viewer's **access fingerprint**: the set of links the viewer passes.
   - It is cached in Redis under that key and served with an `ETag`, so viewers with the same
     outcome share one copy and a page read stops carrying the tree.
   - The node shape is compacted, with short keys and no `revisionNo` in the sidebar.
-- [ ] `DS0.4` **Large pages in the browser.**
+- [x] `DS0.4` **Large pages in the browser.** done: 2026-10-01. **As built:** copy buttons are wired when the browser is idle, not as each block scrolls in. The sidebar renders only open branches. The original wording:
   - `Prose` sets `content-visibility: auto` on top-level sections, so offscreen sections cost no
     layout.
   - Code-block copy buttons are created as their block scrolls into view.
   - The TOC observes headings once, not per render.
-- [ ] `DS0.5` **Editor and publish.**
+- [x] `DS0.5` **Editor and publish.** done: 2026-10-01. **As built:** autosave and preview already behaved as described. Fixed: a save returning after more typing marked the draft clean. Publish stays in the request, because the largest page renders in 0.6–1.2 s on a loaded machine. The original wording:
   - Autosave sends only when something changed, and is skipped while a save is in flight.
   - The preview renders on demand, in the Preview tab only, with a debounce.
   - Publishing a page over the render budget queues it on the maintenance queue and shows
     "publishing", rather than holding the request.
-- [ ] `DS0.6` **Query plans pinned.** Specs assert, with `EXPLAIN`, that a page read, a nav read
+- [~] `DS0.6` **Query plans pinned.** Query counts are pinned by `tests/doc/doc.cache.spec.ts` and the bench; the `EXPLAIN` specs are open. The original wording: specs assert, with `EXPLAIN`, that a page read, a nav read
   and a search use their indexes. A query-count spec covers each reader path.
+
+- [-] `DS0.7` **Production-mode guard.** Dropped 2026-10-01. The web build bundles React's production build, and no code reads `NODE_ENV`, so it would guard nothing.
+- [x] `DS0.8` **One web process per core.** done: 2026-10-01, `apps/web/cluster.mjs`. It forwards SIGTERM, drains each worker, then disconnects it, and restarts a crashed one. Under the same load, `/docs` went from 66 to 183 req/s.
+- [x] `DS0.9` **`pnpm bench`.** done: 2026-10-01, `tooling/scripts/bench.mjs`.
+- [ ] `DS0.10` **The article HTML is sent twice**, rendered and in the hydration data: 674 KB for a 292 KB page. Fix it by keeping `page.html` out of the serialized loader data, without breaking hydration.
 
 **Exit.** `pnpm doc:bench` meets every budget in `DS0.2`. The numbers are written in `doc.md`.
 

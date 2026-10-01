@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouteContext } from "@tanstack/react-router";
 import {
   buttonClassName,
+  type DocNavNodeDto,
   DocReaderPanel,
   type DocReadingDto,
   type DocSearchHit,
@@ -22,6 +23,7 @@ export interface DocReaderRouteProps {
   readonly editHref?: string | null;
   readonly markdownHref?: string | null;
   readonly search?: (query: string) => Promise<readonly DocSearchHit[]>;
+  readonly loadNav?: () => Promise<readonly DocNavNodeDto[]>;
 }
 
 // Shared by both trees. It owns the palette: a space may open in its own theme, the
@@ -34,6 +36,7 @@ export function DocReaderRoute({
   editHref = null,
   markdownHref = null,
   search,
+  loadNav,
 }: DocReaderRouteProps) {
   const navigate = useNavigate();
   const { appearance, appearanceSnapshot } = useRouteContext({ from: "__root__" });
@@ -74,6 +77,7 @@ export function DocReaderRoute({
         editHref={editHref}
         markdownHref={markdownHref}
         {...(search ? { search } : {})}
+        {...(loadNav ? { loadNav } : {})}
       />
     </ThemeScope>
   );

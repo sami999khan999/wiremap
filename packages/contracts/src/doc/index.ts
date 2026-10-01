@@ -46,6 +46,8 @@ export {
   DocSpaceContract,
   type DocSpaceDto,
   type DocSpaceListDto,
+  type DocSpaceNavDto,
+  type DocSpaceNavInput,
   type DocSpaceRefInput,
   type DocSpaceViewDto,
   type UpdateDocSpaceInput,

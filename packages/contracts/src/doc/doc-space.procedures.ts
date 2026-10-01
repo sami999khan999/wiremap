@@ -14,6 +14,11 @@ export class DocSpaceProcedures {
     .input(DocSpaceContract.get)
     .output(DocSpaceContract.entity);
 
+  public static readonly nav = oc
+    .route({ method: "GET", path: "/doc-spaces/by-slug/{slug}/nav" })
+    .input(DocSpaceContract.navQuery)
+    .output(DocSpaceContract.nav);
+
   public static readonly create = oc
     .route({ method: "POST", path: "/doc-spaces" })
     .input(DocSpaceContract.create)
@@ -34,6 +39,7 @@ export class DocSpaceProcedures {
   public static readonly all = {
     list: DocSpaceProcedures.list,
     get: DocSpaceProcedures.get,
+    nav: DocSpaceProcedures.nav,
     create: DocSpaceProcedures.create,
     update: DocSpaceProcedures.update,
     remove: DocSpaceProcedures.remove,

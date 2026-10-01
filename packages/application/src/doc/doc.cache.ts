@@ -2,12 +2,17 @@ import { NotFoundError, type OrganizationId } from "../import.js";
 import type { CacheStore } from "../port/index.js";
 import { DocRules } from "./doc.rules.js";
 import type { DocPagePublishedRecord, DocPageRepository } from "./doc-page.repository.js";
-import type { DocSpaceRecord, DocSpaceRepository } from "./doc-space.repository.js";
+import type {
+  DocSpaceRecord,
+  DocSpaceRepository,
+  DocSpaceSummary,
+} from "./doc-space.repository.js";
 
 // JSON has no dates, so the cached shapes carry strings and are revived on the way out.
 type Cached<T, K extends keyof T> = Omit<T, K> & { readonly [P in K]: string };
 type CachedSpace = Cached<DocSpaceRecord, "updatedAt">;
 type CachedPage = Cached<DocPagePublishedRecord, "publishedAt">;
+type CachedSummary = Cached<DocSpaceSummary, "updatedAt">;
 
 export interface DocReading {
   readonly space: DocSpaceRecord;
@@ -20,8 +25,8 @@ export class DocCache {
   // Short, and deleted after every commit that changes the space. The TTL is only the
   // bound on a delete that was lost.
   private static readonly SPACE_TTL_SECONDS = 60;
-  // Immutable, so this is only how long an unread page occupies memory. Redis evicts
-  // least-recently-used first anyway.
+  // Immutable, so this is only how long an unread page occupies memory. Redis never evicts
+  // (`noeviction`), so the TTL is what frees it.
   private static readonly PAGE_TTL_SECONDS = 86_400;
 
   public constructor(
@@ -72,12 +77,29 @@ export class DocCache {
     return space;
   }
 
-  // After the commit that changed the space, never inside it: a reader between the delete
-  // and the commit would put the old row straight back.
-  public async forget(organizationId: OrganizationId, ...slugs: readonly string[]): Promise<void> {
-    await Promise.all(
-      slugs.map((slug) => this.cache.delete(DocCache.spaceKey(organizationId, slug))),
+  // Every space in the organization, without their trees: the switcher, the landing page and
+  // search all start here, so a warm read of any of them is no query.
+  public async list(organizationId: OrganizationId): Promise<readonly DocSpaceSummary[]> {
+    const key = DocCache.listKey(organizationId);
+    const cached = await this.cache.get<readonly CachedSummary[]>(key);
+    if (cached) return cached.map((space) => ({ ...space, updatedAt: new Date(space.updatedAt) }));
+
+    const spaces = await this.spaces.list(organizationId);
+    await this.cache.set<readonly CachedSummary[]>(
+      key,
+      spaces.map((space) => ({ ...space, updatedAt: space.updatedAt.toISOString() })),
+      DocCache.SPACE_TTL_SECONDS,
     );
+    return spaces;
+  }
+
+  // After the commit that changed the space, never inside it: a reader between the delete
+  // and the commit would put the old row straight back. The list goes with any space.
+  public async forget(organizationId: OrganizationId, ...slugs: readonly string[]): Promise<void> {
+    await Promise.all([
+      this.cache.delete(DocCache.listKey(organizationId)),
+      ...slugs.map((slug) => this.cache.delete(DocCache.spaceKey(organizationId, slug))),
+    ]);
   }
 
   private async page(
@@ -100,6 +122,10 @@ export class DocCache {
       );
     }
     return page;
+  }
+
+  private static listKey(organizationId: OrganizationId): string {
+    return `doc:spaces:${organizationId}`;
   }
 
   private static spaceKey(organizationId: OrganizationId, slug: string): string {
