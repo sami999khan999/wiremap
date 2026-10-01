@@ -194,7 +194,7 @@ export { createRouter } from "@tanstack/react-router";
 export { createIsomorphicFn } from "@tanstack/react-start";
 
 // ── react ────────────────────────────────────────────────────────────────────
-export { type CSSProperties, type ReactNode, useMemo, useState } from "react";
+export { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from "react";
 
 // ── zod ──────────────────────────────────────────────────────────────────────
 // Search-parameter schemas only: a route validates what a browser put in its own URL
