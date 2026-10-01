@@ -37,6 +37,7 @@ export const doc = {
   "doc.search.loading": "Searching…",
   "doc.search.pages": "Pages",
   "doc.search.sections": "In the text",
+  "doc.search.inSpace": "In {space}",
 
   // ── managing spaces ──
   "doc.manage.title": "Manage docs",

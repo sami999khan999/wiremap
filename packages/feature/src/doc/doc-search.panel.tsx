@@ -19,6 +19,9 @@ export interface DocSearchHit {
   readonly title: string;
   readonly excerpt?: string;
   readonly href: string;
+  // The space a server hit is in, for grouping. Absent on a title match from the open tree.
+  readonly spaceSlug?: string;
+  readonly spaceTitle?: string;
 }
 
 export type RenderDocLink = (
@@ -101,9 +104,28 @@ export function DocSearchPanel({ nav, base, renderLink, search }: DocSearchPanel
     const seen = new Set(titles.map((item) => item.href));
     const text = hits.filter((hit) => !seen.has(hit.href));
 
+    // The whole docs are searched; the open space's text comes first, every other space
+    // follows under its own name, in the order the server ranked their best match.
+    const here = text.filter((hit) => !hit.spaceSlug || hit.href.startsWith(`${base}/`));
+    const elsewhere = new Map<string, { label: string; items: DocSearchHit[] }>();
+    for (const hit of text) {
+      if (here.includes(hit) || !hit.spaceSlug) continue;
+      const group = elsewhere.get(hit.spaceSlug) ?? {
+        label: hit.spaceTitle ?? hit.spaceSlug,
+        items: [],
+      };
+      group.items.push(hit);
+      elsewhere.set(hit.spaceSlug, group);
+    }
+
     return [
       { key: "pages", label: t("doc.search.pages"), items: titles },
-      { key: "sections", label: t("doc.search.sections"), items: text },
+      { key: "sections", label: t("doc.search.sections"), items: here },
+      ...[...elsewhere].map(([slug, group]) => ({
+        key: `space:${slug}`,
+        label: t("doc.search.inSpace", { space: group.label }),
+        items: group.items,
+      })),
     ].filter((group) => group.items.length > 0);
   }, [query, pages, base, hits, t]);
 

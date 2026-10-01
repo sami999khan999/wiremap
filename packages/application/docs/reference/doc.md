@@ -243,6 +243,13 @@ matched by trigram, which is what finds "quik start".
 Excerpts come back as plain text, and nothing downstream renders them as HTML. The author
 wrote that text, and a `<script>` in a code sample is still just text in a search result.
 
+**The palette searches the whole docs, not the open space.** In `/doc` it covers every space of
+the organization the reader may see, and in `/docs` every platform space they may read. Spaces
+are filtered first, by audience and access links, then each hit's page is checked against the
+space's tree as this reader sees it, filtered once per search. So a hidden page, and anything
+under one, never appears. The open space's hits come first; every other space follows under its
+own name, in the order the server ranked them.
+
 ## Images
 
 An image is uploaded straight from the browser to storage. `docPage.upload` checks the key,

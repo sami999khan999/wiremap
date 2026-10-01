@@ -36,6 +36,7 @@ export const doc: NamespaceBundle<"doc"> = {
   "doc.search.loading": "খোঁজা হচ্ছে…",
   "doc.search.pages": "পাতা",
   "doc.search.sections": "লেখার ভেতরে",
+  "doc.search.inSpace": "{space}-এ",
 
   "doc.manage.title": "ডক পরিচালনা",
   "doc.manage.description": "স্পেস পাতাগুলোকে একটি সাইডবারে সাজায়। প্রতিটির নিজস্ব ঠিকানা আছে।",

@@ -209,13 +209,13 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 
 ### Phase 2 — Search the whole docs
 
-- [ ] `DS2.1` **Scope.** The palette searches every space the viewer may read in the reader it is
+- [x] `DS2.1` **Scope.** done: 2026-10-02. `DocSearch` already covered every allowed space; the access filter (`DS1.4`) now applies to each hit. The palette searches every space the viewer may read in the reader it is
   in: the organization's spaces in `/doc`, and the readable platform spaces in `/docs`. It is no
   longer only the open space. Confirm what `DocSearch` does today, then widen it if needed.
   Results are filtered by `DS1.4`.
-- [ ] `DS2.2` **Grouping.** Hits are grouped by space, with the current space first. Each hit names
+- [x] `DS2.2` **Grouping.** Hits are grouped by space, with the current space first. Each hit names
   its space, and following it opens that space.
-- [ ] `DS2.3` **Specs and docs.** A hit in another readable space is found, and a hit in an
+- [x] `DS2.3` **Specs and docs.** A hit in another readable space is found, and a hit in an
   unreadable or linked-away space is not. Docs: `doc.md` (search).
 
 ### Phase 3 — Reading aids

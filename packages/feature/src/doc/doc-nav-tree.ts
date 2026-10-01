@@ -57,6 +57,8 @@ export class DocNavTree {
       title: hit.heading ? `${hit.title} › ${hit.heading}` : hit.title,
       href: `${root}/${hit.spaceSlug}/${hit.path}${hit.anchor ? `#${hit.anchor}` : ""}`,
       ...(hit.excerpt ? { excerpt: hit.excerpt } : {}),
+      spaceSlug: hit.spaceSlug,
+      spaceTitle: hit.spaceTitle,
     }));
   }
 
