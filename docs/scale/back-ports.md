@@ -16,6 +16,7 @@ later port has to work around the difference.
 | **Embedding model per chunk** | chunks record `embedding_model`; switching provider re-indexes instead of mixing vectors | not added |
 | **Owner-only docs** | a fourth doc space audience, `owner`, readable only by its author; built in lite `LT3`, migration `0001_doc_owner_audience` | not added |
 | **Tailwind, Base UI and `cn`** | the UI stack: Tailwind v4 utilities in each component, the twelve colours as its only palette, Base UI for behaviour, `ThemeScope` for portals; `check-architecture` §32; built in lite `UI1`–`UI4` ([plan](../plans/UI-KIT-PLAN.md)) | added 2026-10-01, big kit `cf6b331f..035bab66` on `dev`, with lite's CI fixes; its backlog §16 holds the hand checks |
+| **Doc access links and reader additions** | a doc space or page linked to a module, permission, flag or plan (`DocFeaturePolicy`, migration `0003_doc_access`), hidden as `NOT_FOUND`; whole-docs search grouped by space; breadcrumbs, pager and collapsible sections; tabs, steps, accordions and card icons (renderer 3, `pnpm doc:rerender`); the repository link and Open in ChatGPT / Claude. Also the UI fixes found on the way: Prose's memoised HTML, greys with hue `none`, and sprite symbols keeping their paint. Built in lite `DS0`–`DS6` ([plan](../plans/DOCS-SYSTEM-PLAN.md)) | not added |
 
 ## How to back-port
 

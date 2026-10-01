@@ -280,8 +280,8 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 
 ### Phase 7 — Wrap-up
 
-- [ ] `DS7.1` `docs/plans/TESTS.md` gets this plan's owed runs and hand checks.
-- [ ] `DS7.2` `docs/scale/back-ports.md` gets a row: doc access links and the reader additions,
+- [x] `DS7.1` done: 2026-10-02. Rows `DS0`–`DS6` in `TESTS.md`, with what was checked by hand and what is still owed. `docs/plans/TESTS.md` gets this plan's owed runs and hand checks.
+- [x] `DS7.2` done: 2026-10-02. One row in `back-ports.md`, status not added. `docs/scale/back-ports.md` gets a row: doc access links and the reader additions,
   owed to the big kit.
 - [ ] `DS7.0` **Re-run `pnpm doc:bench`** after every phase: no budget may regress.
 - [ ] `DS7.3` The full gate: typecheck, lint, every test, `check-architecture`, `check:contrast`,
