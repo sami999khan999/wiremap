@@ -44,10 +44,26 @@ const mount = (activeId?: string) =>
   );
 
 describe("NavTree", () => {
-  it("renders a section as a heading over its pages", () => {
+  it("renders a section as an open toggle over its pages", () => {
     mount();
-    expect(screen.getByText("Introduction").tagName).toBe("P");
+    const section = screen.getByRole("button", { name: "Introduction" });
+    expect(section.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByRole("link", { name: "Quick Start" }).getAttribute("href")).toBe("/start");
+  });
+
+  // Collapsed sections are remembered for the session; storage failing only forgets.
+  it("collapses a section and remembers it for the session", () => {
+    sessionStorage.clear();
+    const view = mount();
+    fireEvent.click(screen.getByRole("button", { name: "Introduction" }));
+    expect(screen.queryByRole("link", { name: "Quick Start" })).toBeNull();
+
+    view.unmount();
+    mount();
+    expect(screen.getByRole("button", { name: "Introduction" }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
+    sessionStorage.clear();
   });
 
   // The attributes travel to the caller's link: the router builds the element, not this.

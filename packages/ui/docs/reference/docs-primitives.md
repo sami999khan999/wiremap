@@ -11,7 +11,7 @@ index is. The docs slice in `feature` composes them and passes every string in.
 | Export | What it is |
 |---|---|
 | `Sidebar` | A sticky column. Below `64rem` it becomes a drawer, controlled by `open` and `onOpenChange` |
-| `NavTree` | Headed sections, collapsible pages, one active leaf. The caller builds each link through `renderLink` |
+| `NavTree` | Collapsible sections and pages, one active leaf. A section starts open; one the reader closes stays closed for the session (`sessionStorage`, read after mount so the server and first paint agree). A closed branch renders nothing, so a 2,000-page space does not hydrate every page. The caller builds each link through `renderLink` |
 | `Menu` | A listbox select that shows an icon and a second line. It is the space switcher |
 | `CommandDialog`, `SearchTrigger`, `useHotkey` | The Ctrl K palette, the field that opens it, and the key binding |
 | `Card`, `CardGrid` | A card that is one whole link, and the grid of them |

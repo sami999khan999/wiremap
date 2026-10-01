@@ -220,14 +220,14 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 
 ### Phase 3 — Reading aids
 
-- [ ] `DS3.1` **Previous and next** at the foot of a page, from the filtered reading order
+- [x] `DS3.1` done: 2026-10-02. **Previous and next** at the foot of a page, from the filtered reading order
   (`doc-nav-tree.ts` `pages`).
-- [ ] `DS3.2` **Breadcrumbs** above the title, from the page's trail.
-- [ ] `DS3.3` **Collapsible sidebar sections.** `NavTree` section headings become toggles, open
+- [x] `DS3.2` **Breadcrumbs** above the title, from the page's trail.
+- [x] `DS3.3` **Collapsible sidebar sections.** `NavTree` section headings become toggles, open
   when they hold the active page, and the choice is remembered per session.
-- [ ] `DS3.4` **Space icon field** in `doc-space.form.tsx`. The contract and the database already
+- [x] `DS3.4` done with `DS1.6`. **Space icon field** in `doc-space.form.tsx`. The contract and the database already
   support it.
-- [ ] `DS3.5` **Specs, plus `packages/ui/docs/reference/docs-primitives.md`.**
+- [x] `DS3.5` **Specs, plus `packages/ui/docs/reference/docs-primitives.md`.**
 
 ### Phase 4 — Richer Markdown
 

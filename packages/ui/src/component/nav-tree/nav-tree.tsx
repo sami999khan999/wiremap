@@ -55,6 +55,31 @@ const LINK =
 const ACTIVE =
   "ui-nav-tree__link--active bg-[color-mix(in_oklch,var(--primary)_14%,var(--bg))] font-medium text-fg hover:bg-[color-mix(in_oklch,var(--primary)_14%,var(--bg))] hover:text-fg";
 
+// Which sections a reader closed, for this tab's session. Storage can be absent or refuse
+// (a private window, a sandboxed frame), and then a section simply starts open again.
+class SectionMemory {
+  private static readonly PREFIX = "ui-nav-tree:closed:";
+
+  private constructor() {}
+
+  public static closed(id: string): boolean {
+    try {
+      return globalThis.sessionStorage?.getItem(SectionMemory.PREFIX + id) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  public static remember(id: string, open: boolean): void {
+    try {
+      if (open) globalThis.sessionStorage?.removeItem(SectionMemory.PREFIX + id);
+      else globalThis.sessionStorage?.setItem(SectionMemory.PREFIX + id, "1");
+    } catch {
+      // Not remembered: the next visit opens it, which is the safe default.
+    }
+  }
+}
+
 function contains(node: NavTreeNode, id: string | undefined): boolean {
   if (id === undefined) return false;
   return node.children?.some((child) => child.id === id || contains(child, id)) ?? false;
@@ -99,8 +124,17 @@ function link(node: NavTreeNode, activeId: string | undefined, renderLink: Rende
 
 function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: BranchProps) {
   const holdsActive = contains(node, activeId);
-  const [open, setOpen] = useState(holdsActive);
+  const section = node.kind === "section";
+  // A section starts open, a page branch only when it holds the page being read.
+  const [open, setOpen] = useState(section || holdsActive);
   const listId = useId();
+
+  // A section the reader closed stays closed for the session. After mount: the server
+  // has no session storage, and rendering it open there keeps the first paint the same.
+  useEffect(() => {
+    if (!section || holdsActive) return;
+    if (SectionMemory.closed(node.id)) setOpen(false);
+  }, [section, holdsActive, node.id]);
 
   // Navigating into a closed branch opens it. Never closes one: the reader opened it.
   useEffect(() => {
@@ -112,14 +146,31 @@ function Branch({ node, activeId, renderLink, expandLabel, collapseLabel }: Bran
   if (node.kind === "section") {
     return (
       <li className="ui-nav-tree__section [&+&]:mt-5">
-        <p className="ui-nav-tree__heading m-0 mb-2 px-2 font-semibold text-fg">{node.label}</p>
-        <Level
-          nodes={children}
-          activeId={activeId}
-          renderLink={renderLink}
-          expandLabel={expandLabel}
-          collapseLabel={collapseLabel}
-        />
+        <button
+          type="button"
+          className="ui-nav-tree__heading m-0 mb-1 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-2 py-1 text-left font-semibold text-fg text-sm [font:inherit] hover:bg-muted [&_svg]:text-fg-muted [&_svg]:transition-transform [&_svg]:duration-(--duration-fast) aria-expanded:[&_svg]:rotate-90"
+          aria-expanded={open}
+          aria-controls={listId}
+          onClick={() => {
+            const next = !open;
+            setOpen(next);
+            SectionMemory.remember(node.id, next);
+          }}
+        >
+          <span>{node.label}</span>
+          <Icon name="chevron-right" size={14} />
+        </button>
+        <div id={listId} hidden={!open}>
+          {open ? (
+            <Level
+              nodes={children}
+              activeId={activeId}
+              renderLink={renderLink}
+              expandLabel={expandLabel}
+              collapseLabel={collapseLabel}
+            />
+          ) : null}
+        </div>
       </li>
     );
   }

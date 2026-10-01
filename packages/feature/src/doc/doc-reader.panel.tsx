@@ -88,6 +88,9 @@ function useFullNav(
   return full?.key === key ? full.nav : null;
 }
 
+const PAGER =
+  "ui-doc-pager__link flex flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3 no-underline transition-colors duration-(--duration-fast) hover:bg-muted";
+
 // The whole reading screen: navigation, the page, its outline. The shell supplies links
 // and data; nothing here fetches.
 export function DocReaderPanel({
@@ -109,6 +112,8 @@ export function DocReaderPanel({
   const full = useFullNav(space.nav, space.slug, space.version, loadNav);
   const nav = full ?? space.nav;
   const nodes = useMemo(() => DocNavTree.toNodes(nav, base), [nav, base]);
+  // Reading order, from the tree this reader may see: the pager and the trail follow it.
+  const order = useMemo(() => DocNavTree.pages(nav), [nav]);
   const [open, setOpen] = useState(false);
 
   // A drawer left open over the page just navigated to would hide the page asked for.
@@ -167,8 +172,25 @@ export function DocReaderPanel({
     );
   }
 
+  const at = order.findIndex((entry) => entry.node.id === page.id);
+  const previous = at > 0 ? order[at - 1] : undefined;
+  const next = at >= 0 ? order[at + 1] : undefined;
+  const trail = at >= 0 ? (order[at]?.trail ?? []) : [];
+
   const header = (
     <>
+      {trail.length > 0 ? (
+        <nav aria-label={t("doc.breadcrumb.label")} className="ui-doc-breadcrumb">
+          <ol className="m-0 flex list-none flex-wrap items-center gap-1 p-0 text-fg-muted text-sm">
+            {trail.map((title, index) => (
+              <li key={`${index}-${title}`} className="flex items-center gap-1">
+                {index > 0 ? <Icon name="chevron-right" size={12} /> : null}
+                <span>{title}</span>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      ) : null}
       <h1 className={readerClassName.title}>{page.title}</h1>
       {page.description ? <p className={readerClassName.description}>{page.description}</p> : null}
       <div className={readerClassName.actions}>
@@ -215,6 +237,35 @@ export function DocReaderPanel({
       <p className={fieldClassName.hint}>
         {t("doc.updated", { date: DateFormat.day(page.publishedAt) })}
       </p>
+      {previous || next ? (
+        <nav
+          aria-label={t("doc.pager.label")}
+          className="ui-doc-pager mt-10 grid grid-cols-1 gap-3 border-border border-t pt-6 sm:grid-cols-2"
+        >
+          {previous ? (
+            renderLink(
+              `${base}/${previous.node.path ?? ""}`,
+              <>
+                <span className="text-fg-muted text-xs">{t("doc.pager.previous")}</span>
+                <span className="font-medium text-fg">{previous.node.title}</span>
+              </>,
+              { className: PAGER },
+            )
+          ) : (
+            <span />
+          )}
+          {next
+            ? renderLink(
+                `${base}/${next.node.path ?? ""}`,
+                <>
+                  <span className="text-fg-muted text-xs">{t("doc.pager.next")}</span>
+                  <span className="font-medium text-fg">{next.node.title}</span>
+                </>,
+                { className: `${PAGER} sm:items-end sm:text-right` },
+              )
+            : null}
+        </nav>
+      ) : null}
     </ReaderLayout>
   );
 }
