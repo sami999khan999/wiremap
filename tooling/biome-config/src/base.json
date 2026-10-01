@@ -150,6 +150,7 @@
         "packages/infrastructure/seed.ts",
         "packages/infrastructure/shard-env.ts",
         "packages/infrastructure/smoke.ts",
+        "apps/web/cluster.mjs",
         "tooling/scripts/boot-smoke.mjs",
         "tooling/scripts/check-architecture.mjs"
       ],

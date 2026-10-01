@@ -115,6 +115,10 @@ services:
   web:
     build: { context: .., dockerfile: apps/web/Dockerfile }
     restart: unless-stopped
+    # One web process per core: rendering is single-threaded, and one process leaves the
+    # other cores idle. cluster.mjs forwards SIGTERM, drains each worker and restarts a
+    # crashed one. WEB_PROCESSES sets the count; processes x DATABASE_POOL_MAX < 200.
+    command: ["node", "apps/web/cluster.mjs"]
     env_file: [.env.production]
     environment:
       APP: web

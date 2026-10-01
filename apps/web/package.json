@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "smoke": "vitest run -c vitest.smoke.config.ts",
-    "clean": "rimraf dist .output .nitro .tanstack"
+    "clean": "rimraf dist .output .nitro .tanstack",
+    "start": "node --env-file-if-exists=../../.env cluster.mjs"
   },
   "dependencies": {
     "@loadbearing/api-client": "workspace:*",

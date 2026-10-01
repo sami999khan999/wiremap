@@ -205,6 +205,9 @@ const ENV_EXEMPT = [
   // The web smoke's `globalSetup`: it spawns the built server, so it composes that
   // child's whole environment out of the one it was given.
   /^apps\/web\/tests\/smoke\/support\/server\.ts$/,
+  // The production entry that forks the web workers: it sizes the pool before any app
+  // code, and so before `env.ts`, has run.
+  /^apps\/web\/cluster\.mjs$/,
   /^packages\/infrastructure\/(ai-reindex|migrate|partitions|platform-grant|queue-replay|seed|shard-env|smoke)\.ts$/,
 ];
 
