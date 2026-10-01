@@ -88,6 +88,18 @@ function useFullNav(
   return full?.key === key ? full.nav : null;
 }
 
+// Each opens a new conversation with the prompt filled in; neither needs an account here.
+const OPEN_IN = [
+  {
+    key: "chatgpt",
+    href: (prompt: string) => `https://chatgpt.com/?hints=search&q=${encodeURIComponent(prompt)}`,
+  },
+  {
+    key: "claude",
+    href: (prompt: string) => `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
+  },
+] as const;
+
 const PAGER =
   "ui-doc-pager__link flex flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3 no-underline transition-colors duration-(--duration-fast) hover:bg-muted";
 
@@ -115,6 +127,11 @@ export function DocReaderPanel({
   // Reading order, from the tree this reader may see: the pager and the trail follow it.
   const order = useMemo(() => DocNavTree.pages(nav), [nav]);
   const [open, setOpen] = useState(false);
+  // The tools fetch the source themselves, so they need it absolute; the origin is only
+  // known in the browser, and reading it after mount keeps the server's HTML the same.
+  const [origin, setOrigin] = useState<string | null>(null);
+  useEffect(() => setOrigin(globalThis.location.origin), []);
+  const source = markdownHref && origin ? new URL(markdownHref, origin).toString() : null;
 
   // A drawer left open over the page just navigated to would hide the page asked for.
   const pageId = page?.id;
@@ -140,7 +157,23 @@ export function DocReaderPanel({
           <DocSpaceSwitcherButton spaces={spaces} current={space.slug} onSelect={onSelectSpace} />
         </>
       }
-      footer={<DocAppearancePanel appearance={appearance} />}
+      footer={
+        <>
+          {space.repositoryUrl ? (
+            <a
+              href={space.repositoryUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={t("doc.repository.label")}
+              title={t("doc.repository.label")}
+              className="ui-doc-repository inline-flex size-8 shrink-0 items-center justify-center rounded-md text-fg-muted transition-colors duration-(--duration-fast) hover:bg-muted hover:text-fg"
+            >
+              <Icon name="github" size={18} />
+            </a>
+          ) : null}
+          <DocAppearancePanel appearance={appearance} />
+        </>
+      }
     >
       <NavTree
         label={t("doc.nav.label")}
@@ -214,6 +247,19 @@ export function DocReaderPanel({
                   </a>
                 </li>
               ) : null}
+              {source
+                ? OPEN_IN.map((tool) => (
+                    <li key={tool.key}>
+                      <a
+                        href={tool.href(t("doc.open.prompt", { url: source }))}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {t(`doc.open.${tool.key}`)}
+                      </a>
+                    </li>
+                  ))
+                : null}
               {editHref ? (
                 <li>{renderLink(editHref, t("doc.open.edit"), { className: "" })}</li>
               ) : null}

@@ -130,6 +130,20 @@ registry knows and a platform-scope permission, which no organization holds. It 
 transaction, because a plan is a catalog row. A link is structure, like a slug: live on save, with
 the tree rebuilt in the same transaction. Leaving `access` out of a save keeps the stored rule.
 
+## Raw Markdown, Open in AI and the repository link
+
+`/api/doc/<space>/<path>` serves a page's Markdown source. It reads as nobody, so it answers only
+for a **public, unlinked** page. The reader offers three things for such a page, in its Open menu:
+the raw Markdown, **Open in ChatGPT** and **Open in Claude**. Each AI entry opens a new conversation
+with a prompt naming the page's absolute source URL, which that tool then fetches.
+
+Any other page offers none of the three. A members-only, granted or linked page would hand the
+tool a URL that answers 404. `DocNavTree.isLinked` checks the space, the page and every page above
+it, because a hidden parent hides its children.
+
+A space's `repository_url` is an `https` link, checked by the contract. When it is set, the
+sidebar footer shows a GitHub icon beside the theme controls. When it is null, nothing shows.
+
 ## A page is rendered once
 
 `PublishDocPageUseCase` renders the Markdown when a page is published, and never when it is

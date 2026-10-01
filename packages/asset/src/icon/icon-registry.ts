@@ -12,6 +12,7 @@ export const ICON_NAMES = [
   "edit",
   "external",
   "file",
+  "github",
   "hash",
   "key",
   "menu",

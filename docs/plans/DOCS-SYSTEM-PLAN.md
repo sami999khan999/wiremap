@@ -251,15 +251,15 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 
 ### Phase 5 — GitHub link and Open in AI
 
-- [ ] `DS5.1` **Repository link.**
+- [x] `DS5.1` done: 2026-10-02. The `github` icon, the space form field from `DS1.6`, and the footer link. **Repository link.**
   - `repository_url` (from `DS1.2`), accepting `https` only.
   - A field in the space form.
   - An icon link in the sidebar footer, beside the theme controls.
   - A `github` icon added to `packages/asset`.
-- [ ] `DS5.2` **Open in AI.** The Open menu gains "Open in ChatGPT" and "Open in Claude", each
+- [x] `DS5.2` done: 2026-10-02. `OPEN_IN` in `doc-reader.panel.tsx`; `DocNavTree.isLinked` hides all three entries for a linked page. **Open in AI.** The Open menu gains "Open in ChatGPT" and "Open in Claude", each
   prefilled to read the page's raw Markdown URL. They show only when the page has one, which means
   public and unlinked pages. A private page's Markdown cannot be fetched by those tools.
-- [ ] `DS5.3` **Specs and copy.**
+- [x] `DS5.3` done: 2026-10-02. `doc-reader.panel.spec.tsx`; `doc.open.*` and `doc.repository.label` in en and bn; `doc.md`. **Specs and copy.**
 
 ### Phase 6 — Visual pass
 

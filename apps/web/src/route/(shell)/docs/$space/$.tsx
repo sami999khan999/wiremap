@@ -51,9 +51,12 @@ function PublicDocPage() {
     page && platform && capabilities.can("doc.page.write")
       ? `/doc/manage/${reading.space.id}/${page.id}`
       : null;
-  // Only a public page can be fetched by an outside tool, so only it offers raw Markdown.
+  // Only a public, unlinked page can be fetched by an outside tool, so only it offers raw
+  // Markdown: the source route reads as nobody, and nobody fails every access link.
   const markdownHref =
-    page && reading.space.audience === "public"
+    page &&
+    reading.space.audience === "public" &&
+    !DocNavTree.isLinked(reading.space.access, reading.space.nav, page.id)
       ? `/api/doc/${reading.space.slug}/${path.length > 0 ? path : "index"}`
       : null;
 
