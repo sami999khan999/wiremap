@@ -139,7 +139,7 @@ describe("the fixture harness", () => {
   it("reports every assertion, and none of them fails on a clean tree", () => {
     const results = run();
 
-    expect(results).toHaveLength(30);
+    expect(results).toHaveLength(31);
     for (const { name, status } of results) {
       expect(status, `${name} failed on the base fixture`).not.toBe("✗");
     }
@@ -1339,5 +1339,45 @@ describe("31 — every flag is live", () => {
   it("passes with no flag at all, and skips a tree with no flag barrel", () => {
     passes(run(flags("")), NAME);
     expect(entry(run(), NAME).status).toBe("○");
+  });
+});
+
+describe("32 — no colour outside the twelve", () => {
+  const NAME = "no colour outside the twelve";
+
+  it("accepts the twelve as utilities, a mix of them, and a variable in a style", () => {
+    passes(
+      run({
+        "packages/ui/src/swatch/swatch.tsx":
+          'export const a = "bg-surface text-fg-muted border-border";\n' +
+          'export const b = "bg-[color-mix(in_oklch,var(--primary)_88%,var(--fg))]";\n' +
+          "export const c = { background: `var(--bg)` };\n",
+        "packages/ui/src/theme/token/shadow.css":
+          ":root { --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05); }\n",
+      }),
+      NAME,
+    );
+  });
+
+  it.each([
+    ['"text-[#fff]"', "text-[#fff"],
+    ['"bg-red-500"', "bg-red-500"],
+    ['"hover:bg-white"', "bg-white"],
+    ['{ color: "red" }', 'color: "'],
+  ])("catches %s in source", (literal, detail) => {
+    fails(
+      run({ "packages/feature/src/example/example.tsx": `export const x = ${literal};\n` }),
+      NAME,
+      detail,
+    );
+  });
+
+  // A literal in a stylesheet is as wrong as one in a class; a comment about one is not.
+  it("catches a literal in a stylesheet, and ignores one in a comment", () => {
+    fails(
+      run({ "packages/ui/src/theme/class/example.css": "/* #abc */\n.x { color: #fff; }\n" }),
+      NAME,
+      "example.css:2",
+    );
   });
 });
