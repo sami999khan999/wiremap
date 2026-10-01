@@ -57,6 +57,16 @@ describe("the sprite", () => {
     }
   });
 
+  // `<Icon>` sets `fill="currentColor"` on its `<svg>`, so a symbol that does not say
+  // `fill="none"` itself turns every outline into a filled shape: `key` drew as a dot.
+  it("keeps each outline icon unfilled whatever the <use> element sets", () => {
+    const symbols = sprite.match(/<symbol [^>]*>/g) ?? [];
+    for (const symbol of symbols) {
+      expect(symbol).toMatch(/fill="none"/);
+      expect(symbol).toMatch(/stroke="currentColor"/);
+    }
+  });
+
   it("hardcodes no colour", () => {
     // The same rule build-sprite.mjs enforces, asserted on the output rather than the
     // input — so a change to the extraction that let one through still fails here.

@@ -37,13 +37,20 @@ for (const file of files) {
     continue;
   }
 
+  // The root's paint carries over to the symbol. Dropped, an icon without its own `<g>`
+  // inherits the `<use>` element's `fill`, and a stroked outline renders as a solid blob.
+  const root = /<svg[^>]*>/.exec(raw)?.[0] ?? "";
+  const paint = [...root.matchAll(/\s((?:fill|stroke(?:-[a-z]+)?)=["'][^"']*["'])/g)]
+    .map((match) => ` ${match[1]}`)
+    .join("");
+
   const body = raw
     .replace(/<\?xml[^>]*\?>/g, "")
     .replace(/<svg[^>]*>/, "")
     .replace(/<\/svg>/, "")
     .trim();
 
-  symbols.push(`  <symbol id="${name}" viewBox="${viewBox}">${body}</symbol>`);
+  symbols.push(`  <symbol id="${name}" viewBox="${viewBox}"${paint}>${body}</symbol>`);
   names.push(name);
 }
 
