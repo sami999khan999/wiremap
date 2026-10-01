@@ -59,6 +59,9 @@ with access that is **dynamic**: what a reader sees follows the access system's 
    A link can only narrow, so a writer cannot widen access by setting one.
 10. **The kept extras:** the GitHub link and Open in AI, the richer Markdown, the reading aids, and
     the visual pass.
+11. **Performance is a requirement, not a phase at the end.** Large docs must cost no more per
+    request than small ones. Budgets are fixed in `DS0.2`, a benchmark proves them, and every later
+    phase re-runs it.
 
 ### What exists and is reused
 
@@ -86,6 +89,52 @@ with access that is **dynamic**: what a reader sees follows the access system's 
   `{ module?, permission?, flag?, plan? }`.
 - **Effective rule:** the space's rule plus the page's rule. All of its links must pass.
 - **Readable:** passes the audience rules (today's `DocAccess`) **and** the effective rule.
+
+### Phase 0 — Performance budgets and a large-docs benchmark
+
+Measured on 2026-10-01, on the development machine (4-core i5-4440, one web process): server-rendered
+pages top out near **200–280 requests a second**, with one CPU core saturated by React rendering.
+`/api/health` reaches 1,500. Three things in the doc slice scale with size today:
+- **The whole space tree ships with every page read** (`DocSpace.view.nav`), with no limit on page
+  count.
+- **Autosave sends the full Markdown** (up to 200,000 characters) after every 2-second pause, and
+  the preview renders the whole page on the server.
+- **Publishing renders inside the request**, however long the page is.
+
+- [ ] `DS0.1` **Benchmark.** A `pnpm doc:bench` script seeds a throwaway organization with a large
+  space: 2,000 pages, 6 levels deep, the largest pages at the 200,000-character cap with 300 code
+  blocks. It then load-tests the reader page, the nav, search and publish, and prints p50, p95 and
+  queries per request. Results are recorded in `doc.md`.
+- [ ] `DS0.2` **Budgets**, on one web process:
+
+  | Path | Budget |
+  |---|---|
+  | Page read, warm / cold | 0 / 2 queries; p95 ≤ 150 ms at 100 req/s |
+  | Nav for a 2,000-page space | ≤ 60 KB gzipped, fetched once per space version |
+  | Search | p95 ≤ 120 ms, bounded by `limit` |
+  | Publish of a 200,000-character page | ≤ 1 s, or rendered in the worker |
+  | Access filtering (`DS1.4`) | 0 extra queries, linear in nav nodes |
+  | Largest page in the browser | no long task over 200 ms on first paint |
+- [ ] `DS0.3` **Nav out of the page read.**
+  - The tree moves to its own procedure and server function, keyed by space id, space version and
+    the viewer's **access fingerprint**: the set of links the viewer passes.
+  - It is cached in Redis under that key and served with an `ETag`, so viewers with the same
+    outcome share one copy and a page read stops carrying the tree.
+  - The node shape is compacted, with short keys and no `revisionNo` in the sidebar.
+- [ ] `DS0.4` **Large pages in the browser.**
+  - `Prose` sets `content-visibility: auto` on top-level sections, so offscreen sections cost no
+    layout.
+  - Code-block copy buttons are created as their block scrolls into view.
+  - The TOC observes headings once, not per render.
+- [ ] `DS0.5` **Editor and publish.**
+  - Autosave sends only when something changed, and is skipped while a save is in flight.
+  - The preview renders on demand, in the Preview tab only, with a debounce.
+  - Publishing a page over the render budget queues it on the maintenance queue and shows
+    "publishing", rather than holding the request.
+- [ ] `DS0.6` **Query plans pinned.** Specs assert, with `EXPLAIN`, that a page read, a nav read
+  and a search use their indexes. A query-count spec covers each reader path.
+
+**Exit.** `pnpm doc:bench` meets every budget in `DS0.2`. The numbers are written in `doc.md`.
 
 ### Phase 1 — Access links
 
@@ -225,6 +274,7 @@ with access that is **dynamic**: what a reader sees follows the access system's 
 - [ ] `DS7.1` `docs/plans/TESTS.md` gets this plan's owed runs and hand checks.
 - [ ] `DS7.2` `docs/scale/back-ports.md` gets a row: doc access links and the reader additions,
   owed to the big kit.
+- [ ] `DS7.0` **Re-run `pnpm doc:bench`** after every phase: no budget may regress.
 - [ ] `DS7.3` The full gate: typecheck, lint, every test, `check-architecture`, `check:contrast`,
   then a push with CI green.
 
@@ -260,3 +310,4 @@ By hand:
 | Date | Who | Change |
 |---|---|---|
 | 2026-10-01 | @sami | Plan written from three rounds of questions. |
+| 2026-10-01 | @sami | Phase 0 added: performance budgets and a large-docs benchmark, from measured numbers. |
