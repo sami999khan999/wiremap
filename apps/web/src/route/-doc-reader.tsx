@@ -1,11 +1,11 @@
 import { Link, useNavigate, useRouteContext } from "@tanstack/react-router";
 import {
-  buttonClassName,
   type DocNavNodeDto,
   DocReaderPanel,
   type DocReadingDto,
   type DocSearchHit,
   type DocSpaceDto,
+  Icon,
   type ModeKey,
   type ReactNode,
   type ThemeKey,
@@ -70,7 +70,11 @@ export function DocReaderRoute({
           },
         }}
         brand={
-          <Link to={back.href} className={buttonClassName("ghost")}>
+          <Link
+            to={back.href}
+            className="ui-doc-brand inline-flex items-center gap-1 self-start rounded-md px-2 py-1 font-semibold text-fg text-sm no-underline transition-colors duration-(--duration-fast) hover:bg-muted"
+          >
+            <Icon name="chevron-right" size={14} className="rotate-180 text-fg-muted" />
             {back.label}
           </Link>
         }

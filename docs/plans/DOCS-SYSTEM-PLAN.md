@@ -263,14 +263,14 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 
 ### Phase 6 — Visual pass
 
-- [ ] `DS6.1` **Match the reference.**
+- [x] `DS6.1` done: 2026-10-02. Switcher row with description, bordered Open menu with icons, brand link, step rail, tab strip, spacing. Fixed on the way: Prose lost its enhancements on any parent re-render; outline icons drew filled; greys with hue `0` tinted callouts pink; search text fused blocks (renderer 3). **Match the reference.**
   - The sidebar search box with its key caps, and the space switcher with an icon tile.
   - The active item as a tinted pill.
   - The title scale, the muted description, and the action row with its divider.
   - The callout card, the TOC rail with an active marker, and the sidebar footer bar.
 
   All through utilities and the twelve colours.
-- [ ] `DS6.2` **Check every theme.**
+- [x] `DS6.2` done: 2026-10-02. All six themes in light and dark checked in the reader and on the kitchen sink, whose Doc blocks section shows every directive; `check:contrast` accepts hue `none`. Phone width has no horizontal scroll. **Check every theme.**
   - Each of the six themes in light and dark.
   - `check:contrast` takes any new pairing.
   - The kitchen sink shows the new directives.

@@ -100,6 +100,9 @@ const OPEN_IN = [
   },
 ] as const;
 
+const OPEN_ITEM =
+  "flex items-center gap-2 rounded-sm px-2 py-1.5 text-fg text-sm no-underline transition-colors duration-(--duration-fast) hover:bg-muted [&_svg]:text-fg-muted";
+
 const PAGER =
   "ui-doc-pager__link flex flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3 no-underline transition-colors duration-(--duration-fast) hover:bg-muted";
 
@@ -232,6 +235,7 @@ export function DocReaderPanel({
           <Popover
             label={t("doc.open.label")}
             align="start"
+            variant="secondary"
             trigger={
               <>
                 {t("doc.open.label")}
@@ -239,10 +243,11 @@ export function DocReaderPanel({
               </>
             }
           >
-            <ul className="ui-stack flex flex-col gap-3">
+            <ul className="ui-doc-open m-0 flex min-w-52 list-none flex-col gap-0.5 p-0">
               {markdownHref ? (
                 <li>
-                  <a href={markdownHref} target="_blank" rel="noreferrer">
+                  <a href={markdownHref} target="_blank" rel="noreferrer" className={OPEN_ITEM}>
+                    <Icon name="file" size={16} />
                     {t("doc.open.markdown")}
                   </a>
                 </li>
@@ -254,14 +259,26 @@ export function DocReaderPanel({
                         href={tool.href(t("doc.open.prompt", { url: source }))}
                         target="_blank"
                         rel="noreferrer"
+                        className={OPEN_ITEM}
                       >
-                        {t(`doc.open.${tool.key}`)}
+                        <Icon name="chat" size={16} />
+                        <span className="flex-1">{t(`doc.open.${tool.key}`)}</span>
+                        <Icon name="external" size={14} />
                       </a>
                     </li>
                   ))
                 : null}
               {editHref ? (
-                <li>{renderLink(editHref, t("doc.open.edit"), { className: "" })}</li>
+                <li>
+                  {renderLink(
+                    editHref,
+                    <>
+                      <Icon name="edit" size={16} />
+                      {t("doc.open.edit")}
+                    </>,
+                    { className: OPEN_ITEM },
+                  )}
+                </li>
               ) : null}
             </ul>
           </Popover>
@@ -280,7 +297,7 @@ export function DocReaderPanel({
         : {})}
     >
       <Prose html={page.html} copyLabel={t("doc.code.copy")} copiedLabel={t("doc.code.copied")} />
-      <p className={fieldClassName.hint}>
+      <p className={`${fieldClassName.hint} mt-10`}>
         {t("doc.updated", { date: DateFormat.day(page.publishedAt) })}
       </p>
       {previous || next ? (

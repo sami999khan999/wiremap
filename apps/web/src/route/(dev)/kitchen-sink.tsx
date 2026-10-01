@@ -18,6 +18,7 @@ import {
   Menu,
   type ModePreference,
   Popover,
+  Prose,
   QrCode,
   type ReactNode,
   Select,
@@ -40,6 +41,11 @@ export const Route = createFileRoute("/(dev)/kitchen-sink")({
   },
   component: KitchenSink,
 });
+
+// What `UnifiedMarkdownRenderer` writes for each block, so every theme shows them. Re-render
+// it when the markup changes: packages/infrastructure/docs/reference/doc-renderer.md.
+const DOC_BLOCKS =
+  '<div class="ui-callout ui-callout--success">\n<div class="ui-callout__body">\n<p>Every block below is written in Markdown and rendered once, at publish.</p>\n</div>\n</div>\n<div class="ui-card-grid"><a class="ui-card" data-icon="rocket" href="/docs"><span class="ui-card__title">Install</span><span class="ui-card__description">Add the packages and start the stack.</span></a><a class="ui-card" data-icon="book" href="/docs"><span class="ui-card__title">Reference</span><span class="ui-card__description">Every port, contract and rule.</span></a></div>\n<div class="ui-tabs"><div class="ui-tabs__panel"><p class="ui-tabs__title">pnpm</p><pre><code class="hljs language-sh">pnpm add @loadbearing/ui\n</code></pre></div><div class="ui-tabs__panel"><p class="ui-tabs__title">npm</p><pre><code class="hljs language-sh">npm install @loadbearing/ui\n</code></pre></div></div>\n<div class="ui-steps"><h3 id="clone-the-kit">Clone the kit</h3><p>Copy the repository.</p><h3 id="start-the-stack">Start the stack</h3><p>Run <code>pnpm infra:up</code>, then <code>pnpm dev</code>.</p></div>\n<details class="ui-accordion"><summary class="ui-accordion__summary">Why is the HTML stored?</summary><p>A page is read far more than it is written, so it is rendered once.</p></details>';
 
 // The twelve names every theme declares. A theme that omits one shows up here as a
 // swatch of whatever leaked through.
@@ -275,6 +281,12 @@ function KitchenSink() {
         <Popover label="A sample popover" trigger={<Icon name="bell" />} align="start">
           <p className="m-0">A panel anchored to the control that opened it.</p>
         </Popover>
+      </Section>
+
+      <Section title="Doc blocks">
+        <div className="max-w-2xl">
+          <Prose html={DOC_BLOCKS} copyLabel="Copy" copiedLabel="Copied" />
+        </div>
       </Section>
 
       <Section title="Base UI">
