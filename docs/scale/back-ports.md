@@ -15,7 +15,7 @@ later port has to work around the difference.
 | **Search without an AI key** | `EMBEDDING_PROVIDER=none` falls back to Postgres full-text search through `VectorStore.searchText` | not added |
 | **Embedding model per chunk** | chunks record `embedding_model`; switching provider re-indexes instead of mixing vectors | not added |
 | **Owner-only docs** | a fourth doc space audience, `owner`, readable only by its author; built in lite `LT3`, migration `0001_doc_owner_audience` | not added |
-| **Tailwind, Base UI and `cn`** | the UI stack: Tailwind v4 utilities in each component, the twelve colours as its only palette, Base UI for behaviour, `ThemeScope` for portals; `check-architecture` §32; built in lite `UI1`–`UI4` ([plan](../plans/UI-KIT-PLAN.md)) | not added. The largest back-port: `feature` and `apps/web` change with it |
+| **Tailwind, Base UI and `cn`** | the UI stack: Tailwind v4 utilities in each component, the twelve colours as its only palette, Base UI for behaviour, `ThemeScope` for portals; `check-architecture` §32; built in lite `UI1`–`UI4` ([plan](../plans/UI-KIT-PLAN.md)) | added 2026-10-01, big kit `cf6b331f..035bab66` on `dev`, with lite's CI fixes; its backlog §16 holds the hand checks |
 
 ## How to back-port
 
