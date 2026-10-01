@@ -1,0 +1,171 @@
+@import "@loadbearing/asset/font.css";
+
+/* The sizes: type, spacing, shape, elevation and motion. Theme-invariant, because a dark
+   theme is not a different spacing system, and colour-free, because colour is color/'s.
+   Each block is a Tailwind theme block with its namespace reset, so these values are the
+   only ones its utilities can produce. */
+
+/* ── typography ──────────────────────────────────────────────────────────── */
+
+/* Type. Every face carries its whole stack, fallbacks included, so no component
+   reassembles one differently. FontRegistry overrides --font-sans and nothing else.
+
+   A Tailwind theme block, so `font-sans`, `text-sm`, `leading-tight` and `font-medium`
+   are these values and no others: each namespace is reset before it is filled. `static`
+   emits every variable whether a utility uses it or not, because the component CSS
+   still reads them by name. */
+
+@theme static {
+  --font-*: initial;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-*: initial;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+
+  --leading-*: initial;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+}
+
+/* The names the component CSS was written against, until the last of it is converted. */
+:root {
+  --weight-normal: var(--font-weight-normal);
+  --weight-medium: var(--font-weight-medium);
+  --weight-semibold: var(--font-weight-semibold);
+}
+
+/* ── space ───────────────────────────────────────────────────────────────── */
+
+/* A 4px scale, and the whole of it. Tailwind's spacing is the same step, so `p-4` is
+   --space-4; the named steps stay for the component CSS that reads them. A component reaching for an arbitrary value is a
+   component that has left the system, so the gaps in this ladder are deliberate. */
+
+:root {
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --control-height-sm: 2rem;
+  --control-height: 2.25rem;
+  --control-height-lg: 2.75rem;
+}
+
+@theme static {
+  --spacing: 0.25rem;
+}
+
+/* ── radius ──────────────────────────────────────────────────────────────── */
+
+/* Shape. One border width for the whole system: a control that draws a 2px edge next to
+   a 1px one reads as a rendering bug rather than as emphasis. The radii are Tailwind's
+   `rounded-*` scale, reset first so no default survives beside them. */
+
+@theme static {
+  --radius-*: initial;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+}
+
+:root {
+  --border-width: 1px;
+}
+
+/* ── shadow ──────────────────────────────────────────────────────────────── */
+
+/* Elevation, and the focus ring that is not elevation but is built the same way.
+
+   The ring is two shadows, not an outline: the inner one punches a gap in the page
+   colour so the ring stays visible against a control of any fill. It reads --bg and
+   --ring, which is why it lives here and resolves per theme.
+
+   The shadows are Tailwind's `shadow-*` scale. Its other shadow namespaces are reset and
+   left empty: their defaults are colour literals this system does not declare. */
+
+@theme static {
+  --shadow-*: initial;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05);
+  --shadow-md: 0 2px 4px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
+  --shadow-lg: 0 8px 24px oklch(0 0 0 / 0.1), 0 2px 6px oklch(0 0 0 / 0.05);
+
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+}
+
+:root {
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring);
+}
+
+/* ── motion ──────────────────────────────────────────────────────────────── */
+
+/* Motion. Two durations and one curve, because a system with nine of each has no
+   opinion at all. */
+
+:root {
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+}
+
+/* The one curve is Tailwind's `ease-out`, and every `transition` utility defaults to it
+   and to --duration-base, so the reduced-motion block below reaches utilities too. */
+@theme static {
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --default-transition-duration: var(--duration-base);
+  --default-transition-timing-function: var(--ease-out);
+}
+
+/* `animate-pulse` is the loading pulse, on the one curve. Replacing the default rather than
+   adding a name keeps the utility everyone already knows. */
+@theme inline {
+  --animate-pulse: ui-pulse 1.4s var(--ease-out) infinite;
+
+  @keyframes ui-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+}
+
+/* One block, and every transition in the system respects it -- rather than each
+   component checking the media query for itself. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}
+
+/* Held on <html> for one frame while a theme swaps. The same mechanism as the block
+   above, for the same reason: zero the durations rather than fight every rule for the
+   cascade. Without it every transitioned property animates at once and the switch reads
+   as a stall rather than as a change. */
+[data-theme-switching] {
+  --duration-fast: 0ms;
+  --duration-base: 0ms;
+}

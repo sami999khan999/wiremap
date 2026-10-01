@@ -1791,7 +1791,7 @@ assert("every flag is live", (failures) => {
 // Tailwind's palette is reset to the twelve, so `bg-red-500` generates nothing, but an
 // arbitrary value compiles: `text-[#fff]` is a colour no theme knows and `check:contrast`
 // never sees. The same holds for a literal in a `style` prop or in any stylesheet outside
-// `theme/color/`. `token/shadow.css` may write `oklch(0 0 0 / <alpha>)`, and only that.
+// `style/color/`. `style/token.css` may write `oklch(0 0 0 / <alpha>)` for a shadow, and only that.
 
 const PALETTE =
   "slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose";
@@ -1816,8 +1816,8 @@ assert("no colour outside the twelve", (failures) => {
     });
   }
 
-  const colourDir = join(ROOT, "packages/ui/src/theme/color");
-  const shadow = join(ROOT, "packages/ui/src/theme/token/shadow.css");
+  const colourDir = join(ROOT, "packages/ui/src/style/color");
+  const shadow = join(ROOT, "packages/ui/src/style/token.css");
   for (const file of roots.flatMap((root) => walk(root, [".css"]))) {
     if (file.startsWith(colourDir)) continue;
     // `/* */` is CSS's only comment, and prose about a colour is not one.

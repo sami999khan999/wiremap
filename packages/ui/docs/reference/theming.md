@@ -43,7 +43,7 @@ blocks a palette actually ships, so "light, dark, or both" is data rather than a
 ## How Tailwind reads the attributes
 
 The twelve names stay plain custom properties on the theme selectors, and
-[`theme/tailwind.css`](../../src/theme/tailwind.css) maps each to a Tailwind colour with
+[`theme/tailwind.css`](../../src/style/tailwind.css) maps each to a Tailwind colour with
 `@theme inline`. `inline` matters: `bg-surface` compiles to `var(--surface)` itself, so a theme swap
 on `<html>`, or inside a `ThemeScope`, repaints every utility with no rebuild.
 

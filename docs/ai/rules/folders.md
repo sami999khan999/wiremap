@@ -9,12 +9,14 @@ description: What src/ may hold, role folders vs subject folders, and the two ex
   helper, not a small type. A loose file has no stated kind, so nothing says where the next one goes.
 - **Every folder has an `index.ts`.** That is what lets a file move within a folder without touching
   an import elsewhere. Exemptions: `content/src/message/{en,bn}/` (reached only by string-literal
-  `import()`; a barrel would collapse the code-split) and directories holding no modules.
+  `import()`; a barrel would collapse the code-split) and directories holding no modules, such as
+  `ui`'s `style/`.
 - **Role folder by default, subject folder where contents repeat per feature.** A role folder names
   the kind of thing inside and uses the shared vocabulary — `catalog/`, `registry/`, `port/`,
   `primitive/`, `gate/`, `route/`, `flag/`, `widget/`, `procedure/`, `schema/`, `container/`, `fake/`, `key/`,
-  `consumer/`, `subscriber/`, `schedule/`, `bootstrap/`. **Non-plural, always.** A subject folder is singular and **every file
-  inside is prefixed with the folder's name**.
+  `consumer/`, `subscriber/`, `schedule/`, `bootstrap/`, `component/`, `style/`. **Non-plural,
+  always.** A subject folder is singular and **every file inside is prefixed with the folder's
+  name**.
 - **Adding a folder name is a decision.** If a new folder wants a name that already means something
   else in `docs/opinions/folders.md`, it is the wrong name.
 - **Two exceptions worth knowing before you place a file.** `infrastructure` splits a slice across

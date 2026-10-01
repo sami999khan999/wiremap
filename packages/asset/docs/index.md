@@ -108,7 +108,7 @@ are eventually asked about measures.
 **Self-hosted, never Google Fonts.** A third-party font CDN is a privacy exposure, a GDPR question, a
 third-party outage in your critical path, and no faster than your own CDN under HTTP/2.
 
-`font.css` is imported exactly once, by `packages/ui/src/theme/token/typography.css`
+`font.css` is imported exactly once, by `packages/ui/src/style/token.css`
 ([22](../../../docs/setup/22-ui-package.md)).
 
 > [!IMPORTANT]

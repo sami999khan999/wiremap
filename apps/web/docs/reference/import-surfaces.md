@@ -47,7 +47,7 @@ that Start's import protection denies outright.
 
 Not on either surface. `__root.tsx` imports its own
 [`src/style/app.css`](../../src/style/app.css) with `?url` and links it once. That file is the
-Tailwind entry: it `@import`s `@loadbearing/ui/theme.css` and `class.css`, names the package sources
+Tailwind entry: it `@import`s `@loadbearing/ui/style.css`, names the package sources
 Tailwind scans with `@source`, and compiles all of it into one stylesheet. A relative file, so it is
 never re-exported from an `import.ts`.
 

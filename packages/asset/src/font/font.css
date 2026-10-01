@@ -1,4 +1,4 @@
-/* Every @font-face the product ships, declared once. Imported by packages/ui/src/theme/token/typography.css
+/* Every @font-face the product ships, declared once. Imported by packages/ui/src/style/token.css
    and nowhere else.
 
    Nothing is declared here, because no binary ships in this repository. The stack in

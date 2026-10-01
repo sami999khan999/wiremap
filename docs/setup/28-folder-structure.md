@@ -661,32 +661,32 @@ packages/query/src/
 ```
 packages/ui/src/
 ├── index.ts
-├── theme/
+├── import.ts
+├── component/                     ← one folder per exported component
 │   ├── index.ts
-│   ├── theme.css                  ← entry: @imports token/ and color/
-│   ├── class.css                  ← entry: @imports class/
-│   ├── token/                     ← sizes: typography, space, radius, shadow, motion
-│   ├── color/                     ← one .css per theme; the twelve names, in oklch
-│   ├── class/                     ← one .css per component; styles the ui-* hooks
+│   ├── icon/                      → Icon
+│   ├── can/                       → Can
+│   ├── data-table/                → DataTable
+│   ├── dialog/                    → Dialog, AlertDialog
+│   └── empty-state/ · status-badge/ · select/ · …
+├── theme/                         ← TypeScript only
+│   ├── index.ts
 │   ├── theme-registry.ts          → ThemeRegistry, ThemeKey, ThemeMeta
 │   ├── mode-registry.ts           → ModeRegistry, ModeKey, ModePreference
-│   └── font-registry.ts           → FontRegistry, FontKey
-├── icon/
-│   ├── index.ts
-│   └── icon.tsx                   → Icon
-├── can/
-│   ├── index.ts
-│   └── can.tsx                    → Can
-├── data-table/
-│   ├── index.ts
-│   ├── data-table.tsx             → DataTable
-│   └── data-table.stories.tsx
-├── dialog/
-├── empty-state/
-└── status-badge/
+│   ├── font-registry.ts           → FontRegistry, FontKey
+│   └── theme-scope.tsx            → ThemeScope
+├── style/                         ← every stylesheet, and nothing else
+│   ├── index.css                  ← the one entry, exported as `./style.css`
+│   ├── token.css                  ← sizes: typography, space, radius, shadow, motion
+│   ├── color/                     ← one .css per theme; the twelve names, in oklch
+│   ├── tailwind.css               ← the twelve as Tailwind's palette
+│   ├── base.css
+│   └── markdown/                  ← the HTML the Markdown renderer writes
+├── class-name/                    → cn
+└── format/                        → DateFormat, ByteFormat
 ```
 
-**Colours live in `color/`, never in `token/`, and `class/` declares no value of its own** — that separation is what makes a second theme a file rather than a refactor.
+**Colours live in `style/color/`, never in `token.css`, and `base.css` and `markdown/` declare no value of their own** — that separation is what makes a second theme a file rather than a refactor. Components style themselves with Tailwind utilities.
 
 **No domain nouns and no router.** A `TaskCard` here is a bug; it belongs in `feature`.
 
@@ -758,7 +758,7 @@ apps/web/
 │   │       ├── role.router.ts          → RoleRouter
 │   │       └── member.router.ts        → MemberRouter   (three lines per procedure)
 │       └── route/                      ← see below; the tree above is the whole of src/
-│       ├── __root.tsx                  ← theme.css, class.css, all four providers
+│       ├── __root.tsx                  ← links style/app.css; all four providers
 │       ├── -context.ts                 → RouterContext
 │       ├── -guard.ts                   → RouteGuard   (hyphen = not a route)
 │       ├── -messages.ts                ← StaticDataRouteOption augmentation

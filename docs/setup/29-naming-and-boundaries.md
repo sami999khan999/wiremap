@@ -304,9 +304,9 @@ The Postgres side gets its own section because it is the largest folder in the p
 
 ## 1.18 Inside `packages/ui`
 
-- **`theme/`** — everything about appearance, divided by what a file may reference. `token/` holds the sizes — type scale, spacing, radii, elevation, motion — and **deliberately no colours**. `color/` holds one file per theme, each declaring the same twelve names under `[data-theme][data-mode]`. `class/` holds one file per component and declares **no value of its own**: every number in it is a `var()` reaching back into the other two. A rule that breaks that direction is in the wrong folder.
+- **`theme/` and `style/`** — `theme/` is the TypeScript that chooses and scopes a theme. `style/` is every stylesheet, divided by what a file may reference. `token.css` holds the sizes — type scale, spacing, radii, elevation, motion — and **deliberately no colours**. `color/` holds one file per theme, each declaring the same twelve names under `[data-theme][data-mode]`. `base.css` and `markdown/` declare **no value of their own**: every number in them is a `var()` reaching back into the other two. A rule that breaks that direction is in the wrong file.
 - **Two attributes, not one key.** `data-theme` selects the palette and `data-mode` selects light or dark, so the two axes stay independent and a palette may declare either or both.
-- **`icon/`, `can/`, `data-table/`, `dialog/`, `empty-state/`, `status-badge/`** — one folder per component, each with its `index.ts` and optionally a `.stories.tsx`.
+- **`component/`** — one folder per component, `icon/`, `can/`, `data-table/`, `dialog/` and the rest, each with its `index.ts`. Components style themselves with Tailwind utilities.
 - **No domain nouns.** `DataTable`, never `TaskTable`. The test is mechanical and has no judgement call in it: if the name contains a domain word, the component belongs in `feature`.
 - **No router import.** Navigation arrives as an `onNavigate` prop or an `href` string.
 - **`<Can>` lives here but is convenience, never the gate.** The gate is `Authorizer.assert()` in the use-case.

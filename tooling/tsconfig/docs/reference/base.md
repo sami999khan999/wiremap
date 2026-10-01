@@ -60,7 +60,7 @@ emits imports **exactly as written** — no elision, no inference.
 That is what makes type-only imports an architectural tool rather than a hint:
 
 ```ts
-// packages/ui/src/can/can.tsx
+// packages/ui/src/component/can/can.tsx
 import type { CapabilitySet, PermissionKey } from "@loadbearing/permissions";
 ```
 

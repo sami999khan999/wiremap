@@ -15,7 +15,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const COLOR_DIR = join(ROOT, "packages", "ui", "src", "theme", "color");
+const COLOR_DIR = join(ROOT, "packages", "ui", "src", "style", "color");
 
 // WCAG AA for body text, and 3:1 for the focus ring, which is a UI component boundary
 // rather than text. Deliberately not applied to --border: a subtle separator at 3:1 is a

@@ -5,7 +5,7 @@ description: The twelve colour names every theme declares, why they are oklch, t
 
 # Palettes
 
-A theme is **one file in `src/theme/color/`** declaring twelve names, twice — once for light and
+A theme is **one file in `src/style/color/`** declaring twelve names, twice — once for light and
 once for dark. It names no component and it declares nothing structural. That is the whole contract.
 
 ## The twelve
@@ -80,9 +80,9 @@ before authoring a theme:
 
 Four steps, and none of them touch a component.
 
-1. **`src/theme/color/<name>.css`** — one block per mode, each declaring all twelve. Copy `slate.css`
+1. **`src/style/color/<name>.css`** — one block per mode, each declaring all twelve. Copy `slate.css`
    and rotate the hue; the lightness ladder is the part that should not move.
-2. **`src/theme/theme.css`** — one `@import` line, with the others, above every rule. Vite inlines
+2. **`src/style/index.css`** — one `@import` line, with the other colour files, above every rule. Vite inlines
    them, so the added file costs no extra request.
 3. **`src/theme/theme-registry.ts`** — one entry in `THEMES` with a `label` and the `modes` you
    actually wrote blocks for. Declaring a mode you did not write is how a page ends up with all
@@ -113,11 +113,11 @@ reaching an inbox renders as nothing at all — and most clients strip or ignore
 which is why every value there is inline on the element.
 
 The values are slate-light converted to sRGB, so a message looks like the product it came from. They
-are deliberately *not* derived from `theme/color/slate.css` at build time: a message is composed on
+are deliberately *not* derived from `style/color/slate.css` at build time: a message is composed on
 the server for a recipient who has no theme and no mode, so there is nothing to read a preference
 from, and a pipeline that tried would have to pick one anyway.
 
-`check:contrast` does not see them — it reads `packages/ui/src/theme/color/*.css` and nothing else.
+`check:contrast` does not see them — it reads `packages/ui/src/style/color/*.css` and nothing else.
 The pairings that matter there are white-on-primary for the button and `--fg` on `--surface` for the
 body, both of which clear AA at the values listed, and both of which are a review item rather than a
 gate.

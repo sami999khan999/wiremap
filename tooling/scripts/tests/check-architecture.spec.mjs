@@ -1352,7 +1352,7 @@ describe("32 — no colour outside the twelve", () => {
           'export const a = "bg-surface text-fg-muted border-border";\n' +
           'export const b = "bg-[color-mix(in_oklch,var(--primary)_88%,var(--fg))]";\n' +
           "export const c = { background: `var(--bg)` };\n",
-        "packages/ui/src/theme/token/shadow.css":
+        "packages/ui/src/style/token.css":
           ":root { --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05); }\n",
       }),
       NAME,
@@ -1375,7 +1375,7 @@ describe("32 — no colour outside the twelve", () => {
   // A literal in a stylesheet is as wrong as one in a class; a comment about one is not.
   it("catches a literal in a stylesheet, and ignores one in a comment", () => {
     fails(
-      run({ "packages/ui/src/theme/class/example.css": "/* #abc */\n.x { color: #fff; }\n" }),
+      run({ "packages/ui/src/style/markdown/example.css": "/* #abc */\n.x { color: #fff; }\n" }),
       NAME,
       "example.css:2",
     );

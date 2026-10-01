@@ -54,27 +54,29 @@ them into one chunk per locale × namespace. A barrel there would be dead weight
 accidentally import and collapse the split. See [20](../setup/20-content-package.md).
 
 **A second exemption: directories that hold no modules.** In `packages/asset`, `icon/svg/`,
-`image/file/` and `font/` hold `.svg`, `.webp` and `.woff2`; in `packages/ui`, `theme/token/`,
-`theme/color/` and `theme/class/` hold stylesheets only. None of them hold modules. There is nothing for a barrel to name, and
-the surfaces that reach them are `ImageManifest` (which imports the files by path) and the `exports`
-map (which publishes `./font.css`, `./sprite.svg`, `./theme.css` and `./class.css` directly). The
-rule is about folders of code.
+`image/file/` and `font/` hold `.svg`, `.webp` and `.woff2`; in `packages/ui`, `style/` and the
+folders under it hold stylesheets only. None of them hold modules. There is nothing for a barrel to
+name, and the surfaces that reach them are `ImageManifest` (which imports the files by path) and the
+`exports` map (which publishes `./font.css`, `./sprite.svg` and `./style.css` directly). The rule is
+about folders of code.
 
-**`ui` keeps one folder for appearance, and divides it inside.** `theme/` is the subject; the
-three folders under it are the kinds of thing appearance is made of, and each answers a different
-question:
+**`ui` splits code from appearance.** `component/` holds one folder per exported component.
+`theme/` holds the TypeScript that chooses and scopes a theme: the registries and `ThemeScope`.
+`style/` holds every stylesheet and nothing else, because a folder that mixes `.ts` and `.css`
+answers two questions and gets both wrong. Inside `style/`, each file is a kind of thing appearance
+is made of:
 
-- **`token/`** — the sizes. Type scale, spacing, radii, elevation, motion. Theme-invariant: a dark
-  theme is not a different spacing system.
+- **`token.css`** — the sizes. Type scale, spacing, radii, elevation, motion. Theme-invariant: a
+  dark theme is not a different spacing system.
 - **`color/`** — one file per theme, each declaring the same twelve names. The set is the contract.
-- **`class/`** — one file per component, styling the `ui-*` hooks that component already emits.
+- **`base.css` and `markdown/`** — rules for elements no component renders: the page, and the HTML
+  the Markdown renderer writes into stored docs.
 
-The line between them is what each may reference. `token/` names no colour. `color/` names no
-component. `class/` declares no value of its own — every number and every colour in it is a `var()`
-reaching back into the other two. A rule that breaks that direction is in the wrong folder.
-
-`token/` and `color/` ship together as `./theme.css`; `class/` ships as `./class.css`, separately,
-so an app that wants the tokens and its own design drops one link and keeps the rest.
+The line between them is what each may reference. `token.css` names no colour. A colour file names
+no component. `base.css` and `markdown/` declare no value of their own — every number and every
+colour in them is a `var()` reaching back into the other two. A rule that breaks that direction is
+in the wrong file. Components style themselves with Tailwind utilities, so none of this is per
+component.
 
 ## Every folder under `docs/` has an `index.md`
 
@@ -149,6 +151,8 @@ gets the same name in every package, so `catalog/` means the same thing in `erro
 | `consumer/` | queue consumers | `apps/worker` |
 | `schedule/` | repeatable jobs | `apps/worker` |
 | `bootstrap/` | what a process assembles before it starts working | `apps/worker` |
+| `component/` | one folder per exported React component | `ui` |
+| `style/` | stylesheets only, and every one the package ships | `ui`, `apps/web` |
 
 **Non-plural, always.** `tasks/` and `task/` coexisting in different packages is exactly the
 ambiguity this removes.
@@ -212,7 +216,7 @@ Subject folders repeat across packages by design: `contracts/task/`, `applicatio
 **Which packages are which.** `core`, `errors`, `permissions`, `observability`, `content`,
 `composition`, `api-client`, `api-server` are role-organised — they hold one of each thing. `application`, `query`,
 `feature` are subject-organised — they hold one of each thing per slice. `ui` is the third kind: one
-folder per exported component.
+folder per exported component, under `component/`.
 
 **`infrastructure` is a fourth kind, and the axis is the vendor.** One folder per external system —
 `pg/`, `redis/`, `s3/`, `bullmq/`, `openai/`, `clickhouse/`, `loki/` — with the file named after the

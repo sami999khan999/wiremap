@@ -12,7 +12,7 @@ subpaths, so no consumer can reach into a package's internals and break when you
 
 The only permitted extra exports are non-JS side-effect files that physically cannot live in a
 barrel: `@loadbearing/asset` ships `./font.css` and `./sprite.svg`; `@loadbearing/ui` ships
-`./theme.css` and `./class.css`. **A package wanting extra JavaScript subpaths is a signal it should
+`./style.css`. **A package wanting extra JavaScript subpaths is a signal it should
 be two packages.**
 
 ## Barrels name every export. `export *` is banned

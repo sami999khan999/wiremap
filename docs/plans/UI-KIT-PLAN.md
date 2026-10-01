@@ -106,6 +106,21 @@ Lite diverges from the big kit here, which is recorded in `UPSTREAM.md` at `UI4`
   - `apps/web/docs/reference/import-surfaces.md`;
   - `UPSTREAM.md` and `docs/scale/back-ports.md`.
 
+## UI5 — structure
+
+- [x] `UI5.1` `packages/ui/src` is split into four groups:
+  - `component/`, one folder per exported component;
+  - `theme/`, TypeScript only: the registries and `ThemeScope`;
+  - `style/`, every stylesheet;
+  - `class-name/` and `format/`.
+
+  The 19 stylesheets became 13:
+  - the five token files are now `token.css`;
+  - `theme.css` and `class.css` are now `index.css`, exported as `./style.css`;
+  - `class/` is now `markdown/`.
+
+  The public API is unchanged, and the compiled CSS is byte-for-byte the same.
+
 ## Verification
 
 After every commit:

@@ -1,0 +1,22 @@
+/* The package's one stylesheet, which the app's Tailwind build imports
+   (apps/web/src/style/app.css). It is Tailwind source, never linked alone: the tokens are
+   theme blocks. @import lines come first because CSS requires it. */
+
+/* What a design is built on: the sizes, the twelve colours per theme, and the twelve as
+   Tailwind's palette. */
+@import "./token.css";
+@import "./color/slate.css";
+@import "./color/ocean.css";
+@import "./color/forest.css";
+@import "./color/plum.css";
+@import "./color/midnight.css";
+@import "./color/graphite.css";
+@import "./tailwind.css";
+
+/* Rules for elements no component renders: the page itself, and the HTML the Markdown
+   renderer writes into stored docs. In the components layer, so a utility beats them. */
+@import "./base.css" layer(components);
+@import "./markdown/callout.css" layer(components);
+@import "./markdown/card.css" layer(components);
+@import "./markdown/code-block.css" layer(components);
+@import "./markdown/prose.css" layer(components);

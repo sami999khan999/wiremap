@@ -122,7 +122,7 @@ reviewer should apply to a comment that has grown past the ceiling.
    `// see docs/reference/x.md`.
 4. **An `import.ts` header is one line plus its `// ── @scope/pkg ──` separators.**
 5. **A JSX block becomes `{ // }`**, or is deleted — see above.
-6. **CSS under `packages/ui/src/theme/**` keeps `/* */`**, because there is no `//` form in CSS. The
+6. **CSS under `packages/ui/src/style/**` keeps `/* */`**, because there is no `//` form in CSS. The
    same two-line ceiling applies.
 
 > [!NOTE]

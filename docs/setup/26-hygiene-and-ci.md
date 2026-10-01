@@ -1076,14 +1076,14 @@ widgets.
 ```js
 // fail on an arbitrary colour value (`text-[#fff]`, `bg-[rgb(`), a palette utility
 // (`bg-red-500`, `text-white`) or a literal `style` colour in packages/{ui,feature}/src and
-// apps/web/src, and on any colour literal in a stylesheet there outside theme/color/
+// apps/web/src, and on any colour literal in a stylesheet there outside style/color/
 ```
 
 Tailwind's palette is reset to the twelve, so `bg-red-500` generates no CSS and would at worst do
 nothing. An arbitrary value is different: `text-[#fff]` compiles to a real colour that no theme
 knows and that `check:contrast` never sees. It reviews clean and is wrong in five of six themes.
 A `color-mix` of two of the twelve passes, because that is how a state is derived.
-`token/shadow.css` keeps its one exception, `oklch(0 0 0 / <alpha>)`.
+`style/token.css` keeps its one exception for shadows, `oklch(0 0 0 / <alpha>)`.
 
 ## Step 26.4b — `check:contrast`, the gate that is not a grep
 
@@ -1094,7 +1094,7 @@ OK 154 pairings meet WCAG AA and 132 colours are inside sRGB, all 12 names prese
 
 **The assertions above read source; this one computes.** It resolves the twelve colour names
 ([Opinions · Colour](../ai/rules/color.md)) for every theme in every mode, walks the pairings
-`packages/ui/src/theme/class/` actually produces, and fails on a contrast ratio under WCAG AA, a
+`packages/ui/src/style/markdown/` actually produces, and fails on a contrast ratio under WCAG AA, a
 name a theme forgot to declare, or an `oklch()` value outside the sRGB gamut.
 
 **The gamut half is the one nobody expects.** `oklch()` describes colours a monitor cannot show, and

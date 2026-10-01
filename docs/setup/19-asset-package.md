@@ -337,7 +337,7 @@ declare module "*.png" {
 
 **Self-hosted, never Google Fonts.** Third-party font CDNs are a privacy exposure, a GDPR question, a third-party outage in your critical path, and no faster than your own CDN under HTTP/2.
 
-This file is imported exactly once, by `packages/ui/src/theme/token/typography.css` ([22](22-ui-package.md)).
+This file is imported exactly once, by `packages/ui/src/style/token.css` ([22](22-ui-package.md)).
 
 > [!NOTE]
 > **The two `.woff2` files are a drop-in, and the build says so on every run.** `build-sprite.mjs`
