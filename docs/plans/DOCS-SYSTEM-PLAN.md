@@ -135,9 +135,7 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
   - The preview renders on demand, in the Preview tab only, with a debounce.
   - Publishing a page over the render budget queues it on the maintenance queue and shows
     "publishing", rather than holding the request.
-- [~] `DS0.6` **Query plans pinned.** Query counts are pinned by `tests/doc/doc.cache.spec.ts` and the bench; the `EXPLAIN` specs are open. The original wording: specs assert, with `EXPLAIN`, that a page read, a nav read
-  and a search use their indexes. A query-count spec covers each reader path.
-
+- [x] `DS0.6` done: 2026-10-02. **Query plans pinned.** `tests/doc/doc-query-plan.spec.ts` runs the space-by-slug, page and search reads as the repository writes them, under `EXPLAIN` with sequential scans priced out, and fails on any doc table read in full. Query counts stay pinned by `doc.cache.spec.ts` and the bench.
 - [-] `DS0.7` **Production-mode guard.** Dropped 2026-10-01. The web build bundles React's production build, and no code reads `NODE_ENV`, so it would guard nothing.
 - [x] `DS0.8` **One web process per core.** done: 2026-10-01, `apps/web/cluster.mjs`. It forwards SIGTERM, drains each worker, then disconnects it, and restarts a crashed one. Under the same load, `/docs` went from 66 to 183 req/s.
 - [x] `DS0.9` **`pnpm bench`.** done: 2026-10-01, `tooling/scripts/bench.mjs`.
