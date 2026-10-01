@@ -92,7 +92,13 @@ one type `lowlight` imports from it, `LanguageFn`. The runtime import is unchang
 ## Changing the markup
 
 `version` is stored beside every page it rendered, as `doc_pages.renderer_version`. Bump it
-whenever the emitted HTML changes shape. It is **2** today: version 1 had callouts and cards only.
+whenever the emitted HTML or the search text changes. It is **3** today:
+
+| Version | Changed |
+|---|---|
+| 1 | Callouts and cards |
+| 2 | Tabs, steps, accordions and card icons |
+| 3 | Section text keeps blocks apart, so a card's title and description stay two words |
 
 Then run **`pnpm doc:rerender`** with the worker up. It queues one `doc-rerender` job per
 organization on the maintenance queue. `DocRerender` renders each published page the older

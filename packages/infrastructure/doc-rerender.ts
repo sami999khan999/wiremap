@@ -15,7 +15,10 @@ const connection = new Redis(queueUrl, { maxRetriesPerRequest: null });
 const queue = new Queue(QueueName.MAINTENANCE, { connection });
 
 try {
-  const rows = await catalog.client.execute<{ id: string }>(sql`select id from organizations`);
+  // Placed ones only: an organization with no node has no pages, and its job could only fail.
+  const rows = await catalog.client.execute<{ id: string }>(
+    sql`select o.id from organizations o join shard_assignments a on a.shard_key = o.id::text`,
+  );
 
   // One job id per tenant, so a second run before the worker drains queues nothing new.
   for (const row of rows.rows) {

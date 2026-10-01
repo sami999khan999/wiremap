@@ -67,6 +67,25 @@ const SCHEMA: SanitizeSchema = {
   },
 };
 
+// Text-level tags, read straight through. Any other element ends a run of text, so a card's
+// title and description, or two steps, never fuse into one word in a search excerpt.
+const INLINE = new Set([
+  "a",
+  "abbr",
+  "b",
+  "code",
+  "del",
+  "em",
+  "i",
+  "kbd",
+  "mark",
+  "s",
+  "strong",
+  "sub",
+  "sup",
+  "u",
+]);
+
 // The headings a reader navigates by. `h1` is the page title's, drawn outside the body.
 const TOC_DEPTHS: ReadonlyMap<string, number> = new Map([
   ["h2", 2],
@@ -85,9 +104,9 @@ interface DirectiveNode {
 // Markdown to sanitised HTML with unified. Sanitising runs before the slugger and the
 // highlighter, so the ids and classes those two add are the only ones that skip it.
 export class UnifiedMarkdownRenderer extends MarkdownRenderer {
-  // Bump when the HTML changes shape, then run `pnpm doc:rerender`. 2 added tabs, steps,
-  // accordions and card icons.
-  public readonly version = 2;
+  // Bump when the HTML or the search text changes, then run `pnpm doc:rerender`. 2: tabs,
+  // steps, accordions, card icons. 3: section text keeps blocks apart.
+  public readonly version = 3;
 
   private readonly processor = unified()
     .use(remarkParse)
@@ -282,9 +301,20 @@ export class UnifiedMarkdownRenderer extends MarkdownRenderer {
         };
         continue;
       }
-      current.body.push(hastToString(child));
+      current.body.push(UnifiedMarkdownRenderer.text(child));
     }
     flush();
     return out;
+  }
+
+  private static text(node: HastNodes): string {
+    if (node.type === "text") return node.value;
+    if (node.type !== "element" && node.type !== "root") return "";
+    const inner = (node.children as HastNodes[]).map((child) =>
+      UnifiedMarkdownRenderer.text(child),
+    );
+    return node.type === "element" && INLINE.has(node.tagName)
+      ? inner.join("")
+      : ` ${inner.join("")} `;
   }
 }

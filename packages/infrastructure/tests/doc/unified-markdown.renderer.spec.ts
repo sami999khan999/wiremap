@@ -111,6 +111,15 @@ describe("UnifiedMarkdownRenderer — outline", () => {
       { anchor: "install-1", heading: "Install", body: "Again." },
     ]);
   });
+
+  // A block ends a word; inline markup does not. Glued text was an excerpt reading
+  // "InstallationAdd the packages", and a search for "Add" that matched nothing.
+  it("keeps blocks apart and inline markup joined in a section's text", async () => {
+    const { sections } = await renderer.render(
+      '::::cards\n:::card{title="Install" href="/a"}\nAdd it.\n:::\n::::\n\nRun **pnpm**`i` now.',
+    );
+    expect(sections[0]?.body).toBe("Install Add it. Run pnpmi now.");
+  });
 });
 
 describe("UnifiedMarkdownRenderer — version 2 blocks", () => {
@@ -150,6 +159,6 @@ describe("UnifiedMarkdownRenderer — version 2 blocks", () => {
   });
 
   it("is version 2, so pages rendered by version 1 can be found and rendered again", () => {
-    expect(renderer.version).toBe(2);
+    expect(renderer.version).toBe(3);
   });
 });
