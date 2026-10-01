@@ -7,17 +7,19 @@ import type {
   DocPagePublishedRecord,
   DocPageRepository,
   DocPublication,
+  DocRendering,
   DocRevisionRecord,
   DocRevisionSummaryRecord,
   DocSearchMatch,
   DocSpaceId,
+  DocStalePageRecord,
   NewDocPage,
   OrganizationId,
   Placement,
   RenderedSection,
   UserId,
 } from "../../import.js";
-import { and, desc, eq, inArray, isNotNull, sql, Uuid } from "../../import.js";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql, Uuid } from "../../import.js";
 import { BaseRepository } from "../primitive/index.js";
 import { docPages, docRevision, docSections } from "../schema/index.js";
 
@@ -218,6 +220,52 @@ export class PgDocPageRepository extends BaseRepository implements DocPageReposi
   }
 
   // Two statements whatever the page's length: the delete, then one multi-row insert.
+  public async listStale(
+    organizationId: OrganizationId,
+    version: number,
+    limit: number,
+  ): Promise<readonly DocStalePageRecord[]> {
+    const rows = await this.db
+      .select({
+        id: docPages.id,
+        spaceId: docPages.spaceId,
+        title: docPages.publishedTitle,
+        description: docPages.publishedDescription,
+        markdown: docPages.publishedMarkdown,
+        revisionNo: docPages.revisionNo,
+      })
+      .from(docPages)
+      .where(
+        and(
+          eq(docPages.organizationId, organizationId),
+          isNotNull(docPages.publishedAt),
+          or(isNull(docPages.rendererVersion), lt(docPages.rendererVersion, version)),
+        ),
+      )
+      .orderBy(docPages.id)
+      .limit(limit);
+    return rows.map((row) => ({
+      ...row,
+      title: row.title ?? "",
+      markdown: row.markdown ?? "",
+    }));
+  }
+
+  public async saveRendering(
+    organizationId: OrganizationId,
+    pageId: DocPageId,
+    rendering: DocRendering,
+  ): Promise<void> {
+    await this.db
+      .update(docPages)
+      .set({
+        publishedHtml: rendering.html,
+        publishedToc: rendering.toc,
+        rendererVersion: rendering.rendererVersion,
+      })
+      .where(and(eq(docPages.organizationId, organizationId), eq(docPages.id, pageId)));
+  }
+
   public async saveSections(
     organizationId: OrganizationId,
     spaceId: DocSpaceId,

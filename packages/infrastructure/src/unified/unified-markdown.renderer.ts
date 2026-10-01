@@ -39,12 +39,20 @@ const ALERT_MARKER = /^\[!(NOTE|IMPORTANT|TIP|WARNING|CAUTION)\]\s*/;
 // Only the class hooks this renderer itself emits survive sanitising. An author who types
 // `class="ui-…"` gets nothing: raw HTML never reaches the sanitiser at all.
 const UI_CLASS = /^ui-/;
+// A card's icon is a sprite name, filled in by `Prose`. Only a name's shape gets through.
+const ICON_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 const SCHEMA: SanitizeSchema = {
   ...defaultSchema,
   attributes: {
     ...defaultSchema.attributes,
-    div: [...(defaultSchema.attributes?.div ?? []), ["className", UI_CLASS]],
+    div: [
+      ...(defaultSchema.attributes?.div ?? []),
+      ["className", UI_CLASS],
+      ["dataIcon", ICON_NAME],
+    ],
+    details: [...(defaultSchema.attributes?.details ?? []), ["className", UI_CLASS]],
+    summary: [...(defaultSchema.attributes?.summary ?? []), ["className", UI_CLASS]],
     span: [...(defaultSchema.attributes?.span ?? []), ["className", UI_CLASS]],
     p: [...(defaultSchema.attributes?.p ?? []), ["className", UI_CLASS]],
     // One `className` rule, not two: the sanitiser reads the first, and the default's own
@@ -54,6 +62,7 @@ const SCHEMA: SanitizeSchema = {
         (rule) => !Array.isArray(rule) || rule[0] !== "className",
       ),
       ["className", "data-footnote-backref", UI_CLASS],
+      ["dataIcon", ICON_NAME],
     ],
   },
 };
@@ -76,9 +85,9 @@ interface DirectiveNode {
 // Markdown to sanitised HTML with unified. Sanitising runs before the slugger and the
 // highlighter, so the ids and classes those two add are the only ones that skip it.
 export class UnifiedMarkdownRenderer extends MarkdownRenderer {
-  // Bump when the HTML this emits changes shape, so the pages rendered by the old one
-  // can be found and rendered again.
-  public readonly version = 1;
+  // Bump when the HTML changes shape, then run `pnpm doc:rerender`. 2 added tabs, steps,
+  // accordions and card icons.
+  public readonly version = 2;
 
   private readonly processor = unified()
     .use(remarkParse)
@@ -145,9 +154,43 @@ export class UnifiedMarkdownRenderer extends MarkdownRenderer {
     ];
   }
 
-  // `::::cards` holding `:::card{title=… href=…}` blocks, each with its text as the
-  // description. Any other directive is put back as the text it was typed as.
+  // Cards, tabs, steps and accordions; any other directive is put back as typed. Shapes:
+  // packages/ui/docs/reference/docs-primitives.md, syntax: docs/reference/doc-renderer.md.
   private static directive(node: DirectiveNode): void {
+    if (node.type === "containerDirective" && node.name === "tabs") {
+      node.data = { hName: "div", hProperties: { className: ["ui-tabs"] } };
+      return;
+    }
+    // Each panel carries its title, so with no script every tab reads as a titled block.
+    if (node.type === "containerDirective" && node.name === "tab") {
+      node.data = { hName: "div", hProperties: { className: ["ui-tabs__panel"] } };
+      node.children = [
+        {
+          type: "paragraph",
+          children: [{ type: "text", value: node.attributes?.title ?? "" }],
+          data: { hName: "p", hProperties: { className: ["ui-tabs__title"] } },
+        },
+        ...node.children,
+      ];
+      return;
+    }
+    // Each `###` heading inside is a numbered step, counted by the stylesheet.
+    if (node.type === "containerDirective" && node.name === "steps") {
+      node.data = { hName: "div", hProperties: { className: ["ui-steps"] } };
+      return;
+    }
+    if (node.type === "containerDirective" && node.name === "accordion") {
+      node.data = { hName: "details", hProperties: { className: ["ui-accordion"] } };
+      node.children = [
+        {
+          type: "paragraph",
+          children: [{ type: "text", value: node.attributes?.title ?? "" }],
+          data: { hName: "summary", hProperties: { className: ["ui-accordion__summary"] } },
+        },
+        ...node.children,
+      ];
+      return;
+    }
     if (node.type === "containerDirective" && node.name === "cards") {
       node.data = { hName: "div", hProperties: { className: ["ui-card-grid"] } };
       return;
@@ -155,11 +198,15 @@ export class UnifiedMarkdownRenderer extends MarkdownRenderer {
     if (node.type === "containerDirective" && node.name === "card") {
       const href = node.attributes?.href ?? null;
       const title = node.attributes?.title ?? "";
+      const icon = node.attributes?.icon ?? null;
       const safe = href !== null && /^(https?:\/\/|\/|#)/.test(href) ? href : null;
+      const card = {
+        className: ["ui-card"],
+        ...(icon !== null && ICON_NAME.test(icon) ? { dataIcon: icon } : {}),
+      };
       node.data = {
         hName: safe === null ? "div" : "a",
-        hProperties:
-          safe === null ? { className: ["ui-card"] } : { className: ["ui-card"], href: safe },
+        hProperties: safe === null ? card : { ...card, href: safe },
       };
       // Inline content only: a card is a link, and a paragraph inside a `span` is not HTML.
       const phrasing = node.children.flatMap((child) =>

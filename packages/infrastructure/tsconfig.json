@@ -17,6 +17,7 @@
     "queue-replay.ts",
     "ai-reindex.ts",
     "doc-bench.ts",
+    "doc-rerender.ts",
     "seed.ts",
     "shard-env.ts"
   ]

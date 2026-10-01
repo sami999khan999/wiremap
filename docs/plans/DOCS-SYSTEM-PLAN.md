@@ -231,22 +231,22 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 
 ### Phase 4 — Richer Markdown
 
-- [ ] `DS4.1` **Renderer version 2.** New directives:
+- [x] `DS4.1` done: 2026-10-02. `UnifiedMarkdownRenderer.version` is 2. **Renderer version 2.** New directives:
   - `:::tabs` containing `:::tab{title}`;
   - `:::steps`, numbered;
   - `:::accordion{title}`, rendered as `<details>` and `<summary>`;
   - `icon=` on `:::card`, written as `data-icon`.
 
   The sanitizer allows exactly these `ui-*` classes and attributes.
-- [ ] `DS4.2` **Behaviour in `Prose`.**
+- [x] `DS4.2` done: 2026-10-02. `Tabs.enhance` and `Cards.icon` run on idle; styles in `style/markdown/blocks.css`. **Behaviour in `Prose`.**
   - Tabs get an ARIA tablist with arrow keys. That is enhanced after mount, because the HTML is
     server-written. With no script, every panel shows stacked.
   - Card icons fill from the sprite.
   - Styles go in `ui/src/style/markdown/`.
-- [ ] `DS4.3` **Re-render.** A `pnpm doc:rerender` script, plus a maintenance job, re-render pages
+- [x] `DS4.3` done: 2026-10-02. `DocRerender`, the `doc-rerender` maintenance job and `pnpm doc:rerender`. **Re-render.** A `pnpm doc:rerender` script, plus a maintenance job, re-render pages
   whose `renderer_version` is below the current version. They rewrite the published snapshot
   without a new revision.
-- [ ] `DS4.4` **Specs, plus `packages/infrastructure/docs/reference/doc-renderer.md` and an
+- [x] `DS4.4` done: 2026-10-02. `doc-rerender.spec.ts`, renderer and prose specs; the authoring table is in `doc-renderer.md`. **Specs, plus `packages/infrastructure/docs/reference/doc-renderer.md` and an
   authoring guide for each directive.**
 
 ### Phase 5 — GitHub link and Open in AI

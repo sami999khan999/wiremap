@@ -124,6 +124,16 @@ export class DocCache {
     return page;
   }
 
+  // After a re-render, which keeps the revision number and so the key: without this the
+  // old HTML would be served until the key expires.
+  public async forgetPage(
+    organizationId: OrganizationId,
+    pageId: DocPagePublishedRecord["id"],
+    revisionNo: number,
+  ): Promise<void> {
+    await this.cache.delete(`doc:page:${organizationId}:${pageId}:${revisionNo}`);
+  }
+
   private static listKey(organizationId: OrganizationId): string {
     return `doc:spaces:${organizationId}`;
   }

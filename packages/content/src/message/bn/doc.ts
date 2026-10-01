@@ -96,7 +96,7 @@ export const doc: NamespaceBundle<"doc"> = {
   "doc.page.url": "লিংকের ঠিকানা",
   "doc.page.markdown": "বিষয়বস্তু",
   "doc.page.markdownHint":
-    'মার্কডাউন। `> [!NOTE]` একটি কলআউট তৈরি করে; ভেতরে `:::card{title="…" href="…"}` সহ `::::cards` একটি কার্ড গ্রিড তৈরি করে।',
+    'মার্কডাউন। `> [!NOTE]` একটি কলআউট তৈরি করে। `:::card{title="…" href="…" icon="…"}` ঘিরে `::::cards` একটি কার্ড গ্রিড তৈরি করে; `:::tab{title="…"}` ঘিরে `::::tabs` ট্যাব তৈরি করে; `:::steps` এর `###` শিরোনামগুলোকে নম্বর দেয়; `:::accordion{title="…"}` ভাঁজ হয়।',
   "doc.editor.write": "লিখুন",
   "doc.editor.preview": "প্রিভিউ",
   "doc.editor.previewEmpty": "প্রিভিউ করার মতো এখনও কিছু নেই।",

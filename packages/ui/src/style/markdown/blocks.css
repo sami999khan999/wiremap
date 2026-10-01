@@ -1,0 +1,128 @@
+/* Tabs, steps and accordions the Markdown renderer writes. Every value is a token or one
+   of the twelve, so each reads right in every theme and mode. */
+
+/* With no script each panel is a titled block; once `Prose` adds the tablist, the titles
+   go and one panel shows. */
+.ui-tabs {
+  margin: var(--space-6) 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.ui-tabs__panel {
+  padding: var(--space-4);
+}
+
+.ui-tabs__panel + .ui-tabs__panel {
+  border-top: var(--border-width) solid var(--border);
+}
+
+.ui-tabs__title {
+  margin: 0 0 var(--space-2);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-tabs[data-enhanced] .ui-tabs__title {
+  display: none;
+}
+
+.ui-tabs[data-enhanced] .ui-tabs__panel + .ui-tabs__panel {
+  border-top: 0;
+}
+
+.ui-tabs__list {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--border);
+  background: var(--muted);
+  overflow-x: auto;
+}
+
+.ui-tabs__tab {
+  margin-bottom: calc(-1 * var(--border-width));
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.ui-tabs__tab:hover {
+  color: var(--fg);
+}
+
+.ui-tabs__tab[aria-selected="true"] {
+  border-color: var(--border);
+  border-bottom-color: var(--surface);
+  background: var(--surface);
+  color: var(--fg);
+  font-weight: var(--weight-medium);
+}
+
+.ui-tabs__panel > :first-child,
+.ui-tabs__panel > .ui-tabs__title + * {
+  margin-top: 0;
+}
+
+.ui-tabs__panel > :last-child {
+  margin-bottom: 0;
+}
+
+/* Each `###` inside is a step, numbered down a rail. */
+.ui-steps {
+  margin: var(--space-6) 0;
+  padding-left: var(--space-10);
+  border-left: var(--border-width) solid var(--border);
+  counter-reset: ui-step;
+}
+
+.ui-prose .ui-steps h3 {
+  position: relative;
+  counter-increment: ui-step;
+}
+
+.ui-prose .ui-steps h3::before {
+  content: counter(ui-step);
+  position: absolute;
+  left: calc(-1 * var(--space-10) - var(--space-4) - var(--border-width) / 2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  color: var(--fg);
+  font-size: var(--text-sm);
+}
+
+.ui-accordion {
+  margin: var(--space-4) 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.ui-accordion__summary {
+  padding: var(--space-3) var(--space-4);
+  color: var(--fg);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.ui-accordion[open] > .ui-accordion__summary {
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.ui-accordion > :not(summary) {
+  margin: var(--space-3) var(--space-4);
+}

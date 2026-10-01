@@ -50,6 +50,7 @@
     "ai:reindex": "pnpm --filter @loadbearing/infrastructure run ai:reindex",
     "bench": "node tooling/scripts/bench.mjs",
     "doc:bench": "pnpm --filter @loadbearing/infrastructure run doc:bench",
+    "doc:rerender": "pnpm --filter @loadbearing/infrastructure run doc:rerender",
     "auth:tables": "pnpm --filter @loadbearing/auth run auth:tables",
     "smoke": "pnpm --filter @loadbearing/infrastructure run smoke",
     "smoke:web": "pnpm --filter @loadbearing/web run smoke",

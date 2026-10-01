@@ -102,7 +102,7 @@ export const doc = {
   "doc.page.url": "Link address",
   "doc.page.markdown": "Content",
   "doc.page.markdownHint":
-    'Markdown. `> [!NOTE]` makes a callout; `::::cards` with `:::card{title="…" href="…"}` inside makes a card grid.',
+    'Markdown. `> [!NOTE]` makes a callout. `::::cards` around `:::card{title="…" href="…" icon="…"}` makes a card grid; `::::tabs` around `:::tab{title="…"}` makes tabs; `:::steps` numbers its `###` headings; `:::accordion{title="…"}` folds.',
   "doc.editor.write": "Write",
   "doc.editor.preview": "Preview",
   "doc.editor.previewEmpty": "Nothing to preview yet.",

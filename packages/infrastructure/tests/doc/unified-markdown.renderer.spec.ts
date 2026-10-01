@@ -112,3 +112,44 @@ describe("UnifiedMarkdownRenderer — outline", () => {
     ]);
   });
 });
+
+describe("UnifiedMarkdownRenderer — version 2 blocks", () => {
+  it("writes each tab as a titled panel, readable with no script", async () => {
+    const { html } = await renderer.render(
+      '::::tabs\n:::tab{title="pnpm"}\npnpm add x\n:::\n:::tab{title="npm"}\nnpm i x\n:::\n::::',
+    );
+    expect(html).toBe(
+      '<div class="ui-tabs"><div class="ui-tabs__panel"><p class="ui-tabs__title">pnpm</p><p>pnpm add x</p></div>' +
+        '<div class="ui-tabs__panel"><p class="ui-tabs__title">npm</p><p>npm i x</p></div></div>',
+    );
+  });
+
+  it("wraps steps for the stylesheet to number, and keeps their headings in the outline", async () => {
+    const { html, toc } = await renderer.render(":::steps\n### Install\nRun it.\n:::");
+    expect(html).toBe('<div class="ui-steps"><h3 id="install">Install</h3><p>Run it.</p></div>');
+    expect(toc).toEqual([{ id: "install", text: "Install", depth: 3 }]);
+  });
+
+  it("writes an accordion as details and summary", async () => {
+    const { html } = await renderer.render(':::accordion{title="Why?"}\nBecause.\n:::');
+    expect(html).toBe(
+      '<details class="ui-accordion"><summary class="ui-accordion__summary">Why?</summary><p>Because.</p></details>',
+    );
+  });
+
+  // Only a name's shape reaches the page; the sprite decides whether it draws.
+  it("carries a card's icon as a data attribute, and only a well-formed one", async () => {
+    const good = await renderer.render(
+      '::::cards\n:::card{title="A" href="/a" icon="book"}\nx\n:::\n::::',
+    );
+    expect(good.html).toContain('data-icon="book"');
+    const bad = await renderer.render(
+      '::::cards\n:::card{title="A" icon="Bad Name"}\nx\n:::\n::::',
+    );
+    expect(bad.html).not.toContain("data-icon");
+  });
+
+  it("is version 2, so pages rendered by version 1 can be found and rendered again", () => {
+    expect(renderer.version).toBe(2);
+  });
+});

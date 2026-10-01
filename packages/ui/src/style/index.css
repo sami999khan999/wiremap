@@ -20,3 +20,4 @@
 @import "./markdown/card.css" layer(components);
 @import "./markdown/code-block.css" layer(components);
 @import "./markdown/prose.css" layer(components);
+@import "./markdown/blocks.css" layer(components);

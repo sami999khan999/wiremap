@@ -123,6 +123,10 @@ export interface EventShape {
     readonly created: number;
     readonly target: number;
   };
+  readonly "doc.pages.rerendered": {
+    readonly organizationId: string;
+    readonly pages: number;
+  };
   // The ids, not just the count: with no foreign key left, this line is the only place
   // a leaked tenant is named, and a number alone cannot be chased.
   readonly "maintenance.orphans.found": {

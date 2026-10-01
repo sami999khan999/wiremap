@@ -21,11 +21,14 @@ export {
   type DocPagePublishedRecord,
   DocPageRepository,
   type DocPublication,
+  type DocRendering,
   type DocRevisionRecord,
   type DocRevisionSummaryRecord,
   type DocSearchMatch,
+  type DocStalePageRecord,
   type NewDocPage,
 } from "./doc-page.repository.js";
+export { DocRerender } from "./doc-rerender.js";
 export { DocSearch } from "./doc-search.js";
 export { DocShape } from "./doc-shape.js";
 export {

@@ -172,6 +172,32 @@ describe("PgDocPageRepository", () => {
     expect(node?.publishedDraftVersion).toBe(1);
   });
 
+  // A re-render keeps the revision: readers' cache keys and the history do not move.
+  it("lists a page an older renderer wrote and re-renders it in place", async () => {
+    const id = await newPage(`stale-${Uuid.v7().slice(-8)}`);
+    await pages().publish(organizationId, id, 1, PUBLICATION, author);
+
+    const stale = await pages().listStale(organizationId, 2, 100_000);
+    expect(stale.find((row) => row.id === id)).toMatchObject({
+      spaceId,
+      title: PUBLICATION.title,
+      markdown: PUBLICATION.markdown,
+      revisionNo: 1,
+    });
+
+    await pages().saveRendering(organizationId, id, {
+      html: "<p>new</p>",
+      toc: [],
+      rendererVersion: 2,
+    });
+    expect((await pages().listStale(organizationId, 2, 100_000)).some((row) => row.id === id)).toBe(
+      false,
+    );
+    const published = await pages().findPublished(organizationId, id);
+    expect(published?.html).toBe("<p>new</p>");
+    expect(published?.revisionNo).toBe(1);
+  });
+
   it("reads nothing published for a page that never was", async () => {
     const id = await newPage(`never-${Uuid.v7().slice(-8)}`);
     expect(await pages().findPublished(organizationId, id)).toBeNull();

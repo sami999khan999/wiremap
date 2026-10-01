@@ -81,6 +81,22 @@ export interface DocPublication {
   readonly rendererVersion: number;
 }
 
+// A published page the current renderer did not write, with what re-rendering needs.
+export interface DocStalePageRecord {
+  readonly id: DocPageId;
+  readonly spaceId: DocSpaceId;
+  readonly title: string;
+  readonly description: string | null;
+  readonly markdown: string;
+  readonly revisionNo: number;
+}
+
+export interface DocRendering {
+  readonly html: string;
+  readonly toc: readonly DocTocEntryDto[];
+  readonly rendererVersion: number;
+}
+
 export interface DocRevisionSummaryRecord {
   readonly revisionNo: number;
   readonly title: string;
@@ -156,6 +172,20 @@ export abstract class DocPageRepository {
   ): Promise<void>;
 
   // Replaces the page's search rows in one statement pair, inside the publish.
+  // Published pages rendered before `version`, oldest renderer first.
+  public abstract listStale(
+    organizationId: OrganizationId,
+    version: number,
+    limit: number,
+  ): Promise<readonly DocStalePageRecord[]>;
+
+  // The published HTML and outline only: no revision, no draft, no publish time moves.
+  public abstract saveRendering(
+    organizationId: OrganizationId,
+    pageId: DocPageId,
+    rendering: DocRendering,
+  ): Promise<void>;
+
   public abstract saveSections(
     organizationId: OrganizationId,
     spaceId: DocSpaceId,

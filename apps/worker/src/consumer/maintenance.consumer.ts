@@ -23,6 +23,10 @@ interface ExportJob {
 
 // What `tenant-delete` carries. The actor rides along because the job's own principal
 // is the system's, and the audit row for a delete has to name who asked for it.
+interface RerenderJob {
+  readonly organizationId: OrganizationId;
+}
+
 interface PurgeJob {
   readonly organizationId: OrganizationId;
   readonly actorId: UserId;
@@ -130,6 +134,8 @@ export class MaintenanceConsumer {
         return this.export(job.data as ExportJob);
       case "tenant-delete":
         return this.purge(job.data as PurgeJob);
+      case "doc-rerender":
+        return this.rerender(job.data as RerenderJob);
       default:
         throw new Error(`Unknown maintenance job: ${job.name}`);
     }
@@ -171,6 +177,18 @@ export class MaintenanceConsumer {
       archived: purged.archived,
       partitions: purged.partitions,
       outboxRows: purged.outboxRows,
+    });
+  }
+
+  // Off `pnpm doc:rerender`, one job per organization, placed on the tenant's node.
+  private async rerender(data: RerenderJob): Promise<void> {
+    const pages = await withShard(this.container, data.organizationId, () =>
+      this.container.doc.rerender.run(data.organizationId),
+    );
+    if (pages === 0) return;
+    this.container.logger.emit("doc.pages.rerendered", {
+      organizationId: data.organizationId,
+      pages,
     });
   }
 

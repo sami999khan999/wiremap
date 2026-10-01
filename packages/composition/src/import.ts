@@ -35,6 +35,7 @@ export {
   DocCache,
   DocFeaturePolicy,
   DocImageSweep,
+  DocRerender,
   DocSearch,
   DocTree,
   type DocumentChunk,
