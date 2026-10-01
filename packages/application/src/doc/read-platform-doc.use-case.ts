@@ -4,6 +4,7 @@ import type { Principal } from "../primitive/index.js";
 import type { DocCache } from "./doc.cache.js";
 import { DocRules } from "./doc.rules.js";
 import type { DocAccess } from "./doc-access.js";
+import type { DocFeaturePolicy } from "./doc-feature.policy.js";
 import { DocShape } from "./doc-shape.js";
 
 // The platform's public and granted spaces, read by anyone — signed in or not, from any
@@ -15,6 +16,7 @@ export class ReadPlatformDocUseCase {
   public constructor(
     private readonly platform: PlatformReader,
     private readonly cache: DocCache,
+    private readonly features: DocFeaturePolicy,
     private readonly access: DocAccess,
   ) {}
 
@@ -24,13 +26,21 @@ export class ReadPlatformDocUseCase {
 
     // One answer for "no such space" and "not yours to read", so a private slug cannot be
     // found by asking for it.
-    if (!space || !(await this.access.canRead(viewer, space, platformOrganizationId))) {
+    const scope = this.features.scope(viewer);
+    if (
+      !space ||
+      !(await this.access.canRead(viewer, space, platformOrganizationId)) ||
+      !(await this.features.allows(scope, space.access))
+    ) {
       throw new NotFoundError("doc.space", input.space);
     }
 
-    const { page } = await this.cache.readIn(space, input.path);
+    // A reader from another organization is judged against their own: their flags, their
+    // plan, their permissions. Signed out passes no link at all.
+    const visible = await this.features.filterNav(scope, space.nav);
+    const { page } = await this.cache.readIn({ ...space, nav: visible }, input.path);
     // Trimmed: a large space's whole tree in every page read is what made one slow.
-    const nav = DocRules.trimNav(space.nav, page?.id ?? null);
+    const nav = DocRules.trimNav(visible, page?.id ?? null);
     return { space: { ...DocShape.space(space), nav }, page };
   }
 }

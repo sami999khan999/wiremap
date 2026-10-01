@@ -19,6 +19,7 @@ export const docProcedurePermissions = {
   "docPage.publish": "doc.page.publish",
   "docPage.move": "doc.page.write",
   "docPage.remove": "doc.page.write",
+  "docPage.accessOptions": "doc.page.write",
   "docPage.preview": "doc.page.write",
   "docPage.upload": "doc.page.write",
   "docPage.revisions": "doc.page.write",

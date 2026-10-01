@@ -1,4 +1,5 @@
 import type {
+  DocAccessRuleDto,
   DocNavNodeDto,
   DocSpaceAudience,
   DocSpaceId,
@@ -13,6 +14,8 @@ export interface DocSpaceFields {
   readonly icon: string | null;
   readonly audience: DocSpaceAudience;
   readonly theme: string | null;
+  readonly access: DocAccessRuleDto | null;
+  readonly repositoryUrl: string | null;
 }
 
 export interface DocSpaceSummary extends DocSpaceFields {

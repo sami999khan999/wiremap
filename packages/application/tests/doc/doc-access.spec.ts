@@ -28,6 +28,8 @@ const space = (audience: DocSpaceSummary["audience"]): DocSpaceSummary => ({
   icon: null,
   audience,
   theme: null,
+  access: null,
+  repositoryUrl: null,
   createdBy: AUTHOR,
   position: 0,
   version: 1,

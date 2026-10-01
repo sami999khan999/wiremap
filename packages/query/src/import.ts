@@ -35,6 +35,7 @@ export type {
   DeleteRequestedDto,
   DeleteRoleInput,
   DenyOverrideInput,
+  DocAccessOptionsDto,
   DocGrantDto,
   DocGrantListDto,
   DocImageType,

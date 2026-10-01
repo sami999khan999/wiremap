@@ -21,6 +21,7 @@ const node = (
   title: overrides.slug,
   icon: null,
   url: null,
+  access: null,
   position: n,
   draftVersion: 1,
   publishedDraftVersion: 1,

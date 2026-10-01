@@ -1,6 +1,7 @@
-import type { DocSearchHitDto, OrganizationId } from "../import.js";
+import type { DocNavNodeDto, DocSearchHitDto, OrganizationId } from "../import.js";
 import type { DocCache } from "./doc.cache.js";
 import { DocRules } from "./doc.rules.js";
+import type { DocFeaturePolicy, DocFeatureScope } from "./doc-feature.policy.js";
 import type { DocPageRepository } from "./doc-page.repository.js";
 import type { DocSpaceSummary } from "./doc-space.repository.js";
 
@@ -10,6 +11,7 @@ export class DocSearch {
   public constructor(
     private readonly pages: DocPageRepository,
     private readonly cache: DocCache,
+    private readonly features: DocFeaturePolicy,
   ) {}
 
   // `spaces` is what the caller may show; a match outside it is dropped. Twice the limit is
@@ -19,6 +21,7 @@ export class DocSearch {
     query: string,
     spaces: readonly DocSpaceSummary[],
     limit: number,
+    scope: DocFeatureScope,
   ): Promise<DocSearchHitDto[]> {
     const allowed = new Map(spaces.map((space) => [space.id, space]));
     if (allowed.size === 0) return [];
@@ -26,6 +29,9 @@ export class DocSearch {
     const matches = await this.pages.search(organizationId, query, limit * 2);
     const hits: DocSearchHitDto[] = [];
     const seen = new Set<string>();
+    // Each space's tree as this reader may see it, filtered once per search, so a page the
+    // reader's features hide never appears, nor anything under it.
+    const visible = new Map<string, readonly DocNavNodeDto[]>();
 
     for (const match of matches) {
       const summary = allowed.get(match.spaceId);
@@ -33,7 +39,13 @@ export class DocSearch {
       // The tree, from the same cache the reader uses. A page it no longer holds was
       // unpublished or moved after the match was indexed, and is not shown.
       const space = await this.cache.space(organizationId, summary.slug);
-      const node = space ? DocRules.locate(space.nav, match.pageId) : null;
+      if (!space) continue;
+      let nav = visible.get(space.id);
+      if (!nav) {
+        nav = await this.features.filterNav(scope, space.nav);
+        visible.set(space.id, nav);
+      }
+      const node = DocRules.locate(nav, match.pageId);
       if (!node?.path) continue;
 
       const key = `${match.pageId}#${match.anchor ?? ""}`;

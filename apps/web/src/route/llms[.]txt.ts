@@ -17,13 +17,14 @@ export const Route = createFileRoute("/llms.txt")({
             const { items } = await container.doc.listPlatformSpaces.execute(null);
             const lines = ["# Documentation", ""];
             for (const space of items) {
-              const { space: view } = await container.doc.readPlatform.execute(null, {
-                space: space.slug,
-                path: "",
+              // The whole tree, not a page read's trimmed one, and read as nobody: a page
+              // linked to a feature is for signed-in readers and is left out.
+              const { nav } = await container.doc.readPlatformNav.execute(null, {
+                slug: space.slug,
               });
               lines.push(`## ${space.title}`, "");
               if (space.description) lines.push(`> ${space.description}`, "");
-              for (const page of flatten(view.nav)) {
+              for (const page of flatten(nav)) {
                 lines.push(`- [${page.title}](${origin}/api/doc/${space.slug}/${page.path})`);
               }
               lines.push("");

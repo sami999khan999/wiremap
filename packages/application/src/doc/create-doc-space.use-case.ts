@@ -11,6 +11,7 @@ import type { ActivityLogger, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
 import type { DocCache } from "./doc.cache.js";
 import { DocRules } from "./doc.rules.js";
+import type { DocFeaturePolicy } from "./doc-feature.policy.js";
 import { DocShape } from "./doc-shape.js";
 import type { DocSpaceRepository } from "./doc-space.repository.js";
 
@@ -20,6 +21,7 @@ export class CreateDocSpaceUseCase {
     private readonly spaces: DocSpaceRepository,
     private readonly platform: PlatformReader,
     private readonly cache: DocCache,
+    private readonly features: DocFeaturePolicy,
     private readonly activity: ActivityLogger,
     private readonly unitOfWork: UnitOfWork,
   ) {}
@@ -29,6 +31,7 @@ export class CreateDocSpaceUseCase {
     DocRules.assertSpaceSlug(input.slug);
     const isPlatform = actor.organizationId === (await this.platform.organizationId());
     DocRules.assertAudience(input.audience, isPlatform);
+    await this.features.assertKnown(input.access);
 
     const id = Uuid.v7() as DocSpaceId;
     const space = await this.unitOfWork.run(async () => {

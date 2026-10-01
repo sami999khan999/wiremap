@@ -3,6 +3,7 @@ import type { PlatformReader } from "../platform/index.js";
 import type { Principal } from "../primitive/index.js";
 import type { DocCache } from "./doc.cache.js";
 import type { DocAccess } from "./doc-access.js";
+import type { DocFeaturePolicy } from "./doc-feature.policy.js";
 import type { DocSearch } from "./doc-search.js";
 
 // The same search over the platform's docs, narrowed to the spaces this viewer may read.
@@ -13,6 +14,7 @@ export class SearchPlatformDocsUseCase {
     private readonly spaces: DocCache,
     private readonly access: DocAccess,
     private readonly search: DocSearch,
+    private readonly features: DocFeaturePolicy,
   ) {}
 
   public async execute(
@@ -24,12 +26,20 @@ export class SearchPlatformDocsUseCase {
 
     // Sequential for the reason `ListPlatformDocSpacesUseCase` gives: one grant lookup, then
     // every later space answered from the cache it filled.
+    const scope = this.features.scope(viewer);
     const readable = [];
     for (const space of spaces) {
-      if (await this.access.canRead(viewer, space, platformOrganizationId)) readable.push(space);
+      if (!(await this.access.canRead(viewer, space, platformOrganizationId))) continue;
+      if (await this.features.allows(scope, space.access)) readable.push(space);
     }
     return {
-      items: await this.search.run(platformOrganizationId, input.query, readable, input.limit),
+      items: await this.search.run(
+        platformOrganizationId,
+        input.query,
+        readable,
+        input.limit,
+        scope,
+      ),
     };
   }
 }

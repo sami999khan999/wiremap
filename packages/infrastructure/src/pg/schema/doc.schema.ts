@@ -1,5 +1,6 @@
 import {
   customType,
+  type DocAccessRuleDto,
   type DocNavNodeDto,
   type DocPageId,
   type DocSpaceId,
@@ -36,6 +37,10 @@ export const docSpaces = pgTable(
     icon: text("icon"),
     audience: text("audience").notNull().default("members"),
     theme: text("theme"),
+    // The access rule every page in the space inherits; null is none. See doc.md.
+    access: jsonb("access").$type<DocAccessRuleDto>(),
+    // A repository the reader's sidebar links to; null shows no link.
+    repositoryUrl: text("repository_url"),
     position: integer("position").notNull().default(0),
     // The published tree, rebuilt in the transaction that changes it: a reader's sidebar
     // is this column and nothing else. See application/docs/reference/doc.md.
@@ -69,6 +74,8 @@ export const docPages = pgTable(
     position: integer("position").notNull().default(0),
     icon: text("icon"),
     url: text("url"),
+    // Added to the space's rule, never instead of it. Live on save, like a slug.
+    access: jsonb("access").$type<DocAccessRuleDto>(),
     title: text("title").notNull(),
     description: text("description"),
     markdown: text("markdown").notNull().default(""),

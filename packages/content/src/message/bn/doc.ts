@@ -136,4 +136,18 @@ export const doc: NamespaceBundle<"doc"> = {
   "doc.revision.item": "সংস্করণ {revision}",
   "doc.revision.restore": "খসড়ায় ফিরিয়ে আনুন",
   "doc.revision.restored": "সংস্করণ {revision} এখন খসড়া। প্রকাশ করলে এটি চালু হবে।",
+  "doc.access.legend": "প্রবেশাধিকার",
+  "doc.access.hint":
+    "এখানে দেওয়া প্রতিটি লিঙ্ক পূরণ হলে তবেই পাঠক এটি দেখবেন। কোনো লিঙ্ক না চাইলে চারটিই কোনোটিই নয় রাখুন।",
+  "doc.access.spaceHint":
+    "স্পেসের প্রতিটি পাতা এই লিঙ্কগুলো মেনে চলে, আর একটি পাতা নিজের লিঙ্কও যোগ করতে পারে।",
+  "doc.access.module": "মডিউল",
+  "doc.access.permission": "অনুমতি",
+  "doc.access.flag": "ফিচার ফ্ল্যাগ",
+  "doc.access.plan": "প্ল্যান",
+  "doc.access.none": "কোনোটিই নয়",
+  "doc.access.unknown": "এটি {key}-এর সঙ্গে যুক্ত, যা আর নেই, তাই বদলানো পর্যন্ত কেউ এটি পড়তে পারবেন না।",
+  "doc.tree.linked": "একটি ফিচারের সঙ্গে যুক্ত",
+  "doc.space.repository": "রিপোজিটরি URL",
+  "doc.space.repositoryHint": "পাঠকের সাইডবারে দেখানো একটি https লিঙ্ক। না চাইলে খালি রাখুন।",
 };

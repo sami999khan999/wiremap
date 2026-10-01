@@ -1,5 +1,6 @@
 import { z } from "../import.js";
 import { Identifiers } from "../primitive/index.js";
+import { DocAccessContract } from "./doc-access.contract.js";
 import { DocNav } from "./doc-nav.js";
 import { DocSpaceContract } from "./doc-space.contract.js";
 
@@ -30,6 +31,7 @@ const node = z.object({
   slug: DocSpaceContract.slug,
   title: z.string(),
   icon: z.string().nullable(),
+  access: DocAccessContract.rule.nullable(),
   position: z.number().int().nonnegative(),
   status,
   updatedAt: z.date(),
@@ -123,6 +125,8 @@ export class DocPageContract {
     icon: z.string().max(40).nullable(),
     markdown: z.string().max(MARKDOWN_MAX),
     url: link.nullable(),
+    // Left out keeps what is stored, so an older client cannot clear it.
+    access: DocAccessContract.rule.nullable().optional(),
   });
 
   public static readonly publish = z.object({

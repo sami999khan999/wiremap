@@ -9,6 +9,7 @@ import type { UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
 import type { DocCache } from "./doc.cache.js";
 import { DocRules } from "./doc.rules.js";
+import type { DocFeaturePolicy } from "./doc-feature.policy.js";
 import type { DocPageRepository } from "./doc-page.repository.js";
 import { DocShape } from "./doc-shape.js";
 import type { DocSpaceRepository } from "./doc-space.repository.js";
@@ -23,12 +24,15 @@ export class SaveDocPageUseCase {
     private readonly pages: DocPageRepository,
     private readonly tree: DocTree,
     private readonly cache: DocCache,
+    private readonly features: DocFeaturePolicy,
     private readonly unitOfWork: UnitOfWork,
   ) {}
 
   public async execute(actor: Principal, input: SaveDocPageInput): Promise<DocPageDraftDto> {
     this.authorizer.assert(actor, "doc.page.write");
     const organizationId = actor.organizationId;
+    // Before the transaction: a plan is a catalog row, and a routed one may not read it.
+    if (input.access !== undefined) await this.features.assertKnown(input.access);
 
     const { slug, page } = await this.unitOfWork.run(async () => {
       const current = await this.pages.findDraft(organizationId, input.pageId);
@@ -43,8 +47,12 @@ export class SaveDocPageUseCase {
         throw new ValidationError([{ field: "url", rule: "required" }]);
       }
 
+      const access = input.access === undefined ? current.access : input.access;
       const structural =
-        current.kind !== "page" || current.slug !== input.slug || current.icon !== input.icon;
+        current.kind !== "page" ||
+        current.slug !== input.slug ||
+        current.icon !== input.icon ||
+        JSON.stringify(current.access) !== JSON.stringify(access);
       if (current.slug !== input.slug) {
         const nodes = await this.pages.listBySpace(organizationId, current.spaceId);
         DocRules.assertTree(
@@ -63,6 +71,7 @@ export class SaveDocPageUseCase {
           icon: input.icon,
           markdown: current.kind === "page" ? input.markdown : "",
           url: current.kind === "link" ? input.url : null,
+          access,
         },
         actor.userId,
       );

@@ -46,6 +46,10 @@ export class DocPageRouter {
     return { ok: true } as const;
   });
 
+  public static readonly accessOptions = authed.docPage.accessOptions.handler(({ context }) =>
+    context.container.doc.accessOptions.execute(context.principal),
+  );
+
   public static readonly preview = authed.docPage.preview.handler(({ input, context }) =>
     context.container.doc.previewPage.execute(context.principal, input),
   );
@@ -73,6 +77,7 @@ export class DocPageRouter {
     publish: DocPageRouter.publish,
     move: DocPageRouter.move,
     remove: DocPageRouter.remove,
+    accessOptions: DocPageRouter.accessOptions,
     preview: DocPageRouter.preview,
     revisions: DocPageRouter.revisions,
     revision: DocPageRouter.revision,

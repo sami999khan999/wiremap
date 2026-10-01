@@ -33,6 +33,8 @@ const summary = (organizationId: OrganizationId, audience: DocSpaceSummary["audi
   icon: null,
   audience,
   theme: null,
+  access: null,
+  repositoryUrl: null,
   createdBy: USER,
   position: 0,
   version: 1,

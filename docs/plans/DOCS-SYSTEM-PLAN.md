@@ -147,17 +147,17 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
 
 ### Phase 1 — Access links
 
-- [ ] `DS1.1` **Contract.**
+- [x] `DS1.1` **Contract.** done: 2026-10-02. All of `DS1.1`–`DS1.8` landed together; the hand check below is in `TESTS.md`.
   - `DocAccessRuleDto` in `contracts/src/doc/`: four optional fields, each a key string, with `null`
     meaning no rule.
   - `access` on the space and page entities, and on `DocNavNodeDto`, so the sidebar can be filtered
     without a query.
   - Space update and page save accept `access`.
   - Docs: `packages/contracts/docs`.
-- [ ] `DS1.2` **Schema.** Migration `0003_doc_access.sql` adds `access jsonb` (nullable) to
+- [x] `DS1.2` **Schema.** Migration `0003_doc_access.sql` adds `access jsonb` (nullable) to
   `doc_spaces` and `doc_pages`. It also adds `repository_url text` to `doc_spaces`, for `DS5.1`.
   The columns are nullable, so the change is safe on a table that already holds rows (§20).
-- [ ] `DS1.3` **The rule** (`application/src/doc/doc-feature.gate.ts`, class `DocFeatureGate`).
+- [x] `DS1.3` **The rule** (`application/src/doc/doc-feature.policy.ts`, class `DocFeaturePolicy`; `.gate` already names a module's catalog fragment).
   `allows(viewer, rule)` passes only when every link passes:
   - **module:** the module is in `ModuleRegistry.visibleModules(viewer.capabilities)`;
   - **permission:** `viewer.can(key)`;
@@ -167,7 +167,7 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
   A null viewer fails any link. A key the registries no longer know **fails closed**: the doc
   hides, it does not open up. Permission and module checks already include the plan mask,
   overrides and platform denies, because `CapabilitySet` is narrowed first.
-- [ ] `DS1.4` **Apply it everywhere a doc is reached.**
+- [x] `DS1.4` **Apply it everywhere a doc is reached.**
   - `DocAccess.canRead` adds the space rule.
   - `ReadDocPage` and `ReadPlatformDoc` add the page rule, and fail with `NOT_FOUND`.
   - The nav is filtered per viewer before it is returned. A hidden page takes its subtree with it,
@@ -175,26 +175,26 @@ pages top out near **200–280 requests a second**, with one CPU core saturated 
   - `DocSearch` drops hits whose effective rule fails.
   - `/llms.txt`, `api/doc/$` and the public reader exclude any doc with a rule.
   - Platform docs read by a tenant user are judged against that user's active organization.
-- [ ] `DS1.5` **Editing.**
+- [x] `DS1.5` **Editing.**
   - Space update and page save validate each key against its registry (`ValidationError`
     otherwise) and enforce decision 9.
   - Access is structure, not content: it is live on save, like a slug, and the nav is rebuilt in
     the same transaction.
   - A new procedure, `docPage.accessOptions`, needs `doc.page.write`. It returns the modules,
     org-scope permissions, flags and plans, each with its label, for the pickers.
-- [ ] `DS1.6` **UI.**
+- [x] `DS1.6` **UI.**
   - An "Access" fieldset in `doc-space.form.tsx` and in `doc-editor.form.tsx`: four `Select`s with
     "None" first. The flag `Select` is hidden while `FLAGS` is empty.
   - A badge in the page tree marks a linked page.
   - A warning appears when a stored key is unknown.
   - Copy goes in both `doc` catalogs, en and bn.
-- [ ] `DS1.7` **Specs.**
+- [x] `DS1.7` **Specs.**
   - A matrix for `DocFeatureGate`: each link alone, the AND of several, a null viewer, and an
     unknown key.
   - The read, nav, search and `llms.txt` filters each get a spec where the hidden doc gives
     `NOT_FOUND` and is absent.
   - Query-count assertions show the nav filter adds no queries.
-- [ ] `DS1.8` **Docs.**
+- [x] `DS1.8` **Docs.**
   - `packages/application/docs/reference/doc.md`: a section on access links, with the
     viewer-by-link matrix.
   - `docs/ai/rules/visibility.md` and `docs/opinions/visibility.md`: one line saying a doc link is

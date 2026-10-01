@@ -57,6 +57,7 @@ export class CreateDocPageUseCase {
         title: input.title,
         icon: input.icon,
         url: input.kind === "link" ? input.url : null,
+        access: null,
         position,
         draftVersion: 1,
         publishedDraftVersion: null,

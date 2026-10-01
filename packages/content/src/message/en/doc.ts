@@ -145,4 +145,19 @@ export const doc = {
   "doc.revision.item": "Revision {revision}",
   "doc.revision.restore": "Restore to draft",
   "doc.revision.restored": "Revision {revision} is now the draft. Publish it to make it live.",
+  "doc.access.legend": "Access",
+  "doc.access.hint":
+    "Readers see this only when every link set here passes. Leave all four as None for no link.",
+  "doc.access.spaceHint":
+    "Every page in the space follows these links, and a page can add its own.",
+  "doc.access.module": "Module",
+  "doc.access.permission": "Permission",
+  "doc.access.flag": "Feature flag",
+  "doc.access.plan": "Plan",
+  "doc.access.none": "None",
+  "doc.access.unknown":
+    "This links to {key}, which no longer exists, so nobody can read it until it is changed.",
+  "doc.tree.linked": "Linked to a feature",
+  "doc.space.repository": "Repository URL",
+  "doc.space.repositoryHint": "An https link shown in the reader's sidebar. Leave empty for none.",
 } as const;

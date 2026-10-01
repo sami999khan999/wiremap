@@ -1,4 +1,5 @@
 import type {
+  DocAccessRuleDto,
   DocPageId,
   DocPageKind,
   DocSpaceId,
@@ -19,6 +20,8 @@ export interface DocPageNodeRecord {
   readonly title: string;
   readonly icon: string | null;
   readonly url: string | null;
+  // The page's own rule, added to its space's. Null is none.
+  readonly access: DocAccessRuleDto | null;
   readonly position: number;
   readonly draftVersion: number;
   // The draft version the live page was published from. Null is never published.
@@ -66,6 +69,7 @@ export interface DocDraftFields {
   readonly icon: string | null;
   readonly markdown: string;
   readonly url: string | null;
+  readonly access: DocAccessRuleDto | null;
 }
 
 export interface DocPublication {

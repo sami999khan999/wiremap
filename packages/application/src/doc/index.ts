@@ -5,6 +5,7 @@ export { DeleteDocSpaceUseCase } from "./delete-doc-space.use-case.js";
 export { DocCache, type DocReading } from "./doc.cache.js";
 export { DocRules } from "./doc.rules.js";
 export { DocAccess } from "./doc-access.js";
+export { DocFeaturePolicy, type DocFeatureScope } from "./doc-feature.policy.js";
 export {
   type DocGrantee,
   type DocGrantRecord,
@@ -37,6 +38,7 @@ export { DocTree } from "./doc-tree.js";
 export { GetDocPageUseCase } from "./get-doc-page.use-case.js";
 export { GetDocRevisionUseCase } from "./get-doc-revision.use-case.js";
 export { GetDocSpaceUseCase } from "./get-doc-space.use-case.js";
+export { ListDocAccessOptionsUseCase } from "./list-doc-access-options.use-case.js";
 export { ListDocGrantsUseCase } from "./list-doc-grants.use-case.js";
 export { ListDocPagesUseCase } from "./list-doc-pages.use-case.js";
 export { ListDocRevisionsUseCase } from "./list-doc-revisions.use-case.js";

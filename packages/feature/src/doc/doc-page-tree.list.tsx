@@ -148,6 +148,12 @@ export function DocPageTreeList({
                       ? t(`doc.page.status.${node.status}`)
                       : t(`doc.page.kind.${node.kind}`)}
                   </StatusBadge>
+                  {node.access ? (
+                    <>
+                      {" "}
+                      <StatusBadge tone="accent">{t("doc.tree.linked")}</StatusBadge>
+                    </>
+                  ) : null}
                 </>,
                 node.id === activePageId
                   ? { className: "", "aria-current": "page" }

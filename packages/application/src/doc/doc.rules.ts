@@ -206,6 +206,7 @@ export class DocRules {
       url,
       revisionNo,
       children,
+      ...(node.access ? { access: node.access } : {}),
     };
   }
 

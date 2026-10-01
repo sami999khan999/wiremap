@@ -108,6 +108,7 @@ const add = (parentId: DocPageId | null, kind: "section" | "page", index: number
     title: kind === "section" ? `Section ${index}` : `Page ${index}`,
     icon: null,
     url: null,
+    access: null,
     position: index,
     draftVersion: 1,
     publishedDraftVersion: kind === "page" ? 1 : null,

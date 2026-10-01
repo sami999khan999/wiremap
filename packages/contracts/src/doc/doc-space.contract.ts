@@ -1,5 +1,6 @@
 import { z } from "../import.js";
 import { Identifiers } from "../primitive/index.js";
+import { DocAccessContract } from "./doc-access.contract.js";
 import { DocNav } from "./doc-nav.js";
 
 // Who may read a space. `public` and `granted` are the platform organization's alone, and
@@ -28,6 +29,9 @@ const entity = z.object({
   audience,
   // The theme the space opens in when the reader has chosen none of their own.
   theme: z.string().nullable(),
+  // Every page in the space follows it. Null is no rule.
+  access: DocAccessContract.rule.nullable(),
+  repositoryUrl: z.string().nullable(),
   position: z.number().int().nonnegative(),
   // Who created it, which is who an `owner` space belongs to.
   createdBy: Identifiers.userId,
@@ -43,6 +47,12 @@ const create = z.object({
   icon: z.string().max(40).nullable().default(null),
   audience: audience.default("members"),
   theme: z.string().max(40).nullable().default(null),
+  access: DocAccessContract.rule.nullable().default(null),
+  repositoryUrl: z
+    .url({ protocol: /^https$/ })
+    .max(500)
+    .nullable()
+    .default(null),
 });
 
 export class DocSpaceContract {
@@ -69,9 +79,17 @@ export class DocSpaceContract {
 
   public static readonly create = create;
 
+  // `access` and `repositoryUrl` left out keep what is stored, so an older client cannot
+  // clear a rule it never showed.
   public static readonly update = create.extend({
     spaceId: Identifiers.docSpaceId,
     position: z.number().int().nonnegative(),
+    access: DocAccessContract.rule.nullable().optional(),
+    repositoryUrl: z
+      .url({ protocol: /^https$/ })
+      .max(500)
+      .nullable()
+      .optional(),
   });
 }
 

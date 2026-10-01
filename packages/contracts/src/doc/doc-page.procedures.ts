@@ -1,5 +1,6 @@
 import { oc } from "../import.js";
 import { Envelope } from "../primitive/index.js";
+import { DocAccessContract } from "./doc-access.contract.js";
 import { DocPageContract } from "./doc-page.contract.js";
 
 export class DocPageProcedures {
@@ -50,6 +51,11 @@ export class DocPageProcedures {
     .output(Envelope.acknowledged);
 
   // The same renderer publish uses, so the preview cannot disagree with the page.
+  // What a page or space may be linked to, for the editor's access pickers.
+  public static readonly accessOptions = oc
+    .route({ method: "GET", path: "/doc-pages/access-options" })
+    .output(DocAccessContract.options);
+
   public static readonly preview = oc
     .route({ method: "POST", path: "/doc-pages/preview" })
     .input(DocPageContract.preview)
@@ -93,6 +99,7 @@ export class DocPageProcedures {
     publish: DocPageProcedures.publish,
     move: DocPageProcedures.move,
     remove: DocPageProcedures.remove,
+    accessOptions: DocPageProcedures.accessOptions,
     preview: DocPageProcedures.preview,
     revisions: DocPageProcedures.revisions,
     revision: DocPageProcedures.revision,

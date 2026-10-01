@@ -1,5 +1,6 @@
 import { z } from "../import.js";
 import { type DocPageId, Identifiers } from "../primitive/index.js";
+import { DocAccessContract, type DocAccessRuleDto } from "./doc-access.contract.js";
 
 // A `section` is a heading in the sidebar with no page behind it, a `page` is Markdown,
 // and a `link` points somewhere else. All three are rows in one tree.
@@ -23,6 +24,9 @@ export interface DocNavNodeDto {
   // True when `children` was left out of a page read to keep it small. The full tree comes
   // from `docSpace.nav`, once per space version.
   readonly folded?: boolean;
+  // The page's own access rule, present only when it has one, so a reader's tree can be
+  // filtered without reading a row per page.
+  readonly access?: DocAccessRuleDto;
 }
 
 const node: z.ZodType<DocNavNodeDto> = z.lazy(() =>
@@ -36,6 +40,7 @@ const node: z.ZodType<DocNavNodeDto> = z.lazy(() =>
     revisionNo: z.number().int().positive().nullable(),
     children: z.array(node).readonly(),
     folded: z.boolean().optional(),
+    access: DocAccessContract.rule.optional(),
   }),
 );
 

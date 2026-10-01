@@ -64,6 +64,8 @@ beforeAll(async () => {
       icon: null,
       audience: "members",
       theme: null,
+      access: null,
+      repositoryUrl: null,
     },
     author,
   );
@@ -123,6 +125,7 @@ describe("PgDocPageRepository", () => {
       icon: null,
       markdown: "one",
       url: null,
+      access: null,
     };
 
     expect(await pages().saveDraft(organizationId, id, 1, fields, author)).toBe(true);
@@ -131,6 +134,26 @@ describe("PgDocPageRepository", () => {
       await pages().saveDraft(organizationId, id, 1, { ...fields, markdown: "two" }, author),
     ).toBe(false);
     expect((await pages().findDraft(organizationId, id))?.markdown).toBe("one");
+  });
+
+  // jsonb in, the same rule out, and on the node the tree is built from.
+  it("stores a page's access rule and reads it back on its node", async () => {
+    const id = await newPage(`access-${Uuid.v7().slice(-8)}`);
+    const access = { module: "apikey", permission: null, flag: null, plan: "team" };
+    const fields = {
+      slug: "y",
+      title: "Y",
+      description: null,
+      icon: null,
+      markdown: "",
+      url: null,
+      access,
+    };
+    expect(await pages().saveDraft(organizationId, id, 1, fields, author)).toBe(true);
+
+    expect((await pages().findDraft(organizationId, id))?.access).toEqual(access);
+    const nodes = await pages().listBySpace(organizationId, spaceId);
+    expect(nodes.find((node) => node.id === id)?.access).toEqual(access);
   });
 
   it("publishes under the same lock and counts revisions on the row", async () => {

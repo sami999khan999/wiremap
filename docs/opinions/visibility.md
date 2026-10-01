@@ -64,6 +64,12 @@ The names of *client-gating* flags — the ones some widget names — are in the
 flag is the wrong tool for a secret.** It controls when something ships, not who may know it
 exists.
 
+**A doc linked to a feature uses these same answers and adds no mechanism.** A page or space may
+link to a module, a permission, a flag or a plan. It is resolved through the flag, the entitlement
+mask and the permission above, every link must pass, and a doc a reader fails is `NOT_FOUND` —
+the docs' own rule that "not yours is not found" decides it, not `FORBIDDEN`. See
+`packages/application/docs/reference/doc.md`.
+
 ---
 
 ## The rules for a widget

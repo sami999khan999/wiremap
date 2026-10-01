@@ -25,6 +25,10 @@ narrow the one above it, and each has a different owner.
 - **A platform admin is not a tenant owner.** `wildcard` is never set in production, and a
   platform admin gets no powers inside a tenant.
 
+**A doc's access link adds no mechanism.** A page or space linked to a module, permission, flag
+or plan is resolved through the three above and hides as `NOT_FOUND` — see
+`packages/application/docs/reference/doc.md`.
+
 **The fourth mechanism — widget preference, with zones — is not in lite.** A per-user "hide this
 card" is not a flag, an entitlement or a permission, and must not be faked with one. It comes back
 whole from [`docs/scale/`](../../scale/index.md), with its resolution order and its ten rules.

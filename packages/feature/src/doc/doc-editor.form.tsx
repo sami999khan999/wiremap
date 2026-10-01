@@ -4,6 +4,7 @@ import {
   Button,
   buttonClassName,
   Callout,
+  type DocAccessRuleDto,
   DocMutations,
   type DocPageDraftDto,
   Field,
@@ -22,6 +23,7 @@ import {
   useRef,
   useState,
 } from "../import.js";
+import { DocAccessPanel } from "./doc-access.panel.js";
 
 export interface DocEditorFormProps {
   // The draft as loaded. The shell keys this component by page, so a new page is a new
@@ -66,6 +68,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
   const [icon, setIcon] = useState(draft.icon ?? "");
   const [markdown, setMarkdown] = useState(draft.markdown);
   const [url, setUrl] = useState(draft.url ?? "");
+  const [access, setAccess] = useState<DocAccessRuleDto | null>(draft.access);
   const [version, setVersion] = useState(draft.draftVersion);
   const [dirty, setDirty] = useState(false);
   const [tab, setTab] = useState<Tab>("write");
@@ -116,6 +119,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
     icon: icon === "" ? null : icon,
     markdown,
     url: draft.kind === "link" ? url : null,
+    access,
   });
 
   const persist = (then?: (saved: DocPageDraftDto) => void) => {
@@ -139,7 +143,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
     if (!dirty || save.isPending || save.isError) return;
     const timer = setTimeout(() => latest.current(), AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [dirty, save.isPending, save.isError, title, slug, description, icon, markdown, url]);
+  }, [dirty, save.isPending, save.isError, title, slug, description, icon, markdown, url, access]);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -210,6 +214,7 @@ export function DocEditorForm({ draft, viewLink }: DocEditorFormProps) {
           ]}
         />
       </Field>
+      <DocAccessPanel id="doc-page" scope="page" value={access} onChange={edit(setAccess)} />
 
       {draft.kind === "link" ? (
         <Field label={t("doc.page.url")} htmlFor="doc-url">

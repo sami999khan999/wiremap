@@ -3,11 +3,13 @@ import { useMessages } from "../i18n/index.js";
 import {
   Button,
   Callout,
+  type DocAccessRuleDto,
   DocMutations,
   type DocSpaceAudience,
   type DocSpaceDto,
   Field,
   type FormEvent,
+  IconRegistry,
   Input,
   readerClassName,
   Select,
@@ -15,6 +17,7 @@ import {
   useApiClient,
   useState,
 } from "../import.js";
+import { DocAccessPanel } from "./doc-access.panel.js";
 
 export interface DocSpaceFormProps {
   // Absent to create one.
@@ -43,6 +46,9 @@ export function DocSpaceForm({ space, platform, onSaved, onDeleted }: DocSpaceFo
   const [description, setDescription] = useState(space?.description ?? "");
   const [audience, setAudience] = useState<DocSpaceAudience>(space?.audience ?? "members");
   const [theme, setTheme] = useState(space?.theme ?? "");
+  const [icon, setIcon] = useState(space?.icon ?? "");
+  const [repositoryUrl, setRepositoryUrl] = useState(space?.repositoryUrl ?? "");
+  const [access, setAccess] = useState<DocAccessRuleDto | null>(space?.access ?? null);
   const [confirming, setConfirming] = useState(false);
 
   const id = space?.id ?? "new";
@@ -55,9 +61,11 @@ export function DocSpaceForm({ space, platform, onSaved, onDeleted }: DocSpaceFo
       slug,
       title,
       description: description.trim() === "" ? null : description,
-      icon: space?.icon ?? null,
+      icon: icon === "" ? null : icon,
       audience,
       theme: theme === "" ? null : theme,
+      access,
+      repositoryUrl: repositoryUrl.trim() === "" ? null : repositoryUrl.trim(),
     };
     if (space) {
       update.mutate(
@@ -140,6 +148,35 @@ export function DocSpaceForm({ space, platform, onSaved, onDeleted }: DocSpaceFo
           ]}
         />
       </Field>
+
+      <Field label={t("doc.space.icon")} htmlFor={`doc-space-icon-${id}`}>
+        <Select
+          id={`doc-space-icon-${id}`}
+          label={t("doc.space.icon")}
+          value={icon}
+          onValueChange={setIcon}
+          options={[
+            { value: "", label: t("doc.space.iconNone") },
+            ...IconRegistry.all().map((name) => ({ value: name, label: name, icon: name })),
+          ]}
+        />
+      </Field>
+      <Field
+        label={t("doc.space.repository")}
+        htmlFor={`doc-space-repository-${id}`}
+        hint={t("doc.space.repositoryHint")}
+      >
+        <Input
+          id={`doc-space-repository-${id}`}
+          type="url"
+          inputMode="url"
+          placeholder="https://github.com/…"
+          value={repositoryUrl}
+          onChange={(event) => setRepositoryUrl(event.target.value)}
+          maxLength={500}
+        />
+      </Field>
+      <DocAccessPanel id={`doc-space-${id}`} scope="space" value={access} onChange={setAccess} />
 
       {failure ? <Callout tone="danger">{describe(failure)?.message}</Callout> : null}
       {update.isSuccess ? <Callout tone="success">{t("doc.space.saved")}</Callout> : null}

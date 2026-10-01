@@ -28,6 +28,8 @@ export {
   type ApiKeyDto,
   ApiKeyEntity,
   type CapabilitiesDto,
+  type DocAccessOptionsDto,
+  type DocAccessRuleDto,
   type DocGrantKind,
   type DocNavNodeDto,
   type DocPageDraftDto,

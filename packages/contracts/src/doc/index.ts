@@ -1,4 +1,9 @@
 export {
+  DocAccessContract,
+  type DocAccessOptionsDto,
+  type DocAccessRuleDto,
+} from "./doc-access.contract.js";
+export {
   DocGrantContract,
   type DocGrantDto,
   type DocGrantKind,

@@ -174,6 +174,7 @@ export type { Locale } from "@loadbearing/content";
 export {
   type ActivityAction,
   type ApiKeyId,
+  type DocAccessRuleDto,
   type DocGrantKind,
   type DocNavNodeDto,
   type DocPageId,

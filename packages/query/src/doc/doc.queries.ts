@@ -1,5 +1,6 @@
 import type {
   ApiClient,
+  DocAccessOptionsDto,
   DocGrantListDto,
   DocPageDraftDto,
   DocPageId,
@@ -43,6 +44,15 @@ export class DocQueries {
       queryKey: QueryKeys.doc.nav(space, version),
       queryFn: (): Promise<DocSpaceNavDto> => client.docSpace.nav({ slug: space }),
       staleTime: Number.POSITIVE_INFINITY,
+    });
+  }
+
+  // A catalog that changes with a deploy or a plan edit, so five minutes is plenty.
+  public static accessOptions(client: ApiClient) {
+    return queryOptions({
+      queryKey: QueryKeys.doc.accessOptions(),
+      queryFn: (): Promise<DocAccessOptionsDto> => client.docPage.accessOptions({}),
+      staleTime: 300_000,
     });
   }
 

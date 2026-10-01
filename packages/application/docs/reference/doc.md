@@ -87,6 +87,49 @@ narrower key to delete.
 **Not yours is not found.** A private space asked for by someone who may not read it is
 `NOT_FOUND`, never `FORBIDDEN`. Answering differently would let anyone probe for private slugs.
 
+## Access links: a doc that follows a feature
+
+The audience says who may open a space. An **access link** narrows it further, to readers who
+have a feature. A space or a page can link to four kinds of feature, stored as one rule in its
+`access` column:
+
+| Link | The reader passes when | Read through |
+|---|---|---|
+| `module` | the module is visible to them | its gate's permission, so the plan mask and a switched-off module apply |
+| `permission` | they hold the key | `CapabilitySet`, after roles, overrides, platform denies and the plan |
+| `flag` | the flag is on for their organization | `FlagCache.onFor`, one read per request |
+| `plan` | their organization is on that plan | `EntitlementRepository.findPlanOf`, cached 60 s as `doc:plan:<org>` |
+
+**Every link set must pass.** A page linked to a module and a plan needs both. A page's rule adds
+to its space's rule, never replaces it. A hidden page takes its children with it, and a section
+left with nothing disappears.
+
+**Hidden is not found.** A doc a reader fails is absent from the sidebar, search, the space
+switcher, `/llms.txt` and raw Markdown, and a direct link to it is `NOT_FOUND`, as an `owner` space
+is. Three more rules follow:
+- **Signed out passes no link.** A signed-out reader has no organization, plan or permission, so a
+  linked doc is for signed-in readers only. An unlinked public page is unchanged.
+- **A key that no longer exists fails closed.** The doc hides; it never opens.
+- **A reader from another organization is judged against their own.** A platform doc linked to the
+  `apikey` module shows to whoever's organization has it.
+
+| Reader | No link | `module: apikey` | `permission: rbac.role.manage` | `plan: team` |
+|---|---|---|---|---|
+| admin, on a plan with `apikey`, on `team` | reads | reads | reads | reads |
+| member, on a plan without `apikey`, on `free` | reads | `NOT_FOUND` | `NOT_FOUND` | `NOT_FOUND` |
+| signed out | reads (public only) | `NOT_FOUND` | `NOT_FOUND` | `NOT_FOUND` |
+
+`DocFeaturePolicy` holds the four checks. Module and permission links read the viewer's
+`CapabilitySet` in memory. The flag set and the plan are fetched only when a rule names one, once
+per request through `DocFeatureScope`, so **a reader of unlinked docs pays nothing**. A page's rule
+is copied onto its node in `doc_spaces.nav`, so filtering a tree reads no row per page.
+
+**Who may set a link.** `doc.space.manage` for a space and `doc.page.write` for a page. A link only
+narrows, so a writer cannot widen who reads a doc by setting one. `assertKnown` refuses a key no
+registry knows and a platform-scope permission, which no organization holds. It runs before the
+transaction, because a plan is a catalog row. A link is structure, like a slug: live on save, with
+the tree rebuilt in the same transaction. Leaving `access` out of a save keeps the stored rule.
+
 ## A page is rendered once
 
 `PublishDocPageUseCase` renders the Markdown when a page is published, and never when it is

@@ -57,6 +57,7 @@ export class RestoreDocRevisionUseCase {
           icon: current.icon,
           markdown: revision.markdown,
           url: current.url,
+          access: current.access,
         },
         actor.userId,
       );
