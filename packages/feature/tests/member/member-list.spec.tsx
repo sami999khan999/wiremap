@@ -2,9 +2,10 @@ import type { ApiClient } from "@loadbearing/api-client";
 import type { MemberDto } from "@loadbearing/contracts";
 import { ForbiddenError } from "@loadbearing/errors";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemberList } from "../../src/member/member-list.js";
 import { capabilitiesWith, renderWithFakes } from "../support/render-with-fakes.js";
+import { choose } from "../support/select.js";
 import { transportError } from "../support/transport-error.js";
 
 const MEMBER: MemberDto = {
@@ -166,5 +167,104 @@ describe("MemberList — exceptions", () => {
     expect(await screen.findByText("+ 1 exception")).toBeDefined();
     expect(screen.getByText("+ 2 exceptions")).toBeDefined();
     expect(screen.getAllByText(/exception/)).toHaveLength(2);
+  });
+});
+
+// Assigning roles from the list: the picker offers only roles the viewer may hand out, and
+// is absent where the use-case would refuse — your own row, or someone who outranks you.
+describe("MemberList — change role", () => {
+  const role = (id: string, key: string, name: string, permissions: string[] = []) => ({
+    id,
+    key,
+    name,
+    description: null,
+    scope: "org",
+    isSystem: false,
+    permissions,
+  });
+  const MEMBER_ROLE = role("00000000-0000-7000-8000-0000000000c2", "member", "Member");
+  const EDITOR = role("00000000-0000-7000-8000-0000000000c3", "editor", "Docs editor", [
+    "doc.page.write",
+  ]);
+  const MANAGER = role("00000000-0000-7000-8000-0000000000c4", "manager", "Role manager", [
+    "rbac.role.manage",
+  ]);
+  const ADMIN = role("00000000-0000-7000-8000-0000000000c5", "platform_admin", "Platform admin", [
+    "platform.account.manage",
+  ]);
+  const grace = (roleId: string, roleName: string) => ({
+    ...MEMBER,
+    userId: "00000000-0000-7000-8000-000000000002" as MemberDto["userId"],
+    name: "Grace",
+    email: "grace@example.test",
+    roleId: roleId as MemberDto["roleId"],
+    roleKey: "member",
+    roleName,
+  });
+
+  const mount = async (rows: readonly MemberDto[], changeRole = vi.fn()) => {
+    const client = {
+      member: { list: () => Promise.resolve({ items: rows, total: rows.length }), changeRole },
+      role: {
+        list: () => Promise.resolve({ items: [MEMBER_ROLE, EDITOR, MANAGER, ADMIN], total: 4 }),
+        entitlement: () => Promise.reject(new Error("not needed")),
+      },
+    } as unknown as ApiClient;
+    await renderWithFakes(
+      <MemberList />,
+      capabilitiesWith(["member.role.change", "doc.page.write"]),
+      undefined,
+      ["member"],
+      client,
+    );
+    return changeRole;
+  };
+
+  it("offers only the roles the viewer may hand out, and changes on confirm", async () => {
+    const changeRole = vi.fn().mockResolvedValue(grace(EDITOR.id, "Docs editor"));
+    await mount([MEMBER, grace(MEMBER_ROLE.id, "Member")], changeRole);
+
+    const picker = await screen.findByRole("combobox", { name: "Change role: Member" });
+    fireEvent.click(picker);
+    const offered = await screen.findAllByRole("option");
+    expect(offered.map((option) => option.textContent)).toEqual(["Member", "Docs editor"]);
+    fireEvent.keyDown(picker, { key: "Escape" });
+    await choose(picker, "Docs editor");
+    fireEvent.click(screen.getByRole("button", { name: "Change role" }));
+    await waitFor(() =>
+      expect(changeRole).toHaveBeenCalledWith({
+        userId: "00000000-0000-7000-8000-000000000002",
+        roleId: EDITOR.id,
+      }),
+    );
+  });
+
+  it("offers nothing on your own row", async () => {
+    await mount([MEMBER]);
+    await waitFor(() => expect(screen.getByText("Ada")).toBeDefined());
+    expect(screen.queryByRole("combobox", { name: /Change role/ })).toBeNull();
+  });
+
+  it("offers nothing on a member whose role holds a key the viewer lacks", async () => {
+    await mount([grace(ADMIN.id, "Platform admin")]);
+    await waitFor(() => expect(screen.getByText("Grace")).toBeDefined());
+    expect(screen.queryByRole("combobox", { name: /Change role/ })).toBeNull();
+  });
+
+  it("says so when the change would remove the last platform admin", async () => {
+    const changeRole = vi.fn().mockRejectedValue(
+      transportError({
+        code: "CONFLICT",
+        context: { resource: "member", reason: "lastPlatformAdmin" },
+      }),
+    );
+    await mount([MEMBER, grace(MEMBER_ROLE.id, "Member")], changeRole);
+
+    const picker = await screen.findByRole("combobox", { name: "Change role: Member" });
+    await choose(picker, "Docs editor");
+    fireEvent.click(screen.getByRole("button", { name: "Change role" }));
+    await waitFor(() =>
+      expect(screen.getByText(/only active platform administrator/)).toBeDefined(),
+    );
   });
 });

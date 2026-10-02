@@ -51,6 +51,8 @@ export const renderWithFakes = async (
   client?: ApiClient,
   // The session on-set. None by default, which is where every rollout starts.
   flags: readonly FlagKey[] = [],
+  // Whether the active organization is the platform one, which some screens widen for.
+  isPlatformOrganization = false,
 ): Promise<RenderResult> => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
@@ -60,7 +62,12 @@ export const renderWithFakes = async (
   const tree = (
     <QueryClientProvider client={queryClient}>
       <MessageProvider messages={messages}>
-        <SessionProvider user={user} capabilities={capabilities} flags={flags}>
+        <SessionProvider
+          user={user}
+          capabilities={capabilities}
+          flags={flags}
+          isPlatformOrganization={isPlatformOrganization}
+        >
           {ui}
         </SessionProvider>
       </MessageProvider>

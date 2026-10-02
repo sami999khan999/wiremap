@@ -8,22 +8,21 @@ import {
   Input,
   MemberMutations,
   type RoleDto,
-  RoleQueries,
   Select,
   useApiClient,
-  useAppQuery,
   useState,
 } from "../import.js";
+import { useAssignableRoles } from "./use-assignable-roles.js";
 
 // The roles come from the same query the roles page reads, so a role created there is
-// offered here with no second list.
+// offered here with no second list — less the ones the viewer may not hand out.
 export function InviteMemberForm() {
   const { t } = useMessages("member");
   // Renders the code the server sent rather than one generic sentence: a 403 and a
   // 409 are different things to be told.
   const describe = useErrorMessage();
   const client = useApiClient();
-  const roles = useAppQuery(RoleQueries.list(client, { limit: 100, offset: 0 }));
+  const roles = useAssignableRoles();
   const invite = MemberMutations.useInvite(client);
 
   const [email, setEmail] = useState("");
@@ -31,7 +30,7 @@ export function InviteMemberForm() {
 
   // Annotated rather than inferred: the client's procedure types are reconstructed
   // through two packages, and a break anywhere degrades to `any` silently.
-  const options: readonly RoleDto[] = roles.data?.items ?? [];
+  const options: readonly RoleDto[] = roles.assignable;
   // `member` by default, never `owner`: the role holding every key should be a deliberate pick.
   // The first option and not `""`, so the value equals what the select paints.
   const fallback = options.find((role) => role.key === "member")?.id ?? options[0]?.id ?? "";

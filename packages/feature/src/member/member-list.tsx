@@ -11,6 +11,8 @@ import {
   type MemberDto,
   MemberMutations,
   MemberQueries,
+  type RoleDto,
+  Select,
   StatusBadge,
   type TableColumn,
   useApiClient,
@@ -19,6 +21,7 @@ import {
   useState,
 } from "../import.js";
 import { EffectivePermissionsInspector } from "../rbac/index.js";
+import { useAssignableRoles } from "./use-assignable-roles.js";
 
 export interface MemberListProps {
   // Paged rather than unbounded: `Pagination.query` caps `limit` at 100 in the schema.
@@ -44,9 +47,21 @@ export function MemberList({ limit = 25, onOpenAccess }: MemberListProps) {
   const members = useAppQuery(MemberQueries.list(client, { limit, offset: 0 }));
   const deactivate = MemberMutations.useDeactivate(client);
   const reactivate = MemberMutations.useReactivate(client);
+  const changeRole = MemberMutations.useChangeRole(client);
+  const roles = useAssignableRoles();
+  // One pending change at a time, confirmed by a second press: a demotion is one click from
+  // the list, and the select alone would apply whatever the pointer slipped onto.
+  const [changing, setChanging] = useState<{ userId: string; roleId: string } | null>(null);
   // One row at a time: the inspector issues a query, and opening every row would issue
   // one per member on a page of twenty-five.
   const [inspecting, setInspecting] = useState<MemberDto | null>(null);
+
+  // The roles a member can be moved to, with their current one kept so the select names it.
+  const rolesFor = (row: MemberRow): readonly RoleDto[] => {
+    const current = roles.all.find((role) => role.id === row.roleId);
+    const offered = roles.assignable;
+    return current && !offered.includes(current) ? [current, ...offered] : offered;
+  };
 
   const rows = useMemo<readonly MemberRow[]>(() => {
     // Annotated rather than inferred: the client's procedure types are reconstructed
@@ -115,6 +130,44 @@ export function MemberList({ limit = 25, onOpenAccess }: MemberListProps) {
                 {onOpenAccess ? t("member.action.access") : t("member.action.inspect")}
               </Button>
             </Can>
+            <Can permission="member.role.change" capabilities={capabilities}>
+              {
+                // Not on your own row, and not on someone whose role holds a key you lack:
+                // the use-case refuses both, so the control would only ever fail.
+                row.userId === user?.id ||
+                !roles.canAct(roles.all.find((role) => role.id === row.roleId)) ? null : (
+                  <span className="inline-flex items-center gap-2">
+                    <Select
+                      id={`member-role-${row.userId}`}
+                      label={t("member.action.changeRole")}
+                      value={changing?.userId === row.userId ? changing.roleId : row.roleId}
+                      onValueChange={(roleId) =>
+                        setChanging(roleId === row.roleId ? null : { userId: row.userId, roleId })
+                      }
+                      options={rolesFor(row).map((role) => ({ value: role.id, label: role.name }))}
+                    />
+                    {changing?.userId === row.userId ? (
+                      <>
+                        <Button
+                          disabled={changeRole.isPending}
+                          onClick={() =>
+                            changeRole.mutate(
+                              { userId: row.userId, roleId: changing.roleId as RoleDto["id"] },
+                              { onSuccess: () => setChanging(null) },
+                            )
+                          }
+                        >
+                          {t("member.action.changeRole")}
+                        </Button>
+                        <Button variant="ghost" onClick={() => setChanging(null)}>
+                          {t("member.action.cancel")}
+                        </Button>
+                      </>
+                    ) : null}
+                  </span>
+                )
+              }
+            </Can>
             <Can permission="member.deactivate" capabilities={capabilities}>
               {
                 // Hidden for your own row, because the use-case refuses it: a button whose
@@ -140,18 +193,21 @@ export function MemberList({ limit = 25, onOpenAccess }: MemberListProps) {
         ),
       },
     ],
-    [t, capabilities, user, deactivate, reactivate, onOpenAccess],
+    [t, capabilities, user, deactivate, reactivate, onOpenAccess, roles, changing, changeRole],
   );
 
   // The last-owner and self refusals get their own sentence: the catalog's generic
   // conflict copy says "someone else changed this first", which is wrong about both.
-  const refusal = describe(deactivate.error ?? reactivate.error);
+  const refusal = describe(deactivate.error ?? reactivate.error ?? changeRole.error);
+  const reason = refusal?.envelope.context.reason;
   const refusalCopy =
     refusal?.envelope.code === "CONFLICT"
       ? t(
-          refusal.envelope.context.reason === "self"
+          reason === "self"
             ? "member.error.self"
-            : "member.error.lastOwner",
+            : reason === "lastPlatformAdmin"
+              ? "member.error.lastPlatformAdmin"
+              : "member.error.lastOwner",
         )
       : refusal?.message;
 

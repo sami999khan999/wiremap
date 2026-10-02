@@ -101,3 +101,23 @@ describe("InviteMemberForm", () => {
     expect(screen.getByLabelText("Role").getAttribute("aria-busy")).toBe("true");
   });
 });
+
+// The server refuses inviting into a role holding a key the inviter lacks, so it is not offered.
+describe("InviteMemberForm — assignable roles only", () => {
+  it("leaves out roles holding a key the inviter lacks, and goal roles", async () => {
+    const MANAGER = {
+      ...role("00000000-0000-7000-8000-0000000000c3", "manager", "Role manager"),
+      permissions: ["rbac.role.manage"],
+    };
+    const REVIEWER = {
+      ...role("00000000-0000-7000-8000-0000000000c4", "reviewer", "Goal reviewer"),
+      scope: "goal" as const,
+    };
+    await render([MEMBER, ADMIN, MANAGER, REVIEWER]);
+
+    const picker = await waitFor(() => roleNamed("Member"));
+    fireEvent.click(picker);
+    const offered = await screen.findAllByRole("option");
+    expect(offered.map((option) => option.textContent)).toEqual(["Member", "Admin"]);
+  });
+});

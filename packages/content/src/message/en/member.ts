@@ -34,12 +34,15 @@ export const member = {
   "member.action.deactivate": "Deactivate",
   "member.action.reactivate": "Reactivate",
   "member.action.changeRole": "Change role",
+  "member.action.cancel": "Cancel",
   "member.action.inspect": "Why?",
   "member.inspect.title": "What {name} can do here",
   "member.inspect.close": "Close",
   // Two refusals worth their own sentence, because the generic conflict copy — "someone
   // else changed this first" — is wrong about both.
   "member.error.lastOwner": "This is the only active owner. Promote someone else to owner first.",
+  "member.error.lastPlatformAdmin":
+    "This is the only active platform administrator. Make someone else a platform administrator first.",
   "member.error.self": "You cannot deactivate your own membership.",
 
   "member.exception.one": "+ 1 exception",
