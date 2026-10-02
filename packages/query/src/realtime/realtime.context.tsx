@@ -29,14 +29,23 @@ export interface RealtimeProviderProps {
   // The active tenant. The server builds the channel from the principal when the stream
   // opens, so a switch with no remount leaves the tab reading the tenant it left.
   readonly organizationId: string | null;
+  // `stream` holds the kit's server stream open; `poll` refetches what a frame would
+  // have named, on a timer and whenever the tab becomes visible. Wiremap polls.
+  readonly transport?: "stream" | "poll";
+  readonly pollIntervalMs?: number;
   readonly children: ReactNode;
 }
+
+// A bell a minute behind is fine; a tab in the background polls not at all.
+const POLL_INTERVAL_MS = 60_000;
 
 // One stream per tab, opened here rather than per component. On HTTP/1.1 a browser holds
 // six connections to an origin, and each open stream is one of them.
 export function RealtimeProvider({
   client,
   organizationId,
+  transport = "stream",
+  pollIntervalMs = POLL_INTERVAL_MS,
   children,
 }: RealtimeProviderProps): ReactNode {
   const queryClient = useQueryClient();
@@ -55,6 +64,19 @@ export function RealtimeProvider({
     const controller = new AbortController();
     const refetch = new RealtimeRefetch(cache.current);
     const request = (queryKey: QueryKey) => refetch.request(queryKey);
+
+    if (transport === "poll") {
+      const poll = (): void => {
+        if (document.visibilityState === "visible") RealtimeRoutes.resync(request);
+      };
+      const timer = setInterval(poll, pollIntervalMs);
+      document.addEventListener("visibilitychange", poll);
+      return () => {
+        clearInterval(timer);
+        document.removeEventListener("visibilitychange", poll);
+        refetch.dispose();
+      };
+    }
 
     void RealtimeStream.run<RealtimeMessage>({
       open: (signal, lastEventId) => client.realtime.stream(undefined, { signal, lastEventId }),
@@ -78,7 +100,7 @@ export function RealtimeProvider({
       refetch.dispose();
       controller.abort();
     };
-  }, [client, organizationId]);
+  }, [client, organizationId, transport, pollIntervalMs]);
 
   // Memoised, or every render hands each consumer a new object and re-renders all of them.
   const value = useMemo(() => ({ connected }), [connected]);

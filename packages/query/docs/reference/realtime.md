@@ -89,9 +89,18 @@ same instant, which is a load test nobody scheduled.
 A stream that cannot open is not a rendered error. `connected` goes false, the loop keeps trying,
 and the tab keeps working on `staleTime`, which is exactly how it worked before any of this existed.
 
-## The stream is held by its own process
+## Wiremap polls
 
-The stream is a `realtime.*` procedure, and `ApiClient` sends that namespace to `/api/realtime`
-— the stream process, `apps/realtime`, behind the web app's own origin. Nothing in this package
-knows that: the provider calls `client.realtime.stream`, and where
-the request goes is the transport's business. See `apps/realtime/docs/index.md`.
+Wiremap runs on Vercel, which holds no long-lived connection, so it mounts the provider with
+`transport="poll"`. Every 60 seconds, and whenever the tab becomes visible, it runs the same
+`RealtimeRoutes.resync` a lost-frame resync runs: every key the table names is refetched. A tab
+in the background polls not at all. The server matches it with `REALTIME_DRIVER=none`, which
+publishes nothing.
+
+## The stream, when it runs, is held by its own process
+
+The stream is a `realtime.*` procedure, and `ApiClient` sends that namespace to `/api/realtime`,
+the kit's stream process behind the web app's own origin. Wiremap removed that process; the
+way back is [`docs/scale/realtime.md`](../../../../docs/scale/realtime.md). Nothing in this
+package knows where the request goes: the provider calls `client.realtime.stream`, and the
+rest is the transport's business.

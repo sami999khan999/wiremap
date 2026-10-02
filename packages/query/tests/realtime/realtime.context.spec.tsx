@@ -173,3 +173,45 @@ describe("RealtimeProvider", () => {
     await waitFor(() => expect(stream).not.toHaveBeenCalled());
   });
 });
+
+describe("RealtimeProvider with transport poll", () => {
+  const polling = (client: ApiClient, queryClient: QueryClient) =>
+    createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      createElement(RealtimeProvider, {
+        client,
+        organizationId: ORG,
+        transport: "poll",
+        pollIntervalMs: 1_000,
+        children: createElement(Probe),
+      } as {
+        client: ApiClient;
+        organizationId: string;
+        transport: "poll";
+        pollIntervalMs: number;
+        children: ReactNode;
+      }),
+    );
+
+  // Polling refetches what a frame would have named, and never opens a stream.
+  it("refetches the routed keys on each tick and opens no stream", async () => {
+    vi.useFakeTimers();
+    try {
+      const stream = vi.fn();
+      const client = { realtime: { stream } } as unknown as ApiClient;
+      const queryClient = new QueryClient();
+      const invalidate = vi.spyOn(queryClient, "invalidateQueries").mockResolvedValue(undefined);
+
+      render(polling(client, queryClient));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1_000);
+      });
+
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: QueryKeys.notification.unreadCount() });
+      expect(stream).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
