@@ -1143,6 +1143,7 @@ export class Container {
         this.authorizer,
         members,
         capabilityRepository,
+        this.platform,
       ),
       entitlement: new GetEntitlementUseCase(this.authorizer, capabilityRepository),
       createRole: new CreateRoleUseCase(

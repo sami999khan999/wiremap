@@ -1,8 +1,10 @@
 import { type DocPageId, type DocSpaceId, Identifiers } from "@loadbearing/contracts";
-import { NotFoundError, ValidationError } from "@loadbearing/errors";
+import { ForbiddenError, NotFoundError, ValidationError } from "@loadbearing/errors";
+import { CapabilitySet } from "@loadbearing/permissions";
 import { describe, expect, it } from "vitest";
 import { DocRules } from "../../src/doc/doc.rules.js";
 import type { DocPageNodeRecord } from "../../src/doc/doc-page.repository.js";
+import { Principal } from "../../src/primitive/principal.js";
 
 const SPACE: DocSpaceId = Identifiers.docSpaceId.parse("018f8c00-0000-7000-8000-000000000100");
 const AUTHOR = Identifiers.userId.parse("018f8c00-0000-7000-8000-000000000200");
@@ -213,5 +215,39 @@ describe("DocRules.trimNav", () => {
   it("folds every branch below the sections when no page is open", () => {
     const [section] = DocRules.trimNav(tree, null);
     expect(section?.children.every((node) => node.folded === true)).toBe(true);
+  });
+});
+
+// Publishing to the internet or to other tenants is a platform decision, not "can arrange spaces".
+describe("DocRules.assertMayOpen", () => {
+  const editor = new Principal(
+    Identifiers.organizationId.parse("018f8c00-0000-7000-8000-000000000010"),
+    Identifiers.userId.parse("018f8c00-0000-7000-8000-000000000011"),
+    CapabilitySet.from({
+      wildcard: false,
+      org: { grants: ["doc.space.manage"], denies: [] },
+      goals: {},
+    }),
+  );
+  const sharer = new Principal(
+    editor.organizationId,
+    editor.userId,
+    CapabilitySet.from({
+      wildcard: false,
+      org: { grants: ["doc.space.manage"], denies: [] },
+      platform: { grants: ["platform.doc.grant"], denies: [] },
+      goals: {},
+    }),
+  );
+
+  it("refuses opening a space without platform.doc.grant", () => {
+    expect(() => DocRules.assertMayOpen(editor, "public", null)).toThrow(ForbiddenError);
+    expect(() => DocRules.assertMayOpen(editor, "granted", "members")).toThrow(ForbiddenError);
+  });
+
+  it("lets a holder open one, and anyone keep one open while editing it", () => {
+    expect(() => DocRules.assertMayOpen(sharer, "public", null)).not.toThrow();
+    expect(() => DocRules.assertMayOpen(editor, "public", "public")).not.toThrow();
+    expect(() => DocRules.assertMayOpen(editor, "members", "public")).not.toThrow();
   });
 });

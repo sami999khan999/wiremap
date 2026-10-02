@@ -1,6 +1,7 @@
-import type { CapabilitySet, UserId } from "../import.js";
-import { NotFoundError } from "../import.js";
+import type { UserId } from "../import.js";
+import { CapabilitySet, NotFoundError } from "../import.js";
 import type { MemberRepository } from "../member/index.js";
+import type { PlatformReader } from "../platform/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
 import type { CapabilityExplanation, CapabilityRepository } from "./capability.repository.js";
 import { CapabilityResolution } from "./capability-resolution.js";
@@ -22,6 +23,7 @@ export class InspectEffectivePermissionsUseCase {
     private readonly authorizer: Authorizer,
     private readonly members: MemberRepository,
     private readonly capabilities: CapabilityRepository,
+    private readonly platform: PlatformReader,
   ) {}
 
   public async execute(
@@ -37,6 +39,18 @@ export class InspectEffectivePermissionsUseCase {
 
     // One read and one fold: the same fold `resolveFor` runs, so the two cannot disagree.
     const explanation = await this.capabilities.explainFor(actor.organizationId, member.userId);
-    return { capabilities: CapabilityResolution.fold(explanation), explanation };
+    const folded = CapabilityResolution.fold(explanation);
+
+    // In the platform organization only, platform keys answer from their own axis. Shown in a
+    // customer tenant, that axis would tell its admins which of their members are platform staff.
+    if (actor.organizationId !== (await this.platform.organizationId())) {
+      return { capabilities: folded, explanation };
+    }
+    const platform = await this.capabilities.resolvePlatformFor(member.userId);
+    const capabilities = CapabilitySet.from({
+      ...folded.toJSON(),
+      platform: platform.toJSON().platform,
+    });
+    return { capabilities, explanation };
   }
 }

@@ -39,6 +39,7 @@ export class UpdateDocSpaceUseCase {
         input.spaceId,
       );
       DocRules.assertAudienceChange(current, input.audience, actor.userId);
+      DocRules.assertMayOpen(actor, input.audience, current.audience);
 
       // Left out keeps what is stored: an older client cannot clear a rule it never showed.
       const saved = await this.spaces.save(

@@ -31,6 +31,7 @@ export class CreateDocSpaceUseCase {
     DocRules.assertSpaceSlug(input.slug);
     const isPlatform = actor.organizationId === (await this.platform.organizationId());
     DocRules.assertAudience(input.audience, isPlatform);
+    DocRules.assertMayOpen(actor, input.audience, null);
     await this.features.assertKnown(input.access);
 
     const id = Uuid.v7() as DocSpaceId;

@@ -3,10 +3,12 @@ import {
   type DocPageId,
   type DocPageStatus,
   type DocSpaceAudience,
+  ForbiddenError,
   NotFoundError,
   type UserId,
   ValidationError,
 } from "../import.js";
+import type { Principal } from "../primitive/index.js";
 import type { DocPageNodeRecord } from "./doc-page.repository.js";
 import type { DocSpaceSummary } from "./doc-space.repository.js";
 
@@ -39,6 +41,19 @@ export class DocRules {
   public static assertAudience(audience: DocSpaceAudience, isPlatform: boolean): void {
     if (audience !== "members" && audience !== "owner" && !isPlatform) {
       throw new ValidationError([{ field: "audience", rule: "invalid" }]);
+    }
+  }
+
+  // Opening a space to the internet, or to other tenants, is a platform decision rather than
+  // "can arrange spaces": only a holder of `platform.doc.grant` moves a space onto either.
+  public static assertMayOpen(
+    actor: Principal,
+    audience: DocSpaceAudience,
+    current: DocSpaceAudience | null,
+  ): void {
+    const open = audience === "public" || audience === "granted";
+    if (open && audience !== current && !actor.can("platform.doc.grant")) {
+      throw new ForbiddenError("platform.doc.grant");
     }
   }
 
