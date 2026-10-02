@@ -36,6 +36,25 @@ Its columns are `grantee_organization_id`, `grantee_user_id` and `grantee_plan_k
 `organization_id`. With that column, §17 would read the table as a tenant's and require every
 unique index to lead with it.
 
+## Who may write
+
+**Writing docs needs a membership in the organization that owns them.** Every write asserts its
+`doc.*` key against the actor's active organization, and every repository call is scoped to it, so
+another organization's ids are simply not found. `doc-write-authorization.spec.ts` pins this for
+each write.
+
+| Key | Lets a member |
+|---|---|
+| `doc.page.write` | add, edit, move and delete pages, upload images, restore a revision |
+| `doc.page.publish` | publish a page |
+| `doc.space.manage` | create, edit and delete spaces |
+
+**Platform docs are the platform organization's**, so the same keys held there write them. Its
+`platform_admin` holds every key, and a custom role such as "Docs editor" can hold just the doc
+keys. One extra rule: **moving a space onto `public` or `granted` also needs `platform.doc.grant`**
+(`DocRules.assertMayOpen`), because opening docs to the internet or to other tenants is a platform
+decision, not just arranging spaces. A space already open can still be edited without it.
+
 ## Who may read a space
 
 A space has an **audience**:

@@ -1,6 +1,6 @@
 ---
 title: The platform scope
-description: A third axis above the tenant — the four leak paths it closes, why the tier is an organization, and why the first admin comes from a script rather than the API.
+description: A third axis above the tenant — the four leak paths it closes, why the tier is an organization run like any other, the guards that protect its admins, and why the first admin comes from a script rather than the API.
 ---
 
 # `platform`, the third scope
@@ -26,6 +26,35 @@ What this buys, and why it is not an env list of admin emails:
 - A second platform role — read-only, say — is a role, not a code change.
 - Nothing has to redeploy to change who is an admin.
 
+## It is run like any other organization
+
+`platform_admin` holds **every key in the catalog**: every platform key and every tenant key,
+including keys added later. So inside the platform organization its admin does what any owner
+does: invites people, builds roles, changes who holds which, and writes and publishes the
+platform's docs.
+
+The tenant keys act only while the platform organization is the active one. They come from the
+active membership's role, and a platform admin in a customer tenant holds there only the role that
+tenant gave them. **A platform admin is still not a tenant owner** anywhere but in the platform
+organization itself.
+
+A custom role in the platform organization may hold both kinds of key. "Support", say, might hold
+`platform.account.read` and `member.read`; "Docs editor" might hold `doc.page.write` and
+`doc.page.publish`. The platform menu (`PlatformNav`) shows each platform page to whoever holds its
+key, from `PLATFORM_ROUTE_PERMISSION`, and adds the team, roles and docs while the platform
+organization is active.
+
+The guards that keep the tier runnable:
+
+| Rule | Where |
+|---|---|
+| Changing, deactivating or reactivating a member needs every key of their **current** role | `ChangeMemberRoleUseCase`, `SetMemberActiveUseCase` |
+| The last active `platform_admin` cannot be demoted or deactivated, even while owners remain | `MemberRules.lastHolderGuard` |
+| A platform key can be granted only on a role in the platform organization | `GrantPermissionUseCase`, rule `platformOnly` |
+| A key you do not hold cannot be revoked from a role, unless the plan no longer includes it | `RevokePermissionUseCase` |
+| The platform organization cannot be moved to a plan or adjusted | `AssignPlanUseCase`, `AdjustEntitlementUseCase` |
+| Making a doc space public or granted needs `platform.doc.grant` | `DocRules.assertMayOpen` |
+
 ## The four leak paths, and what closes each
 
 A third scope bolted onto a two-scope `can()` leaks in four places. Each is a case in
@@ -45,7 +74,7 @@ Every line of that is load-bearing:
    tenant key as an explicit row. The flag is still on the DTO, and if anything ever set it,
    falling through to `allowsAtOrg` would make that principal a platform admin in every tenant.
    **A platform admin is never given it either.** It would make them an owner inside every
-   customer tenant, and a platform admin holds no tenant powers.
+   customer tenant; a platform admin holds tenant powers only inside the platform organization.
 2. **An org-level grant of the same key.** The branch consults `platformSet` and nothing else, so a
    `platform.*` string that reached `org.grants` grants nothing.
 3. **`intersect()`.** An API key is issued by a user who may be a platform admin. `intersect` sets
@@ -61,7 +90,8 @@ Two more things fall out of the same branch and are worth stating:
   out.
 - **The role editor offers no platform checkbox** in a customer tenant. `PermissionMatrix` takes
   `excludeScopes`, by scope and never by module name. That removes the checkbox; the grant
-  use-case's no-escalation rule is what actually refuses the write.
+  use-case refuses the write with `platformOnly`, whoever asks. In the platform organization the
+  grid reads each platform key from the platform axis, so a held one shows ticked.
 
 ## The DTO's third axis is optional, on purpose
 
@@ -80,8 +110,10 @@ to grant it.
 pnpm platform:grant alice@example.test
 ```
 
-One membership in the platform organization, under `platform_admin`. Every later admin is invited
-through the existing members screen with the platform organization active.
+One membership in the platform organization, under `platform_admin`. If the person was already a
+member there, the script moves them onto it; that loses nothing, since `platform_admin` holds every
+key `owner` does. Every later admin is invited from **Members** with the platform organization
+active, or moved onto the role with **Change role**.
 
 ## A suspended account, and the way back
 
@@ -124,10 +156,13 @@ both system principals carry an empty platform axis.
 
 1. A line in `catalog/platform.permissions.ts`, `scope: "platform"`, `module: "platform"`.
 2. `PlatformRoleSeed` grants it to `platform_admin` on the next `pnpm db:seed` — it resolves
-   `byScope("platform")` at seed time rather than from a list.
-3. Its procedure, its `catalog/platform.permissions.ts` entry in `contracts`, and its router
+   the whole catalog at seed time rather than from a list, and strips platform keys from roles in
+   every other organization.
+3. An entry in `PLATFORM_ROUTE_PERMISSION` if the key opens a new platform page, so its guard
+   and the platform menu agree.
+4. Its procedure, its `catalog/platform.permissions.ts` entry in `contracts`, and its router
    handler, in one commit.
 
-Until step 3, the key is in `PERMISSION_AWAITING_A_PROCEDURE` in
+Until step 4, the key is in `PERMISSION_AWAITING_A_PROCEDURE` in
 [`check-architecture.mjs`](../../../../tooling/scripts/check-architecture.mjs) §28 — a key nothing
 asserts grants nothing, and that list only ever shrinks. It has been empty since `24.2`.

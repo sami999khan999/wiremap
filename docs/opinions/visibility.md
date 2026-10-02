@@ -110,7 +110,7 @@ The mount point is a **zone**, never a surface. The reasoning, and the grammar o
 zone keys, is on [Vocabulary](vocabulary.md). The four places a permission is checked are
 [enforcement surfaces](../../apps/web/docs/reference/enforcement-surfaces.md); `<Widget>` is a
 second form of the fourth, and like `<Can>` it is not the gate. Why a platform admin is not a
-tenant owner is
+tenant owner anywhere but in the platform organization, which is run like any other, is
 [platform scope](../../packages/permissions/docs/reference/platform-scope.md).
 
 ## Where these rules are enforced

@@ -23,7 +23,8 @@ narrow the one above it, and each has a different owner.
 - **Hiding is not revoking.** The API, a bookmark and the nav still work; the server's
   `Authorizer.assert` is the gate, and nothing on the client is.
 - **A platform admin is not a tenant owner.** `wildcard` is never set in production, and a
-  platform admin gets no powers inside a tenant.
+  platform admin holds tenant powers only inside the platform organization, which is run like
+  any other — invites, roles, docs. In a customer tenant they hold only the role it gave them.
 
 **A doc's access link adds no mechanism.** A page or space linked to a module, permission, flag
 or plan is resolved through the three above and hides as `NOT_FOUND` — see
