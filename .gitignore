@@ -27,3 +27,8 @@ packages/asset/src/icon/sprite.svg
 # The rest is per-developer: local permission overrides and Claude Code's worktree checkouts.
 .claude/settings.local.json
 .claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# Cloudflare: local secrets and wrangler state
+.dev.vars
+.wrangler/

@@ -1,0 +1,5 @@
+# Copy to .dev.vars for `pnpm --filter @loadbearing/dispatcher dev`. The two secrets
+# must equal DISPATCHER_SECRET and INTERNAL_JOB_SECRET in the root .env.
+WEB_URL=http://localhost:43000
+DISPATCHER_SECRET=
+INTERNAL_JOB_SECRET=

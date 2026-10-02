@@ -1,0 +1,28 @@
+# The dispatcher Worker. Free plan: Queues (10,000 operations a day), three Cron Triggers,
+# 10 ms of CPU per invocation, which a Worker that only waits on fetch never approaches.
+name = "wiremap-dispatcher"
+main = "src/main.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Overridden locally by .dev.vars. Production sets it to the Vercel origin.
+WEB_URL = "https://wiremap.vercel.app"
+
+[[queues.producers]]
+binding = "JOBS"
+queue = "wiremap-jobs"
+
+[[queues.producers]]
+binding = "DEAD"
+queue = "wiremap-jobs-dead"
+
+[[queues.consumers]]
+queue = "wiremap-jobs"
+max_batch_size = 5
+max_batch_timeout = 1
+# Above every job's own `maxAttempts`, which is what sends a message to DEAD.
+max_retries = 20
+
+[triggers]
+# The same three expressions as src/schedule/cron.schedule.ts; a spec checks they agree.
+crons = ["13 * * * *", "0 3 * * *", "0 7 * * *"]

@@ -1,0 +1,22 @@
+{
+  "name": "@loadbearing/dispatcher",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc -p tsconfig.test.json && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "clean": "rimraf .wrangler"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@loadbearing/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "catalog:"
+  }
+}
