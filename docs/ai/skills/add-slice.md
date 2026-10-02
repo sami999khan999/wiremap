@@ -168,7 +168,7 @@ Three edits, in this order:
 ```
 src/message/namespace.ts        register "<subject>" in NamespaceShape + ClientNamespace
 src/message/catalog.ts          one loader per locale — total, so a missing cell will not compile
-src/message/en/<subject>.ts     labels, empty states, validation copy   (+ bn/, and any other locale)
+src/message/en/<subject>.ts     labels, empty states, validation copy   (+ any other locale added later)
 ```
 
 The namespace must be registered **before** the component that calls `useMessages("<subject>")` —

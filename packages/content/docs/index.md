@@ -62,7 +62,7 @@ packages/content/
 │       ├── en/                    ← as const; the key union is derived from these
 │       │   ├── common.ts · error.ts · nav.ts · auth.ts
 │       │   └── role.ts · member.ts · organization.ts · email.ts
-│       └── bn/                    ← NamespaceBundle<N>; total, checked by tsc
+│       └── <locale>/              ← none in wiremap; each would be NamespaceBundle<N>, total
 │           └── the same eight
 └── tests/
     ├── primitive/locale.spec.ts
@@ -159,7 +159,7 @@ repository permitted to carry a message. Moving it here cost nothing and removed
 | Area | State |
 | --- | --- |
 | `locale.ts`, `translator.ts` | ✅ final |
-| `message/en/*`, `message/bn/*` — `common`, `error`, `nav`, `auth`, `account`, `role`, `member`, `organization`, `apikey`, `document`, `doc`, `notification`, `platform`, `email` | ✅ fourteen namespaces per locale |
+| `message/en/*` (wiremap ships English only) — `common`, `error`, `nav`, `auth`, `account`, `role`, `member`, `organization`, `apikey`, `document`, `doc`, `notification`, `platform`, `email` | ✅ fourteen namespaces |
 | `message/namespace.ts` | ✅ fourteen namespaces; `email` is `ServerNamespace`, outside `ClientNamespace` |
 | `message/catalog.ts` | ✅ twenty-six cells, total over `Locale × ClientNamespace` |
 | `message/error-copy.ts` | ✅ final |

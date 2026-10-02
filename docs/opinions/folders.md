@@ -48,7 +48,7 @@ next such file goes now has an answer.
 That is what lets you move a file within a folder without touching a single import elsewhere. The
 barrel names every symbol it publishes — never `export *` ([Imports and exports](imports.md)).
 
-**One exemption: `packages/content/src/message/en/` and `bn/`.** Nothing merges those files; they
+**One exemption: `packages/content/src/message/en/`, and any other locale folder beside it.** Nothing merges those files; they
 are reached only by string-literal `import()` from `message/catalog.ts`, and that is what splits
 them into one chunk per locale × namespace. A barrel there would be dead weight that anyone could
 accidentally import and collapse the split. See [20](../setup/20-content-package.md).

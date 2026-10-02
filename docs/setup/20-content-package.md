@@ -366,7 +366,8 @@ changed — only where the runtime data lives.
 
 ### A locale is split the same way English is
 
-**`packages/content/src/message/bn/common.ts`**
+**`message/bn/common.ts`** — the kit's second locale. Wiremap ships English only, so this folder
+is gone from the tree; the walkthrough keeps it because it is how a locale is added back.
 
 ```ts
 import type { NamespaceBundle } from "../namespace.js";
