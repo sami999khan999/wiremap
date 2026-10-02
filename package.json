@@ -22,7 +22,7 @@
     "dev": "pnpm build:packages && pnpm --filter \"./apps/*\" --parallel run dev",
     "dev:web": "pnpm build:packages && pnpm --filter @loadbearing/web run dev",
     "dev:worker": "pnpm build:packages && pnpm --filter @loadbearing/worker run dev",
-    "dev:realtime": "pnpm build:packages && pnpm --filter @loadbearing/realtime run dev",
+    "dev:dispatcher": "pnpm --filter @loadbearing/dispatcher run dev",
     "typecheck": "pnpm -r run typecheck",
     "format": "biome format --write .",
     "check": "biome check --write .",

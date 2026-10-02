@@ -4,7 +4,7 @@
 // process, so a missing environment variable — `env.ts` parses at module load — was
 // invisible until a deploy. See docs/setup/26.
 //
-// Run: node tooling/scripts/boot-smoke.mjs worker | web | realtime
+// Run: node tooling/scripts/boot-smoke.mjs worker | web
 
 // @ts-check
 
@@ -35,16 +35,6 @@ const APPS = {
     // dependencies, so it answers 200 through the bug this exists to catch and 503
     // through a dependency nobody started. See docs/setup/26-hygiene-and-ci.md, step 26.4d.
     probe: "/",
-  },
-  realtime: {
-    entry: "apps/realtime/dist/main.js",
-    build: "pnpm --filter @loadbearing/realtime build",
-    started: '"event":"process.started"',
-    stopped: '"event":"process.stopped"',
-    // Liveness only: it proves the listener answers, and a stream needs a signed-in user.
-    probe: "/healthz",
-    // Its own variable, not `PORT`, because the web app's Vite reads it to proxy to.
-    portEnv: "REALTIME_PORT",
   },
 };
 

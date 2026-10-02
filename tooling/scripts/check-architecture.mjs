@@ -1673,9 +1673,9 @@ assert("every permission in the catalog gates a procedure", (failures) => {
   }
 });
 
-// ── 29 — the four shard readers run one algorithm ──────────────────────
+// ── 29 — the three shard readers run one algorithm ─────────────────────
 //
-// `DATABASE_SHARD_<n>_URL` is parsed in four places and cannot be parsed in one: each
+// `DATABASE_SHARD_<n>_URL` is parsed in three places and cannot be parsed in one: each
 // app declares the environment it needs (docs/setup/25), and the scripts above
 // `packages/infrastructure/src` cannot import an app. So the copies stay and the rule
 // does not — two of them once disagreed about an empty value, and the odd one out threw
@@ -1684,11 +1684,10 @@ assert("every permission in the catalog gates a procedure", (failures) => {
 const SHARD_READERS = [
   "apps/web/src/env.ts",
   "apps/worker/src/env.ts",
-  "apps/realtime/src/env.ts",
   "packages/infrastructure/shard-env.ts",
 ];
 
-// The body only. The infrastructure copy names its return type where the three apps inline
+// The body only. The infrastructure copy names its return type where the two apps inline
 // it, which is a difference in the signature and not in what the code does.
 function shardReaderBody(file) {
   const path = join(ROOT, file);
@@ -1710,7 +1709,7 @@ function shardReaderBody(file) {
     .trim();
 }
 
-assert("the four shard readers run one algorithm", (failures) => {
+assert("the three shard readers run one algorithm", (failures) => {
   const bodies = new Map();
   let present = 0;
 

@@ -128,7 +128,8 @@ jobs:
       # The node apps, because `tsc -p` is the only thing that compiles each and
       # `pnpm build:packages` filters to ./packages/*.
       - run: pnpm --filter @loadbearing/worker build
-      - run: pnpm --filter @loadbearing/realtime build
+      # The dispatcher Worker bundles, and its bindings parse, without a Cloudflare account.
+      - run: pnpm --filter @loadbearing/dispatcher exec wrangler deploy --dry-run --outdir .wrangler/dry-run
 
       # The two steps that start a process. Everything above them runs against source and
       # cannot tell that a variable is missing, because `env.ts` parses at module load.
@@ -136,7 +137,6 @@ jobs:
       # imported, listened, and answered 500 on every page.
       - run: node tooling/scripts/boot-smoke.mjs worker
       - run: node tooling/scripts/boot-smoke.mjs web
-      - run: node tooling/scripts/boot-smoke.mjs realtime
 
       # The web build above is also what makes this pass rather than skip:
       # `check:architecture`'s bundle assertion greps the built client output, and

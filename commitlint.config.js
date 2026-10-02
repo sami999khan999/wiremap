@@ -25,7 +25,6 @@ export default {
         "feature",
         "web",
         "worker",
-        "realtime",
         "graph",
         "analyzer",
         "cli",
