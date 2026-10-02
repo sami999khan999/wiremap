@@ -25,6 +25,7 @@ let scope: TransactionScope;
 let platformOrganization: OrganizationId;
 let admin: UserId;
 let outsider: UserId;
+let customer: OrganizationId;
 
 const PLATFORM_KEYS = PermissionRegistry.instance.byScope("platform");
 
@@ -69,6 +70,14 @@ beforeAll(async () => {
 
   await memberOf(platformOrganization, admin, "platform_admin");
   await memberOf(platformOrganization, outsider, "owner");
+
+  // A customer tenant the platform admin is an ordinary member of.
+  customer = crypto.randomUUID() as OrganizationId;
+  await database.client
+    .insert(organizations)
+    .values({ id: customer, slug: `customer-${customer}`, name: "Customer" });
+  await new SystemRoleSeed(DatabaseCluster.single(database), scope, shards).run(customer);
+  await memberOf(customer, admin, "member");
 });
 
 afterAll(async () => {
@@ -77,6 +86,7 @@ afterAll(async () => {
     await database.client.delete(permissionOverrides).where(eq(permissionOverrides.userId, id));
     await database.client.delete(users).where(eq(users.id, id));
   }
+  await database.client.delete(organizations).where(eq(organizations.id, customer));
   await database.close();
 });
 
@@ -210,7 +220,8 @@ describe("SystemRoleSeed and PlatformRoleSeed", () => {
     expect(held.rows).toEqual([]);
   });
 
-  it("grants the platform role exactly the platform scope", async () => {
+  // The tier is run like any organization, so its top role holds the tenant keys as well.
+  it("grants the platform role every key in the catalog", async () => {
     const held = await database.client.execute<{ permission: string }>(sql`
       select rp.permission
       from role_permissions rp
@@ -219,6 +230,61 @@ describe("SystemRoleSeed and PlatformRoleSeed", () => {
       order by rp.permission
     `);
 
-    expect(held.rows.map((row) => row.permission)).toEqual([...PLATFORM_KEYS].sort());
+    expect(held.rows.map((row) => row.permission)).toEqual(
+      [...PermissionRegistry.instance.all()].sort(),
+    );
+  });
+
+  // Granting nothing, such a row only blocks the tenant's owner from assigning the role.
+  it("takes platform keys back from roles in every other organization", async () => {
+    const [role] = await database.client
+      .select({ id: roles.id })
+      .from(roles)
+      .where(and(eq(roles.organizationId, customer), eq(roles.key, "guest")));
+    if (!role) throw new Error("no guest role");
+    await database.client.execute(sql`
+      insert into role_permissions (organization_id, role_id, permission)
+      values (${customer}, ${role.id}, 'platform.status.read')
+    `);
+
+    await new PlatformRoleSeed(DatabaseCluster.single(database), scope, shards).run();
+
+    const left = await database.client.execute<{ permission: string }>(sql`
+      select permission from role_permissions
+      where organization_id = ${customer} and permission like 'platform.%'
+    `);
+    expect(left.rows).toEqual([]);
+  });
+});
+
+describe("tenant keys on the platform role", () => {
+  const capabilities = () =>
+    new PgCapabilityRepository(DatabaseCluster.single(database), scope, shards);
+
+  it("hold every tenant key while the platform organization is active", async () => {
+    const held = await capabilities().resolveFor(platformOrganization, admin);
+    for (const key of [
+      "member.invite",
+      "member.role.change",
+      "rbac.role.manage",
+      "doc.page.publish",
+    ]) {
+      expect(held.can(key as never), key).toBe(true);
+    }
+  });
+
+  // "A platform admin is not a tenant owner": inside a customer tenant they hold only what
+  // that tenant gave them.
+  it("reach no customer tenant, where the admin holds only their role there", async () => {
+    const held = await capabilities().resolveFor(customer, admin);
+    for (const key of [
+      "member.invite",
+      "member.role.change",
+      "rbac.role.manage",
+      "doc.page.write",
+    ]) {
+      expect(held.can(key as never), key).toBe(false);
+    }
+    expect(held.can("doc.page.read")).toBe(true);
   });
 });

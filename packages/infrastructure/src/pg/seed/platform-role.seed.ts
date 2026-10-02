@@ -1,6 +1,8 @@
 import {
   and,
   eq,
+  inArray,
+  ne,
   type OrganizationId,
   PermissionRegistry,
   type Placement,
@@ -10,8 +12,8 @@ import {
 import { BaseRepository } from "../primitive/index.js";
 import { organizations, rolePermissions, roles } from "../schema/index.js";
 
-// The one role the tier has. Holding every platform key rather than a list, because a
-// platform key with nobody able to hold it is a screen nobody can open.
+// The tier's top role: every platform key and every tenant key, so the platform organization
+// is run like any other — its admin invites, builds roles and writes docs. See platform-scope.md.
 const KEY = "platform_admin";
 const NAME = "Platform administrator";
 
@@ -55,9 +57,9 @@ export class PlatformRoleSeed extends BaseRepository {
     const roleId = rows[0]?.id;
     if (!roleId) return organizationId;
 
-    // Resolved at seed time, so a platform key added by a later phase reaches every
-    // admin on the next deploy rather than on a grant somebody has to remember.
-    const permissions = PermissionRegistry.instance.byScope("platform");
+    // Resolved at seed time, so a key added by a later phase reaches every admin on the
+    // next deploy. Tenant keys act only while this organization is the active one.
+    const permissions = PermissionRegistry.instance.all();
 
     if (permissions.length > 0) {
       await this.db
@@ -67,7 +69,23 @@ export class PlatformRoleSeed extends BaseRepository {
     }
 
     await this.reconcile(organizationId, roleId, permissions);
+    await this.stripElsewhere(organizationId);
     return organizationId;
+  }
+
+  // A platform key on a role in any other organization grants nothing, and it stops that
+  // organization's owner assigning the role. `GrantPermission` now refuses it; this clears old rows.
+  private async stripElsewhere(organizationId: OrganizationId): Promise<void> {
+    const platformKeys = PermissionRegistry.instance.byScope("platform");
+    if (platformKeys.length === 0) return;
+    await this.db
+      .delete(rolePermissions)
+      .where(
+        and(
+          ne(rolePermissions.organizationId, organizationId),
+          inArray(rolePermissions.permission, [...platformKeys]),
+        ),
+      );
   }
 
   // The half an insert cannot do. A platform key removed from the catalog stays granted

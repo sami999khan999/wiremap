@@ -2,6 +2,7 @@ import {
   and,
   asc,
   eq,
+  inArray,
   isNull,
   type MemberPage,
   type MemberRecord,
@@ -139,39 +140,45 @@ export class PgMemberRepository extends BaseRepository implements MemberReposito
       .where(and(eq(memberships.organizationId, organizationId), eq(memberships.userId, userId)));
   }
 
-  public async countActiveOwners(organizationId: OrganizationId): Promise<number> {
+  public async countActiveHolders(
+    organizationId: OrganizationId,
+    roleKeys: readonly string[],
+  ): Promise<number> {
     const [row] = await this.db
       .select({ total: sql<number>`count(*)::int` })
       .from(memberships)
       .innerJoin(roles, eq(roles.id, memberships.roleId))
-      .where(
-        and(
-          eq(memberships.organizationId, organizationId),
-          eq(roles.key, "owner"),
-          isNull(memberships.deactivatedAt),
-        ),
-      );
+      .innerJoin(users, eq(users.id, memberships.userId))
+      .where(this.activeHolders(organizationId, roleKeys));
 
     return row?.total ?? 0;
   }
 
   // `for update` on the membership rows, not on the joined role: an aggregate cannot
   // carry the clause, so the rows come back and are counted here.
-  public async lockActiveOwners(organizationId: OrganizationId): Promise<number> {
+  public async lockActiveHolders(
+    organizationId: OrganizationId,
+    roleKeys: readonly string[],
+  ): Promise<number> {
     const rows = await this.db
       .select({ id: memberships.id })
       .from(memberships)
       .innerJoin(roles, eq(roles.id, memberships.roleId))
-      .where(
-        and(
-          eq(memberships.organizationId, organizationId),
-          eq(roles.key, "owner"),
-          isNull(memberships.deactivatedAt),
-        ),
-      )
+      .innerJoin(users, eq(users.id, memberships.userId))
+      .where(this.activeHolders(organizationId, roleKeys))
       .for("update", { of: memberships });
 
     return rows.length;
+  }
+
+  // A suspended account cannot act anywhere, so it never counts as the one keeping a tenant open.
+  private activeHolders(organizationId: OrganizationId, roleKeys: readonly string[]) {
+    return and(
+      eq(memberships.organizationId, organizationId),
+      inArray(roles.key, [...roleKeys]),
+      isNull(memberships.deactivatedAt),
+      isNull(users.suspendedAt),
+    );
   }
 
   public async existsByEmail(organizationId: OrganizationId, email: string): Promise<boolean> {
