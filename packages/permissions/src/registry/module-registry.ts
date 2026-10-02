@@ -5,6 +5,8 @@ import type { PermissionKey } from "./permission-registry.js";
 
 export interface ModuleGate {
   readonly permission: PermissionKey;
+  // Any one of these shows the module too: a staff role may hold one platform page and not another.
+  readonly anyOf?: readonly PermissionKey[];
   // `AppRoute`, not `string` — a gate pointing at an undeclared path fails to compile.
   readonly route: AppRoute;
 }
@@ -21,7 +23,8 @@ export class ModuleRegistry {
   }
 
   public isVisible(module: ModuleKey, caps: CapabilitySet): boolean {
-    return caps.can(GATES[module].permission);
+    const gate: ModuleGate = GATES[module];
+    return caps.can(gate.permission) || (gate.anyOf?.some((key) => caps.can(key)) ?? false);
   }
 
   public visibleModules(caps: CapabilitySet): readonly ModuleKey[] {

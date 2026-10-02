@@ -21,4 +21,9 @@ export {
   PermissionRegistry,
   type PermissionScope,
 } from "./registry/index.js";
-export { type AppRoute, ROUTES, type RoutePath } from "./route/index.js";
+export {
+  type AppRoute,
+  PLATFORM_ROUTE_PERMISSION,
+  ROUTES,
+  type RoutePath,
+} from "./route/index.js";

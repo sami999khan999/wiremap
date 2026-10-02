@@ -75,3 +75,25 @@ describe("ModuleRegistry", () => {
     expect(registry.isVisible("platform", admin)).toBe(true);
   });
 });
+
+// A staff role may hold one platform page and not another: any page's key shows the module.
+describe("the platform module", () => {
+  const holding = (...platform: string[]) =>
+    CapabilitySet.from({
+      wildcard: false,
+      org: { grants: [], denies: [] },
+      platform: { grants: platform as never, denies: [] },
+      goals: {},
+    });
+
+  it("is visible to a holder of any platform page's key", () => {
+    expect(ModuleRegistry.instance.isVisible("platform", holding("platform.account.read"))).toBe(
+      true,
+    );
+    expect(ModuleRegistry.instance.isVisible("platform", holding("platform.flag.read"))).toBe(true);
+  });
+
+  it("stays hidden from someone holding none", () => {
+    expect(ModuleRegistry.instance.isVisible("platform", holding())).toBe(false);
+  });
+});
