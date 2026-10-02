@@ -17,10 +17,11 @@ export { default as spriteUrl } from "@loadbearing/asset/sprite.svg";
 // Type-only, both of them. The `CapabilitySet` instance arrives as a prop, so
 // `verbatimModuleSyntax` erases these and the emitted JavaScript imports nothing.
 export type { CapabilitySet, PermissionKey } from "@loadbearing/permissions";
-
 // ── clsx · tailwind-merge ────────────────────────────────────────────────────
 // Composed once, as `cn` in class-name/. Nothing else calls either directly.
 export { type ClassValue, clsx } from "clsx";
+// ── glass-scroll ─────────────────────────────────────────────────────────────
+export { GlassScroll, GlassScrollArea, type PartialTheme as GlassScrollTheme } from "glass-scroll";
 // ── react ────────────────────────────────────────────────────────────────────
 export type {
   ButtonHTMLAttributes,

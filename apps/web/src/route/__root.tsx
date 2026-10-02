@@ -5,6 +5,7 @@ import {
   type CSSProperties,
   FontRegistry,
   MessageProvider,
+  PageScrollbar,
   QueryClientProvider,
   type ReactNode,
   SessionProvider,
@@ -99,20 +100,25 @@ function RootDocument({ children }: { children: ReactNode }) {
         {correctsMode ? <script dangerouslySetInnerHTML={{ __html: SYSTEM_MODE_SCRIPT }} /> : null}
       </head>
       <body>
-        <QueryClientProvider client={queryClient}>
-          <ApiClientProvider client={api}>
-            <MessageProvider messages={messages}>
-              <SessionProvider
-                user={user}
-                capabilities={capabilities}
-                isPlatformOrganization={isPlatformOrganization}
-                flags={flags}
-              >
-                {children}
-              </SessionProvider>
-            </MessageProvider>
-          </ApiClientProvider>
-        </QueryClientProvider>
+        {
+          // Around the app, so every ScrollArea inside shares its theme and its one stylesheet.
+        }
+        <PageScrollbar>
+          <QueryClientProvider client={queryClient}>
+            <ApiClientProvider client={api}>
+              <MessageProvider messages={messages}>
+                <SessionProvider
+                  user={user}
+                  capabilities={capabilities}
+                  isPlatformOrganization={isPlatformOrganization}
+                  flags={flags}
+                >
+                  {children}
+                </SessionProvider>
+              </MessageProvider>
+            </ApiClientProvider>
+          </QueryClientProvider>
+        </PageScrollbar>
         <Scripts />
       </body>
     </html>

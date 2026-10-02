@@ -160,6 +160,7 @@ export {
   type ModeKey,
   type ModePreference,
   ModeRegistry,
+  PageScrollbar,
   Popover,
   Prose,
   QrCode,

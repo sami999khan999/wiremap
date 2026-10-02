@@ -1,5 +1,6 @@
 import { cn } from "../../class-name/index.js";
 import type { ReactNode } from "../../import.js";
+import { ScrollArea } from "../scroll-area/index.js";
 
 export interface ReaderLayoutProps {
   // A `Sidebar`, normally. Passed whole so the caller decides what it holds.
@@ -22,8 +23,7 @@ export const readerClassName = Object.freeze({
   contentAside:
     "ui-reader__content--aside grid-cols-[minmax(0,48rem)_14rem] max-xl:grid-cols-[minmax(0,48rem)]",
   // Sticky under the viewport's top edge, and scrolls on its own when taller than the screen.
-  aside:
-    "ui-reader__aside sticky top-8 max-h-[calc(100dvh-4rem)] self-start overflow-y-auto max-xl:hidden",
+  aside: "ui-reader__aside sticky top-8 max-h-[calc(100dvh-4rem)] self-start max-xl:hidden",
   header: "ui-reader__header mb-8 flex flex-col gap-3 border-border border-b pb-6",
   title: "ui-reader__title m-0 font-semibold text-2xl leading-tight",
   description: "ui-reader__description m-0 text-fg-muted text-lg",
@@ -54,7 +54,7 @@ export function ReaderLayout({
             {header ? <header className={readerClassName.header}>{header}</header> : null}
             {children}
           </article>
-          {aside ? <div className={readerClassName.aside}>{aside}</div> : null}
+          {aside ? <ScrollArea className={readerClassName.aside}>{aside}</ScrollArea> : null}
         </div>
       </div>
     </div>

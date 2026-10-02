@@ -205,6 +205,10 @@ Three stayed hand-written, each for a stated reason:
 theme, so [`ThemeScope`](../src/theme/theme-scope.tsx) renders the scoped `data-theme` and
 hands its element to every portal inside it. See [Popover](reference/popover.md).
 
+**Every scrollbar is one component.** `PageScrollbar`, mounted once at the root, replaces the
+page's bar with a glass overlay and themes every inner scroller to match, from the twelve tokens.
+See [Scrollbar](reference/scrollbar.md).
+
 **No Storybook, and no `*.stories.tsx`.** Doc 22 offers Storybook or a `/kitchen-sink` route in
 `apps/web` and says to pick one deliberately. The route is what was picked —
 `apps/web/src/route/(dev)/kitchen-sink.tsx` renders every component against every theme and every

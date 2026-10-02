@@ -1,5 +1,6 @@
 import { cn } from "../../class-name/index.js";
 import { type ReactNode, useEffect } from "../../import.js";
+import { ScrollArea } from "../scroll-area/index.js";
 
 export interface SidebarProps {
   // The region's accessible name. A page with a sidebar and a header nav has two
@@ -56,9 +57,12 @@ export function Sidebar({
         {
           // The only part that scrolls, so the search field and the footer never leave the screen.
         }
-        <div className="ui-sidebar__body min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-4">
+        <ScrollArea
+          className="ui-sidebar__body min-h-0 flex-1"
+          contentClassName="overscroll-contain px-4 pt-2 pb-4"
+        >
           {children}
-        </div>
+        </ScrollArea>
         {footer ? (
           <div className="ui-sidebar__footer flex items-center justify-between gap-2 border-border border-t px-4 py-3">
             {footer}

@@ -151,6 +151,9 @@ catalog:
   # Headless primitives for everything with hard interaction semantics: focus, keyboard
   # and dismissal. Styling is ours, through Tailwind utilities in packages/ui.
   "@base-ui/react": ^1.8.0
+  # The overlay scrollbar for the page and the themed thin bar for every inner scroller.
+  # Coloured only from the twelve tokens; see packages/ui/docs/reference/scrollbar.md.
+  glass-scroll: ^0.2.0
 
   # ── router-scoped — apps/ only, never a package ──
   #    Routing is app-shaped, not product-shaped. A Next app brings its own
@@ -198,3 +201,6 @@ allowBuilds:
   # Denied: msgpackr falls back to pure JS and round-trips correctly without it.
   msgpackr-extract: false
   sharp: true
+
+minimumReleaseAgeExclude:
+  - glass-scroll@0.2.0

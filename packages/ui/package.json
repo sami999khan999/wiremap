@@ -46,6 +46,7 @@
     "@base-ui/react": "catalog:",
     "@loadbearing/asset": "workspace:*",
     "clsx": "catalog:",
+    "glass-scroll": "catalog:",
     "tailwind-merge": "catalog:",
     "uqr": "catalog:"
   },

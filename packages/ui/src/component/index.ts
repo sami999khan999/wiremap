@@ -37,10 +37,12 @@ export {
   type NavTreeProps,
   type RenderNavLink,
 } from "./nav-tree/index.js";
+export { PageScrollbar, type PageScrollbarProps } from "./page-scrollbar/index.js";
 export { Popover, type PopoverAlign, type PopoverProps } from "./popover/index.js";
 export { Prose, type ProseProps } from "./prose/index.js";
 export { QrCode, type QrCodeProps } from "./qr-code/index.js";
 export { ReaderLayout, type ReaderLayoutProps, readerClassName } from "./reader-layout/index.js";
+export { ScrollArea, type ScrollAreaProps } from "./scroll-area/index.js";
 export { Select, type SelectOption, type SelectProps, type SelectVariant } from "./select/index.js";
 export { Sidebar, type SidebarProps } from "./sidebar/index.js";
 export { type BadgeTone, StatusBadge, type StatusBadgeProps } from "./status-badge/index.js";
