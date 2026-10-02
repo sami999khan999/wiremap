@@ -10,7 +10,7 @@ running scan refreshes every 3 seconds while its page is open. Nothing is pushed
 
 ## Why
 
-The kit pushes updates over a server-sent event stream held by a separate process, `apps/realtime`.
+The kit pushes updates over a server-sent event stream held by a separate process, apps/realtime.
 That process needs a long-lived connection per open tab and a Redis subscription behind it. Vercel's
 functions end when the response does, so the stream cannot live there, and a second always-on host
 would break the free-tier rule ([`docs/infra/free-tier.md`](../infra/free-tier.md)).
@@ -19,7 +19,7 @@ would break the free-tier rule ([`docs/infra/free-tier.md`](../infra/free-tier.m
 
 | Removed | Stayed |
 |---|---|
-| The `apps/realtime` process, its boot smoke and its CI build | The `RealtimePublisher` and `RealtimeSubscriber` ports |
+| The apps/realtime process, its boot smoke and its CI build | The `RealtimePublisher` and `RealtimeSubscriber` ports |
 | The Vite proxy from `/api/realtime` to it | `RedisRealtimePublisher`, `RedisRealtimeSubscriber` and the replay log |
 | `REALTIME_PORT`, `REALTIME_SHUTDOWN_TIMEOUT_MS` | The `realtime.*` contract and `RealtimeRouter` |
 | The `realtime.stream.drained` log event | `RealtimeProvider`, which now takes `transport="poll"` |
@@ -32,7 +32,7 @@ command is spent on a frame nobody reads.
 When there is a host that can hold connections (a VPS, Fly, or a Cloudflare Durable Object fronting
 the same contract):
 
-1. Restore `apps/realtime` from the kit at `ea3e7c4` (`git checkout ea3e7c4 -- apps/realtime`),
+1. Restore apps/realtime from the kit at `ea3e7c4` (`git checkout ea3e7c4 -- apps/realtime`),
    along with its lines in `package.json`, `.github/workflows/ci.yml`, `tooling/scripts/boot-smoke.mjs`
    and the proxy in `apps/web/vite.config.ts`.
 2. Add its shard reader back to §29's list in `tooling/scripts/check-architecture.mjs`.

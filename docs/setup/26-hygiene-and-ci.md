@@ -1022,7 +1022,7 @@ catalog, so a `...billingPermissions` added tomorrow is covered without anyone e
 
 ### 29 — The three shard readers run one algorithm
 
-Wiremap removed `apps/realtime`, so the fourth copy below is gone; the rule is unchanged.
+Wiremap removed apps/realtime, so the fourth copy below is gone; the rule is unchanged.
 
 ```js
 // fail if `shardsFromEnv` in apps/web/src/env.ts, apps/worker/src/env.ts,
@@ -1031,7 +1031,7 @@ Wiremap removed `apps/realtime`, so the fourth copy below is gone; the rule is u
 ```
 
 `DATABASE_SHARD_<n>_URL` is parsed in four places and cannot be parsed in one — the stream
-process, `apps/realtime`, is the fourth. Each deployable
+process, apps/realtime, is the fourth. Each deployable
 declares the environment it needs, which is why step 25.2 forbids extracting a shared schema; and
 the scripts above `packages/infrastructure/src` cannot import an app at all. A fourth package
 holding the parser would have to sit left of the server-only boundary to be reachable from

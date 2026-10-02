@@ -7,7 +7,7 @@ description: The kit's own deployment — one VPS now, managed services later. W
 
 > **Wiremap's production path is [deployment](deployment.md):** Vercel, Cloudflare, Neon, Upstash
 > and B2, all on free tiers. This page is the kit's original guide, kept for running wiremap on a
-> box of your own with the worker on BullMQ. Its `apps/realtime` steps no longer apply; see
+> box of your own with the worker on BullMQ. Its apps/realtime steps no longer apply; see
 > [`docs/scale/realtime.md`](../scale/realtime.md).
 
 The same services, on a machine you rent. Then, service by service, on machines somebody else
@@ -256,7 +256,7 @@ the tab late or never. Behind nginx, that is `gzip on` in the web location and n
 one.
 
 **The stream path goes to its own process.** Every open tab holds one or two streams for as long as it
-is open, and `apps/realtime` holds all of them so the web app's event loop holds none. The browser
+is open, and apps/realtime holds all of them so the web app's event loop holds none. The browser
 still sees one origin, which is what lets the session cookie ride along. Behind nginx instead, the
 location block wants `proxy_buffering off` and `proxy_read_timeout` above the thirty-minute stream age.
 
