@@ -1,12 +1,12 @@
-import {
-  EmbeddingConsumer,
-  MailConsumer,
-  MaintenanceConsumer,
-  NotificationConsumer,
-  OutboxConsumer,
-} from "../consumer/index.js";
+import { BullMqQueueConsumer, type BullMqQueueOptions } from "../consumer/index.js";
 import { Env } from "../env.js";
-import { type Container, QueueName, type RedisConnection, type Worker } from "../import.js";
+import {
+  ConsumerRegistry,
+  type Container,
+  QueueName,
+  type RedisConnection,
+  type Worker,
+} from "../import.js";
 import {
   CleanupSchedule,
   DigestSchedule,
@@ -27,48 +27,21 @@ export class WorkerBootstrap {
   ) {}
 
   public async start(): Promise<void> {
-    this.workers.push(
-      new EmbeddingConsumer(
-        this.container,
-        this.redis.queueClient(),
-        Env.embeddingConcurrency,
-      ).start(),
-    );
+    const registry = new ConsumerRegistry(this.container);
 
-    // Unconditional, and the reason is in `.env.example`: every mail in this system is a
-    // job, so a stopped worker is a sign-up whose verification link never arrives.
-    this.workers.push(
-      new MailConsumer(
-        this.container,
-        this.redis.queueClient(),
-        Env.mailConcurrency,
-        Env.mailRatePerMinute,
-      ).start(),
-    );
-
-    // Before the schedules register, and before the drain in particular: a repeatable
-    // job that fires the instant it lands needs somewhere to run.
-    this.workers.push(
-      new OutboxConsumer(this.container, this.redis.queueClient(), Env.eventConcurrency).start(),
-    );
-
-    this.workers.push(
-      new NotificationConsumer(
-        this.container,
-        this.redis.queueClient(),
-        Env.notificationConcurrency,
-      ).start(),
-    );
-
-    // Before the schedules register, so an entry that fires the instant it lands has
-    // somewhere to run. See docs/reference/schedules.md.
-    this.workers.push(
-      new MaintenanceConsumer(
-        this.container,
-        this.redis.queueClient(),
-        Env.maintenanceConcurrency,
-      ).start(),
-    );
+    // Every consumer starts before the schedules register: a repeatable job that fires
+    // the instant it lands needs somewhere to run.
+    for (const [queue, options] of WorkerBootstrap.queues()) {
+      this.workers.push(
+        new BullMqQueueConsumer(
+          this.container,
+          registry,
+          this.redis.queueClient(),
+          queue,
+          options,
+        ).start(),
+      );
+    }
 
     // Once at boot, before the schedules: the monthly cron only helps a worker that was
     // awake on the first, and the runway running out is every write in the system failing.
@@ -88,6 +61,26 @@ export class WorkerBootstrap {
       service: "worker",
       consumers: this.workers.length,
     });
+  }
+
+  // Mail is unconditional, and the reason is in `.env.example`: every mail in this
+  // system is a job, so a stopped worker is a sign-up whose verification link never arrives.
+  private static queues(): readonly (readonly [string, BullMqQueueOptions])[] {
+    return [
+      [QueueName.EMBEDDING, { concurrency: Env.embeddingConcurrency }],
+      [
+        QueueName.MAIL,
+        {
+          concurrency: Env.mailConcurrency,
+          limiter: { max: Env.mailRatePerMinute, duration: 60_000 },
+        },
+      ],
+      [QueueName.EVENT, { concurrency: Env.eventConcurrency }],
+      [QueueName.NOTIFICATION, { concurrency: Env.notificationConcurrency }],
+      // Five minutes, not BullMQ's 30 s: a runway pass logged nothing for its first
+      // half-minute, the lock expired, and the job ran a second time.
+      [QueueName.MAINTENANCE, { concurrency: Env.maintenanceConcurrency, lockDuration: 300_000 }],
+    ];
   }
 
   // Off the workers that actually started, never the consumers in the tree: a consumer

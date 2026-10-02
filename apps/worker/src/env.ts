@@ -33,6 +33,13 @@ const Schema = z
       .enum(["true", "false"])
       .default("false")
       .transform((v) => v === "true"),
+    // Backblaze B2 wants `required` and `false`: it refuses the SDK's default checksums and
+    // has no lifecycle API, so its expiry rule is set in its console. See deployment.md.
+    S3_CHECKSUMS: z.enum(["full", "required"]).default("full"),
+    S3_LIFECYCLE: z
+      .enum(["true", "false"])
+      .default("true")
+      .transform((v) => v === "true"),
 
     // In both processes because both build a `Container`, which treats mail as required
     // rather than optional.
@@ -49,6 +56,9 @@ const Schema = z
     EMBEDDING_MODEL: z.string().min(1).optional(),
     EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
 
+    // `none`: nothing is published and the browser polls, which is wiremap's shape on
+    // Vercel. `redis` is the kit's stream, for a deployment that runs a stream process.
+    REALTIME_DRIVER: z.enum(["none", "redis"]).default("none"),
     // Per process. The cap exists to stop one runaway tab, which is local by
     // construction, and the age is what releases a channel a leaked reader is holding.
     REALTIME_MAX_STREAMS_PER_USER: z.coerce.number().int().positive().default(8),
@@ -208,6 +218,8 @@ export class Env {
         accessKey: e.S3_ACCESS_KEY,
         secretKey: e.S3_SECRET_KEY,
         forcePathStyle: e.S3_FORCE_PATH_STYLE,
+        checksums: e.S3_CHECKSUMS,
+        lifecycle: e.S3_LIFECYCLE,
       },
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
       embedding: {
@@ -217,6 +229,7 @@ export class Env {
         ...(e.EMBEDDING_MODEL ? { model: e.EMBEDDING_MODEL } : {}),
       },
       realtime: {
+        driver: e.REALTIME_DRIVER,
         maxStreamsPerUser: e.REALTIME_MAX_STREAMS_PER_USER,
         streamMaxAgeSeconds: e.REALTIME_STREAM_MAX_AGE_SECONDS,
       },

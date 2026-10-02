@@ -14,9 +14,7 @@
   "dependencies": {
     "@loadbearing/application": "workspace:*",
     "@loadbearing/composition": "workspace:*",
-    "@loadbearing/contracts": "workspace:*",
     "@loadbearing/infrastructure": "workspace:*",
-    "@loadbearing/permissions": "workspace:*",
     "bullmq": "catalog:",
     "ioredis": "catalog:",
     "zod": "catalog:"

@@ -13,10 +13,20 @@ description: Five consumers, all with a public handle() — the batch sizes and 
 | `OutboxConsumer` | `EVENT` | drain · deliver | always |
 | `NotificationConsumer` | `NOTIFICATION` | digest-fanout · digest | always |
 
-## `handle()` is public on every one of them
+## The consumers live in `composition`, and two hosts run them
 
-This — not `start()` — is the consumer's unit of work. `start()` is the BullMQ binding around it and
-needs a live Redis, so **a private handler is a handler no test can reach.**
+Each consumer is a `QueueConsumer` in `packages/composition/src/consumer/`, with one public
+`handle(job)`. `ConsumerRegistry` maps a queue name to its consumer, and both hosts call
+`registry.run(queue, job)`:
+
+- **This worker**, through `BullMqQueueConsumer` (`apps/worker/src/consumer/bullmq-queue.consumer.ts`),
+  which turns a BullMQ job into a `QueueJob` and keeps the per-queue options: concurrency, the mail
+  limiter, the maintenance lock duration.
+- **The web app's `/api/internal/job`**, when `QUEUE_DRIVER=cloudflare` and the dispatcher Worker
+  delivers each message there. See `packages/infrastructure/docs/reference/cloudflare-queue.md`.
+
+`run()` reports `queue.job.failed` or `queue.job.completed` and rethrows a failure, because both
+hosts retry on rejection. The specs are in `packages/composition/tests/consumer/`.
 
 ## `MaintenanceConsumer` is serial
 

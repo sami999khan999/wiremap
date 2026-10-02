@@ -2,42 +2,17 @@
 // read from here, because it is parsed before anything else in the process exists.
 
 // ── @loadbearing/application ─────────────────────────────────────────────────
-// The principal a consumer runs as. `SystemPrincipal` narrows it; nothing here
-// constructs a user's.
-export {
-  type ArchivedPartition,
-  PartitionedTable,
-  type PartitionedTableEntry,
-  type PartitionedTableName,
-  Principal,
-  QueueName,
-  RetentionRules,
-  Shard,
-  type TenantRunway,
-} from "@loadbearing/application";
+export { QueueName } from "@loadbearing/application";
 
 // ── @loadbearing/composition ─────────────────────────────────────────────────
-// A value in `main.ts` and a type everywhere else. The worker never builds an adapter
-// itself; it asks the container.
-export { Container } from "@loadbearing/composition";
-
-// ── @loadbearing/contracts ───────────────────────────────────────────────────
-// The envelope, because a `deliver` job crosses Redis as JSON and has to be parsed back
-// into a typed event rather than trusted.
-export {
-  type ActivityAction,
-  DomainEvents,
-  type OrganizationId,
-  type UserId,
-} from "@loadbearing/contracts";
+// The worker never builds an adapter or runs a use-case itself: the container builds,
+// and the registry holds every queue's consumer, shared with the web app's job route.
+export { ConsumerRegistry, Container, type QueueJob } from "@loadbearing/composition";
 
 // ── @loadbearing/infrastructure ──────────────────────────────────────────────
 // `RedisConnection` is what applies `maxRetriesPerRequest: null`: a bare connection gets
 // ioredis defaults, and the symptom is a worker that stops consuming silently.
 export { RedisConnection } from "@loadbearing/infrastructure";
-
-// ── @loadbearing/permissions ─────────────────────────────────────────────────
-export { CapabilitySet, type PermissionKey, PermissionRegistry } from "@loadbearing/permissions";
 
 // ── bullmq ───────────────────────────────────────────────────────────────────
 // The one `import.ts` in the repository that names the queue library: a package naming
