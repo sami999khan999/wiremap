@@ -8,6 +8,10 @@ export interface LifecycleRule {
 // A second port rather than a method on `StorageGateway`: that one says "no bucket, no
 // region, no endpoint", and a lifecycle rule is bucket-shaped policy.
 export abstract class StoragePolicyGateway {
+  // False where the store has no lifecycle API over S3 (Backblaze B2): the rule is then set
+  // in the provider's console, and the daily converger leaves the bucket alone.
+  public readonly managesLifecycle: boolean = true;
+
   // A bucket with no configuration reads as `[]`. `NoSuchLifecycleConfiguration` is the
   // empty case, not an error, and a caller that treated it as one would never converge.
   public abstract lifecycle(): Promise<readonly LifecycleRule[]>;

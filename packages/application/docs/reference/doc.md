@@ -257,7 +257,7 @@ doc reading, and the browser reads the HTML back from the server's markup. That 
 `ArticleHtmlStore` in `apps/web`. It keeps what it read by page and revision, so going back to the
 page still has it. The largest page is 1.1 MB raw, mostly a sidebar repeating one set of class
 names, and 59 KB gzipped. The Node server does not compress; the proxy does
-(`docs/infra/deployment.md`).
+(`docs/infra/self-hosted.md`).
 
 ## Two authors, one page
 
