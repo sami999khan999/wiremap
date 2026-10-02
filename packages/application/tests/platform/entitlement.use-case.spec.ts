@@ -194,7 +194,14 @@ function harness() {
   const unitOfWork = { run: <T>(work: () => Promise<T>) => work() } as UnitOfWork;
   const platform = { organizationId: () => Promise.resolve(PLATFORM) } as PlatformReader;
   const tenants = {
-    findByTerm: (term: string) => Promise.resolve(term === "acme" || term === ACME ? TENANT : null),
+    findByTerm: (term: string) =>
+      Promise.resolve(
+        term === "acme" || term === ACME
+          ? TENANT
+          : term === "loadbearing"
+            ? { ...TENANT, organizationId: PLATFORM, slug: "loadbearing" }
+            : null,
+      ),
   } as ShardMapReader;
   const authorizer = new Authorizer();
   const shared = [entitlements, invalidator, tenants, platform, activity, unitOfWork] as const;
@@ -562,5 +569,30 @@ describe("GetOrganizationEntitlementUseCase", () => {
     expect(result.roles).toEqual([
       { key: "accountant", name: "Accountant", listed: 2, entitled: 1 },
     ]);
+  });
+});
+
+// The platform organization's staff hold its tenant keys through `platform_admin`; a plan or
+// an adjustment there would mask them, so neither may touch it.
+describe("the platform organization's own entitlement", () => {
+  it("refuses moving it to a plan", async () => {
+    const { assign } = harness();
+    await expect(
+      assign.execute(admin, { organization: "loadbearing", planKey: "team" }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it("refuses adjusting it", async () => {
+    const { adjust, entitlements } = harness();
+    await expect(
+      adjust.execute(admin, {
+        organization: "loadbearing",
+        permission: "member.invite",
+        effect: "remove",
+        reason: "test",
+        expiresAt: null,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(entitlements.adjustments).toEqual([]);
   });
 });

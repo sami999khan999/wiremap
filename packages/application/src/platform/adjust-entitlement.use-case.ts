@@ -1,4 +1,4 @@
-import { type Clock, NotFoundError, ValidationError } from "../import.js";
+import { type Clock, ConflictError, NotFoundError, ValidationError } from "../import.js";
 import type { ActivityLogger, CapabilityInvalidator, UnitOfWork } from "../port/index.js";
 import { type Authorizer, Principal } from "../primitive/index.js";
 import type { EntitlementRepository } from "./entitlement.repository.js";
@@ -45,6 +45,10 @@ export class AdjustEntitlementUseCase {
     const term = input.organization.trim();
     const tenant = await this.tenants.findByTerm(term);
     if (!tenant) throw new NotFoundError("organization", term);
+    // The platform organization's own staff hold its tenant keys; a narrower plan would mask them.
+    if (tenant.organizationId === (await this.platform.organizationId())) {
+      throw new ConflictError("organization", "platform");
+    }
 
     // The same expiry and reason on every key the closure reaches: a trial of `invite`
     // that outlived the trial of the role list it needs would be broken for its tail.

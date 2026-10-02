@@ -1,4 +1,4 @@
-import { NotFoundError } from "../import.js";
+import { ConflictError, NotFoundError } from "../import.js";
 import type { ActivityLogger, CapabilityInvalidator, UnitOfWork } from "../port/index.js";
 import { type Authorizer, Principal } from "../primitive/index.js";
 import type { EntitlementRepository } from "./entitlement.repository.js";
@@ -30,6 +30,10 @@ export class AssignPlanUseCase {
     const term = input.organization.trim();
     const tenant = await this.tenants.findByTerm(term);
     if (!tenant) throw new NotFoundError("organization", term);
+    // The platform organization's own staff hold its tenant keys; a narrower plan would mask them.
+    if (tenant.organizationId === (await this.platform.organizationId())) {
+      throw new ConflictError("organization", "platform");
+    }
     const plan = await this.entitlements.findPlan(input.planKey);
     if (!plan) throw new NotFoundError("plan", input.planKey);
 
