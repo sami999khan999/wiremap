@@ -56,9 +56,7 @@ export {
   StubMarkdownRenderer,
   StubSessionResolver,
 } from "./fake/index.js";
-// `TestHarness.clock` is one, so a consumer naming that type needs it — and a spec that
-// wants a different instant replaces it rather than reaching for `@loadbearing/core`.
-// The check `/api/internal/job` runs on a dispatcher delivery. Re-exported so the web app
-// verifies with the same code the publisher signs with, without naming infrastructure.
+// `FixedClock` is `TestHarness.clock`'s type. `JobSignatureHasher` lets `/api/internal/job`
+// verify with the publisher's own code without the web app naming infrastructure.
 export { FixedClock, JobSignatureHasher } from "./import.js";
 export { OrganizationShardingStrategy } from "./shard/index.js";
