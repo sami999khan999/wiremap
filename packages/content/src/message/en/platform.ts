@@ -1,5 +1,14 @@
 export const platform = {
   "platform.title": "Platform",
+  "platform.nav.label": "Platform",
+  "platform.nav.status": "Status",
+  "platform.nav.accounts": "Accounts",
+  "platform.nav.entitlements": "Plans and entitlements",
+  "platform.nav.flags": "Feature flags",
+  "platform.nav.team": "Team",
+  "platform.nav.roles": "Roles",
+  "platform.nav.docs": "Docs",
+  "platform.nav.open": "Open the platform organization",
   "platform.subtitle":
     "Settings above any one tenant. Held through a role in the platform organization, not through the tenant you are signed into.",
   "platform.status.title": "Status",

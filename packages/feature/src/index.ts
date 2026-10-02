@@ -119,6 +119,8 @@ export {
   PlanForm,
   type PlanFormProps,
   PlanList,
+  PlatformNav,
+  type PlatformNavProps,
   PlatformStatusPanel,
   ReplicaSwitchPanel,
   TenantExportPanel,

@@ -71,6 +71,8 @@ export {
   type PermissionKey,
   PermissionRegistry,
   type PermissionScope,
+  PLATFORM_ROUTE_PERMISSION,
+  ROUTES,
 } from "@loadbearing/permissions";
 
 // ── @loadbearing/query ───────────────────────────────────────────────────────

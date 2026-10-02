@@ -15,6 +15,8 @@ export interface SessionOrganization {
   // Per tenant, not per user: the same person is an owner in one organization and a
   // member in another, so this cannot sit beside `id` on the user.
   readonly roleName: string;
+  // The platform organization, where its staff run the team, roles and platform docs.
+  readonly isPlatform?: boolean;
 }
 
 export interface SessionUser {
