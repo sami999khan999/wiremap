@@ -110,15 +110,15 @@ describe("AppearanceStore", () => {
   // The fourth axis. Unlike the other three it is not a CSS variable, so it is the one
   // the switcher has to invalidate the router for.
   it("prefers the locale cookie over the Accept-Language header", () => {
-    const snapshot = AppearanceStore.fromCookieHeader("locale=bn", false, "en-GB,en;q=0.9");
+    const snapshot = AppearanceStore.fromCookieHeader("locale=en", false, "de-DE,de;q=0.9");
 
-    expect(snapshot.locale).toBe("bn");
+    expect(snapshot.locale).toBe("en");
   });
 
   it("negotiates from Accept-Language when no cookie has been set", () => {
-    const snapshot = AppearanceStore.fromCookieHeader(null, false, "bn-BD,bn;q=0.9,en;q=0.8");
+    const snapshot = AppearanceStore.fromCookieHeader(null, false, "de-DE,en-GB;q=0.9");
 
-    expect(snapshot.locale).toBe("bn");
+    expect(snapshot.locale).toBe("en");
   });
 
   // A cookie is a string a user can edit, and an unknown locale would index a catalog

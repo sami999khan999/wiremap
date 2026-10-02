@@ -1,6 +1,6 @@
 ---
 title: Plans
-description: Live plans for the lite kit. Finished plans move to archive/ with a row here.
+description: Live plans for wiremap, and the lite kit's plans it inherited. Finished plans move to archive/ with a row here.
 ---
 
 # Plans
@@ -8,8 +8,16 @@ description: Live plans for the lite kit. Finished plans move to archive/ with a
 | Plan | Status |
 |---|---|
 | [`HANDOFF.md`](./HANDOFF.md) | **Start here.** Where the build stopped and how to pick it up. |
-| [`LITE-KIT-PLAN.md`](./LITE-KIT-PLAN.md) | Every item done. Tests owed in `TESTS.md`. |
-| [`UI-KIT-PLAN.md`](./UI-KIT-PLAN.md) | Tailwind v4, Base UI and `cn` in `packages/ui`. Every item done; manual checks owed in `TESTS.md`. |
-| [`DOCS-SYSTEM-PLAN.md`](./DOCS-SYSTEM-PLAN.md) | Feature-linked doc access, whole-docs search, and the Fumadocs-style reader finished. Not started. |
+| [`WIREMAP-PLAN.md`](./WIREMAP-PLAN.md) | **The live plan.** Wiremap on the lite kit, on free-tier infrastructure. |
 | [`TESTS.md`](./TESTS.md) | Every test run the build still owes, by plan item. |
-| [`BACKLOG.md`](./BACKLOG.md) | The open ledger. Empty. |
+| [`BACKLOG.md`](./BACKLOG.md) | The open ledger. |
+
+## Inherited from the kit
+
+Done before wiremap began, and kept because the kit's docs link to them.
+
+| Plan | Status |
+|---|---|
+| [`LITE-KIT-PLAN.md`](./LITE-KIT-PLAN.md) | Every item done. |
+| [`UI-KIT-PLAN.md`](./UI-KIT-PLAN.md) | Every item done. |
+| [`DOCS-SYSTEM-PLAN.md`](./DOCS-SYSTEM-PLAN.md) | Every item done. |

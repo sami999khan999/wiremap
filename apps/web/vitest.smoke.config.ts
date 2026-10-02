@@ -15,9 +15,9 @@ const required = (name: string): string => {
 
 const optional = (name: string): string | undefined => process.env[name] || undefined;
 
-// `28025` is the template's own default, and this is the only place the suite needs it:
+// `48025` is the template's own default, and this is the only place the suite needs it:
 // Mailpit has no URL in either `env.ts`, because no application code ever reads it.
-const MAILPIT_DEFAULT = "http://localhost:28025";
+const MAILPIT_DEFAULT = "http://localhost:48025";
 
 export default defineConfig({
   resolve: { conditions: ["development"] },

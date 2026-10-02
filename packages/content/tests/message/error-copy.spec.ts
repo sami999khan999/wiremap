@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { ERROR_COPY, ErrorCopy, FIELD_RULE_COPY } from "../../src/message/error-copy.js";
 import { StaticContentSource } from "../../src/source/static-content.source.js";
 
-const translator = (locale: "en" | "bn" = "en") => new StaticContentSource().translator(locale, []);
+const translator = (locale: "en" = "en") => new StaticContentSource().translator(locale, []);
 
 describe("ERROR_COPY", () => {
   // The compiler already makes this total, but a code with no copy reaches a customer as
@@ -134,18 +134,5 @@ describe("ErrorCopy", () => {
     ).toJSON();
 
     expect(ErrorCopy.message(t, envelope)).toBe("Something went wrong. Please try again.");
-  });
-
-  it("renders in the requested locale", async () => {
-    const t = await translator("bn");
-
-    expect(ErrorCopy.message(t, { code: "FORBIDDEN", context: {} })).toBe(
-      "এটি করার অনুমতি আপনার নেই।",
-    );
-    // Every code, not a sample: `ERROR_COPY` is total over `ERROR_CATALOG` and every
-    // bundle is total over its namespace, so no code may render an English sentence.
-    for (const code of Object.keys(ERROR_CATALOG) as ErrorCode[]) {
-      expect(ErrorCopy.message(t, { code, context: {} })).not.toMatch(/^[\p{ASCII}]+$/u);
-    }
   });
 });

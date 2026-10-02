@@ -1,4 +1,4 @@
-name: lite
+name: wiremap
 
 services:
   postgres:
@@ -26,7 +26,7 @@ services:
       POSTGRES_USER: ratchet
       POSTGRES_PASSWORD: ratchet
       POSTGRES_DB: ratchet
-    ports: ["${POSTGRES_PORT:-25432}:5432"]
+    ports: ["${POSTGRES_PORT:-45432}:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres.init.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
@@ -49,7 +49,7 @@ services:
         "--maxmemory-policy",
         "noeviction",
       ]
-    ports: ["${REDIS_PORT:-26379}:6379"]
+    ports: ["${REDIS_PORT:-46379}:6379"]
     volumes:
       - redisdata:/data
     healthcheck:
@@ -62,8 +62,8 @@ services:
     image: axllent/mailpit:latest
     restart: unless-stopped
     ports:
-      - "${SMTP_PORT:-21025}:1025"
-      - "${MAILPIT_UI_PORT:-28025}:8025"
+      - "${SMTP_PORT:-41025}:1025"
+      - "${MAILPIT_UI_PORT:-48025}:8025"
     healthcheck:
       test: ["CMD", "/mailpit", "readyz"]
       interval: 10s
@@ -79,7 +79,7 @@ services:
     environment:
       MINIO_ROOT_USER: ratchet
       MINIO_ROOT_PASSWORD: ratchetsecret
-    ports: ["${S3_PORT:-29000}:9000", "${MINIO_CONSOLE_PORT:-29001}:9001"]
+    ports: ["${S3_PORT:-49000}:9000", "${MINIO_CONSOLE_PORT:-49001}:9001"]
     volumes:
       - miniodata:/data
     # No healthcheck, and that is the second time this service has had one it could not

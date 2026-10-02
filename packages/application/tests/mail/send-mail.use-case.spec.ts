@@ -105,10 +105,10 @@ describe("SendMailUseCase", () => {
     await useCase.execute(platform(), {
       template: "auth.otp",
       to: "a@example.test",
-      locale: "bn",
+      locale: "en",
       params: { code: "123456" },
     });
 
-    expect(renderer.rendered[0]?.locale).toBe("bn");
+    expect(renderer.rendered[0]?.locale).toBe("en");
   });
 });

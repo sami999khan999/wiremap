@@ -5,13 +5,13 @@ import type { ContainerConfig } from "../../src/container/container.config.js";
 // ──
 // `Container.health()` dials all three, so a literal here hangs on whatever holds the
 // old port. The fallback is what a checkout with no `.env` gets.
-const REDIS_CACHE_URL = process.env.REDIS_CACHE_URL ?? "redis://localhost:26379";
-const REDIS_QUEUE_URL = process.env.REDIS_QUEUE_URL ?? "redis://localhost:26379";
+const REDIS_CACHE_URL = process.env.REDIS_CACHE_URL ?? "redis://localhost:46379";
+const REDIS_QUEUE_URL = process.env.REDIS_QUEUE_URL ?? "redis://localhost:46379";
 
 export const DATABASE_URL =
   process.env.DATABASE_DIRECT_URL ??
   process.env.DATABASE_URL ??
-  "postgres://ratchet:ratchet@localhost:25432/ratchet";
+  "postgres://ratchet:ratchet@localhost:45432/ratchet";
 
 // Everything a container needs and nothing a deployment would decide. `auth` is absent,
 // which is the shape the throwing getters are about.
@@ -19,7 +19,7 @@ export const baseConfig = (): ContainerConfig => ({
   database: { url: DATABASE_URL },
   redis: { cacheUrl: REDIS_CACHE_URL, queueUrl: REDIS_QUEUE_URL },
   storage: {
-    endpoint: process.env.S3_ENDPOINT ?? "http://localhost:29000",
+    endpoint: process.env.S3_ENDPOINT ?? "http://localhost:49000",
     region: "us-east-1",
     bucket: "loadbearing",
     accessKey: "ratchet",
@@ -27,9 +27,9 @@ export const baseConfig = (): ContainerConfig => ({
     forcePathStyle: true,
   },
   email: {
-    url: process.env.SMTP_URL ?? "smtp://localhost:21025",
+    url: process.env.SMTP_URL ?? "smtp://localhost:41025",
     from: "noreply@example.test",
-    baseUrl: "http://localhost:23000",
+    baseUrl: "http://localhost:43000",
   },
   embedding: { provider: "none", dimensions: 1536 },
   realtime: { maxStreamsPerUser: 8, streamMaxAgeSeconds: 1800 },
@@ -41,8 +41,8 @@ export const authConfig = (
   enrolmentMode: "personal" | "bootstrap" | "invite",
 ): NonNullable<ContainerConfig["auth"]> => ({
   secret: "spec-secret-spec-secret-spec-secret",
-  baseUrl: "http://localhost:23000",
-  trustedOrigins: ["http://localhost:23000"],
+  baseUrl: "http://localhost:43000",
+  trustedOrigins: ["http://localhost:43000"],
   sessionMaxAgeSeconds: 604_800,
   cookieCacheMaxAgeSeconds: 60,
   requireEmailVerification: true,

@@ -91,7 +91,7 @@ const Schema = z
     REALTIME_MAX_STREAMS_PER_USER: z.coerce.number().int().positive().default(8),
     REALTIME_STREAM_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(1800),
     // Where the browser's `/api/realtime` is proxied to. The web app's Vite reads it too.
-    REALTIME_PORT: z.coerce.number().int().min(1).max(65_535).default(23001),
+    REALTIME_PORT: z.coerce.number().int().min(1).max(65_535).default(43001),
     // How long a stop may take to hand every open stream on before the rest are cut.
     REALTIME_SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(20_000),
 

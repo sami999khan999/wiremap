@@ -17,7 +17,7 @@ const shards = new ShardScope();
 export const DATABASE_URL =
   process.env.DATABASE_DIRECT_URL ??
   process.env.DATABASE_URL ??
-  "postgres://ratchet:ratchet@localhost:25432/ratchet";
+  "postgres://ratchet:ratchet@localhost:45432/ratchet";
 
 const URL = DATABASE_URL;
 

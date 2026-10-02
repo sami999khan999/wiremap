@@ -1,5 +1,12 @@
 # Upstream
 
+**Wiremap** is built on the lite kit, and its repository carries the kit's history. Wiremap
+started from the lite kit at commit `ea3e7c4` (2026-10-02), fetched as the `kit` remote:
+<https://github.com/ParentPlaceholderOrg/loadbearing_mini>. A kit fix is ported with
+`git fetch kit` and a cherry-pick or a file copy, because the package names and scope are the kit's.
+
+The rest of this page is the kit's own record of where it came from.
+
 This kit, **loadbearing lite**, was cut from the big kit, **loadbearing**, and lives in its own git
 repository. This file records exactly where it came from, so anything removed can be brought back
 from the right place.

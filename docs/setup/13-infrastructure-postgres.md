@@ -453,7 +453,7 @@ Use `db:push` on a scratch database while iterating on a schema shape you have n
 
 ```bash
 cd packages/infrastructure
-node -e "require('fs').writeFileSync('.env', 'DATABASE_URL=postgres://ratchet:ratchet@localhost:25432/ratchet\n')"
+node -e "require('fs').writeFileSync('.env', 'DATABASE_URL=postgres://ratchet:ratchet@localhost:45432/ratchet\n')"
 ```
 > A package-local `.env` for drizzle-kit only. It is already covered by the root `.gitignore`.
 

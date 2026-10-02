@@ -9,8 +9,8 @@ description: The SMTP sink — every outbound mail is caught and displayed, none
 mailpit:
   image: axllent/mailpit:latest
   ports:
-    - "${SMTP_PORT:-21025}:1025"     # SMTP — what the worker dials
-    - "${MAILPIT_UI_PORT:-28025}:8025" # web UI — what you read
+    - "${SMTP_PORT:-41025}:1025"     # SMTP — what the worker dials
+    - "${MAILPIT_UI_PORT:-48025}:8025" # web UI — what you read
   healthcheck:
     test: ["CMD", "/mailpit", "readyz"]
 ```
@@ -21,8 +21,8 @@ No config file and no volume. Every setting is a flag or a default, and the inbo
 ## What it is for
 
 `SmtpEmailSender` in `packages/infrastructure/src/smtp/` dials `SMTP_URL`, which is
-`smtp://localhost:21025` locally. Mailpit accepts the message, **delivers it nowhere**, and shows it
-at <http://localhost:28025>.
+`smtp://localhost:41025` locally. Mailpit accepts the message, **delivers it nowhere**, and shows it
+at <http://localhost:48025>.
 
 The transport is **pooled** — up to five connections, each recycled after a hundred messages — and
 bounded: ten seconds to connect and greet, thirty of silence mid-send. A hung server fails the send
@@ -37,8 +37,8 @@ The pool connects on the first send, so a process that never mails opens no sock
 ## Reading what was sent
 
 ```bash
-open http://localhost:28025          # the UI — subject, recipients, HTML and text parts
-curl -s localhost:28025/api/v1/messages | jq '.messages[0].Subject'
+open http://localhost:48025          # the UI — subject, recipients, HTML and text parts
+curl -s localhost:48025/api/v1/messages | jq '.messages[0].Subject'
 ```
 
 The API is what makes it usable from a test: send, then assert on what arrived, without a
@@ -49,7 +49,7 @@ provider's sandbox or a fake in the container.
 One environment variable, no code change:
 
 ```
-SMTP_URL=smtp://localhost:21025                    # mailpit
+SMTP_URL=smtp://localhost:41025                    # mailpit
 SMTP_URL=smtps://user:key@smtp.provider.com:465   # any real provider
 ```
 
@@ -67,8 +67,8 @@ The image ships neither `wget` nor `curl`, so the usual `CMD curl -f …` probe 
 
 | Symptom | Usually |
 |---|---|
-| Worker logs `ECONNREFUSED :21025` | Container not up — `pnpm infra:up` |
-| Worker logs `ECONNREFUSED :1025` | `SMTP_URL` points at the container port from the host — use `21025` |
-| Mail sends, UI is empty | Two Mailpits — check nothing else owns 21025 |
+| Worker logs `ECONNREFUSED :41025` | Container not up — `pnpm infra:up` |
+| Worker logs `ECONNREFUSED :1025` | `SMTP_URL` points at the container port from the host — use `41025` |
+| Mail sends, UI is empty | Two Mailpits — check nothing else owns 41025 |
 | `unhealthy`, but mail arrives | The healthcheck was changed to `curl`; see above |
 | Inbox empty after a restart | Working as designed — no volume, memory only |

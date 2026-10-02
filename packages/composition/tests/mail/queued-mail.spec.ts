@@ -13,7 +13,7 @@ const build = () => {
   return { queue, mail: new QueuedMailPublisher(queue) };
 };
 
-const recipient = { email: "a@example.test", userId: USER, locale: "bn" as const };
+const recipient = { email: "a@example.test", userId: USER, locale: "en" as const };
 
 describe("QueuedMailPublisher", () => {
   // A digest page as one batch, each job keeping the options a single send would get.
@@ -138,7 +138,7 @@ describe("QueuedAuthMailer", () => {
     expect(jobs).toHaveLength(4);
     for (const job of jobs) {
       expect(job.options?.attempts).toBe(10);
-      expect(job.payload).toMatchObject({ locale: "bn", organizationId: null });
+      expect(job.payload).toMatchObject({ locale: "en", organizationId: null });
     }
   });
 

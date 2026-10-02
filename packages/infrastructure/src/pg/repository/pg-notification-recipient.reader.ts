@@ -135,9 +135,8 @@ export class PgNotificationRecipientReader
       userId: row.userId,
       email: row.email,
       name: row.name,
-      // An unrecognised value falls back rather than asking `ContentSource` for a
-      // catalog that does not exist.
-      locale: row.locale === "bn" ? "bn" : "en",
+      // English is the only catalog; a stored value from another locale must not index it.
+      locale: "en",
     };
   }
 }

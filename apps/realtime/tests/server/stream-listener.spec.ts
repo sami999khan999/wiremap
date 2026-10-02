@@ -14,7 +14,7 @@ const container = {
 const open: StreamListener[] = [];
 
 const start = async () => {
-  const listener = new StreamListener(container, ["http://localhost:23000"]);
+  const listener = new StreamListener(container, ["http://localhost:43000"]);
   open.push(listener);
   await listener.listen(0);
   const address = (listener as unknown as { server: { address: () => AddressInfo } }).server;

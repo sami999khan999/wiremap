@@ -40,10 +40,10 @@ describe("Translator", () => {
 
   it("prefers an override over the English base", () => {
     const t = new Translator(
-      snapshot({ locale: "bn", overrides: { "error.field.required": "{field} আবশ্যক।" } }),
+      snapshot({ overrides: { "error.field.required": "{field} is needed." } }),
     );
 
-    expect(t.t("error.field.required", { field: "ইমেইল" })).toBe("ইমেইল আবশ্যক।");
+    expect(t.t("error.field.required", { field: "Email" })).toBe("Email is needed.");
   });
 
   it("with() does not mutate the instance it came from", () => {

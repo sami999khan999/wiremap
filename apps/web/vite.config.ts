@@ -76,11 +76,11 @@ export default defineConfig(({ command }) => {
   // The fallback matters: `vite build` deliberately runs without `.env` loaded, since
   // that file sets `NODE_ENV=development` and the dev JSX transform would then ship into
   // the production bundle. `server` and `preview` are dev-only anyway.
-  const port = Number(process.env.WEB_PORT ?? 23000);
+  const port = Number(process.env.WEB_PORT ?? 43000);
 
   // The stream process, behind this origin so the session cookie rides along. In production
   // the reverse proxy does the same split — see docs/infra/deployment.md.
-  const realtime = `http://localhost:${process.env.REALTIME_PORT ?? 23001}`;
+  const realtime = `http://localhost:${process.env.REALTIME_PORT ?? 43001}`;
 
   return {
     server: { port },

@@ -11,14 +11,14 @@ The only file here that Docker reads directly. Everything else is mounted into a
 name: lite
 ```
 
-**The project name.** It prefixes every container (`lite-postgres-1`), every volume (`lite_pgdata`)
-and the network (`lite_default`). Two stacks with the same name on one machine share all three.
+**The project name.** It prefixes every container (`wiremap-postgres-1`), every volume (`wiremap_pgdata`)
+and the network (`wiremap_default`). Two stacks with the same name on one machine share all three.
 
 ---
 
 ## The network
 
-There is no `networks:` block, which is itself the decision. Compose creates `lite_default` — a
+There is no `networks:` block, which is itself the decision. Compose creates `wiremap_default` — a
 bridge network — and joins every service to it.
 
 Inside that network, **a service name is a hostname**. Docker runs an embedded DNS server at
@@ -127,7 +127,7 @@ used to have.
 Every host port is a variable with the documented default; every container port is fixed.
 
 ```yaml
-ports: ["${MINIO_CONSOLE_PORT:-29001}:9001"]
+ports: ["${MINIO_CONSOLE_PORT:-49001}:9001"]
 ```
 
 Port collisions on a developer machine are not hypothetical — this stack met one on its first run,
@@ -144,9 +144,9 @@ missing file, compose has no `-if-exists` form, and CI runs the stack with no `.
 
 | Variable | Default | Variable | Default |
 |---|---|---|---|
-| `POSTGRES_PORT` | 25432 | `SMTP_PORT` | 21025 |
-| `REDIS_PORT` | 26379 | `MAILPIT_UI_PORT` | 28025 |
-| `S3_PORT` | 29000 | `MINIO_CONSOLE_PORT` | 29001 |
+| `POSTGRES_PORT` | 45432 | `SMTP_PORT` | 41025 |
+| `REDIS_PORT` | 46379 | `MAILPIT_UI_PORT` | 48025 |
+| `S3_PORT` | 49000 | `MINIO_CONSOLE_PORT` | 49001 |
 
 These defaults are what a checkout with no `.env` gets, which is exactly what CI is, so
 `check:architecture` §27 asserts each one equals the value `.env.example` documents. It also pairs
@@ -186,7 +186,7 @@ consequently the one long-running service `compose-wait.mjs` passes on `running`
 ```bash
 docker compose -f infra/docker-compose.yml --profile '*' config --quiet   # valid?
 docker compose -f infra/docker-compose.yml --profile '*' config --services # what would run
-docker network inspect lite_default --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\n"}}{{end}}'
+docker network inspect wiremap_default --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\n"}}{{end}}'
 ```
 
 `config` resolves variables, applies `.env`, and validates the schema without starting anything — it

@@ -1,4 +1,12 @@
-# loadbearing lite
+# wiremap, on loadbearing lite
+
+**This repository is wiremap**, a SaaS that scans repositories and shows how their code is wired:
+the import graph by folder, file roles, routes, insights and an AI assistant. It is built on the
+lite kit below and keeps all of its rules and seams. The live plan is
+[`docs/plans/WIREMAP-PLAN.md`](docs/plans/WIREMAP-PLAN.md), and every hosting choice in it is made
+to stay inside free tiers.
+
+## The kit underneath
 
 A pnpm-workspace starter kit for a smaller project: a TanStack Start web app, a standalone worker
 and a stream process that holds every open browser stream, over a layered, port-and-adapter package

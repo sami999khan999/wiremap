@@ -12,7 +12,7 @@ domain rows, RBAC, the audit trail, auth tables, and embeddings.
 | --- | --- |
 | **Image** | `pgvector/pgvector:pg17` |
 | **Inside the network** | `postgres:5432` |
-| **From the host** | `localhost:25432` |
+| **From the host** | `localhost:45432` |
 | **Credentials** | `ratchet` / `ratchet`, database `ratchet` |
 | **Volume** | `pgdata` |
 | **Config file** | `postgres.init.sql` |
@@ -92,12 +92,12 @@ pnpm infra:reset
 
 | Consumer | Reaches it at | For |
 |---|---|---|
-| `apps/web`, `apps/worker` (host) | `localhost:25432` | everything, via `DATABASE_URL` |
-| `migrate.ts`, `seed.ts`, `drizzle-kit` (host) | `localhost:25432` | DDL, via `DATABASE_DIRECT_URL` |
-| `PgPartitionArchiveGateway` | `localhost:25432` | `DETACH … CONCURRENTLY` and a month-long stream |
+| `apps/web`, `apps/worker` (host) | `localhost:45432` | everything, via `DATABASE_URL` |
+| `migrate.ts`, `seed.ts`, `drizzle-kit` (host) | `localhost:45432` | DDL, via `DATABASE_DIRECT_URL` |
+| `PgPartitionArchiveGateway` | `localhost:45432` | `DETACH … CONCURRENTLY` and a month-long stream |
 
 **Two different hostnames for one database**, and the difference is which side of the bridge network
-the client is on. A container using `localhost:25432` would reach *its own* loopback and find
+the client is on. A container using `localhost:45432` would reach *its own* loopback and find
 nothing.
 
 **Two URLs, one server.** `DATABASE_URL` and `DATABASE_DIRECT_URL` are the same address in lite.

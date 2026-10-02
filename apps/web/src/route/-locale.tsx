@@ -26,6 +26,9 @@ export function LocaleSwitcher({ appearance, current }: LocaleSwitcherProps) {
     void router.invalidate();
   };
 
+  // One locale ships, so there is nothing to choose; a second one brings the control back.
+  if (Locales.ALL.length < 2) return null;
+
   return (
     // The endonym, never a translated name: it is what a reader who cannot read the
     // current locale is scanning for.

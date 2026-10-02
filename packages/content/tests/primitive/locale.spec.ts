@@ -3,7 +3,8 @@ import { Locales } from "../../src/primitive/locale.js";
 
 describe("Locales", () => {
   it("narrows an untrusted string", () => {
-    expect(Locales.is("bn")).toBe(true);
+    expect(Locales.is("en")).toBe(true);
+    expect(Locales.is("bn")).toBe(false);
     expect(Locales.is("de")).toBe(false);
     expect(Locales.is(null)).toBe(false);
     expect(Locales.is(undefined)).toBe(false);
@@ -15,11 +16,11 @@ describe("Locales", () => {
   });
 
   it("lets an explicit override win over the header", () => {
-    expect(Locales.negotiate("en-GB,en;q=0.9", "bn")).toBe("bn");
+    expect(Locales.negotiate("de-DE,fr;q=0.9", "en")).toBe("en");
   });
 
   it("takes the first matching tag, ignoring region and weight", () => {
-    expect(Locales.negotiate("de-DE,bn-BD;q=0.8,en;q=0.5", null)).toBe("bn");
+    expect(Locales.negotiate("de-DE,en-GB;q=0.8,fr;q=0.5", null)).toBe("en");
   });
 
   it("falls back to the default when nothing matches", () => {

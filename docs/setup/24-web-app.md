@@ -361,7 +361,7 @@ export class Env {
 **`AUTH_TRUSTED_ORIGINS` carries the Tauri origins from the first deployment**, not from whenever the desktop app is built:
 
 ```bash
-AUTH_TRUSTED_ORIGINS=http://localhost:23000,tauri://localhost,http://tauri.localhost
+AUTH_TRUSTED_ORIGINS=http://localhost:43000,tauri://localhost,http://tauri.localhost
 ```
 
 Both Tauri entries, because the webview's scheme differs by platform — `tauri://localhost` on macOS and Linux, `http://tauri.localhost` on Windows. Ship one and the desktop app works for half your team ([30](30-desktop-app.md)).
@@ -1089,7 +1089,7 @@ providers inside `<body>` instead of around it.
 > it does not sit inside it. Nothing warns — the page just renders twice — so it is easy to ship:
 >
 > ```bash
-> curl -s http://localhost:23000/ | grep -c "<main"   # must print 1
+> curl -s http://localhost:43000/ | grep -c "<main"   # must print 1
 > ```
 
 In order:
@@ -1169,8 +1169,8 @@ Server functions are fine for genuinely framework-local concerns — setting a c
 **None of these are checkable by `typecheck` or `build`, which is the point — every one of them
 passed while the app was broken.**
 
-- `http://localhost:23000` renders and shows `@loadbearing/core`.
-- **The page renders once.** `curl -s http://localhost:23000/ | grep -c "<main"` prints `1`, not `2`
+- `http://localhost:43000` renders and shows `@loadbearing/core`.
+- **The page renders once.** `curl -s http://localhost:43000/ | grep -c "<main"` prints `1`, not `2`
   (Step 24.11).
 - **No page shows a raw message key.** `/` says "Nothing here yet", not `state.empty` (Step 24.10).
 - **`/sign-in` has a non-empty `<body>`.** An empty one with a `200` is a Suspense boundary that
@@ -1178,11 +1178,11 @@ passed while the app was broken.**
 - **The browser console is clean on first load.** A `ZodError` here means something isomorphic
   imported `Env`; the build should have refused it, so check the marker import is still there.
 - Sign-in works against `/api/auth` and sets an httpOnly cookie.
-- `curl -X POST http://localhost:23000/api/rpc/nope` returns `404`, and
-  `curl -X OPTIONS http://localhost:23000/api/rpc/x -H "Origin: <trusted>"` returns `204` with
+- `curl -X POST http://localhost:43000/api/rpc/nope` returns `404`, and
+  `curl -X OPTIONS http://localhost:43000/api/rpc/x -H "Origin: <trusted>"` returns `204` with
   `access-control-allow-origin`. An **untrusted** origin returns `204` with **no** allow-origin
   header (Step 24.7).
-- `curl -s -o /dev/null -w '%{http_code}' http://localhost:23000/api/health` returns `200` with the
+- `curl -s -o /dev/null -w '%{http_code}' http://localhost:43000/api/health` returns `200` with the
   stack up and `503` with Postgres stopped — anonymously, in both cases, and with `cache-control:
   no-store` on the response. Its body names `database`, `cache`, `queue` and `analytics`, and
   `analytics` is `null`, because lite runs no analytics store.

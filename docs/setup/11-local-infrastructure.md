@@ -35,7 +35,7 @@ services:
       POSTGRES_USER: ratchet
       POSTGRES_PASSWORD: ratchet
       POSTGRES_DB: ratchet
-    ports: ["${POSTGRES_PORT:-25432}:5432"]
+    ports: ["${POSTGRES_PORT:-45432}:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres.init.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
@@ -50,7 +50,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
-    ports: ["${REDIS_PORT:-26379}:6379"]
+    ports: ["${REDIS_PORT:-46379}:6379"]
     volumes:
       - redisdata:/data
     healthcheck:
@@ -63,8 +63,8 @@ services:
     image: axllent/mailpit:latest
     restart: unless-stopped
     ports:
-      - "${SMTP_PORT:-21025}:1025"
-      - "${MAILPIT_UI_PORT:-28025}:8025"
+      - "${SMTP_PORT:-41025}:1025"
+      - "${MAILPIT_UI_PORT:-48025}:8025"
     healthcheck:
       test: ["CMD", "/mailpit", "readyz"]
       interval: 10s
@@ -78,7 +78,7 @@ services:
     environment:
       MINIO_ROOT_USER: ratchet
       MINIO_ROOT_PASSWORD: ratchetsecret
-    ports: ["${S3_PORT:-29000}:9000", "${MINIO_CONSOLE_PORT:-29001}:9001"]
+    ports: ["${S3_PORT:-49000}:9000", "${MINIO_CONSOLE_PORT:-49001}:9001"]
     volumes:
       - miniodata:/data
 
@@ -104,11 +104,11 @@ volumes:
 
 Five containers. Four stay up, and `minio-init` runs once and exits. There are no profiles: `pnpm infra:up` starts all of it.
 
-> **Every host port is overridable, and every container port is not.** `${MINIO_CONSOLE_PORT:-29001}:9001`
+> **Every host port is overridable, and every container port is not.** `${MINIO_CONSOLE_PORT:-49001}:9001`
 > keeps the documented default while letting one developer move it. Port collisions on a developer
 > machine are not hypothetical — this stack met one on the first run, where `9001` was already held
-> by an unrelated tool, and later met five at once against two other projects. Hence the `2` prefix
-> on every published port: Postgres on `25432`, Redis on `26379`.
+> by an unrelated tool, and later met five at once against two other projects. Hence the `4` prefix
+> on every published port: Postgres on `45432`, Redis on `46379`.
 >
 > **The override goes in the root `.env`, which is the only env file.** Compose reads it because
 > `pnpm infra:up` runs `tooling/scripts/compose.mjs`, which passes `--env-file` when that file is
@@ -117,9 +117,9 @@ Five containers. Four stay up, and `minio-init` runs once and exits. There are n
 >
 > ```ini
 > # .env — the port and the URLs that dial it are edited together
-> POSTGRES_PORT=25432
-> DATABASE_URL=postgres://ratchet:ratchet@localhost:25432/ratchet
-> DATABASE_DIRECT_URL=postgres://ratchet:ratchet@localhost:25432/ratchet
+> POSTGRES_PORT=45432
+> DATABASE_URL=postgres://ratchet:ratchet@localhost:45432/ratchet
+> DATABASE_DIRECT_URL=postgres://ratchet:ratchet@localhost:45432/ratchet
 > ```
 >
 > `check:architecture` §27 fails the build when a `*_PORT` and its URL disagree. The container-side
@@ -137,7 +137,7 @@ Five containers. Four stay up, and `minio-init` runs once and exits. There are n
 
 One instance means one eviction policy for both. `allkeys-lru` would silently drop queued jobs under memory pressure. So the policy is `noeviction` with AOF, which protects the queue. The cost falls on the cache: nothing may rely on eviction, so **every cache key carries a TTL**.
 
-**The code still reads two names.** `REDIS_CACHE_URL` and `REDIS_QUEUE_URL` both point at `redis://localhost:26379`. `RedisConnection` takes both ([15](15-infrastructure-package.md)), and every consumer asks for the one that matches its job. Splitting the instances later is an `.env` change. See [Split Redis](../scale/split-redis.md).
+**The code still reads two names.** `REDIS_CACHE_URL` and `REDIS_QUEUE_URL` both point at `redis://localhost:46379`. `RedisConnection` takes both ([15](15-infrastructure-package.md)), and every consumer asks for the one that matches its job. Splitting the instances later is an `.env` change. See [Split Redis](../scale/split-redis.md).
 
 > **The consequence to keep in mind:** anything reached through `CacheStore` is a cache, never the record. Better Auth's secondary storage is therefore a cache in front of the Postgres `sessions` table — and that is a configuration flag, not a default; see [16](16-auth-package.md). A session missing from Redis must be a read-through, not a sign-out.
 
@@ -211,9 +211,9 @@ docker compose -f infra/docker-compose.yml exec redis redis-cli config get maxme
 ```
 > `noeviction`. Anything else and a full Redis can drop a queued job.
 
-Open `http://localhost:29001` and sign in with `ratchet` / `ratchetsecret`. One bucket should be listed: `ratchet`, empty.
+Open `http://localhost:49001` and sign in with `ratchet` / `ratchetsecret`. One bucket should be listed: `ratchet`, empty.
 
-Open `http://localhost:28025`. That is Mailpit's inbox, and it is where every message the kit sends lands in development.
+Open `http://localhost:48025`. That is Mailpit's inbox, and it is where every message the kit sends lands in development.
 
 ---
 
@@ -268,8 +268,8 @@ The `S3_FORCE_PATH_STYLE` switch already exists in `.env.example` from [02](02-r
 - `redis` reports `noeviction`:
   `docker compose -f infra/docker-compose.yml exec redis redis-cli config get maxmemory-policy`
 - `SELECT extname FROM pg_extension;` includes `vector` and `pg_stat_statements`.
-- The MinIO console at `http://localhost:29001` shows the `ratchet` bucket.
-- The Mailpit inbox at `http://localhost:28025` loads.
+- The MinIO console at `http://localhost:49001` shows the `ratchet` bucket.
+- The Mailpit inbox at `http://localhost:48025` loads.
 
 Do not proceed until this passes.
 

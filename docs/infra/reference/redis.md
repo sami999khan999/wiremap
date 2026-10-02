@@ -11,7 +11,7 @@ job that cannot lose data, the queue.
 | | `redis` |
 | --- | --- |
 | **Inside the network** | `redis:6379` |
-| **From the host** | `localhost:26379` (`REDIS_PORT`) |
+| **From the host** | `localhost:46379` (`REDIS_PORT`) |
 | **Eviction** | `noeviction` |
 | **Persistence** | AOF |
 | **Volume** | `redisdata` |
@@ -89,7 +89,7 @@ redis.realtimeClient()   // realtimeUrl — live frames; the cache client itself
 redis.subscriberClient() // realtimeUrl — subscriber mode, opened by the first stream
 ```
 
-Locally every URL names the one instance, so every client dials `localhost:26379`.
+Locally every URL names the one instance, so every client dials `localhost:46379`.
 
 **One class taking two URLs rather than two classes**, because which connection a consumer gets
 should be a property of what it is doing rather than a wiring decision. Passing two bare `Redis`

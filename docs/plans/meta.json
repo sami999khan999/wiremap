@@ -1,13 +1,14 @@
 {
   "title": "Plans",
-  "description": "Live plans for the lite kit",
+  "description": "Live plans for wiremap",
   "pages": [
     "index",
     "HANDOFF",
+    "WIREMAP-PLAN",
+    "TESTS",
+    "BACKLOG",
     "LITE-KIT-PLAN",
     "UI-KIT-PLAN",
-    "DOCS-SYSTEM-PLAN",
-    "TESTS",
-    "BACKLOG"
+    "DOCS-SYSTEM-PLAN"
   ]
 }

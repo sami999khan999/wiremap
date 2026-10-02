@@ -21,7 +21,7 @@ import { UnifiedMarkdownRenderer } from "./src/unified/index.js";
 
 const url = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required.");
-const base = process.env.BENCH_URL ?? "http://localhost:23000";
+const base = process.env.BENCH_URL ?? "http://localhost:43000";
 
 const SLUG = "bench";
 const PAGES = 2_000;

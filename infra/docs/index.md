@@ -63,10 +63,10 @@ configured, what breaks, what to check — is its reference page.
 
 | Service | From the host | Spoken by |
 |---|---|---|
-| [postgres](../../docs/infra/reference/postgres.md) | `localhost:25432` | `drizzle-orm` + `pg` |
-| [redis](../../docs/infra/reference/redis.md) | `localhost:26379` | `CacheStore`, `QueuePublisher`, BullMQ |
-| [mailpit](../../docs/infra/reference/mailpit.md) | `localhost:21025`, UI `:28025` | `SmtpEmailSender` |
-| [minio](../../docs/infra/reference/minio.md) | `localhost:29000`, console `:29001` | `StorageGateway`, AWS SDK |
+| [postgres](../../docs/infra/reference/postgres.md) | `localhost:45432` | `drizzle-orm` + `pg` |
+| [redis](../../docs/infra/reference/redis.md) | `localhost:46379` | `CacheStore`, `QueuePublisher`, BullMQ |
+| [mailpit](../../docs/infra/reference/mailpit.md) | `localhost:41025`, UI `:48025` | `SmtpEmailSender` |
+| [minio](../../docs/infra/reference/minio.md) | `localhost:49000`, console `:49001` | `StorageGateway`, AWS SDK |
 | [minio-init](../../docs/infra/reference/minio.md) | — | nothing; creates the bucket and exits |
 
 Two of those rows are worth a sentence, because each looks like a mistake:

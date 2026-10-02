@@ -90,16 +90,16 @@ release/
 
 ```ini
 # ── Postgres ─────────────────────────────────────────────
-DATABASE_URL=postgres://ratchet:ratchet@localhost:25432/ratchet
+DATABASE_URL=postgres://ratchet:ratchet@localhost:45432/ratchet
 
 # ── Redis ────────────────────────────────────────────────
 # One instance, `noeviction`, because the queue must never lose a job. Two names
 # anyway: splitting cache from queue is then these two lines.
-REDIS_CACHE_URL=redis://localhost:26379
-REDIS_QUEUE_URL=redis://localhost:26379
+REDIS_CACHE_URL=redis://localhost:46379
+REDIS_QUEUE_URL=redis://localhost:46379
 
 # ── S3 / MinIO ───────────────────────────────────────────
-S3_ENDPOINT=http://localhost:29000
+S3_ENDPOINT=http://localhost:49000
 S3_REGION=us-east-1
 S3_BUCKET=ratchet
 S3_ACCESS_KEY=ratchet
@@ -108,12 +108,12 @@ S3_FORCE_PATH_STYLE=true
 
 # ── Auth ─────────────────────────────────────────────────
 AUTH_SECRET=change-me-generate-with-openssl-rand-base64-32
-AUTH_URL=http://localhost:23000
+AUTH_URL=http://localhost:43000
 # Both Tauri origins from the first deployment — the webview scheme differs by
 # platform (tauri://localhost on macOS/Linux, http://tauri.localhost on Windows),
 # so shipping one produces an app that works for half your team. The same list
 # drives the CORS allowlist on /api/rpc and /api/auth.
-AUTH_TRUSTED_ORIGINS=http://localhost:23000,tauri://localhost,http://tauri.localhost
+AUTH_TRUSTED_ORIGINS=http://localhost:43000,tauri://localhost,http://tauri.localhost
 
 # Session lifetime is an operational value, not a literal in a factory: it differs
 # between a staging box and production. Slides on activity — Better Auth refreshes
@@ -188,7 +188,7 @@ pnpm workspaces · TanStack Start + oRPC · standalone worker · Postgres + pgve
     pnpm db:migrate && pnpm db:seed
     pnpm dev
 
-Web: http://localhost:23000 · Mailpit: http://localhost:28025 · MinIO console: http://localhost:29001
+Web: http://localhost:43000 · Mailpit: http://localhost:48025 · MinIO console: http://localhost:49001
 
 See `docs/` for the architecture and the build order.
 ```

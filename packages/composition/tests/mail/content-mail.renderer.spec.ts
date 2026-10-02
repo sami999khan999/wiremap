@@ -66,13 +66,6 @@ describe("ContentMailRenderer", () => {
     expect(rendered.html).not.toContain("<a href");
   });
 
-  it("renders in the recipient's locale rather than the default", async () => {
-    const en = await renderer().render("auth.verify", "en", { url: URL });
-    const bn = await renderer().render("auth.verify", "bn", { url: URL });
-
-    expect(bn.subject).not.toBe(en.subject);
-  });
-
   // A mail client has no page to resolve a relative href against, so `/settings/members`
   // rendered as nothing at all. The policy builds paths; the origin belongs here.
   it("makes a relative notification link absolute", async () => {

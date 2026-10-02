@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { Cors } from "../../src/server/cors.js";
 
-const ALLOWED = "http://localhost:23000";
+const ALLOWED = "http://localhost:43000";
 const DESKTOP = "tauri://localhost";
 const HOSTILE = "https://evil.example";
 
 function preflightFrom(origin: string | null): Response {
   const headers = origin === null ? undefined : { origin };
   const response = Cors.preflight(
-    new Request("http://localhost:23000/api/rpc", {
+    new Request("http://localhost:43000/api/rpc", {
       method: "OPTIONS",
       headers,
     }),
@@ -20,7 +20,7 @@ function preflightFrom(origin: string | null): Response {
 
 describe("Cors", () => {
   it("is not a preflight for anything but OPTIONS", () => {
-    const request = new Request("http://localhost:23000/api/rpc", { method: "POST" });
+    const request = new Request("http://localhost:43000/api/rpc", { method: "POST" });
     expect(Cors.preflight(request)).toBeNull();
   });
 
@@ -76,7 +76,7 @@ describe("Cors", () => {
   });
 
   it("copies the headers onto a real response without disturbing its body", async () => {
-    const request = new Request("http://localhost:23000/api/rpc", {
+    const request = new Request("http://localhost:43000/api/rpc", {
       method: "POST",
       headers: { origin: ALLOWED },
     });
@@ -89,7 +89,7 @@ describe("Cors", () => {
   });
 
   it("leaves a response to an untrusted origin unmarked", () => {
-    const request = new Request("http://localhost:23000/api/rpc", {
+    const request = new Request("http://localhost:43000/api/rpc", {
       method: "POST",
       headers: { origin: HOSTILE },
     });

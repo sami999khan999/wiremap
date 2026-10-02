@@ -9,26 +9,26 @@ import { defineConfig } from "vitest/config";
 //
 // Values are the *shape* of a real environment, never a real one. Nothing here connects.
 const ENV = {
-  DATABASE_URL: "postgres://test:test@localhost:25432/test",
-  REDIS_CACHE_URL: "redis://localhost:26379",
-  REDIS_QUEUE_URL: "redis://localhost:26379",
+  DATABASE_URL: "postgres://test:test@localhost:45432/test",
+  REDIS_CACHE_URL: "redis://localhost:46379",
+  REDIS_QUEUE_URL: "redis://localhost:46379",
 
-  S3_ENDPOINT: "http://localhost:29000",
+  S3_ENDPOINT: "http://localhost:49000",
   S3_REGION: "us-east-1",
   S3_BUCKET: "test",
   S3_ACCESS_KEY: "test",
   S3_SECRET_KEY: "testsecret",
   S3_FORCE_PATH_STYLE: "true",
 
-  SMTP_URL: "smtp://localhost:21025",
+  SMTP_URL: "smtp://localhost:41025",
   EMAIL_FROM: "Test <no-reply@localhost>",
-  APP_BASE_URL: "http://localhost:23000",
+  APP_BASE_URL: "http://localhost:43000",
 
   AUTH_SECRET: "test-secret-test-secret-test-secret-32",
-  AUTH_URL: "http://localhost:23000",
+  AUTH_URL: "http://localhost:43000",
   // Two entries, so a spec can tell "on the allowlist" from "the allowlist has one
   // thing in it".
-  AUTH_TRUSTED_ORIGINS: "http://localhost:23000,tauri://localhost",
+  AUTH_TRUSTED_ORIGINS: "http://localhost:43000,tauri://localhost",
   AUTH_SESSION_MAX_AGE_SECONDS: "604800",
   AUTH_COOKIE_CACHE_MAX_AGE_SECONDS: "60",
 

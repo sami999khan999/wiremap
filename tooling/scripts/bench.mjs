@@ -1,7 +1,7 @@
 // `pnpm bench [url]`: requests per second and latency for the app's main paths, against a
 // running server. Closed-loop: each caller sends its next request when the last returns.
 
-const base = process.argv[2] ?? "http://localhost:23000";
+const base = process.argv[2] ?? "http://localhost:43000";
 const PATHS = ["/api/health", "/", "/sign-in", "/docs"];
 const CONCURRENCY = [10, 50];
 const SECONDS = 8;

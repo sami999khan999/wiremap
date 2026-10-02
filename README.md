@@ -1,11 +1,17 @@
-# loadbearing lite
+# wiremap
 
-pnpm workspaces · TanStack Start + oRPC · standalone worker · Postgres + pgvector · one Redis (cache + queue) · S3 · logs to stdout
+**See how a codebase is wired.** Wiremap scans a team's repositories and draws the import graph
+grouped by folder, classifies every file by role, lists the routes a backend exposes and the
+frontend calls that reach them, and points at what needs attention: cycles, unused files, routes
+with no auth guard. An "Ask" assistant answers questions grounded in that graph.
 
-**The big kit, `loadbearing`, with its running scale stores removed and every seam kept.** Same
-packages, same `@loadbearing/*` scope, same rules. [`UPSTREAM.md`](UPSTREAM.md) records the commit it
-was cut from and what was taken out, and [`docs/scale/`](docs/scale/index.md) is the way back to
-each piece when a project outgrows this one.
+TanStack Start + oRPC on Vercel · Cloudflare Queues and Cron as the scheduler · Neon Postgres ·
+Upstash Redis · Backblaze B2 · Better Auth · GitHub App + GitHub Actions as the scan runner ·
+ts-morph and tree-sitter · React Flow with ELK · Gemini (each organization's own key)
+
+**Built on the loadbearing lite kit.** Same packages, same `@loadbearing/*` scope, same rules, so a
+kit fix ports across as a file copy. [`UPSTREAM.md`](UPSTREAM.md) records the kit commit, and
+[`docs/plans/WIREMAP-PLAN.md`](docs/plans/WIREMAP-PLAN.md) is the live plan.
 
 ## Running it locally
 
@@ -18,15 +24,15 @@ a boot failure rather than a 500 an hour later.
     pnpm install
     node -e "require('fs').copyFileSync('.env.example', '.env')"
 
-**2 · Host ports, if any are taken.** Every published port is the well-known one with a `1` in
-front — Postgres on `25432`, Redis on `26379` — so this stack does not fight another one on your
+**2 · Host ports, if any are taken.** Every published port is the well-known one with a `4` in
+front — Postgres on `45432`, Redis on `46379` — so this stack does not fight another one on your
 machine for `5432`. Inside the compose network nothing moved: `postgres:5432` is still `postgres:5432`.
 
 There is **one env file**, the `.env` at the root, and both halves of a port live in it — the
 `*_PORT` that compose publishes and the URL that dials it. Change both together:
 
-    POSTGRES_PORT=25432
-    DATABASE_URL=postgres://ratchet:ratchet@localhost:25432/ratchet
+    POSTGRES_PORT=45432
+    DATABASE_URL=postgres://ratchet:ratchet@localhost:45432/ratchet
 
 `POSTGRES_PORT` `REDIS_PORT` `S3_PORT` `MINIO_CONSOLE_PORT` `SMTP_PORT` `MAILPIT_UI_PORT` and
 `WEB_PORT` are the full set, each documented in `.env.example`.
@@ -66,10 +72,10 @@ the root `.env` themselves.
 
 | | |
 |---|---|
-| Web app | http://localhost:23000 |
-| Mailpit — catches every outgoing mail | http://localhost:28025 |
-| MinIO console | http://localhost:29001 |
-| Readiness probe | http://localhost:23000/api/health |
+| Web app | http://localhost:43000 |
+| Mailpit — catches every outgoing mail | http://localhost:48025 |
+| MinIO console | http://localhost:49001 |
+| Readiness probe | http://localhost:43000/api/health |
 | Drizzle Studio | `pnpm db:studio` |
 
 **6 · First sign-in.** Sign up at `/sign-up`. `AUTH_REQUIRE_EMAIL_VERIFICATION` defaults to on, so

@@ -24,10 +24,10 @@ rather than a migration — and it is the whole return on the architecture.
 The compose file publishes every service on **all interfaces**:
 
 ```
-postgres      0.0.0.0:25432->5432/tcp
-redis         0.0.0.0:26379->6379/tcp    ← no password
-mailpit       0.0.0.0:21025->1025/tcp, 0.0.0.0:28025->8025/tcp   ← no auth
-minio         0.0.0.0:29000->9000/tcp, 0.0.0.0:29001->9001/tcp
+postgres      0.0.0.0:45432->5432/tcp
+redis         0.0.0.0:46379->6379/tcp    ← no password
+mailpit       0.0.0.0:41025->1025/tcp, 0.0.0.0:48025->8025/tcp   ← no auth
+minio         0.0.0.0:49000->9000/tcp, 0.0.0.0:49001->9001/tcp
 ```
 
 On a laptop behind NAT that is convenient and harmless. **On a VPS with a public IP it is a database, an
@@ -48,11 +48,11 @@ Where you genuinely need host access — `psql` from your laptop — bind to loo
 through an SSH tunnel:
 
 ```yaml
-ports: ["127.0.0.1:25432:5432"]
+ports: ["127.0.0.1:45432:5432"]
 ```
 
 ```bash
-ssh -L 5432:localhost:25432 you@vps    # then psql against localhost:5432
+ssh -L 5432:localhost:45432 you@vps    # then psql against localhost:5432
 ```
 
 ---

@@ -12,7 +12,7 @@ than first executed on the day you deploy.
 | --- | --- |
 | **Image** | `coollabsio/minio:RELEASE.2025-10-15T17-29-55Z` |
 | **Inside the network** | `minio:9000` |
-| **From the host** | `localhost:29000` (API), `localhost:29001` (console) |
+| **From the host** | `localhost:49000` (API), `localhost:49001` (console) |
 | **Credentials** | `ratchet` / `ratchetsecret` |
 | **Volume** | `miniodata` |
 | **Bucket** | `ratchet` |
@@ -119,7 +119,7 @@ $MC "mc alias set l http://minio:9000 ratchet ratchetsecret >/dev/null && mc ls 
 The server image ships no `mc`, so these borrow the `minio-init` image. It sits on the network,
 so it dials `minio:9000`, not the host port.
 
-The console at `http://localhost:29001` signs in with the same credentials and is the fastest way to
+The console at `http://localhost:49001` signs in with the same credentials and is the fastest way to
 look at an uploaded object.
 
 > **MinIO stopped publishing community images in October 2025**, and pulled the existing ones from

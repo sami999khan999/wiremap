@@ -57,7 +57,7 @@ breaking change at every call site.
 `resolve()` is `protected static`, and every implementation runs its request through it:
 
 ```ts
-await new StaticContentSource().messages("bn", []);
+await new StaticContentSource().messages("en", []);
 // namespaces: ["common", "error"]
 ```
 

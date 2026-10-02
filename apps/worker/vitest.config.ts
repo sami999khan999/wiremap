@@ -7,20 +7,20 @@ import { defineConfig } from "vitest/config";
 // and a `vitest.setup.ts` writing `process.env` would need a new exemption in two
 // places (see doc 26). Values are the *shape* of a real environment, never a real one.
 const ENV = {
-  DATABASE_URL: "postgres://test:test@localhost:25432/test",
-  REDIS_CACHE_URL: "redis://localhost:26379",
-  REDIS_QUEUE_URL: "redis://localhost:26379",
+  DATABASE_URL: "postgres://test:test@localhost:45432/test",
+  REDIS_CACHE_URL: "redis://localhost:46379",
+  REDIS_QUEUE_URL: "redis://localhost:46379",
 
-  S3_ENDPOINT: "http://localhost:29000",
+  S3_ENDPOINT: "http://localhost:49000",
   S3_REGION: "us-east-1",
   S3_BUCKET: "test",
   S3_ACCESS_KEY: "test",
   S3_SECRET_KEY: "testsecret",
   S3_FORCE_PATH_STYLE: "true",
 
-  SMTP_URL: "smtp://localhost:21025",
+  SMTP_URL: "smtp://localhost:41025",
   EMAIL_FROM: "Test <no-reply@localhost>",
-  APP_BASE_URL: "http://localhost:23000",
+  APP_BASE_URL: "http://localhost:43000",
 
   EMBEDDING_MODEL: "text-embedding-3-small",
   EMBEDDING_DIMENSIONS: "1536",

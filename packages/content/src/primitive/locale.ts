@@ -1,13 +1,15 @@
-export type Locale = "en" | "bn";
+// Wiremap ships English only. A second locale is a union member, a label and a
+// `message/<locale>/` folder; the catalog will not compile until it is complete.
+export type Locale = "en";
 
 // Frozen at module load rather than a `static readonly`, which freezes the binding
 // and not the object.
-const LABELS: Readonly<Record<Locale, string>> = Object.freeze({ en: "English", bn: "বাংলা" });
+const LABELS: Readonly<Record<Locale, string>> = Object.freeze({ en: "English" });
 
 export class Locales {
   private constructor() {}
 
-  public static readonly ALL: readonly Locale[] = ["en", "bn"];
+  public static readonly ALL: readonly Locale[] = ["en"];
   public static readonly DEFAULT: Locale = "en";
 
   // Endonyms, so a switcher reads the same in every locale — the one label that must

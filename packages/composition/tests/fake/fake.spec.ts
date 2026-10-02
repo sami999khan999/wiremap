@@ -156,7 +156,7 @@ describe("InMemoryOutboxGateway", () => {
 
 describe("StubMailRenderer", () => {
   it("returns both parts, so a caller cannot pass by rendering text alone", async () => {
-    const rendered = await new StubMailRenderer().render("auth.otp", "bn");
+    const rendered = await new StubMailRenderer().render("auth.otp", "en");
 
     expect(rendered.text).not.toBe("");
     expect(rendered.html).not.toBe("");

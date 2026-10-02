@@ -47,19 +47,19 @@ most one mounted file. **Structure is earned by contents, not by symmetry with a
 
 ## How the services connect
 
-Compose creates one bridge network, `lite_default`, and joins every container to it. Inside that
+Compose creates one bridge network, `wiremap_default`, and joins every container to it. Inside that
 network **a container reaches another by its service name** — Docker's embedded DNS resolves `minio`,
 `postgres` and so on to the container's address.
 
 ```
                     ┌──────────────────────────── host ─────────────────────────────┐
                     │                                                               │
-   pnpm dev ────────┼──→ :25432 postgres   :26379 redis   :29000 minio (S3)         │
-   (apps on host)   │    :21025 mailpit (SMTP)                                      │
+   pnpm dev ────────┼──→ :45432 postgres   :46379 redis   :49000 minio (S3)         │
+   (apps on host)   │    :41025 mailpit (SMTP)                                      │
                     │                                                               │
                     └───────────────────────────────────────────────────────────────┘
                                               │
-   ══════════════════════════ lite_default (bridge) ═══════════════════════════════════
+   ══════════════════════════ wiremap_default (bridge) ═══════════════════════════════════
 
      ┌──────────┐   ┌───────┐   ┌─────────┐   ┌───────┐ ←── mc mb ── ┌────────────┐
      │ postgres │   │ redis │   │ mailpit │   │ minio │              │ minio-init │
@@ -84,10 +84,10 @@ Two numbers per service, and confusing them is the usual source of "connection r
 
 | Service | Inside the network | From the host |
 |---|---|---|
-| postgres | `postgres:5432` | `localhost:25432` — `DATABASE_URL` and `DATABASE_DIRECT_URL` |
-| redis | `redis:6379` | `localhost:26379` — `REDIS_CACHE_URL` and `REDIS_QUEUE_URL` |
-| mailpit | `mailpit:1025`, UI `mailpit:8025` | `localhost:21025`, UI `localhost:28025` |
-| minio | `minio:9000`, console `minio:9001` | `localhost:29000`, console `localhost:29001` |
+| postgres | `postgres:5432` | `localhost:45432` — `DATABASE_URL` and `DATABASE_DIRECT_URL` |
+| redis | `redis:6379` | `localhost:46379` — `REDIS_CACHE_URL` and `REDIS_QUEUE_URL` |
+| mailpit | `mailpit:1025`, UI `mailpit:8025` | `localhost:41025`, UI `localhost:48025` |
+| minio | `minio:9000`, console `minio:9001` | `localhost:49000`, console `localhost:49001` |
 | minio-init | — | — |
 
 **Two database URLs, one server.** `DATABASE_URL` and `DATABASE_DIRECT_URL` both reach Postgres

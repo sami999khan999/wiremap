@@ -11,7 +11,7 @@ does not.
 
 | Key | Here | Why |
 | --- | --- | --- |
-| `REALTIME_PORT` | `23001` | Where `/api/realtime` is proxied to. The web app's Vite reads it too |
+| `REALTIME_PORT` | `43001` | Where `/api/realtime` is proxied to. The web app's Vite reads it too |
 | `REALTIME_SHUTDOWN_TIMEOUT_MS` | `20000` | The stop's budget; half spreads the ends, half is the backstop |
 | `DATABASE_POOL_MAX` | `5` | Never a query per frame, but one per open stream each minute. See below |
 | `APP` | `realtime` | The log label, so a line says which process wrote it |

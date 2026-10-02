@@ -1045,9 +1045,9 @@ describe("25 — .env.example documents every key an app requires", () => {
     // Derived from the compose file rather than from a name pattern, so the fixture
     // needs the file the exemption is read out of.
     const withCompose = {
-      ...tree("DATABASE_URL=x\nPOSTGRES_PORT=25432\n", ONE_KEY),
+      ...tree("DATABASE_URL=x\nPOSTGRES_PORT=45432\n", ONE_KEY),
       // biome-ignore lint/suspicious/noTemplateCurlyInString: compose's own interpolation, which a template literal would resolve away
-      "infra/docker-compose.yml": 'ports: ["${POSTGRES_PORT:-25432}:5432"]\n',
+      "infra/docker-compose.yml": 'ports: ["${POSTGRES_PORT:-45432}:5432"]\n',
     };
 
     passes(run(withCompose), NAME);
@@ -1133,11 +1133,11 @@ describe("27 — every host port is stated once", () => {
   });
 
   it("accepts a port key and the URL beside it agreeing", () => {
-    passes(run(pair("25432", "25432")), NAME);
+    passes(run(pair("45432", "45432")), NAME);
   });
 
   it("catches a URL dialling a port nothing publishes", () => {
-    fails(run(pair("25432", "5432")), NAME, "DATABASE_DIRECT_URL");
+    fails(run(pair("45432", "5432")), NAME, "DATABASE_DIRECT_URL");
   });
 
   // The example is CRLF on a Windows checkout, and `.` matches no carriage return, so a
@@ -1145,14 +1145,14 @@ describe("27 — every host port is stated once", () => {
   it("reads a CRLF example, which is what a Windows checkout has", () => {
     const crlf = {
       ".env.example":
-        "POSTGRES_PORT=25432\r\nDATABASE_DIRECT_URL=postgres://u:p@localhost:5432/db\r\n",
+        "POSTGRES_PORT=45432\r\nDATABASE_DIRECT_URL=postgres://u:p@localhost:5432/db\r\n",
     };
     fails(run(crlf), NAME, "DATABASE_DIRECT_URL");
   });
 
   // Commented out is still documented, and the port beside it is still published.
   it("checks a commented URL too", () => {
-    const tree = { ".env.example": "SMTP_PORT=21025\n# SMTP_URL=smtp://localhost:1025\n" };
+    const tree = { ".env.example": "SMTP_PORT=41025\n# SMTP_URL=smtp://localhost:1025\n" };
     fails(run(tree), NAME, "SMTP_URL");
   });
 

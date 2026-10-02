@@ -29,24 +29,6 @@ describe("lazy namespaces", () => {
     expect(t.t("nav.roles")).toBe("nav.roles");
     expect(t.loaded("nav")).toBe(false);
   });
-
-  // A lazy namespace is one layer like the shell is, since `23.15`. Asserted on the
-  // snapshot as well as through the translator, because the payload is the point.
-  it("carries one layer inside a lazy namespace too", async () => {
-    const snapshot = await source.messages("bn", ["auth"]);
-    const t = await source.translator("bn", ["auth"]);
-
-    expect(t.t("auth.signIn")).toBe("সাইন ইন");
-    expect(snapshot.overrides["auth.signIn"]).toBe("সাইন ইন");
-    expect(snapshot.base).toEqual({});
-  });
-
-  it("keeps error copy working on a route that declared something else", async () => {
-    // `ERROR_COPY` is typed against `ShellMessageKey` precisely so this cannot break.
-    const t = await source.translator("bn", ["nav"]);
-
-    expect(t.t("error.forbidden")).toBe("এটি করার অনুমতি আপনার নেই।");
-  });
 });
 
 describe("the other three shapes", () => {
@@ -77,17 +59,6 @@ describe("the server-only email namespace", () => {
 
     expect(snapshot.namespaces).toEqual(["common", "error", "email"]);
     expect(snapshot.overrides["error.conflict"]).toBeDefined();
-  });
-
-  it("carries one layer inside the email namespace too", async () => {
-    const t = await server.translator("bn", ["email"]);
-
-    expect(t.t("email.digest.viewAll")).toBe("ড্যাশবোর্ড খুলুন");
-    // No English beneath it, which is what makes the *server* catalog behave like the
-    // client one — a worker rendering Bengali mail carries no second copy either.
-    const snapshot = await server.messages("bn", ["email"]);
-    expect(snapshot.base).toEqual({});
-    expect(snapshot.overrides["email.digest.viewAll"]).toBe("ড্যাশবোর্ড খুলুন");
   });
 
   // A client catalog has no email loader, so the lookup is skipped and `t()` renders the

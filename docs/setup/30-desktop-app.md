@@ -200,7 +200,7 @@ Nothing to build here. Because Tauri is settled rather than speculative, `apps/w
 | The bearer plugin is enabled | [16](16-auth-package.md) Step 16.2 |
 
 ```bash
-curl -i -X OPTIONS http://localhost:23000/api/rpc \
+curl -i -X OPTIONS http://localhost:43000/api/rpc \
   -H "Origin: tauri://localhost" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: content-type,authorization"
