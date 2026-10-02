@@ -101,6 +101,8 @@ export {
   OutboxGateway,
   PartitionArchiveGateway,
   type PartitionEstimate,
+  PartitionedTable,
+  type PartitionedTableEntry,
   type PartitionedTableName,
   type PlatformHealth,
   PlatformHealthReader,
@@ -230,6 +232,8 @@ export type {
   RealtimeMessage,
   UserId,
 } from "@loadbearing/contracts";
+// A queued `deliver` job crosses the wire as JSON and is parsed back into a typed event.
+export { DomainEvents } from "@loadbearing/contracts";
 
 // ── @loadbearing/core ────────────────────────────────────────────────────────
 export { type Clock, FixedClock, ServerOnly, SystemClock, Uuid } from "@loadbearing/core";
@@ -242,10 +246,12 @@ export { ConflictError, NotFoundError } from "@loadbearing/errors";
 // whole outside-world side of the ports below.
 export {
   BullMqQueuePublisher,
+  CloudflareQueuePublisher,
   Database,
   DatabaseCluster,
   type DatabaseStats,
   GeminiEmbeddingProvider,
+  JobSignatureHasher,
   OpenAiEmbeddingProvider,
   PgAccountRepository,
   PgActivityLogger,
@@ -301,4 +307,9 @@ export { JsonLogger, type Logger, type LogLevel, SilentLogger } from "@loadbeari
 // ── @loadbearing/permissions ─────────────────────────────────────────────────
 // Only the route table, so the invitation mail's link and the landing page spell the
 // same literal.
-export { CapabilitySet, ROUTES } from "@loadbearing/permissions";
+export {
+  CapabilitySet,
+  type PermissionKey,
+  PermissionRegistry,
+  ROUTES,
+} from "@loadbearing/permissions";

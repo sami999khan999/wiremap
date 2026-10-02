@@ -34,6 +34,11 @@ export interface ContainerConfig {
     // fan-out is heavy enough to compete with session reads.
     readonly realtimeUrl?: string;
   };
+  // Where jobs go. BullMQ on the queue Redis by default, which is what the worker runs;
+  // `cloudflare` posts them to the dispatcher Worker instead. See docs/reference/container.md.
+  readonly queue?:
+    | { readonly driver: "bullmq" }
+    | { readonly driver: "cloudflare"; readonly url: string; readonly secret: string };
   readonly storage: {
     readonly endpoint: string;
     readonly region: string;
@@ -41,6 +46,9 @@ export interface ContainerConfig {
     readonly accessKey: string;
     readonly secretKey: string;
     readonly forcePathStyle: boolean;
+    // B2: `required` checksums and no lifecycle calls. See docs/infra/deployment.md.
+    readonly checksums?: "full" | "required";
+    readonly lifecycle?: boolean;
   };
   // Optional, because `apps/worker` never issues or validates a session and must not
   // carry an AUTH_SECRET it has no use for (25.2). Absent means no `AuthFactory`.
@@ -83,6 +91,9 @@ export interface ContainerConfig {
     readonly dimensions: number;
   };
   readonly realtime: {
+    // `redis` streams frames to a long-lived process; `none` publishes nothing and the
+    // browser polls. Wiremap runs `none` on Vercel. Absent is `redis`, the kit's default.
+    readonly driver?: "redis" | "none";
     // Per process, not per cluster: a shared counter would cost a round trip on every
     // stream open, and the failure it prevents is one runaway tab.
     readonly maxStreamsPerUser: number;

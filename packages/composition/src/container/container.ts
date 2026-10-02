@@ -18,6 +18,7 @@ import {
   ClearEntitlementAdjustmentUseCase,
   ClearPermissionOverrideUseCase,
   type Clock,
+  CloudflareQueuePublisher,
   type ContentSource,
   CountUnreadNotificationsUseCase,
   CreateApiKeyUseCase,
@@ -212,6 +213,8 @@ import {
   QueuedInvitationMailer,
   QueuedMailPublisher,
 } from "../mail/index.js";
+import { OutboxDrainPublisher } from "../outbox/index.js";
+import { NoopRealtimePublisher } from "../realtime/index.js";
 import { OrganizationShardingStrategy } from "../shard/index.js";
 import type { ContainerConfig } from "./container.config.js";
 import { ContainerHealthReader } from "./container-health.reader.js";
@@ -301,7 +304,7 @@ export class Container {
   // `forMs` on the line is the length of *this* episode.
   private poolWaitingTicks = 0;
   private readonly redis: RedisConnection;
-  private readonly queuePublisher: BullMqQueuePublisher;
+  private readonly queuePublisher: QueuePublisher & { close(): Promise<void> };
   // Held concretely for the same reason as the two above: `dispose()` needs `close()`,
   // and `EmailSender` is a port that says nothing about a transport's lifetime.
   private readonly emailSender: SmtpEmailSender;
@@ -616,7 +619,13 @@ export class Container {
       this.storage,
     );
 
-    this.queuePublisher = new BullMqQueuePublisher(this.redis.queueClient());
+    this.queuePublisher =
+      config.queue?.driver === "cloudflare"
+        ? new CloudflareQueuePublisher(
+            { url: config.queue.url, secret: config.queue.secret },
+            this.cache,
+          )
+        : new BullMqQueuePublisher(this.redis.queueClient());
     this.queue = this.queuePublisher;
     // **Two, bound per slice** — decision D16. The port stays `run(work)`, so no
     // use-case knows which one it was handed; a mis-binding fails the first spec.
@@ -679,14 +688,23 @@ export class Container {
     const activity = new PgActivityLogger(this.cluster, this.transactions, this.shards, this.clock);
     this.activity = activity;
     this.relayedActivity = activity;
-    this.eventPublisher = new PgOutboxPublisher(
+    const outboxPublisher = new PgOutboxPublisher(
       this.cluster,
       this.transactions,
       this.shards,
       this.clock,
     );
+    // BullMQ drains every second on a schedule; Cloudflare has only an hourly tick, so
+    // each write asks for a drain of its own. See docs/reference/container.md.
+    this.eventPublisher =
+      config.queue?.driver === "cloudflare"
+        ? new OutboxDrainPublisher(outboxPublisher, this.queuePublisher, this.logger)
+        : outboxPublisher;
     this.outbox = new PgOutboxGateway(this.cluster, this.transactions, this.shards);
-    this.realtime = new RedisRealtimePublisher(this.redis.realtimeClient(), this.logger);
+    this.realtime =
+      config.realtime.driver === "none"
+        ? new NoopRealtimePublisher()
+        : new RedisRealtimePublisher(this.redis.realtimeClient(), this.logger);
     // The role is resolved on the first `subscribe`, not here, so the worker never holds
     // one — which is what makes `health().realtime` honestly `null`.
     this.realtimeSubscriber = new RedisRealtimeSubscriber(
