@@ -87,7 +87,11 @@ function AuthenticatedLayout() {
   const switched = refresh("/");
 
   return (
-    <RealtimeProvider client={api} organizationId={session.user?.activeOrganizationId ?? null}>
+    <RealtimeProvider
+      client={api}
+      organizationId={session.user?.activeOrganizationId ?? null}
+      transport="poll"
+    >
       {
         // First in the tab order and visible only while focused: without it a keyboard
         // reader walks the whole header again on every navigation.

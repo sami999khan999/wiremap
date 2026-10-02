@@ -7,7 +7,12 @@
 export { authed, RealtimeRouter } from "@loadbearing/api-server";
 
 // ── @loadbearing/composition ─────────────────────────────────────────────────
-export { Container } from "@loadbearing/composition";
+export {
+  ConsumerRegistry,
+  Container,
+  JobSignatureHasher,
+  type QueueJob,
+} from "@loadbearing/composition";
 
 // ── @orpc/server ─────────────────────────────────────────────────────────────
 // Never `EventPublisher` from here. It is oRPC's own in-process fan-out, and reaching

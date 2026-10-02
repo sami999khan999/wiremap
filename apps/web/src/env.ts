@@ -27,6 +27,15 @@ const Schema = z
     // Live frames; the cache instance when unset. See docs/infra/reference/redis.md.
     REDIS_REALTIME_URL: z.url().optional(),
 
+    // Where jobs go. `bullmq` is the queue Redis and a running worker; `cloudflare` is the
+    // dispatcher Worker, which calls back into `/api/internal/job`. See docs/infra/deployment.md.
+    QUEUE_DRIVER: z.enum(["bullmq", "cloudflare"]).default("bullmq"),
+    DISPATCHER_URL: z.url().optional(),
+    DISPATCHER_SECRET: z.string().min(32).optional(),
+    // What the dispatcher signs each delivery with. Unset, `/api/internal/job` answers 404,
+    // so a deployment on BullMQ exposes no job endpoint at all.
+    INTERNAL_JOB_SECRET: z.string().min(32).optional(),
+
     S3_ENDPOINT: z.url(),
     S3_REGION: z.string().min(1),
     S3_BUCKET: z.string().min(1),
@@ -37,6 +46,13 @@ const Schema = z
     S3_FORCE_PATH_STYLE: z
       .enum(["true", "false"])
       .default("false")
+      .transform((v) => v === "true"),
+    // Backblaze B2 wants `required` and `false`: it refuses the SDK's default checksums and
+    // has no lifecycle API, so its expiry rule is set in its console. See deployment.md.
+    S3_CHECKSUMS: z.enum(["full", "required"]).default("full"),
+    S3_LIFECYCLE: z
+      .enum(["true", "false"])
+      .default("true")
       .transform((v) => v === "true"),
 
     // A short secret is a real weakness, and this schema is the only place anyone will
@@ -87,6 +103,9 @@ const Schema = z
     EMBEDDING_MODEL: z.string().min(1).optional(),
     EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
 
+    // `none`: nothing is published and the browser polls, which is wiremap's shape on
+    // Vercel. `redis` is the kit's stream, for a deployment that runs a stream process.
+    REALTIME_DRIVER: z.enum(["none", "redis"]).default("none"),
     // Per process. The cap exists to stop one runaway tab, which is local by
     // construction, and the age is what releases a channel a leaked reader is holding.
     REALTIME_MAX_STREAMS_PER_USER: z.coerce.number().int().positive().default(8),
@@ -111,8 +130,7 @@ const Schema = z
     // finish after SIGTERM. Read here so the container is disposed only once that is over.
     SERVER_SHUTDOWN_TIMEOUT: z.coerce.number().int().positive().default(5),
   })
-  // Two cross-field rules, and each earns the exception: `bootstrap` with no slug enrols
-  // nobody, and an embedding provider with no key fails on the first document.
+  // Cross-field rules, each a deploy that would boot and then fail on first use.
   .superRefine((env, ctx) => {
     // A provider with no key would fail on the first document, long after the deploy.
     if (env.EMBEDDING_PROVIDER !== "none" && !env.EMBEDDING_API_KEY) {
@@ -121,6 +139,18 @@ const Schema = z
         path: ["EMBEDDING_API_KEY"],
         message: `Required when EMBEDDING_PROVIDER is "${env.EMBEDDING_PROVIDER}".`,
       });
+    }
+
+    // The dispatcher is the only way a job leaves under `cloudflare`.
+    if (env.QUEUE_DRIVER === "cloudflare") {
+      for (const key of ["DISPATCHER_URL", "DISPATCHER_SECRET", "INTERNAL_JOB_SECRET"] as const) {
+        if (env[key]) continue;
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: 'Required when QUEUE_DRIVER is "cloudflare".',
+        });
+      }
     }
 
     if (env.AUTH_ENROLMENT_MODE === "bootstrap" && !env.BOOTSTRAP_ORGANIZATION_SLUG) {
@@ -196,6 +226,11 @@ export class Env {
     return Boolean(Env.parsed.GOOGLE_CLIENT_ID && Env.parsed.GOOGLE_CLIENT_SECRET);
   }
 
+  // Null switches `/api/internal/job` off: with no secret there is nobody it may trust.
+  public static get internalJobSecret(): string | null {
+    return Env.parsed.INTERNAL_JOB_SECRET ?? null;
+  }
+
   // srvx's window and a second more, so the last request it let finish has returned.
   public static get shutdownGraceMs(): number {
     return (Env.parsed.SERVER_SHUTDOWN_TIMEOUT + 1) * 1_000;
@@ -220,6 +255,10 @@ export class Env {
         queueUrl: e.REDIS_QUEUE_URL,
         ...(e.REDIS_REALTIME_URL ? { realtimeUrl: e.REDIS_REALTIME_URL } : {}),
       },
+      queue:
+        e.QUEUE_DRIVER === "cloudflare" && e.DISPATCHER_URL && e.DISPATCHER_SECRET
+          ? { driver: "cloudflare" as const, url: e.DISPATCHER_URL, secret: e.DISPATCHER_SECRET }
+          : { driver: "bullmq" as const },
       storage: {
         endpoint: e.S3_ENDPOINT,
         region: e.S3_REGION,
@@ -227,6 +266,8 @@ export class Env {
         accessKey: e.S3_ACCESS_KEY,
         secretKey: e.S3_SECRET_KEY,
         forcePathStyle: e.S3_FORCE_PATH_STYLE,
+        checksums: e.S3_CHECKSUMS,
+        lifecycle: e.S3_LIFECYCLE,
       },
       auth: {
         secret: e.AUTH_SECRET,
@@ -254,6 +295,7 @@ export class Env {
         ...(e.EMBEDDING_MODEL ? { model: e.EMBEDDING_MODEL } : {}),
       },
       realtime: {
+        driver: e.REALTIME_DRIVER,
         maxStreamsPerUser: e.REALTIME_MAX_STREAMS_PER_USER,
         streamMaxAgeSeconds: e.REALTIME_STREAM_MAX_AGE_SECONDS,
       },

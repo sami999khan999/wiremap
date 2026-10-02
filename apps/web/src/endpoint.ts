@@ -7,7 +7,7 @@ export class Endpoint {
   // `prefix` and with the file routes, which spell the path again.
   public static readonly rpcPath = "/api/rpc";
   // The stream process, behind the same origin: Vite proxies it in development and the
-  // reverse proxy in production. See docs/infra/deployment.md.
+  // reverse proxy in production. See docs/infra/self-hosted.md.
   public static readonly realtimePath = "/api/realtime";
   public static readonly authPath = "/api/auth";
 
