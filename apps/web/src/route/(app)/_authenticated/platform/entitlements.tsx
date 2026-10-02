@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   type ClientNamespace,
   OrganizationEntitlementPanel,
+  PLATFORM_ROUTE_PERMISSION,
   PlanList,
   PlatformQueries,
   useMessages,
@@ -13,7 +14,7 @@ const MESSAGES = ["platform"] as const satisfies readonly ClientNamespace[];
 // Read, not manage: seeing what an org is entitled to is how support answers "why can't
 // they". The editing controls render only for `platform.entitlement.manage`.
 export const Route = createFileRoute("/(app)/_authenticated/platform/entitlements")({
-  beforeLoad: RouteGuard.requirePermission("platform.entitlement.read"),
+  beforeLoad: RouteGuard.requirePermission(PLATFORM_ROUTE_PERMISSION.entitlements),
   staticData: { messages: MESSAGES },
   loader: ({ context }) =>
     Promise.all([

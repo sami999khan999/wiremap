@@ -62,6 +62,8 @@ export const fetchSession = createServerFn({ method: "GET" }).handler(
           id: entry.id,
           name: entry.name,
           roleName: entry.roleName,
+          // Only ever on the user's own memberships, so no one learns the tier's id this way.
+          isPlatform: entry.id === platformOrganizationId,
         })),
         // Better Auth's own column, widened onto the user by the two-factor plugin.
         twoFactorEnabled: (result.user as { twoFactorEnabled?: boolean }).twoFactorEnabled === true,

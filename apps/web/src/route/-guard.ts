@@ -3,6 +3,8 @@ import {
   CapabilitySet,
   type CapabilitySetDto,
   type PermissionKey,
+  PLATFORM_ROUTE_PERMISSION,
+  ROUTES,
   type SessionUser,
 } from "~/import.js";
 
@@ -18,6 +20,18 @@ export class RouteGuard {
       if (!CapabilitySet.from(context.capabilities).can(permission, goalId)) {
         throw redirect({ to: "/forbidden" });
       }
+    };
+  }
+
+  // `/platform` itself: the first page the reader may open, so a staff role holding one
+  // platform key lands on it rather than on a status page it cannot read.
+  public static firstPlatformPage() {
+    return ({ context }: { context: { capabilities: CapabilitySetDto } }): never => {
+      const capabilities = CapabilitySet.from(context.capabilities);
+      const page = (
+        Object.keys(PLATFORM_ROUTE_PERMISSION) as (keyof typeof PLATFORM_ROUTE_PERMISSION)[]
+      ).find((key) => capabilities.can(PLATFORM_ROUTE_PERMISSION[key]));
+      throw redirect({ to: page ? ROUTES.platform[page] : "/forbidden" });
     };
   }
 

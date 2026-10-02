@@ -82,6 +82,7 @@ export {
   OrganizationEntitlementPanel,
   OrganizationSwitcher,
   PlanList,
+  PlatformNav,
   PlatformStatusPanel,
   ProfileForm,
   ReplicaSwitchPanel,
@@ -115,6 +116,7 @@ export {
   type FlagKey,
   FlagRegistry,
   type PermissionKey,
+  PLATFORM_ROUTE_PERMISSION,
   ROUTES,
 } from "@loadbearing/permissions";
 
@@ -126,6 +128,7 @@ export {
   DocQueries,
   MemberQueries,
   NotificationQueries,
+  OrganizationMutations,
   PlatformQueries,
   RealtimeProvider,
   RoleQueries,

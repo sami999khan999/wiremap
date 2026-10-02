@@ -3,6 +3,7 @@ import {
   Can,
   type ClientNamespace,
   ModuleSwitchPanel,
+  PLATFORM_ROUTE_PERMISSION,
   PlatformQueries,
   PlatformStatusPanel,
   ReplicaSwitchPanel,
@@ -16,7 +17,7 @@ const MESSAGES = ["platform"] as const satisfies readonly ClientNamespace[];
 // Behind `platform.status.read` — the key the procedure is gated on and the use-case
 // asserts. A tenant owner is redirected, which is the tier working. See doc 23.
 export const Route = createFileRoute("/(app)/_authenticated/platform/status")({
-  beforeLoad: RouteGuard.requirePermission("platform.status.read"),
+  beforeLoad: RouteGuard.requirePermission(PLATFORM_ROUTE_PERMISSION.status),
   staticData: { messages: MESSAGES },
   loader: ({ context }) =>
     Promise.all([

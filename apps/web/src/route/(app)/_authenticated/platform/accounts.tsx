@@ -4,6 +4,7 @@ import {
   Can,
   type ClientNamespace,
   DeleteTenantPanel,
+  PLATFORM_ROUTE_PERMISSION,
   TenantExportPanel,
   useCapabilities,
   useMessages,
@@ -15,7 +16,7 @@ const MESSAGES = ["platform"] as const satisfies readonly ClientNamespace[];
 // Read, not manage: support looks an account up far more often than it locks one. The
 // suspend and deny controls render only for `platform.account.manage`.
 export const Route = createFileRoute("/(app)/_authenticated/platform/accounts")({
-  beforeLoad: RouteGuard.requirePermission("platform.account.read"),
+  beforeLoad: RouteGuard.requirePermission(PLATFORM_ROUTE_PERMISSION.accounts),
   staticData: { messages: MESSAGES },
   loader: ({ context }) => context.messages.ensure(MESSAGES),
   component: PlatformAccounts,
