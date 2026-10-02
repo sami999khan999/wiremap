@@ -61,10 +61,11 @@ export class RoleRules {
     role: RoleRecord,
     entitlement: EntitlementMask,
   ): void {
-    for (const permission of role.permissions) {
-      if (!PermissionRegistry.instance.isKnown(permission)) continue;
-      if (!entitlement.isEntitled(permission)) continue;
-      if (!actor.canTenantWide(permission)) throw new ForbiddenError(permission);
-    }
+    // `CapabilitySet.cannotAssign`, which the role pickers run too, so they never offer one
+    // the server would refuse.
+    const missing = actor.capabilities.cannotAssign(role.permissions, (key) =>
+      entitlement.isEntitled(key),
+    );
+    if (missing) throw new ForbiddenError(missing);
   }
 }

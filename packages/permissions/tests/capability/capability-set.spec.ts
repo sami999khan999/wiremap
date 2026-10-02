@@ -498,3 +498,35 @@ describe("CapabilitySet.canTenantWide", () => {
     expect(caps.canTenantWide("rbac.role.manage")).toBe(true);
   });
 });
+
+// What a role picker and `RoleRules.assertAssignableBy` both ask.
+describe("CapabilitySet.cannotAssign", () => {
+  const everything = () => true;
+  const holder = CapabilitySet.from({
+    wildcard: false,
+    org: { grants: ["member.read", "member.invite"], denies: [] },
+    platform: { grants: ["platform.account.read"], denies: [] },
+    goals: {},
+  });
+
+  it("names the first key of the role the holder lacks", () => {
+    expect(holder.cannotAssign(["member.read", "rbac.role.manage"], everything)).toBe(
+      "rbac.role.manage",
+    );
+  });
+
+  it("counts a platform key held on the platform axis", () => {
+    expect(holder.cannotAssign(["member.read", "platform.account.read"], everything)).toBeNull();
+    expect(holder.cannotAssign(["platform.account.manage"], everything)).toBe(
+      "platform.account.manage",
+    );
+  });
+
+  // Nobody can hold a masked or renamed key, so neither may block handing a role out.
+  it("skips keys the catalog does not know and keys the plan masks", () => {
+    expect(holder.cannotAssign(["member.raed"], everything)).toBeNull();
+    expect(
+      holder.cannotAssign(["rbac.role.manage"], (key) => key !== "rbac.role.manage"),
+    ).toBeNull();
+  });
+});

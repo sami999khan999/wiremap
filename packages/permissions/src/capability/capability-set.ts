@@ -140,6 +140,20 @@ export class CapabilitySet {
     return this.allowsAtOrg(permission);
   }
 
+  // The first key of a role this set may not hand out, or null. No escalation by assignment:
+  // unknown keys and keys the plan masks are skipped, since nobody can hold those.
+  public cannotAssign(
+    permissions: readonly string[],
+    isEntitled: (permission: PermissionKey) => boolean,
+  ): PermissionKey | null {
+    for (const permission of permissions) {
+      if (!PermissionRegistry.instance.isKnown(permission)) continue;
+      if (!isEntitled(permission)) continue;
+      if (!this.canTenantWide(permission)) return permission;
+    }
+    return null;
+  }
+
   public canAll(permissions: readonly PermissionKey[], goalId?: string): boolean {
     return permissions.every((permission) => this.can(permission, goalId));
   }
