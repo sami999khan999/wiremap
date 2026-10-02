@@ -85,7 +85,6 @@ export const coreEvents = {
   "realtime.stream.opened": { level: "debug" },
   "realtime.stream.closed": { level: "debug" },
   // A stopping stream process handed its streams on; `streams` is -1 if it ran out of time.
-  "realtime.stream.drained": { level: "info" },
   "realtime.publish.failed": { level: "warn" },
 
   "cache.entry.corrupt": { level: "warn" },
