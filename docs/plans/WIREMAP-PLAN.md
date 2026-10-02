@@ -164,51 +164,60 @@ recorded in `docs/infra/free-tier.md` (`WM1.9`).
 
 ### Phase 0 — The repository
 
-- [ ] `WM0.1` **Clone and re-point.**
+- [x] `WM0.1` **Clone and re-point.**
+  done: 2026-10-03. Cloned beside the session folder and moved in; `origin` and `kit` set.
   - `git clone` the kit into the empty working directory.
   - Set `origin` to `https://github.com/sami999khan999/wiremap.git` and keep the kit's URL as
     `kit`.
   - Copy this plan to `docs/plans/WIREMAP-PLAN.md`, and add a row and the page to `docs/plans/index.md`
     and `meta.json`.
-- [ ] `WM0.2` **Baseline green before any change.**
+- [x] `WM0.2` **Baseline green before any change.**
+  done: 2026-10-03. Typecheck clean, 31 of 31; every suite green but `content`, mid-edit for `WM0.4`.
   - `cp .env.example .env` with a real `AUTH_SECRET`.
   - Then `pnpm install`, `infra:up`, `build:packages`, the web build, `db:migrate`, `db:seed`,
     typecheck and `check:architecture`.
   - Record the result in `HANDOFF.md`, which is rewritten for wiremap.
-- [ ] `WM0.3` **Identity.**
+- [x] `WM0.3` **Identity.**
+  done: 2026-10-03. **As built:** host ports moved to a `4` prefix and the compose project to `wiremap`, because this machine already runs the kit on `2xxxx` and another stack on `3xxxx`.
   - Root `package.json` name `wiremap`, and a new `README.md` (product, stack, running it).
   - `AGENTS.md` gets a wiremap paragraph. `UPSTREAM.md` records `ea3e7c4` as the kit commit.
   - Add commitlint scopes `graph`, `analyzer`, `cli`, `dispatcher`, `vscode`, `action`.
   - Remove `realtime` in `WM1.6`.
-- [ ] `WM0.4` **English only.**
+- [x] `WM0.4` **English only.**
+  done: 2026-10-03. The kit's setup walkthrough keeps naming `bn/` where it explains adding a locale.
   - Delete `content/src/message/bn/`, drop `bn` from the locale registry, the catalog and the
     `LocaleSwitcher`.
   - Delete `bn` fixtures in specs. Docs: `packages/content/docs`.
-- [ ] `WM0.5` Push `main` to `origin`.
+- [x] `WM0.5` Push `main` to `origin`.
+  done: 2026-10-03.
 
 **Exit.** `origin/main` holds the kit history plus the identity commits, and the baseline gate is
 green.
 
 ### Phase 1 — Free-tier platform
 
-- [ ] `WM1.1` **Vercel build.**
+- [x] `WM1.1` **Vercel build.**
+  done: 2026-10-03. **As built:** the pool probe reads in-memory stats on an unref'd timer, so it stays; `DATABASE_POOL_MAX=3` is set in deployment instead.
   - Nitro `preset: "vercel"` when `VERCEL` is set, Node otherwise.
   - The container skips its pool probe interval on serverless.
   - Pool size is 1–3 per instance, with Neon's pooled URL.
   - Docs: `docs/infra/deployment.md`.
-- [ ] `WM1.2` **Jobs as HTTP.**
+- [x] `WM1.2` **Jobs as HTTP.**
+  done: 2026-10-03. **As built:** the consumers moved to `composition/src/consumer/` behind `ConsumerRegistry`; the worker keeps one `BullMqQueueConsumer`, and `/api/internal/job` runs `JobEndpoint` (`web/src/server/job.server.ts`).
   - Move each consumer's `handle` behind one `JobRunner` (`composition/src/job/`), keyed by
     `(queue, name)`.
   - `apps/worker`'s BullMQ consumers and the new route `apps/web/src/route/api/internal/job.ts`
     both call it.
   - The route verifies the HMAC (`INTERNAL_JOB_SECRET`) and a 5-minute timestamp window. It
     answers 2xx when done and 5xx to ask for a retry.
-- [ ] `WM1.3` **`CloudflareQueuePublisher`** (`infrastructure/src/cloudflare/`).
+- [x] `WM1.3` **`CloudflareQueuePublisher`** (`infrastructure/src/cloudflare/`).
+  done: 2026-10-03. Docs: `packages/infrastructure/docs/reference/cloudflare-queue.md`.
   - It POSTs signed batches to `DISPATCHER_URL/enqueue`.
   - Mapping: `delayMs` becomes `delaySeconds`; `jobId`, `inFlightId` and `onceWithin` are
     deduplicated on the publishing side with `CacheStore.setIfAbsent` (Redis, with a TTL); `priority` is ignored and documented.
   - Selected by `QUEUE_DRIVER`. Specs use a fake fetch.
-- [ ] `WM1.4` **`apps/dispatcher`**, a Cloudflare Worker with `wrangler.toml`, one queue `jobs` with
+- [x] `WM1.4` **`apps/dispatcher`**, a Cloudflare Worker with `wrangler.toml`, one queue `jobs` with
+  done: 2026-10-03. **As built:** three crons, not two (hourly, 03:00 maintenance, 07:00 digest), and partitions run nightly since nothing boots to run them once. Verified with `wrangler dev`: a sign-up's mail and both cron ticks ran through the web app.
   a DLQ, and two crons.
   - `fetch /enqueue` checks the signature and calls `send` or `sendBatch`.
   - `queue()` POSTs each message to `/api/internal/job`. A 5xx means `retry` with backoff, and
@@ -218,33 +227,39 @@ green.
   - The daily one runs cleanup, digest and orphans, plus partitions on the 1st.
   - It has no dependencies besides `wrangler` (dev). `wrangler dev` runs it locally against
     `localhost:23000`. Docs: `apps/dispatcher/README.md` and `docs/infra/deployment.md`.
-- [ ] `WM1.5` **Outbox without a 1-second drain.**
+- [x] `WM1.5` **Outbox without a 1-second drain.**
+  done: 2026-10-03. `OutboxDrainPublisher`, only under `QUEUE_DRIVER=cloudflare`.
   - A use-case that wrote outbox events publishes one `EVENT/drain` job after commit, deduplicated
     for 5 s.
   - With BullMQ, the 1-second repeatable stays.
   - Spec: an event is delivered with no schedule running.
-- [ ] `WM1.6` **Realtime out, polling in.**
+- [x] `WM1.6` **Realtime out, polling in.**
+  done: 2026-10-03. **As built:** the realtime contract, router and Redis adapters stay as the seam; `REALTIME_DRIVER=none` binds `NoopRealtimePublisher`, and `RealtimeProvider` takes `transport="poll"`. `REALTIME_MAX_STREAMS_PER_USER` and `REALTIME_STREAM_MAX_AGE_SECONDS` stay, because the mounted router still reads them.
   - Delete `apps/realtime`, `REDIS_REALTIME_URL`, `REALTIME_*` env, its compose proxy and its CI
     smoke.
   - `RealtimePublisher` gets `NoopRealtimePublisher`.
   - `query/src/realtime` becomes `refetchInterval` hooks that are visibility-aware.
   - Write `docs/scale/realtime.md` (the way back).
   - `check-architecture` and `.env.example` follow.
-- [ ] `WM1.7` **B2.**
+- [x] `WM1.7` **B2.**
+  done: 2026-10-03. **As built:** `S3_CHECKSUMS=required` and `S3_LIFECYCLE=false`. Encryption at rest is the bucket's default SSE-B2, set in the console, not a header: a presigned upload would otherwise have to send it too.
   - `S3ClientFactory` sets `requestChecksumCalculation: "WHEN_REQUIRED"`.
   - `S3_SERVER_SIDE_ENCRYPTION=AES256` adds SSE. `S3_LIFECYCLE=off` skips the policy gateway call.
   - MinIO stays for development.
   - Docs: `docs/infra/reference/minio.md` and a B2 section in deployment.
-- [ ] `WM1.8` **Upstash and Neon.**
+- [x] `WM1.8` **Upstash and Neon.**
+  done: 2026-10-03. No code: ioredis turns TLS on for `rediss://`, and a role may `ALTER ROLE` its own settings on Neon.
   - Make TLS URLs work in `RedisConnection`.
   - Document `DATABASE_URL` (pooled) and `DATABASE_DIRECT_URL` (direct) for Neon.
   - The baseline's `ALTER ROLE … SET` must be safe under Neon's owner role. Migrations run from CI
     or locally against `DATABASE_DIRECT_URL`.
-- [ ] `WM1.9` **`docs/infra/free-tier.md`.** One row per vendor:
+- [x] `WM1.9` **`docs/infra/free-tier.md`.** One row per vendor:
+  done: 2026-10-03.
   - Vercel, Cloudflare Workers, Queues and Crons, Neon, Upstash, B2, GitHub Actions minutes
     (public repo unlimited, private 2,000 a month), Gemini (the org's own key) and SMTP.
   - Each row gives the quota, what wiremap spends it on and what happens when it runs out.
-- [ ] `WM1.10` **Deploy docs and CI.**
+- [x] `WM1.10` **Deploy docs and CI.**
+  done: 2026-10-03. The kit's VPS guide moved to `docs/infra/self-hosted.md`.
   - `deployment.md` is rewritten for Vercel + Cloudflare + Neon + Upstash + B2, in order, with
     every env key.
   - CI adds `wrangler deploy --dry-run` and the dispatcher's specs.

@@ -253,7 +253,7 @@ The application code does not change between the two columns. These containers a
 | Logs on stdout | Whatever your host keeps for stdout. A central store is [Logs](../scale/logs.md) |
 
 The full path from here to a rented box, and from there to managed services, is
-[`docs/infra/deployment.md`](../infra/deployment.md) — including the one thing about this
+[`docs/infra/self-hosted.md`](../infra/self-hosted.md) — including the one thing about this
 compose file that is safe on a laptop and dangerous on a public IP.
 
 The MinIO row is the reason MinIO is here rather than a local filesystem stand-in: the AWS SDK talks to MinIO unchanged, so the code path exercised in development is the code path that runs in production. A filesystem adapter would mean the S3 path is first executed on the day you deploy.

@@ -11,6 +11,7 @@
     "retention",
     "logs",
     "shard-nodes",
+    "realtime",
     "messaging",
     "widgets",
     "beyond-the-big-kit",

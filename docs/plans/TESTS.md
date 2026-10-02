@@ -5,6 +5,18 @@ description: Every test run the lite kit build still owes, by plan item, with th
 
 # Tests to run
 
+## Wiremap
+
+Every suite runs as each phase closes, so most rows below are runs that need something a laptop
+cannot give: a real account, a real deploy.
+
+| Item | What was run | Still owed | Status |
+|---|---|---|---|
+| `WM0` repository | Full standard pass, 2026-10-03: typecheck, every suite, 31 of 31 | — | [x] |
+| `WM1` free-tier platform | Full pass, 2026-10-03: every package green (composition 108, dispatcher 14). By hand with `QUEUE_DRIVER=cloudflare` and `wrangler dev`: a sign-up's verification mail reached Mailpit through the dispatcher, and the hourly and nightly crons ran their six jobs in the web app | The first real deploy, following `docs/infra/deployment.md` in order: Neon, Upstash, B2 (checksums `required`, SSE-B2, the `export/` rule, CORS), SMTP, Vercel, the Worker. Then its section 8 checks | [ ] |
+
+## Inherited from the kit
+
 From `LT2.6` on, the build goes ahead on typecheck and `check:architecture` alone, and the owner
 runs the tests. This page lists every run still owed. Tick a row when it has passed; if it fails,
 add a line under it saying what failed.

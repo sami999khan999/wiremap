@@ -8,7 +8,7 @@ description: What src/ may hold, role folders vs subject folders, and the two ex
 - **`src/` holds `index.ts`, `import.ts`, and folders. Nothing else.** Not a "just this one file"
   helper, not a small type. A loose file has no stated kind, so nothing says where the next one goes.
 - **Every folder has an `index.ts`.** That is what lets a file move within a folder without touching
-  an import elsewhere. Exemptions: `content/src/message/{en,bn}/` (reached only by string-literal
+  an import elsewhere. Exemptions: `content/src/message/en/` (reached only by string-literal
   `import()`; a barrel would collapse the code-split) and directories holding no modules, such as
   `ui`'s `style/`.
 - **Role folder by default, subject folder where contents repeat per feature.** A role folder names

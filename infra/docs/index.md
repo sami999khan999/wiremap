@@ -107,7 +107,7 @@ see is [`docs/infra/`](../../docs/infra/index.md#checking-the-whole-stack).
 
 - [`docs/infra/`](../../docs/infra/index.md) — the stack reference: how the services reach each
   other, what flows where, and the per-file pages this page links to.
-  [deployment](../../docs/infra/deployment.md) is the same services on a rented box.
+  [self-hosted](../../docs/infra/self-hosted.md) is the same services on a rented box.
 - [Build order · 11 · Local Infrastructure](../../docs/setup/11-local-infrastructure.md) — how it
   was built, and why each choice was made.
 - [`@loadbearing/infrastructure`](../../packages/infrastructure/docs/index.md) — the adapters that

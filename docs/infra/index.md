@@ -17,7 +17,7 @@ reached over a protocol the code was going to speak anyway.
 explains *why* each choice was made. **This is the reference:** what each file does, how each service
 works, and how they connect.
 
-**Running it somewhere other than a laptop is [deployment](deployment.md)** — the same services on a
+**Wiremap's production is [deployment](deployment.md)**: Vercel, Cloudflare, Neon, Upstash and B2, inside the budget in [free-tier](free-tier.md). **Running it on a box of your own is [self-hosted](self-hosted.md)** — the same services on a
 VPS, and the order to move them to managed services in when one box stops fitting.
 
 ---

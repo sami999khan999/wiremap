@@ -1,5 +1,5 @@
 {
   "title": "infra",
-  "description": "The local stack — every file, every service, and how they reach each other. Nine containers, two profiles, one bridge network",
-  "pages": ["index", "deployment", "reference"]
+  "description": "The local stack, and the free-tier production deployment \u2014 every service, how they reach each other, and the budget each one lives in",
+  "pages": ["index", "deployment", "free-tier", "self-hosted", "reference"]
 }

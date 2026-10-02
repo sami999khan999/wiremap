@@ -54,7 +54,7 @@ catalog declares that nothing emits, `.env.example` drifting from what an app ac
 requires, a runnable script above `src/` that nothing typechecks, and a host port stated
 twice — a `*_PORT` and the URL that dials it, or the compose default and the template — that
 no longer agree, a permission the catalog declares that no procedure asserts, one of the
-four copies of the `DATABASE_SHARD_<n>_URL` reader parsing differently from the other three,
+three copies of the `DATABASE_SHARD_<n>_URL` reader parsing differently from the other two,
 a flag past its expiry or read by no code, and a colour outside the twelve in a class, a `style`
 prop or a stylesheet.
 

@@ -413,7 +413,7 @@ apps/web/src/server/orpc/task.router.ts                     TaskRouter.reactivat
 apps/web/src/server/orpc/app.router.ts                      ← register
 apps/web/src/route/(app)/_authenticated/task/$taskId.tsx     composes the dialog
 
-apps/worker/src/consumer/embedding.consumer.ts              ← already exists, no change
+packages/composition/src/consumer/embedding.consumer.ts              ← already exists, no change
 
 packages/composition/src/container/container.ts             ← expose the use-case
 ```

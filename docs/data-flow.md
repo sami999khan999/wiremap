@@ -124,8 +124,8 @@ copies can all be rebuilt, and that is what makes them safe to lose.
 |---|---|
 | The permission check every use-case runs | `packages/application/src/primitive/authorizer.ts` |
 | Which tables are split by month | `packages/application/src/primitive/partitioned-table.ts` |
-| The outbox sweep and the email path | `apps/worker/src/consumer/outbox.consumer.ts` |
-| Partition creation, expiry sweeps, and the tenant-delete sweep | `apps/worker/src/consumer/maintenance.consumer.ts` |
+| The outbox sweep and the email path | `packages/composition/src/consumer/outbox.consumer.ts` |
+| Partition creation, expiry sweeps, and the tenant-delete sweep | `packages/composition/src/consumer/maintenance.consumer.ts` |
 | Writing a tenant out to S3 | `packages/infrastructure/src/pg/repository/pg-partition-archive.gateway.ts` |
 | The copy into ClickHouse, in the big kit | `upstream:apps/worker/src/consumer/analytics.consumer.ts` |
 

@@ -164,7 +164,7 @@ Adapt `containerConfig()` to return the same shape minus `auth`, and make the `a
 
 Jobs have no user. They still need a principal, because `Authorizer.assert()` is not optional.
 
-**`apps/worker/src/bootstrap/system-principal.ts`**
+**`packages/composition/src/consumer/system-principal.ts`**
 
 ```ts
 import { Principal } from "@loadbearing/application";
@@ -239,7 +239,7 @@ way is in
 
 ## Step 25.4 — A consumer
 
-**`apps/worker/src/consumer/embedding.consumer.ts`**
+**`packages/composition/src/consumer/embedding.consumer.ts`**
 
 ```ts
 import { Worker, type Job } from "bullmq";
@@ -316,7 +316,7 @@ The worker is the only process that reads the `email` namespace, and it is now t
 that sends at all: every message in this system is a job on `QueueName.MAIL`, and `MailConsumer`
 is what renders it and hands it to SMTP.
 
-**`apps/worker/src/consumer/mail.consumer.ts`**
+**`packages/composition/src/consumer/mail.consumer.ts`**
 
 ```ts
 public async handle(job: Job<MailJobData>): Promise<void> {

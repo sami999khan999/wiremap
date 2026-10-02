@@ -57,6 +57,7 @@ In plain terms. The thresholds are the big kit's own planning estimates
 | **Heavy reports slow the main database** | Around 250M rows a year, or when reports take seconds | Bring back ClickHouse analytics | Copy files back | [Analytics](analytics.md) |
 | **Old data is never archived** — tables grow forever | When database storage costs real money | Bring back retention and cold storage | Copy files back | [Retention](retention.md) |
 | **Logs only go to the screen** | Running more than one server | Bring back Loki and Alloy | Config plus a small copy | [Logs](logs.md) |
+| **No live push** — wiremap polls every 60 s | When a minute-old bell is not good enough | Restore the stream process, or front it with a Durable Object | Copy files back | [Realtime](realtime.md) |
 | **One database machine** holds everything | Around 1B rows a year, or writes past what one machine takes | Add database nodes and move organizations onto them | Copy files back, then operate | [Shard nodes](shard-nodes.md) |
 
 Two product features were also left out of lite. They are not scale limits, but they come back the

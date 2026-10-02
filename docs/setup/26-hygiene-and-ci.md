@@ -1020,7 +1020,9 @@ procedure is gated, and no entry names a procedure that is gone — which need t
 Both catalogs are resolved through their barrel's spreads, the same way §24 resolves the event
 catalog, so a `...billingPermissions` added tomorrow is covered without anyone editing this.
 
-### 29 — The four shard readers run one algorithm
+### 29 — The three shard readers run one algorithm
+
+Wiremap removed `apps/realtime`, so the fourth copy below is gone; the rule is unchanged.
 
 ```js
 // fail if `shardsFromEnv` in apps/web/src/env.ts, apps/worker/src/env.ts,
