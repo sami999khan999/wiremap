@@ -17,6 +17,28 @@ export class MemberRules {
     return MemberRules.isOwnerKey(member.roleKey);
   }
 
+  // The platform organization's top role, holding every key. Only that organization has it.
+  public static readonly PLATFORM_ADMIN_KEY = "platform_admin";
+
+  // What must stay held after a member leaves `from` for `to` (`null` is deactivation). The
+  // last platform admin is guarded alone; the last owner counts platform admins as owners too.
+  public static lastHolderGuard(
+    from: string,
+    to: string | null,
+  ): {
+    readonly keys: readonly string[];
+    readonly reason: "lastOwner" | "lastPlatformAdmin";
+  } | null {
+    if (from === MemberRules.PLATFORM_ADMIN_KEY && to !== from) {
+      return { keys: [MemberRules.PLATFORM_ADMIN_KEY], reason: "lastPlatformAdmin" };
+    }
+    const top = [MemberRules.OWNER_KEY, MemberRules.PLATFORM_ADMIN_KEY];
+    if (from === MemberRules.OWNER_KEY && (to === null || !top.includes(to))) {
+      return { keys: top, reason: "lastOwner" };
+    }
+    return null;
+  }
+
   // Seven days. Long enough to survive a weekend, short enough that a link forwarded
   // months later opens nothing.
   private static readonly INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;

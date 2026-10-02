@@ -41,20 +41,22 @@ export class ChangeMemberRoleUseCase {
     const role = await this.roles.findById(actor.organizationId, input.roleId);
     if (!role) throw new NotFoundError("role", input.roleId);
     RoleRules.assertMembershipScope(role);
-    RoleRules.assertAssignableBy(
-      actor,
-      role,
-      await this.entitlements.entitlementFor(actor.organizationId),
-    );
+    const entitlement = await this.entitlements.entitlementFor(actor.organizationId);
+    RoleRules.assertAssignableBy(actor, role, entitlement);
 
     if (member.roleId === role.id) return member;
 
-    const demoting = MemberRules.isOwner(member) && !MemberRules.isOwnerKey(role.key);
+    // No outranking: moving someone off a role takes holding every key it gives, or an
+    // owner of the platform organization could demote its platform admin.
+    const current = await this.roles.findById(actor.organizationId, member.roleId);
+    if (current) RoleRules.assertAssignableBy(actor, current, entitlement);
+
+    const guard = MemberRules.lastHolderGuard(member.roleKey, role.key);
 
     await this.unitOfWork.run(async () => {
       // Inside the transaction and before the write. Read outside it, two concurrent
       // demotions each saw two owners and the tenant committed its way down to none.
-      if (demoting) await this.assertNotLastOwner(actor);
+      if (guard) await this.assertNotLast(actor, guard);
 
       await this.members.changeRole(actor.organizationId, member.userId, role.id);
       await this.activity.record(actor, "member.role.changed", {
@@ -77,10 +79,13 @@ export class ChangeMemberRoleUseCase {
     return { ...member, roleId: role.id, roleKey: role.key, roleName: role.name };
   }
 
-  // `lockActiveOwners`, not `countActiveOwners`: the lock is what makes the second
+  // `lockActiveHolders`, not `countActiveHolders`: the lock is what makes the second
   // demotion wait and then read the number its own commit would leave behind.
-  private async assertNotLastOwner(actor: Principal): Promise<void> {
-    const owners = await this.members.lockActiveOwners(actor.organizationId);
-    if (owners <= 1) throw new ConflictError("member", "lastOwner");
+  private async assertNotLast(
+    actor: Principal,
+    guard: NonNullable<ReturnType<typeof MemberRules.lastHolderGuard>>,
+  ): Promise<void> {
+    const holders = await this.members.lockActiveHolders(actor.organizationId, guard.keys);
+    if (holders <= 1) throw new ConflictError("member", guard.reason);
   }
 }

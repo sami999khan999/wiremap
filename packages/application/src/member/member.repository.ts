@@ -52,11 +52,17 @@ export abstract class MemberRepository {
     at: Date | null,
   ): Promise<void>;
 
-  // Active owners only. The last-owner rule is about who can still act, so a
-  // deactivated owner does not keep a tenant unlockable.
-  public abstract countActiveOwners(organizationId: OrganizationId): Promise<number>;
+  // Active, unsuspended holders of any of `roleKeys`. The last-owner rule is about who can
+  // still act, so a deactivated or suspended owner does not keep a tenant unlockable.
+  public abstract countActiveHolders(
+    organizationId: OrganizationId,
+    roleKeys: readonly string[],
+  ): Promise<number>;
 
-  // The same count with every owner row locked, and **only** valid inside a transaction.
-  // Two concurrent demotions both read two owners otherwise and leave the tenant with none.
-  public abstract lockActiveOwners(organizationId: OrganizationId): Promise<number>;
+  // The same count with every row locked, and **only** valid inside a transaction. Two
+  // concurrent demotions both read two holders otherwise and leave the tenant with none.
+  public abstract lockActiveHolders(
+    organizationId: OrganizationId,
+    roleKeys: readonly string[],
+  ): Promise<number>;
 }

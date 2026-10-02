@@ -120,11 +120,11 @@ class StubMemberRepository implements MemberRepository {
     throw new Error("not under test");
   }
 
-  public countActiveOwners(): Promise<number> {
+  public countActiveHolders(): Promise<number> {
     throw new Error("not under test");
   }
 
-  public lockActiveOwners(): Promise<number> {
+  public lockActiveHolders(): Promise<number> {
     throw new Error("not under test");
   }
 }

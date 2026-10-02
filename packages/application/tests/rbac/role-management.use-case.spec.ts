@@ -1,10 +1,12 @@
 import { Identifiers, type OrganizationId, type RoleId } from "@loadbearing/contracts";
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "@loadbearing/errors";
-import { CapabilitySet, type PermissionKey } from "@loadbearing/permissions";
+import { CapabilitySet, EntitlementMask, type PermissionKey } from "@loadbearing/permissions";
 import { beforeEach, describe, expect, it } from "vitest";
+import type { PlatformReader } from "../../src/platform/platform.reader.js";
 import type { ActivityLogger, CapabilityInvalidator, UnitOfWork } from "../../src/port/index.js";
 import { Authorizer } from "../../src/primitive/authorizer.js";
 import { Principal } from "../../src/primitive/principal.js";
+import type { CapabilityRepository } from "../../src/rbac/capability.repository.js";
 import { CreateRoleUseCase } from "../../src/rbac/create-role.use-case.js";
 import { DeleteRoleUseCase } from "../../src/rbac/delete-role.use-case.js";
 import { GrantPermissionUseCase } from "../../src/rbac/grant-permission.use-case.js";
@@ -159,22 +161,51 @@ const update = () =>
   new UpdateRoleUseCase(new Authorizer(), roles, activity, new DirectUnitOfWork());
 const remove = () =>
   new DeleteRoleUseCase(new Authorizer(), roles, activity, new DirectUnitOfWork());
-const grant = () =>
+// `ORG` is a customer tenant unless a case says the platform organization is this one.
+const OTHER = Identifiers.organizationId.parse("018f8c00-0000-7000-8000-0000000000ff");
+const platformIs = (organizationId: OrganizationId) =>
+  ({ organizationId: () => Promise.resolve(organizationId) }) as unknown as PlatformReader;
+const UNLIMITED = EntitlementMask.from({
+  plan: "all",
+  added: [],
+  removed: [],
+  disabledModules: [],
+});
+const planOf = (mask: EntitlementMask) =>
+  ({ entitlementFor: () => Promise.resolve(mask) }) as unknown as CapabilityRepository;
+
+const grant = (platform: OrganizationId = OTHER) =>
   new GrantPermissionUseCase(
     new Authorizer(),
     roles,
     capabilities,
     activity,
     new DirectUnitOfWork(),
+    platformIs(platform),
   );
-const revoke = () =>
+const revoke = (entitlement: EntitlementMask = UNLIMITED) =>
   new RevokePermissionUseCase(
     new Authorizer(),
     roles,
     capabilities,
     activity,
     new DirectUnitOfWork(),
+    planOf(entitlement),
   );
+
+// Holds `platform.account.read` on the platform axis, as a platform admin does in any tenant.
+function staffHolding(...grants: readonly PermissionKey[]): Principal {
+  return new Principal(
+    ORG,
+    ACTOR,
+    CapabilitySet.from({
+      wildcard: false,
+      org: { grants, denies: [] },
+      platform: { grants: ["platform.account.read"], denies: [] },
+      goals: {},
+    }),
+  );
+}
 
 const NEW_ROLE = { key: "reviewer", name: "Reviewer", description: null, scope: "org" } as const;
 
@@ -356,7 +387,7 @@ describe("GrantPermissionUseCase", () => {
   });
 
   // And the other direction, so the refusal above is the scope and not a typo: a real
-  // platform admin hands the key out the way every other one is handed out.
+  // platform admin hands the key out, on a role in the platform organization.
   it("lets a holder of the platform key grant it", async () => {
     reset([role()]);
     const admin = new Principal(
@@ -370,7 +401,7 @@ describe("GrantPermissionUseCase", () => {
       }),
     );
 
-    const result = await grant().execute(admin, {
+    const result = await grant(ORG).execute(admin, {
       roleId: EDITABLE,
       permission: "platform.status.read",
     });
@@ -419,7 +450,7 @@ describe("RevokePermissionUseCase", () => {
   it("removes the permission and flushes the tenant's cached capability sets", async () => {
     reset([role({ permissions: ["member.read", "rbac.role.read"] })]);
 
-    const result = await revoke().execute(actorHolding("rbac.permission.revoke"), {
+    const result = await revoke().execute(actorHolding("rbac.permission.revoke", "member.read"), {
       roleId: EDITABLE,
       permission: "member.read",
     });
@@ -549,5 +580,60 @@ describe("granting and revoking write one row, not the whole set", () => {
       "member.remove",
       "rbac.role.read",
     ]);
+  });
+});
+
+// A platform key acts only through the platform organization's roles.
+describe("platform keys on a role", () => {
+  it("refuses a platform key on a role outside the platform organization", async () => {
+    reset([role()]);
+
+    await expect(
+      grant(OTHER).execute(staffHolding("rbac.permission.grant"), {
+        roleId: EDITABLE,
+        permission: "platform.account.read",
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect(roles.granted).toEqual([]);
+  });
+
+  it("grants it in the platform organization to an actor who holds it", async () => {
+    reset([role()]);
+
+    const result = await grant(ORG).execute(staffHolding("rbac.permission.grant"), {
+      roleId: EDITABLE,
+      permission: "platform.account.read",
+    });
+    expect(result.permissions).toContain("platform.account.read");
+  });
+
+  // A role able to revoke must not strip what it could never have granted.
+  it("refuses revoking a key the actor does not hold", async () => {
+    reset([role({ permissions: ["platform.account.read"] })]);
+
+    await expect(
+      revoke().execute(actorHolding("rbac.permission.revoke"), {
+        roleId: EDITABLE,
+        permission: "platform.account.read",
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(roles.revoked).toEqual([]);
+  });
+
+  // The plan took it away, so nobody holds it; the row must still be removable.
+  it("revokes a key the plan no longer includes", async () => {
+    reset([role({ permissions: ["apikey.read"] })]);
+    const without = EntitlementMask.from({
+      plan: ["rbac.permission.revoke"],
+      added: [],
+      removed: [],
+      disabledModules: [],
+    });
+
+    const result = await revoke(without).execute(actorHolding("rbac.permission.revoke"), {
+      roleId: EDITABLE,
+      permission: "apikey.read",
+    });
+    expect(result.permissions).toEqual([]);
   });
 });

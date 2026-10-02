@@ -30,6 +30,8 @@ const MEMBER_ROLE = Identifiers.roleId.parse("018f8c00-0000-7000-8000-0000000000
 // `platform` is `platform_admin`, which *is* a membership in the tier.
 const GOAL_ROLE = Identifiers.roleId.parse("018f8c00-0000-7000-8000-0000000000c3");
 const PLATFORM_ROLE = Identifiers.roleId.parse("018f8c00-0000-7000-8000-0000000000c4");
+// The platform organization's top role, holding a platform key no tenant owner has.
+const ADMIN_ROLE = Identifiers.roleId.parse("018f8c00-0000-7000-8000-0000000000c5");
 
 const CLOCK = { now: () => new Date("2026-09-06T00:00:00.000Z") };
 
@@ -38,6 +40,20 @@ function actorHolding(...grants: readonly PermissionKey[]): Principal {
     ORG,
     ACTOR,
     CapabilitySet.from({ wildcard: false, org: { grants, denies: [] }, goals: {} }),
+  );
+}
+
+// A platform admin: the tenant keys of the platform organization plus a platform key.
+function platformAdmin(...grants: readonly PermissionKey[]): Principal {
+  return new Principal(
+    ORG,
+    ACTOR,
+    CapabilitySet.from({
+      wildcard: false,
+      org: { grants, denies: [] },
+      platform: { grants: ["platform.account.manage"], denies: [] },
+      goals: {},
+    }),
   );
 }
 
@@ -62,11 +78,17 @@ class RecordingMembers implements MemberRepository {
   public readonly roleChanges: { userId: UserId; roleId: RoleId }[] = [];
   public readonly deactivations: { userId: UserId; at: Date | null }[] = [];
   public locked = 0;
+  public readonly lockedKeys: (readonly string[])[] = [];
 
   public constructor(
     private readonly row: MemberRecord | null,
-    private readonly activeOwners: number,
+    // One count for any key set, or per set when a case needs owners and admins apart.
+    private readonly holders: number | ((keys: readonly string[]) => number),
   ) {}
+
+  private count(keys: readonly string[]): number {
+    return typeof this.holders === "number" ? this.holders : this.holders(keys);
+  }
 
   public list(): Promise<MemberPage> {
     throw new Error("not under test");
@@ -93,15 +115,16 @@ class RecordingMembers implements MemberRepository {
     return Promise.resolve();
   }
 
-  public countActiveOwners(): Promise<number> {
-    return Promise.resolve(this.activeOwners);
+  public countActiveHolders(_org: OrganizationId, keys: readonly string[]): Promise<number> {
+    return Promise.resolve(this.count(keys));
   }
 
   // The same answer, and it records that the locking read is the one taken: the
   // unlocked count outside the transaction is exactly what the race exploited.
-  public lockActiveOwners(): Promise<number> {
+  public lockActiveHolders(_org: OrganizationId, keys: readonly string[]): Promise<number> {
     this.locked += 1;
-    return Promise.resolve(this.activeOwners);
+    this.lockedKeys.push(keys);
+    return Promise.resolve(this.count(keys));
   }
 }
 
@@ -159,6 +182,17 @@ class StubRoles implements RoleRepository {
         scope: "org",
         isSystem: true,
         permissions: [],
+      });
+    }
+    if (roleId === ADMIN_ROLE) {
+      return Promise.resolve({
+        id: ADMIN_ROLE,
+        key: "platform_admin",
+        name: "Platform administrator",
+        description: null,
+        scope: "platform",
+        isSystem: true,
+        permissions: ["member.invite", "platform.account.manage"],
       });
     }
     if (roleId === GOAL_ROLE || roleId === PLATFORM_ROLE) {
@@ -271,6 +305,8 @@ const setActive = (
     activity,
     new DirectUnitOfWork(),
     CLOCK,
+    new StubRoles(),
+    planOf(UNLIMITED),
   ),
 });
 
@@ -435,7 +471,11 @@ describe("SetMemberActiveUseCase", () => {
     const { useCase } = setActive(members);
 
     await expect(
-      useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }, false),
+      useCase.execute(
+        actorHolding("member.deactivate", "member.invite"),
+        { userId: TARGET },
+        false,
+      ),
     ).rejects.toBeInstanceOf(ConflictError);
     expect(members.deactivations).toEqual([]);
   });
@@ -447,7 +487,7 @@ describe("SetMemberActiveUseCase", () => {
     const { useCase } = setActive(members);
 
     await expect(
-      useCase.execute(actorHolding("member.deactivate"), { userId: ACTOR }, false),
+      useCase.execute(actorHolding("member.deactivate", "member.invite"), { userId: ACTOR }, false),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
@@ -455,13 +495,21 @@ describe("SetMemberActiveUseCase", () => {
     const members = new RecordingMembers(member({ roleKey: "member" }), 2);
     const { useCase, activity } = setActive(members);
 
-    await useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }, false);
+    await useCase.execute(
+      actorHolding("member.deactivate", "member.invite"),
+      { userId: TARGET },
+      false,
+    );
     expect(members.deactivations).toEqual([{ userId: TARGET, at: CLOCK.now() }]);
     expect(activity.records.map((r) => r.action)).toEqual(["member.deactivated"]);
 
     const back = new RecordingMembers(member({ roleKey: "member", deactivated: true }), 2);
     const second = setActive(back);
-    await second.useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }, true);
+    await second.useCase.execute(
+      actorHolding("member.deactivate", "member.invite"),
+      { userId: TARGET },
+      true,
+    );
 
     expect(back.deactivations).toEqual([{ userId: TARGET, at: null }]);
     expect(second.activity.records.map((r) => r.action)).toEqual(["member.reactivated"]);
@@ -473,7 +521,11 @@ describe("SetMemberActiveUseCase", () => {
     const members = new RecordingMembers(member({ roleKey: "member" }), 2);
     const { useCase, capabilities } = setActive(members);
 
-    await useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }, false);
+    await useCase.execute(
+      actorHolding("member.deactivate", "member.invite"),
+      { userId: TARGET },
+      false,
+    );
 
     expect(capabilities.flushed).toEqual([`${ORG}:${TARGET}`]);
   });
@@ -482,7 +534,11 @@ describe("SetMemberActiveUseCase", () => {
     const members = new RecordingMembers(member({ roleKey: "member" }), 2);
     const { useCase, activity } = setActive(members);
 
-    await useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }, true);
+    await useCase.execute(
+      actorHolding("member.deactivate", "member.invite"),
+      { userId: TARGET },
+      true,
+    );
 
     expect(members.deactivations).toEqual([]);
     expect(activity.records).toEqual([]);
@@ -508,7 +564,11 @@ describe("the last-owner rule takes the locking read", () => {
     const members = new RecordingMembers(member(), 2);
     const { useCase } = setActive(members);
 
-    await useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }, false);
+    await useCase.execute(
+      actorHolding("member.deactivate", "member.invite"),
+      { userId: TARGET },
+      false,
+    );
 
     expect(members.locked).toBe(1);
   });
@@ -519,11 +579,15 @@ describe("the last-owner rule takes the locking read", () => {
     const members = new RecordingMembers(member(), 2);
     const { useCase } = setActive(members);
 
-    await useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }, false);
+    await useCase.execute(
+      actorHolding("member.deactivate", "member.invite"),
+      { userId: TARGET },
+      false,
+    );
     const after = new RecordingMembers({ ...member(), deactivated: true }, 2);
 
     await setActive(after).useCase.execute(
-      actorHolding("member.deactivate"),
+      actorHolding("member.deactivate", "member.invite"),
       { userId: TARGET },
       true,
     );
@@ -561,5 +625,101 @@ describe("a membership role cannot be goal-scoped", () => {
     });
 
     expect(members.roleChanges).toHaveLength(1);
+  });
+});
+
+// The platform organization has a second top role. An owner there holds every tenant key
+// but no platform key, so it must not be able to remove the admin who does.
+describe("a platform admin is protected like an owner", () => {
+  const ADMIN = {
+    roleId: ADMIN_ROLE,
+    roleKey: "platform_admin",
+    roleName: "Platform administrator",
+  };
+
+  it("refuses an owner demoting a platform admin", async () => {
+    const members = new RecordingMembers(member(ADMIN), 2);
+    const { useCase } = changeRole(members);
+
+    await expect(
+      useCase.execute(actorHolding("member.role.change", "member.invite"), {
+        userId: TARGET,
+        roleId: MEMBER_ROLE,
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(members.roleChanges).toEqual([]);
+  });
+
+  it("refuses an owner deactivating or reactivating a platform admin", async () => {
+    const off = new RecordingMembers(member(ADMIN), 2);
+    await expect(
+      setActive(off).useCase.execute(
+        actorHolding("member.deactivate", "member.invite"),
+        { userId: TARGET },
+        false,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+    const on = new RecordingMembers(member({ ...ADMIN, deactivated: true }), 2);
+    await expect(
+      setActive(on).useCase.execute(
+        actorHolding("member.deactivate", "member.invite"),
+        { userId: TARGET },
+        true,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(off.deactivations).toEqual([]);
+    expect(on.deactivations).toEqual([]);
+  });
+
+  // Counted alone: a remaining owner does not keep the platform organization runnable.
+  it("refuses to demote the last platform admin while owners remain", async () => {
+    const members = new RecordingMembers(member(ADMIN), (keys) =>
+      keys.length === 1 && keys[0] === "platform_admin" ? 1 : 5,
+    );
+    const { useCase } = changeRole(members);
+
+    await expect(
+      useCase.execute(platformAdmin("member.role.change", "member.invite"), {
+        userId: TARGET,
+        roleId: MEMBER_ROLE,
+      }),
+    ).rejects.toMatchObject({ message: "CONFLICT" });
+    expect(members.lockedKeys).toEqual([["platform_admin"]]);
+    expect(members.roleChanges).toEqual([]);
+  });
+
+  it("refuses to deactivate the last platform admin", async () => {
+    const members = new RecordingMembers(member(ADMIN), 1);
+    await expect(
+      setActive(members).useCase.execute(
+        platformAdmin("member.deactivate", "member.invite"),
+        { userId: TARGET },
+        false,
+      ),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it("demotes a platform admin while another remains", async () => {
+    const members = new RecordingMembers(member(ADMIN), 2);
+    const { useCase } = changeRole(members);
+
+    await useCase.execute(platformAdmin("member.role.change", "member.invite"), {
+      userId: TARGET,
+      roleId: MEMBER_ROLE,
+    });
+    expect(members.roleChanges).toEqual([{ userId: TARGET, roleId: MEMBER_ROLE }]);
+  });
+
+  // An owner may step down when a platform admin can still run the organization.
+  it("counts platform admins as owners when an owner is demoted", async () => {
+    const members = new RecordingMembers(member(), 2);
+    const { useCase } = changeRole(members);
+
+    await useCase.execute(actorHolding("member.role.change", "member.invite"), {
+      userId: TARGET,
+      roleId: MEMBER_ROLE,
+    });
+    expect(members.lockedKeys).toEqual([["owner", "platform_admin"]]);
   });
 });

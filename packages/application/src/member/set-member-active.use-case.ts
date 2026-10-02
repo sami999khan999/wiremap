@@ -1,6 +1,7 @@
 import { type Clock, ConflictError, NotFoundError, type UserId } from "../import.js";
 import type { ActivityLogger, CapabilityInvalidator, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
+import { type CapabilityRepository, type RoleRepository, RoleRules } from "../rbac/index.js";
 import type { MemberRecord, MemberRepository } from "./member.repository.js";
 import { MemberRules } from "./member.rules.js";
 
@@ -18,6 +19,9 @@ export class SetMemberActiveUseCase {
     private readonly activity: ActivityLogger,
     private readonly unitOfWork: UnitOfWork,
     private readonly clock: Clock,
+    // Both for the outrank rule: the member's role, and the plan that filters its keys.
+    private readonly roles: RoleRepository,
+    private readonly entitlements: CapabilityRepository,
   ) {}
 
   public async execute(
@@ -36,13 +40,21 @@ export class SetMemberActiveUseCase {
     // is not recoverable from inside the product at all.
     if (!active && member.userId === actor.userId) throw new ConflictError("member", "self");
 
+    // Both directions: switching someone off, or back on, takes holding every key their role
+    // gives. Reactivating a platform admin restores every platform right.
+    const role = await this.roles.findById(actor.organizationId, member.roleId);
+    if (role) {
+      const entitlement = await this.entitlements.entitlementFor(actor.organizationId);
+      RoleRules.assertAssignableBy(actor, role, entitlement);
+    }
+
     const at = active ? null : this.clock.now();
-    const risky = !active && MemberRules.isOwner(member);
+    const guard = active ? null : MemberRules.lastHolderGuard(member.roleKey, null);
 
     await this.unitOfWork.run(async () => {
       // Inside the transaction and before the write. Read outside it, two concurrent
       // deactivations each saw two owners and the tenant committed its way down to none.
-      if (risky) await this.assertNotLastOwner(actor);
+      if (guard) await this.assertNotLast(actor, guard);
 
       await this.members.setDeactivatedAt(actor.organizationId, member.userId, at);
       await this.activity.record(actor, active ? "member.reactivated" : "member.deactivated", {
@@ -57,10 +69,13 @@ export class SetMemberActiveUseCase {
     return { ...member, deactivated: !active };
   }
 
-  // `lockActiveOwners`, not `countActiveOwners`: the lock is what makes the second
+  // `lockActiveHolders`, not `countActiveHolders`: the lock is what makes the second
   // deactivation wait and then read the number its own commit would leave behind.
-  private async assertNotLastOwner(actor: Principal): Promise<void> {
-    const owners = await this.members.lockActiveOwners(actor.organizationId);
-    if (owners <= 1) throw new ConflictError("member", "lastOwner");
+  private async assertNotLast(
+    actor: Principal,
+    guard: NonNullable<ReturnType<typeof MemberRules.lastHolderGuard>>,
+  ): Promise<void> {
+    const holders = await this.members.lockActiveHolders(actor.organizationId, guard.keys);
+    if (holders <= 1) throw new ConflictError("member", guard.reason);
   }
 }

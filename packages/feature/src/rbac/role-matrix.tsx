@@ -59,24 +59,27 @@ export function RoleMatrix({ limit = 25 }: RoleMatrixProps) {
   const subjects = useMemo<readonly MatrixSubject[]>(() => {
     const registry = PermissionRegistry.instance;
 
-    return items.map((role) => ({
-      id: role.id,
-      label: role.name,
-      // Seeded rows are rewritten on every deploy, so the use-case refuses to edit one.
-      editable: editable && !role.isSystem,
-      capabilities: CapabilitySet.from({
-        // Never a wildcard, even for `owner`: the seed writes every permission as a real
-        // grant, so this shows what is stored.
-        wildcard: false,
-        org: {
-          // A permission the catalog no longer knows is a stale row, not a grant. The API
-          // returns it unfiltered; this is where it stops being trusted.
-          grants: role.permissions.filter((key) => registry.isKnown(key)),
-          denies: [],
-        },
-        goals: {},
-      }),
-    }));
+    return items.map((role) => {
+      // A permission the catalog no longer knows is a stale row, not a grant. The API
+      // returns it unfiltered; this is where it stops being trusted.
+      const known = role.permissions.filter((key) => registry.isKnown(key));
+      // On the axis `can()` reads each from: a platform key on the org axis shows as denied.
+      const isPlatform = (key: PermissionKey) => registry.scopeOf(key) === "platform";
+      return {
+        id: role.id,
+        label: role.name,
+        // Seeded rows are rewritten on every deploy, so the use-case refuses to edit one.
+        editable: editable && !role.isSystem,
+        capabilities: CapabilitySet.from({
+          // Never a wildcard, even for `owner`: the seed writes every permission as a real
+          // grant, so this shows what is stored.
+          wildcard: false,
+          org: { grants: known.filter((key) => !isPlatform(key)), denies: [] },
+          platform: { grants: known.filter(isPlatform), denies: [] },
+          goals: {},
+        }),
+      };
+    });
   }, [items, editable]);
 
   // Every catalog key the plan leaves out. Empty until the ceiling loads, so a slow read

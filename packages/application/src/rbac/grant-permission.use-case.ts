@@ -1,4 +1,11 @@
-import { ForbiddenError, NotFoundError, PermissionRegistry, type RoleId } from "../import.js";
+import {
+  ForbiddenError,
+  NotFoundError,
+  PermissionRegistry,
+  type RoleId,
+  ValidationError,
+} from "../import.js";
+import type { PlatformReader } from "../platform/index.js";
 import type { ActivityLogger, CapabilityInvalidator, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
 import type { RoleRecord, RoleRepository } from "./role.repository.js";
@@ -18,6 +25,7 @@ export class GrantPermissionUseCase {
     private readonly capabilities: CapabilityInvalidator,
     private readonly activity: ActivityLogger,
     private readonly unitOfWork: UnitOfWork,
+    private readonly platform: PlatformReader,
   ) {}
 
   public async execute(actor: Principal, input: GrantPermissionInput): Promise<RoleRecord> {
@@ -42,6 +50,13 @@ export class GrantPermissionUseCase {
       .filter((key) => !role.permissions.includes(key));
     if (keys.length === 0) return role;
     for (const key of keys) if (!actor.can(key)) throw new ForbiddenError(key);
+
+    // A platform key acts only through the platform organization's roles. Anywhere else it
+    // grants nothing, and it blocks that tenant's owner from assigning the role.
+    const platformKey = keys.some((key) => PermissionRegistry.instance.scopeOf(key) === "platform");
+    if (platformKey && actor.organizationId !== (await this.platform.organizationId())) {
+      throw new ValidationError([{ field: "permission", rule: "platformOnly" }]);
+    }
 
     // One row per key, not the whole set. `save` reconciles against the list read above, so
     // two concurrent grants each wrote the set the other had not seen and one was lost.

@@ -1,6 +1,7 @@
-import { NotFoundError, type RoleId } from "../import.js";
+import { ForbiddenError, NotFoundError, PermissionRegistry, type RoleId } from "../import.js";
 import type { ActivityLogger, CapabilityInvalidator, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
+import type { CapabilityRepository } from "./capability.repository.js";
 import type { RoleRecord, RoleRepository } from "./role.repository.js";
 import { RoleRules } from "./role.rules.js";
 
@@ -16,6 +17,8 @@ export class RevokePermissionUseCase {
     private readonly capabilities: CapabilityInvalidator,
     private readonly activity: ActivityLogger,
     private readonly unitOfWork: UnitOfWork,
+    // The plan, so a key it took away stays revocable by an owner who no longer holds it.
+    private readonly entitlements: CapabilityRepository,
   ) {}
 
   public async execute(actor: Principal, input: RevokePermissionInput): Promise<RoleRecord> {
@@ -28,6 +31,16 @@ export class RevokePermissionUseCase {
     // Deliberately not checked against the registry, unlike a grant: a row left behind
     // by a renamed permission is exactly the one somebody needs to be able to remove.
     if (!role.permissions.includes(input.permission)) return role;
+
+    // No stripping what you could not grant: a staff role able to revoke would otherwise
+    // take platform keys off every other role.
+    const permission = input.permission;
+    if (PermissionRegistry.instance.isKnown(permission)) {
+      const entitlement = await this.entitlements.entitlementFor(actor.organizationId);
+      if (entitlement.isEntitled(permission) && !actor.canTenantWide(permission)) {
+        throw new ForbiddenError(permission);
+      }
+    }
 
     // One row, not the whole set. `save` reconciles against the list read above, so a
     // concurrent grant was undone by a revoke that had never seen it.
