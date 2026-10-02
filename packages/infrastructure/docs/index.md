@@ -253,3 +253,5 @@ guessing one.
   table.
 - [The doc renderer](reference/doc-renderer.md) — the unified pipeline and why the sanitiser sits
   where it does, what it lets through, and the type stub that keeps the DOM out of this package.
+- [Cloudflare queue](reference/cloudflare-queue.md) — the round trip through the dispatcher Worker,
+  the signature both hops carry, and which `JobOptions` change meaning off BullMQ.

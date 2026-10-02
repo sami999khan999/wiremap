@@ -257,7 +257,7 @@ exists to have.
 3. **`TENANT_COLUMN` in `check-architecture.mjs`** — the assertion that every domain table carries
    the column and that every unique index leads with it. Asserted equal to `TenantKey`, so the
    two cannot drift.
-4. **The worker's key derivation** — `apps/worker/src/bootstrap/with-shard.ts`, which turns a
+4. **The worker's key derivation** — `packages/composition/src/consumer/queue.consumer.ts`, which turns a
    job's payload into a principal. A job carries an organization id today; a region-sharded fork
    carries whatever its strategy reads.
 

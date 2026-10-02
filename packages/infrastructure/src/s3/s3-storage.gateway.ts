@@ -24,6 +24,11 @@ export interface S3Config {
   readonly secretKey: string;
   // true for MinIO, false for AWS.
   readonly forcePathStyle: boolean;
+  // `required` sends a checksum only where S3 demands one. Backblaze B2 refuses the SDK's
+  // default flexible checksums, so it runs `required`; AWS and MinIO run `full`.
+  readonly checksums?: "full" | "required";
+  // False on B2, whose S3 API has no lifecycle calls. See docs/reference/storage-policy.md.
+  readonly lifecycle?: boolean;
 }
 
 interface Digest {
@@ -54,7 +59,7 @@ export class S3StorageGateway extends StorageGateway {
         Key: key,
         Body: body,
         ContentType: contentType,
-        ChecksumSHA256: digest.base64,
+        ...(this.config.checksums === "required" ? {} : { ChecksumSHA256: digest.base64 }),
       }),
     );
 

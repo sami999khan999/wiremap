@@ -20,6 +20,12 @@ export class S3ClientFactory {
       region: config.region,
       forcePathStyle: config.forcePathStyle,
       credentials: { accessKeyId: config.accessKey, secretAccessKey: config.secretKey },
+      ...(config.checksums === "required"
+        ? {
+            requestChecksumCalculation: "WHEN_REQUIRED",
+            responseChecksumValidation: "WHEN_REQUIRED",
+          }
+        : {}),
       requestHandler: {
         connectionTimeout: S3ClientFactory.CONNECTION_TIMEOUT_MS,
         requestTimeout: S3ClientFactory.REQUEST_TIMEOUT_MS,

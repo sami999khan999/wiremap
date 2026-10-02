@@ -13,6 +13,7 @@
     "storage-policy",
     "realtime",
     "fan-out",
-    "doc-renderer"
+    "doc-renderer",
+    "cloudflare-queue"
   ]
 }

@@ -18,9 +18,12 @@ const NO_CONFIGURATION = "NoSuchLifecycleConfiguration";
 export class S3StoragePolicyGateway extends StoragePolicyGateway {
   private readonly s3: S3Client;
 
+  public override readonly managesLifecycle: boolean;
+
   public constructor(private readonly config: S3Config) {
     super();
     this.s3 = S3ClientFactory.create(config);
+    this.managesLifecycle = config.lifecycle !== false;
   }
 
   public async lifecycle(): Promise<readonly LifecycleRule[]> {
