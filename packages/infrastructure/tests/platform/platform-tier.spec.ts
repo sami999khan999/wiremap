@@ -180,6 +180,31 @@ describe("PgCapabilityRepository.resolvePlatformFor", () => {
       );
   });
 
+  // Live rows only, as the tenant axis reads them: a lapsed grant gives nothing.
+  it("ignores a platform exception past its expiry", async () => {
+    await database.client.insert(permissionOverrides).values({
+      id: crypto.randomUUID(),
+      organizationId: platformOrganization,
+      userId: outsider,
+      permission: "platform.flag.manage",
+      effect: "grant",
+      reason: "lapsed trial",
+      goalId: null,
+      expiresAt: new Date(Date.now() - 60_000),
+    });
+
+    const resolved = await new PgCapabilityRepository(
+      DatabaseCluster.single(database),
+      scope,
+      shards,
+    ).resolvePlatformFor(outsider);
+    expect(resolved.can("platform.flag.manage")).toBe(false);
+
+    await database.client
+      .delete(permissionOverrides)
+      .where(eq(permissionOverrides.userId, outsider));
+  });
+
   // Removing someone's platform rights is deactivating their membership in the tier, so
   // this is the revocation path and not a detail of the query.
   it("holds nothing once the membership is deactivated", async () => {

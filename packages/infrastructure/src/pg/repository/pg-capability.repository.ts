@@ -184,7 +184,14 @@ export class PgCapabilityRepository extends BaseRepository implements Capability
       })
       .from(permissionOverrides)
       .innerJoin(organizations, eq(organizations.id, permissionOverrides.organizationId))
-      .where(and(eq(organizations.isPlatform, true), eq(permissionOverrides.userId, userId)));
+      .where(
+        and(
+          eq(organizations.isPlatform, true),
+          eq(permissionOverrides.userId, userId),
+          // Live only, as the tenant query reads them: an expired exception grants nothing.
+          or(isNull(permissionOverrides.expiresAt), gt(permissionOverrides.expiresAt, sql`now()`)),
+        ),
+      );
 
     for (const row of overrideRows) {
       if (!registry.isKnown(row.permission)) continue;
