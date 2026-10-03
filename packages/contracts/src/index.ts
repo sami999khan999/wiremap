@@ -1,4 +1,11 @@
 export {
+  ActivityContract,
+  type ActivityDto,
+  ActivityEntity,
+  type ActivityListQuery,
+  ActivityProcedures,
+} from "./activity/index.js";
+export {
   ApiKeyContract,
   type ApiKeyDto,
   ApiKeyEntity,
@@ -77,15 +84,23 @@ export {
   MailTemplates,
 } from "./mail/index.js";
 export {
+  type AddDomainInput,
   type ChangeMemberRoleInput,
+  type CreatedInvitationLinkDto,
+  type CreateInvitationLinkInput,
+  type DomainDto,
   type InvitationDto,
+  type InvitationLinkDto,
   type InviteMemberInput,
   MemberContract,
   type MemberDto,
   MemberEntity,
   MemberProcedures,
+  type RemoveDomainInput,
+  type RemoveMemberInput,
   type ResendInvitationInput,
   type RevokeInvitationInput,
+  type RevokeInvitationLinkInput,
   type SetMemberActiveInput,
 } from "./member/index.js";
 export {
@@ -102,6 +117,15 @@ export {
   NotificationProcedures,
   type UpdateNotificationPreferenceInput,
 } from "./notification/index.js";
+export {
+  OrganizationContract,
+  type OrganizationDto,
+  OrganizationEntity,
+  OrganizationProcedures,
+  type RemoveOrganizationInput,
+  type TransferOwnershipInput,
+  type UpdateOrganizationInput,
+} from "./organization/index.js";
 export {
   type ClearOverrideInput,
   type DenyOverrideInput,
@@ -151,10 +175,12 @@ export {
   type ApiKeyId,
   type DocPageId,
   type DocSpaceId,
+  type DomainId,
   Envelope,
   type GoalId,
   Identifiers,
   type InvitationId,
+  type InvitationLinkId,
   Keyset,
   type KeysetQuery,
   type NotificationId,
@@ -164,6 +190,7 @@ export {
   Password,
   type RoleId,
   type TaskId,
+  type TeamId,
   type UserId,
 } from "./primitive/index.js";
 export { type AppContract, contract } from "./procedure/index.js";
@@ -199,3 +226,14 @@ export {
   RoleProcedures,
   type UpdateRoleInput,
 } from "./role/index.js";
+export {
+  type CreateTeamInput,
+  TeamContract,
+  type TeamDto,
+  TeamEntity,
+  type TeamMemberDto,
+  type TeamMembershipInput,
+  TeamProcedures,
+  type TeamRefInput,
+  type UpdateTeamInput,
+} from "./team/index.js";

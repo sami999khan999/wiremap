@@ -17,6 +17,9 @@ export class Identifiers {
   public static readonly notificationId = z.uuid().brand<"NotificationId">();
   public static readonly docSpaceId = z.uuid().brand<"DocSpaceId">();
   public static readonly docPageId = z.uuid().brand<"DocPageId">();
+  public static readonly teamId = z.uuid().brand<"TeamId">();
+  public static readonly invitationLinkId = z.uuid().brand<"InvitationLinkId">();
+  public static readonly domainId = z.uuid().brand<"DomainId">();
 }
 
 export type OrganizationId = z.infer<typeof Identifiers.organizationId>;
@@ -29,3 +32,6 @@ export type InvitationId = z.infer<typeof Identifiers.invitationId>;
 export type NotificationId = z.infer<typeof Identifiers.notificationId>;
 export type DocSpaceId = z.infer<typeof Identifiers.docSpaceId>;
 export type DocPageId = z.infer<typeof Identifiers.docPageId>;
+export type TeamId = z.infer<typeof Identifiers.teamId>;
+export type InvitationLinkId = z.infer<typeof Identifiers.invitationLinkId>;
+export type DomainId = z.infer<typeof Identifiers.domainId>;

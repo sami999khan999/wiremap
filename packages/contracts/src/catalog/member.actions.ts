@@ -10,4 +10,9 @@ export const memberActions = {
   // between them on the value it is writing.
   "member.deactivated": { label: "Member deactivated" },
   "member.reactivated": { label: "Member reactivated" },
+  "member.removed": { label: "Member removed" },
+  "member.link.created": { label: "Invitation link created" },
+  "member.link.revoked": { label: "Invitation link revoked" },
+  "member.domain.added": { label: "Auto-join domain added" },
+  "member.domain.removed": { label: "Auto-join domain removed" },
 } as const;

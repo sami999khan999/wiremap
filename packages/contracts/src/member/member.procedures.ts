@@ -51,6 +51,41 @@ export class MemberProcedures {
     .input(MemberContract.setActive)
     .output(MemberContract.entity);
 
+  public static readonly remove = oc
+    .route({ method: "DELETE", path: "/members/{userId}" })
+    .input(MemberContract.remove)
+    .output(Envelope.acknowledged);
+
+  public static readonly listLinks = oc
+    .route({ method: "GET", path: "/members/links" })
+    .input(MemberContract.listQuery)
+    .output(Envelope.paginated(MemberContract.invitationLink));
+
+  public static readonly createLink = oc
+    .route({ method: "POST", path: "/members/links" })
+    .input(MemberContract.createLink)
+    .output(MemberContract.createdInvitationLink);
+
+  public static readonly revokeLink = oc
+    .route({ method: "DELETE", path: "/members/links/{linkId}" })
+    .input(MemberContract.revokeLink)
+    .output(Envelope.acknowledged);
+
+  public static readonly listDomains = oc
+    .route({ method: "GET", path: "/members/domains" })
+    .input(MemberContract.listQuery)
+    .output(Envelope.paginated(MemberContract.domain));
+
+  public static readonly addDomain = oc
+    .route({ method: "POST", path: "/members/domains" })
+    .input(MemberContract.addDomain)
+    .output(MemberContract.domain);
+
+  public static readonly removeDomain = oc
+    .route({ method: "DELETE", path: "/members/domains/{domainId}" })
+    .input(MemberContract.removeDomain)
+    .output(Envelope.acknowledged);
+
   // The object the merge point in `procedure/index.ts` mounts. One place to add a
   // procedure to, rather than two.
   public static readonly all = {
@@ -62,5 +97,12 @@ export class MemberProcedures {
     changeRole: MemberProcedures.changeRole,
     deactivate: MemberProcedures.deactivate,
     reactivate: MemberProcedures.reactivate,
+    remove: MemberProcedures.remove,
+    listLinks: MemberProcedures.listLinks,
+    createLink: MemberProcedures.createLink,
+    revokeLink: MemberProcedures.revokeLink,
+    listDomains: MemberProcedures.listDomains,
+    addDomain: MemberProcedures.addDomain,
+    removeDomain: MemberProcedures.removeDomain,
   } as const;
 }

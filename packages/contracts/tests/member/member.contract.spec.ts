@@ -49,14 +49,21 @@ describe("MemberContract", () => {
 
   it("mounts every procedure the permission catalog names", () => {
     expect(Object.keys(MemberProcedures.all).sort()).toEqual([
+      "addDomain",
       "changeRole",
+      "createLink",
       "deactivate",
       "invite",
       "list",
+      "listDomains",
       "listInvitations",
+      "listLinks",
       "reactivate",
+      "remove",
+      "removeDomain",
       "resendInvitation",
       "revokeInvitation",
+      "revokeLink",
     ]);
   });
 });

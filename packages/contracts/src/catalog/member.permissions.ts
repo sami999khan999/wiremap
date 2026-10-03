@@ -15,4 +15,12 @@ export const memberProcedurePermissions = {
   // to give it back, or an accident needs an owner to undo it.
   "member.deactivate": "member.deactivate",
   "member.reactivate": "member.deactivate",
+  "member.remove": "member.remove",
+  // Links are invitations without an address, so they are the same act as `invite`.
+  "member.listLinks": "member.invite",
+  "member.createLink": "member.invite",
+  "member.revokeLink": "member.invite",
+  "member.listDomains": "member.read",
+  "member.addDomain": "member.domain.manage",
+  "member.removeDomain": "member.domain.manage",
 } as const satisfies Record<string, PermissionKey>;

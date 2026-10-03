@@ -1,13 +1,16 @@
+import { ActivityProcedures } from "../activity/index.js";
 import { ApiKeyProcedures } from "../apikey/index.js";
 import { DocGrantProcedures, DocPageProcedures, DocSpaceProcedures } from "../doc/index.js";
 import { DocumentProcedures } from "../document/index.js";
 import type { AnyContractRouter } from "../import.js";
 import { MemberProcedures } from "../member/index.js";
 import { NotificationProcedures } from "../notification/index.js";
+import { OrganizationProcedures } from "../organization/index.js";
 import { OverrideProcedures } from "../override/index.js";
 import { PlatformProcedures } from "../platform/index.js";
 import { RealtimeProcedures } from "../realtime/index.js";
 import { RoleProcedures } from "../role/index.js";
+import { TeamProcedures } from "../team/index.js";
 
 // The merge point for every slice's procedures, and registering one here binds three
 // files to the same commit: its permissions, its procedure map, and its `apps/web` router.
@@ -23,6 +26,9 @@ export const contract = {
   docSpace: DocSpaceProcedures.all,
   docPage: DocPageProcedures.all,
   docGrant: DocGrantProcedures.all,
+  organization: OrganizationProcedures.all,
+  team: TeamProcedures.all,
+  activity: ActivityProcedures.all,
 } as const satisfies AnyContractRouter;
 
 export type AppContract = typeof contract;
