@@ -19,7 +19,7 @@ and every open item. This page holds the state of the tree and the traps that co
 | after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
 | after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
 
-**Next, in order:** `WM3.9` (the access overview), then Phase 5 from `WM5.1`.
+**Next, in order:** Phase 5 from `WM5.1`.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.
@@ -69,6 +69,9 @@ pnpm -r --no-bail run test                # not `pnpm test`: that stops at the f
   stale build hides errors. `pnpm --filter "@loadbearing/<pkg>^..." run build`.
 - **Commit messages carry no AI or co-author trailer.** `docs/ai/rules/workflow.md` wins over any
   tool default.
+- **A migration that grants a key shows up within a minute, not at once.** Capability sets are
+  cached for 60 s per user (`CapabilityCache`), and a running dev server also needs a restart to
+  know a new key at all.
 - **Query results that cross packages are annotated with their DTO type** (`const items:
   readonly ProjectDto[] = ...`). Unannotated, a branded id arrives as `any` through `query`'s
   `.d.ts`, `tsc` stays quiet and only ESLint's unsafe-assignment rule notices.

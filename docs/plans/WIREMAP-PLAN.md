@@ -346,8 +346,10 @@ horizontal scroll at 375 px.
   - Procedure `activity.list` with permission `core.activity.read` (admin, owner).
   - Page `/settings/audit` with a `DataTable` and actor names resolved in one query.
   - Every wiremap action is declared in `*.actions.ts`.
-- [ ] `WM3.9` **Access overview.** `/settings/access` is a matrix of projects × members and teams
+- [x] `WM3.9` **Access overview.** `/settings/access` is a matrix of projects × members and teams
   showing the effective project role. It comes after `WM4.5`.
+  - done: 2026-10-03. Gated on a new org-scoped key, `project.access.overview` (owner, admin;
+    migration `0007`), since a module gate cannot be goal-scoped.
 - [x] `WM3.10` Specs for each use-case. Docs: `application/docs/reference/member.md`,
   done: 2026-10-03. Docs: `packages/application/docs/reference/organization-access.md`. Integration spec `infrastructure/tests/member/pg-wiremap-access.spec.ts`.
   `organization.md` and `team.md`.
