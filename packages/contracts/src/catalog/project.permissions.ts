@@ -21,4 +21,7 @@ export const projectProcedurePermissions = {
   "scan.run": "project.scan.run",
   "scan.createUpload": "project.scan.run",
   "scan.graph": "project.graph.read",
+  "view.list": "project.graph.read",
+  "view.save": "project.graph.read",
+  "view.remove": "project.graph.read",
 } as const satisfies Record<string, PermissionKey>;

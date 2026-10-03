@@ -203,6 +203,7 @@ export {
   type DomainId,
   Envelope,
   type GoalId,
+  type GraphViewId,
   Identifiers,
   type InvitationId,
   type InvitationLinkId,
@@ -303,3 +304,10 @@ export {
   type TeamRefInput,
   type UpdateTeamInput,
 } from "./team/index.js";
+export {
+  type GraphViewDto,
+  type RemoveViewInput,
+  type SaveViewInput,
+  ViewContract,
+  ViewProcedures,
+} from "./view/index.js";

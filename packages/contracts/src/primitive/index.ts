@@ -5,6 +5,7 @@ export {
   type DocSpaceId,
   type DomainId,
   type GoalId,
+  type GraphViewId,
   Identifiers,
   type InvitationId,
   type InvitationLinkId,

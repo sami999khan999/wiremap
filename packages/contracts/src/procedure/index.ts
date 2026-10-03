@@ -14,6 +14,7 @@ import { RealtimeProcedures } from "../realtime/index.js";
 import { RoleProcedures } from "../role/index.js";
 import { ScanProcedures } from "../scan/index.js";
 import { TeamProcedures } from "../team/index.js";
+import { ViewProcedures } from "../view/index.js";
 
 // The merge point for every slice's procedures, and registering one here binds three
 // files to the same commit: its permissions, its procedure map, and its `apps/web` router.
@@ -34,6 +35,7 @@ export const contract = {
   activity: ActivityProcedures.all,
   project: ProjectProcedures.all,
   scan: ScanProcedures.all,
+  view: ViewProcedures.all,
   github: GithubProcedures.all,
 } as const satisfies AnyContractRouter;
 

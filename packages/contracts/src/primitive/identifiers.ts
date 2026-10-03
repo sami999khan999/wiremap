@@ -25,6 +25,7 @@ export class Identifiers {
   public static readonly repositoryId = z.uuid().brand<"RepositoryId">();
   public static readonly projectGrantId = z.uuid().brand<"ProjectGrantId">();
   public static readonly scanId = z.uuid().brand<"ScanId">();
+  public static readonly graphViewId = z.uuid().brand<"GraphViewId">();
 }
 
 export type OrganizationId = z.infer<typeof Identifiers.organizationId>;
@@ -44,3 +45,4 @@ export type ProjectId = z.infer<typeof Identifiers.projectId>;
 export type RepositoryId = z.infer<typeof Identifiers.repositoryId>;
 export type ProjectGrantId = z.infer<typeof Identifiers.projectGrantId>;
 export type ScanId = z.infer<typeof Identifiers.scanId>;
+export type GraphViewId = z.infer<typeof Identifiers.graphViewId>;
