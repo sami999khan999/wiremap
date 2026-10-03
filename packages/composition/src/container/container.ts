@@ -62,7 +62,6 @@ import {
   ExpirePermissionOverridesUseCase,
   ExportOrganizationUseCase,
   FailScanUseCase,
-  FetchWebhookSender,
   FindAccountUseCase,
   FlagCache,
   GeminiChatProvider,
@@ -85,6 +84,7 @@ import {
   GrantPermissionUseCase,
   HandleGithubWebhookUseCase,
   HmacScanTokens,
+  HttpsWebhookSender,
   IndexDocumentUseCase,
   InspectEffectivePermissionsUseCase,
   InspectPlatformStatusUseCase,
@@ -1509,6 +1509,7 @@ export class Container {
         scanRepository,
         viewRepository,
         commentRepository,
+        webhookRepository,
       ]),
       available: new ListAvailableRepositoriesUseCase(
         this.authorizer,
@@ -1646,7 +1647,7 @@ export class Container {
     const deliverWebhook = new DeliverWebhookUseCase(
       webhookRepository,
       projectRepository,
-      new FetchWebhookSender(),
+      new HttpsWebhookSender(),
       cipher,
       this.clock,
       config.email.baseUrl,

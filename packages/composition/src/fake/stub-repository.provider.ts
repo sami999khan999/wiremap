@@ -29,6 +29,11 @@ export class StubRepositoryProvider extends RepositoryProvider {
     return Promise.resolve({ installationId, accountLogin: "stub" });
   }
 
+  // Sees no installation: binding through the stub always needs a real provider's proof.
+  public override installationsOfUser(_code: string): Promise<readonly number[] | null> {
+    return Promise.resolve(null);
+  }
+
   public override repositories(): Promise<readonly ProviderRepository[]> {
     return Promise.resolve(this.available);
   }

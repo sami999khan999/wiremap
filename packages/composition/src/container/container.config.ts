@@ -81,6 +81,8 @@ export interface ContainerConfig {
     readonly privateKey: string;
     readonly webhookSecret: string;
     readonly stateSecret: string;
+    // The App's OAuth pair, which binding an installation requires. See docs/infra/github-app.md.
+    readonly oauth?: { readonly clientId: string; readonly clientSecret: string };
   };
   // Where scans run. `secret` signs each scan's callback token, and the runner workflow holds
   // the same value. `serverUrl` is where a runner calls back. See docs/infra/scan-runner.md.
