@@ -23,6 +23,7 @@ interface Behaviour {
   readonly isActive?: boolean;
   readonly ownedCount?: number;
   readonly claimed?: string | null;
+  readonly linkClaimed?: string | null;
   readonly sessionUpdated?: boolean;
 }
 
@@ -43,6 +44,7 @@ const build = (behaviour: Behaviour = {}) => {
       },
     } as never,
     2,
+    { claimByToken: () => Promise.resolve(behaviour.linkClaimed ?? null) } as never,
   );
 
   const endpoints = plugin.endpoints as unknown as Record<
@@ -85,14 +87,19 @@ beforeEach(() => {
 describe("OrganizationPlugin — mounted shape", () => {
   // The paths the client calls and the rate-limit rules name. A rename here is a 404 in
   // the browser and looks identical in review to a working one.
-  it("mounts the three endpoints at the paths the client calls", () => {
+  it("mounts the four endpoints at the paths the client calls", () => {
     const { endpoints } = build();
 
     expect(
       Object.values(endpoints)
         .map((endpoint) => endpoint.path)
         .sort(),
-    ).toEqual(["/invitation/accept", "/organization/create", "/organization/switch"]);
+    ).toEqual([
+      "/invitation-link/accept",
+      "/invitation/accept",
+      "/organization/create",
+      "/organization/switch",
+    ]);
   });
 });
 
@@ -177,6 +184,28 @@ describe("OrganizationPlugin — accept", () => {
     const { call, recorded } = build({ claimed: OTHER_ORG });
 
     await expect(call("acceptInvitation", { token: "tok" })).resolves.toEqual({
+      organizationId: OTHER_ORG,
+    });
+    expect(recorded.sessions).toEqual([
+      { token: "session-token", activeOrganizationId: OTHER_ORG },
+    ]);
+  });
+});
+
+describe("OrganizationPlugin — accept a link", () => {
+  it("refuses a link the claimer will not claim, without naming why", async () => {
+    const { call, recorded } = build({ linkClaimed: null });
+
+    await expect(call("acceptInvitationLink", { token: "tok" })).rejects.toMatchObject({
+      body: { code: "INVITATION_LINK_NOT_CLAIMABLE" },
+    });
+    expect(recorded.sessions).toEqual([]);
+  });
+
+  it("switches into the tenant the link belongs to", async () => {
+    const { call, recorded } = build({ linkClaimed: OTHER_ORG });
+
+    await expect(call("acceptInvitationLink", { token: "tok" })).resolves.toEqual({
       organizationId: OTHER_ORG,
     });
     expect(recorded.sessions).toEqual([

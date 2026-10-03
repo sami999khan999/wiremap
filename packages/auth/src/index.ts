@@ -9,9 +9,13 @@ export { CapabilityCache, PrincipalBuilder } from "./principal/index.js";
 export {
   BetterAuthSessionGateway,
   BetterAuthSessionResolver,
+  DomainJoiningEnroller,
   InvitationClaimer,
   InvitationClaimingEnroller,
+  InvitationLinkClaimer,
+  type InvitationLinkPreview,
   type InvitationPreview,
+  MemberDomainClaimer,
   MembershipEnroller,
   MembershipReader,
   NullMembershipEnroller,

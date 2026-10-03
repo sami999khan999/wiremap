@@ -112,6 +112,7 @@ const optionsFor = (config: AuthConfig = BASE, mailer: AuthMailer = new StubAuth
     mailer,
     new StubInvitationClaimer(),
     new StubOrganizationFounder(),
+    {} as never,
   ).options;
 
 describe("AuthFactory — social providers", () => {
@@ -142,8 +143,9 @@ describe("AuthFactory — social providers", () => {
 describe("AuthFactory — account linking", () => {
   // Google asserts a verified address, so a match is the same person. The alternative is
   // telling a real user their email is taken by themselves.
-  it("trusts Google and nothing else", () => {
-    expect(optionsFor().account?.accountLinking?.trustedProviders).toEqual(["google"]);
+  // GitHub joined for wiremap: its sign-in is the GitHub App's own OAuth client.
+  it("trusts Google and GitHub and nothing else", () => {
+    expect(optionsFor().account?.accountLinking?.trustedProviders).toEqual(["google", "github"]);
   });
 
   // `requireLocalEmailVerified` defaults to true and is deliberately never set: false
@@ -160,6 +162,7 @@ describe("AuthFactory — credential endpoints", () => {
     const rules = optionsFor().rateLimit?.customRules ?? {};
 
     expect(Object.keys(rules).sort()).toEqual([
+      "/invitation-link/accept",
       "/invitation/accept",
       "/organization/create",
       "/organization/switch",
@@ -223,7 +226,7 @@ describe("AuthFactory — two-factor", () => {
 describe("AuthFactory — organization plugin", () => {
   // The three paths the client calls and the rate-limit rules name. Read off the
   // plugin's endpoints so a renamed path fails here rather than as a 404 in the browser.
-  it("mounts switch, create and accept as POST endpoints", () => {
+  it("mounts switch, create and both accepts as POST endpoints", () => {
     const plugin = (optionsFor().plugins ?? []).find(
       (candidate) => candidate.id === "organization",
     );
@@ -238,6 +241,7 @@ describe("AuthFactory — organization plugin", () => {
     expect(
       endpoints.map((endpoint) => `${endpoint.options.method} ${endpoint.path}`).sort(),
     ).toEqual([
+      "POST /invitation-link/accept",
       "POST /invitation/accept",
       "POST /organization/create",
       "POST /organization/switch",
@@ -298,6 +302,7 @@ describe("AuthFactory — a suspended account", () => {
       new StubAuthMailer(),
       new StubInvitationClaimer(),
       new StubOrganizationFounder(),
+      {} as never,
     ).options;
 
     const before = options.databaseHooks?.session?.create?.before;

@@ -20,6 +20,8 @@ export interface AuthConfig {
   // Undefined switches Google sign-in off rather than half-configuring it: an empty
   // client id is rejected at the consent screen, where no log line explains it.
   readonly google?: { readonly clientId: string; readonly clientSecret: string };
+  // Wiremap: the GitHub App's OAuth credentials, the same pair rule as Google's.
+  readonly github?: { readonly clientId: string; readonly clientSecret: string };
   // Required when `enrolmentMode` is `bootstrap` and ignored otherwise. The same slug
   // `pnpm db:seed` creates, which is what stops the two drifting.
   readonly bootstrapOrganizationSlug?: string;

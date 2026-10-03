@@ -11,6 +11,7 @@ import {
   z,
 } from "../import.js";
 import type { InvitationClaimer } from "../session/invitation.claimer.js";
+import type { InvitationLinkClaimer } from "../session/invitation-link.claimer.js";
 import type { MembershipReader } from "../session/membership.reader.js";
 import type { OrganizationFounder } from "../session/organization.founder.js";
 
@@ -31,6 +32,7 @@ export class OrganizationPlugin {
     claimer: InvitationClaimer,
     founder: OrganizationFounder,
     maxOwnedOrganizations: number,
+    linkClaimer: InvitationLinkClaimer,
   ): BetterAuthPlugin {
     return {
       id: "organization",
@@ -93,6 +95,30 @@ export class OrganizationPlugin {
               throw new APIError("NOT_FOUND", {
                 code: "INVITATION_NOT_CLAIMABLE",
                 message: "That invitation cannot be accepted by this account.",
+              });
+            }
+
+            await OrganizationPlugin.rebind(ctx, session.token, user, organizationId);
+            return ctx.json({ organizationId });
+          },
+        ),
+
+        // Wiremap's shareable invitation: the same shape as `acceptInvitation`, a link's
+        // token instead of an emailed one. The verified address is checked by the claimer.
+        acceptInvitationLink: createAuthEndpoint(
+          "/invitation-link/accept",
+          { method: "POST", body: acceptBody, use: [sessionMiddleware], requireHeaders: true },
+          async (ctx) => {
+            const { session, user } = ctx.context.session;
+
+            const organizationId = await linkClaimer.claimByToken(
+              user.id as UserId,
+              ctx.body.token,
+            );
+            if (!organizationId) {
+              throw new APIError("NOT_FOUND", {
+                code: "INVITATION_LINK_NOT_CLAIMABLE",
+                message: "That invitation link cannot be used by this account.",
               });
             }
 

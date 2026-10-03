@@ -3,6 +3,8 @@ import { type CacheStore, Database, getSchema, type OrganizationId } from "./src
 import { AuthMailer } from "./src/mail/index.js";
 import {
   InvitationClaimer,
+  InvitationLinkClaimer,
+  type InvitationLinkPreview,
   type InvitationPreview,
   MembershipEnroller,
   MembershipReader,
@@ -88,6 +90,16 @@ class UnusedInvitationClaimer extends InvitationClaimer {
   }
 }
 
+class UnusedInvitationLinkClaimer extends InvitationLinkClaimer {
+  public override preview(): Promise<InvitationLinkPreview | null> {
+    return unreachable();
+  }
+
+  public override claimByToken(): Promise<OrganizationId | null> {
+    return unreachable();
+  }
+}
+
 class UnusedOrganizationFounder extends OrganizationFounder {
   public override found(): Promise<OrganizationId> {
     return unreachable();
@@ -120,6 +132,7 @@ const auth = AuthFactory.create(
   new UnusedAuthMailer(),
   new UnusedInvitationClaimer(),
   new UnusedOrganizationFounder(),
+  new UnusedInvitationLinkClaimer(),
 );
 
 for (const [model, table] of Object.entries(getSchema(auth.options))) {

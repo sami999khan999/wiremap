@@ -17,6 +17,7 @@ import type { AuthMailer, MailRecipient } from "../mail/index.js";
 import { OrganizationPlugin } from "../plugin/index.js";
 import type {
   InvitationClaimer,
+  InvitationLinkClaimer,
   MembershipEnroller,
   MembershipReader,
   OrganizationFounder,
@@ -46,6 +47,7 @@ export class AuthFactory {
     mailer: AuthMailer,
     claimer: InvitationClaimer,
     founder: OrganizationFounder,
+    linkClaimer: InvitationLinkClaimer,
   ) {
     const options = {
       secret: config.secret,
@@ -103,21 +105,31 @@ export class AuthFactory {
         modelName: "accounts",
         accountLinking: {
           enabled: true,
-          trustedProviders: ["google"],
+          trustedProviders: ["google", "github"],
         },
       },
 
       // Absent rather than half-configured — and absence is what lets the sign-in page
       // decide whether to render the button.
-      socialProviders: config.google
-        ? {
-            google: {
-              clientId: config.google.clientId,
-              clientSecret: config.google.clientSecret,
-              prompt: "select_account",
-            },
-          }
-        : {},
+      socialProviders: {
+        ...(config.google
+          ? {
+              google: {
+                clientId: config.google.clientId,
+                clientSecret: config.google.clientSecret,
+                prompt: "select_account" as const,
+              },
+            }
+          : {}),
+        ...(config.github
+          ? {
+              github: {
+                clientId: config.github.clientId,
+                clientSecret: config.github.clientSecret,
+              },
+            }
+          : {}),
+      },
 
       session: {
         modelName: "sessions",
@@ -181,6 +193,7 @@ export class AuthFactory {
           "/two-factor/send-otp": { window: 60, max: 3 },
           "/organization/create": { window: 60, max: 5 },
           "/invitation/accept": { window: 60, max: 5 },
+          "/invitation-link/accept": { window: 60, max: 5 },
           "/organization/switch": { window: 60, max: 20 },
         },
       },
@@ -248,7 +261,13 @@ export class AuthFactory {
         }),
         // Switch, create, accept — the three ways a session ends up pointing at a
         // different tenant. See the class for why they are endpoints, not procedures.
-        OrganizationPlugin.create(memberships, claimer, founder, config.maxOwnedOrganizations),
+        OrganizationPlugin.create(
+          memberships,
+          claimer,
+          founder,
+          config.maxOwnedOrganizations,
+          linkClaimer,
+        ),
       ],
     } satisfies BetterAuthOptions;
 
