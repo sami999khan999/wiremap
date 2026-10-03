@@ -39,10 +39,12 @@ export type {
   CreateDocSpaceInput,
   CreatedApiKeyDto,
   CreatedInvitationLinkDto,
+  CreatedWebhookDto,
   CreateInvitationLinkInput,
   CreateProjectInput,
   CreateRoleInput,
   CreateTeamInput,
+  CreateWebhookInput,
   DeleteRequestedDto,
   DeleteRoleInput,
   DenyOverrideInput,
@@ -133,6 +135,9 @@ export type {
   UpdateRepositoryInput,
   UpdateRoleInput,
   UpdateTeamInput,
+  UpdateWebhookInput,
+  WebhookDto,
+  WebhookId,
 } from "@loadbearing/contracts";
 export { GRAPH_VERSION } from "@loadbearing/contracts";
 

@@ -145,6 +145,11 @@ export class QueryKeys {
     list: (projectId: string) => ["activity", "project", projectId] as const,
   };
 
+  public static readonly webhook = {
+    all: () => ["webhook"] as const,
+    list: () => ["webhook", "list"] as const,
+  };
+
   public static readonly comment = {
     all: () => ["comment"] as const,
     list: (projectId: string) => ["comment", "list", projectId] as const,

@@ -48,3 +48,4 @@ export { ScanMutations, ScanQueries } from "./scan/index.js";
 export { SessionMutations } from "./session/index.js";
 export { TeamMutations, TeamQueries } from "./team/index.js";
 export { ViewMutations, ViewQueries } from "./view/index.js";
+export { WebhookMutations, WebhookQueries } from "./webhook/index.js";
