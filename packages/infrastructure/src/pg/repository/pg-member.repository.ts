@@ -15,7 +15,14 @@ import {
   type UserId,
 } from "../../import.js";
 import { BaseRepository } from "../primitive/index.js";
-import { memberships, roles, users } from "../schema/index.js";
+import {
+  goalMembers,
+  memberships,
+  permissionOverrides,
+  roles,
+  teamMembers,
+  users,
+} from "../schema/index.js";
 
 // Live overrides for the row's membership, on `permission_overrides_user_idx`. Named in full:
 // drizzle writes a column unqualified in a one-table select, and `po` would capture it.
@@ -137,6 +144,28 @@ export class PgMemberRepository extends BaseRepository implements MemberReposito
     await this.db
       .update(memberships)
       .set({ deactivatedAt: at })
+      .where(and(eq(memberships.organizationId, organizationId), eq(memberships.userId, userId)));
+  }
+
+  // Four tenant-scoped deletes in the caller's transaction, membership last. What hangs off
+  // the person goes first, so no grant outlives the membership that justified it.
+  public async delete(organizationId: OrganizationId, userId: UserId): Promise<void> {
+    await this.db
+      .delete(goalMembers)
+      .where(and(eq(goalMembers.organizationId, organizationId), eq(goalMembers.userId, userId)));
+    await this.db
+      .delete(teamMembers)
+      .where(and(eq(teamMembers.organizationId, organizationId), eq(teamMembers.userId, userId)));
+    await this.db
+      .delete(permissionOverrides)
+      .where(
+        and(
+          eq(permissionOverrides.organizationId, organizationId),
+          eq(permissionOverrides.userId, userId),
+        ),
+      );
+    await this.db
+      .delete(memberships)
       .where(and(eq(memberships.organizationId, organizationId), eq(memberships.userId, userId)));
   }
 

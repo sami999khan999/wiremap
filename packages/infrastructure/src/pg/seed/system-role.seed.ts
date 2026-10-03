@@ -54,6 +54,12 @@ const ROLES: readonly SystemRole[] = Object.freeze([
       "rbac.override.read",
       "member.read",
       "member.invite",
+      // Wiremap: shaping the organization's teams, auto-join domains and name, and reading
+      // its audit trail. Handing it over and deleting it stay the owner's.
+      "member.team.manage",
+      "member.domain.manage",
+      "organization.profile.update",
+      "audit.log.read",
       ...NOTIFICATION,
       ...DOC_AUTHOR,
     ],
@@ -61,6 +67,14 @@ const ROLES: readonly SystemRole[] = Object.freeze([
   {
     key: "member",
     name: "Member",
+    scope: "org",
+    permissions: ["member.read", ...NOTIFICATION, "doc.page.read"],
+  },
+  // Wiremap's read-only seat: the same organization-wide keys as `member` today. The two
+  // part at projects, where a viewer is capped at reading.
+  {
+    key: "viewer",
+    name: "Viewer",
     scope: "org",
     permissions: ["member.read", ...NOTIFICATION, "doc.page.read"],
   },

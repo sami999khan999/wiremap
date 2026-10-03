@@ -116,7 +116,13 @@ describe("PgPersonalOrganizationEnroller", () => {
       .from(roles)
       .where(eq(roles.organizationId, organizationId ?? ""));
 
-    expect(seeded.map((role) => role.key).sort()).toEqual(["admin", "guest", "member", "owner"]);
+    expect(seeded.map((role) => role.key).sort()).toEqual([
+      "admin",
+      "guest",
+      "member",
+      "owner",
+      "viewer",
+    ]);
   });
 
   // The idempotency the advisory lock exists for: Better Auth retries a failed session

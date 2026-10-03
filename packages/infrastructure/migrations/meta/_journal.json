@@ -29,6 +29,13 @@
       "when": 1790885516040,
       "tag": "0003_doc_access",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790986683386,
+      "tag": "0004_wiremap_access",
+      "breakpoints": true
     }
   ]
 }

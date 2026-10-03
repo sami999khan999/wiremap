@@ -61,7 +61,13 @@ describe("SystemRoleSeed.run", () => {
     expect(counter.count).toBe(4);
 
     const rows = await roleRows();
-    expect(rows.map((row) => row.key).sort()).toEqual(["admin", "guest", "member", "owner"]);
+    expect(rows.map((row) => row.key).sort()).toEqual([
+      "admin",
+      "guest",
+      "member",
+      "owner",
+      "viewer",
+    ]);
   });
 
   it("is idempotent, and costs the same four statements the second time", async () => {

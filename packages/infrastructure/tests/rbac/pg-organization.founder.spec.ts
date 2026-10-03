@@ -158,7 +158,13 @@ describe("PgOrganizationFounder", () => {
       .where(eq(roles.organizationId, organizationId));
 
     expect(role?.key).toBe("owner");
-    expect(seeded.map((r) => r.key).sort()).toEqual(["admin", "guest", "member", "owner"]);
+    expect(seeded.map((r) => r.key).sort()).toEqual([
+      "admin",
+      "guest",
+      "member",
+      "owner",
+      "viewer",
+    ]);
   });
 
   it("names the row as told and slugs from the organization id unless given one", async () => {
