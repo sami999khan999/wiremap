@@ -28,5 +28,6 @@ export const CLIENT_CATALOG: Readonly<
     team: async () => (await import("./en/team.js")).team,
     activity: async () => (await import("./en/activity.js")).activity,
     project: async () => (await import("./en/project.js")).project,
+    scan: async () => (await import("./en/scan.js")).scan,
   },
 };

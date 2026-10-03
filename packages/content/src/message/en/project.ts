@@ -39,6 +39,7 @@ export const project = {
   "project.repositories.add": "Add repository",
   "project.repositories.remove": "Remove",
   "project.settings": "Settings",
+  "project.overview": "Overview",
   "project.settings.general": "General",
   "project.settings.analysis": "Analysis",
   "project.settings.access": "Access",

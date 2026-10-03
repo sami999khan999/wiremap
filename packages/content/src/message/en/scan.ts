@@ -1,0 +1,35 @@
+// Scans: when a project's graph was built, how, and what went wrong.
+export const scan = {
+  "scan.title": "Scans",
+  "scan.intro": "Every time this project's graph was built.",
+  "scan.run": "Scan now",
+  "scan.running": "Scanning…",
+  "scan.empty": "No scans yet.",
+  "scan.empty.description": "Scan now, push to a tracked branch, or upload a graph from the CLI.",
+  "scan.state": "State",
+  "scan.state.queued": "Queued",
+  "scan.state.running": "Running",
+  "scan.state.succeeded": "Succeeded",
+  "scan.state.failed": "Failed",
+  "scan.state.cancelled": "Cancelled",
+  "scan.trigger": "Started by",
+  "scan.trigger.push": "Push",
+  "scan.trigger.schedule": "Schedule",
+  "scan.trigger.manual": "Scan now",
+  "scan.trigger.upload": "CLI upload",
+  "scan.branch": "Branch",
+  "scan.commit": "Commit",
+  "scan.started": "Queued",
+  "scan.duration": "Took",
+  "scan.result": "Result",
+  "scan.result.summary": "{files} files · {routes} routes",
+  "scan.noRunner":
+    "This deployment has no scan runner configured. Upload a graph from the CLI instead.",
+  "scan.noRepositories": "Connect a repository first: settings, then Repositories.",
+  "scan.latest": "Latest scan",
+  "scan.partial":
+    "Graph is partial: {resolved} of {total} imports into this repository resolved ({percent}%)",
+  "scan.complete": "All {total} imports into this repository resolved",
+  "scan.counts":
+    "{files} files · {imports} imports · {routes} routes · {cycles} cycles · {unguarded} unguarded routes",
+} as const;
