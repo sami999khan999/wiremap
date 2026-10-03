@@ -17,13 +17,14 @@ and every open item. This page holds the state of the tree and the traps that co
 | after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
 | after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
 | after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
+| after Phase 8 | Phase 9 (in progress): Ask end to end, AI settings, encrypted keys. Owed: `WM9.7` docs pass and a real-key check |
 | after Phase 7 | Phase 8: insights, change impact, compare |
 | after Phase 6 | Phase 7: the graph explorer (view model, ELK in a worker, URL state, search, node detail, overview, saved views) |
 | after Phase 5 | Phase 6: scans, the runner protocol and workflow, push and schedule triggers, CLI upload, the scans page |
 | after Phase 4 | Phase 5: the graph document, `@loadbearing/graph`, `@loadbearing/analyzer` with four framework plugins, and the `wiremap` CLI |
 | after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
 
-**Next, in order:** Phase 9 from `WM9.1` (Ask).
+**Next, in order:** finish `WM9` (record it in the plan, a real-key check), then Phase 10.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.
