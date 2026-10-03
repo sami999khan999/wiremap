@@ -1,5 +1,6 @@
+import type { CommentMark } from "../comment/index.js";
 import { useMessages } from "../i18n/index.js";
-import { Handle, type NodeProps, Position, RoleDot } from "../import.js";
+import { Handle, Icon, type NodeProps, Position, RoleDot } from "../import.js";
 import type { ViewNode } from "./explorer-model.js";
 import { PLAIN_BUTTON, RoleTones } from "./role-tone.js";
 
@@ -7,6 +8,22 @@ export interface NodeData extends Record<string, unknown> {
   readonly view: ViewNode;
   readonly selected: boolean;
   readonly onToggle: (folder: string) => void;
+  readonly mark: CommentMark | null;
+}
+
+// Open comments and a pin when one is a note. Nothing at all on a node with neither.
+function Mark({ mark }: { readonly mark: CommentMark | null }) {
+  const { t } = useMessages("graph");
+  if (!mark || (mark.count === 0 && !mark.pinned)) return null;
+  return (
+    <span
+      title={t("comment.badge", { count: mark.count })}
+      className="flex shrink-0 items-center gap-0.5 rounded-sm bg-[color-mix(in_oklch,var(--primary)_18%,transparent)] px-1 text-[10px] text-fg"
+    >
+      <Icon name={mark.pinned ? "pin" : "comment"} size={10} />
+      {mark.count > 0 ? mark.count : null}
+    </span>
+  );
 }
 
 const frame = (data: NodeData) =>
@@ -35,6 +52,7 @@ export function FolderNode({ data }: NodeProps) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          <Mark mark={node.mark} />
           {view.badge && !view.expanded ? (
             <span className="flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-fg-muted">
               <RoleDot tone={RoleTones.of(view.badge)} />
@@ -71,6 +89,7 @@ export function FileNode({ data }: NodeProps) {
       <span className="shrink-0 text-[10px] text-fg-muted">
         {t("graph.file.counts", { in: view.in, out: view.out })}
       </span>
+      <Mark mark={node.mark} />
       {view.impactDepth !== null && view.impactDepth > 0 ? (
         <span className="shrink-0 rounded-sm bg-[color-mix(in_oklch,var(--warning)_25%,transparent)] px-1 text-[10px]">
           {view.impactDepth}

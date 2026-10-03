@@ -1,5 +1,12 @@
 import { useMessages } from "../i18n/index.js";
-import { Button, type GraphDocument, GraphIndex, RoleDot, useMemo } from "../import.js";
+import {
+  Button,
+  type GraphDocument,
+  GraphIndex,
+  type ReactNode,
+  RoleDot,
+  useMemo,
+} from "../import.js";
 import { PLAIN_BUTTON, RoleTones } from "./role-tone.js";
 
 export interface NodeDetailProps {
@@ -9,6 +16,7 @@ export interface NodeDetailProps {
   readonly onImpact: (on: boolean) => void;
   readonly onSelect: (path: string) => void;
   readonly onClose: () => void;
+  readonly thread?: ReactNode;
 }
 
 function PathList({
@@ -47,6 +55,7 @@ export function NodeDetail({
   onImpact,
   onSelect,
   onClose,
+  thread,
 }: NodeDetailProps) {
   const { t } = useMessages("graph");
   const index = useMemo(() => GraphIndex.from(document), [document]);
@@ -121,6 +130,7 @@ export function NodeDetail({
           </ul>
         )}
       </section>
+      {thread}
     </div>
   );
 }

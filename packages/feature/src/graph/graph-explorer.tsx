@@ -1,5 +1,7 @@
+import type { CommentMark } from "../comment/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
+  type CommentTarget,
   type GraphDocument,
   GraphIndex,
   ReactFlowProvider,
@@ -31,6 +33,13 @@ export interface GraphExplorerProps {
   readonly toolbar?: ReactNode;
   // The Ask tab, when Ask is on for the organization; absent, the tab is not shown at all.
   readonly renderAsk?: (selected: string | null, select: (path: string) => void) => ReactNode;
+  // Comments, when the route has them: counts and pins on the canvas, a thread under a
+  // node's detail, and the notes in the overview.
+  readonly comments?: {
+    readonly marks: ReadonlyMap<string, CommentMark>;
+    readonly thread: (target: CommentTarget) => ReactNode;
+    readonly notes: (select: (path: string) => void) => ReactNode;
+  };
 }
 
 // Roles on the left, the canvas in the middle, the overview or a node's detail on the
@@ -42,6 +51,7 @@ export function GraphExplorer({
   layout,
   toolbar,
   renderAsk,
+  comments,
 }: GraphExplorerProps) {
   const { t } = useMessages("graph");
   const view = useMemo(() => ExplorerModel.build(document, state), [document, state]);
@@ -128,11 +138,21 @@ export function GraphExplorer({
                     onImpact={(impact) => onState({ impact })}
                     onSelect={select}
                     onClose={() => select(null)}
+                    thread={comments?.thread({
+                      kind: document.files.some((file) => file.path === state.selected)
+                        ? "file"
+                        : "folder",
+                      key: state.selected,
+                    })}
                   />
                 </div>
               ) : (
                 <div className="h-full overflow-y-auto">
-                  <OverviewPanel document={document} onSelect={select} />
+                  <OverviewPanel
+                    document={document}
+                    onSelect={select}
+                    notes={comments?.notes(select)}
+                  />
                 </div>
               )
             }
@@ -153,6 +173,7 @@ export function GraphExplorer({
                 onSelect={select}
                 onToggle={toggle}
                 focus={focus}
+                marks={comments?.marks}
               />
             </ReactFlowProvider>
           </div>

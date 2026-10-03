@@ -1,3 +1,4 @@
+import type { CommentMark } from "../comment/index.js";
 import {
   Background,
   Controls,
@@ -37,6 +38,7 @@ export interface GraphCanvasProps {
   readonly onToggle: (folder: string) => void;
   // A node to bring into view, set by search and by a click in a side panel.
   readonly focus: string | null;
+  readonly marks?: ReadonlyMap<string, CommentMark> | undefined;
 }
 
 export function GraphCanvas({
@@ -46,6 +48,7 @@ export function GraphCanvas({
   onSelect,
   onToggle,
   focus,
+  marks,
 }: GraphCanvasProps) {
   const flow = useReactFlow();
 
@@ -53,7 +56,12 @@ export function GraphCanvas({
     () =>
       view.nodes.map((node) => {
         const at = positions.get(node.id) ?? { x: 0, y: 0, width: 220, height: 40 };
-        const data: NodeData = { view: node, selected: node.id === selected, onToggle };
+        const data: NodeData = {
+          view: node,
+          selected: node.id === selected,
+          onToggle,
+          mark: marks?.get(node.id) ?? null,
+        };
         return {
           id: node.id,
           type: node.kind,
@@ -66,7 +74,7 @@ export function GraphCanvas({
           zIndex: node.kind === "file" ? 2 : node.expanded ? 0 : 1,
         };
       }),
-    [view, positions, selected, onToggle],
+    [view, positions, selected, onToggle, marks],
   );
 
   const edges = useMemo<FlowEdge[]>(

@@ -1,5 +1,5 @@
 import { useMessages } from "../i18n/index.js";
-import { Button, type GraphDocument, useState } from "../import.js";
+import { Button, type GraphDocument, type ReactNode, useState } from "../import.js";
 import { PLAIN_BUTTON } from "./role-tone.js";
 
 const SHOWN = 10;
@@ -9,9 +9,11 @@ const SHOWN = 10;
 export function OverviewPanel({
   document,
   onSelect,
+  notes,
 }: {
   readonly document: GraphDocument;
   readonly onSelect: (path: string) => void;
+  readonly notes?: ReactNode;
 }) {
   const { t } = useMessages("graph");
   const [allRoutes, setAllRoutes] = useState(false);
@@ -39,6 +41,7 @@ export function OverviewPanel({
         {fact(t("graph.overview.imports"), t("graph.overview.importsHere", { count: imports }))}
         {fact(t("graph.overview.routes"), String(document.routes.length))}
       </section>
+      {notes}
       {document.routes.length > 0 ? (
         <section>
           <h3 className="m-0 mb-1 text-xs font-semibold uppercase text-fg-muted">

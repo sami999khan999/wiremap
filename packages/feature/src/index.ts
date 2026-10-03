@@ -16,7 +16,7 @@ export {
   TwoFactorSetup,
   type TwoFactorSetupProps,
 } from "./account/index.js";
-export { ActivityList } from "./activity/index.js";
+export { ActivityList, ProjectActivityList } from "./activity/index.js";
 export {
   ApiKeyList,
   type ApiKeyListProps,
@@ -52,6 +52,17 @@ export {
   VerifyEmailNotice,
   type VerifyEmailNoticeProps,
 } from "./auth/index.js";
+export {
+  CommentBody,
+  CommentComposer,
+  type CommentComposerProps,
+  type CommentMark,
+  type CommentPart,
+  CommentText,
+  CommentThread,
+  type CommentThreadProps,
+  NoteList,
+} from "./comment/index.js";
 export {
   type DocAppearance,
   DocAppearancePanel,
