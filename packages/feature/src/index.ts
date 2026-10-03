@@ -23,6 +23,7 @@ export {
   CreateApiKeyForm,
   useApiKeyFailure,
 } from "./apikey/index.js";
+export { AiSettingsForm, AskPanel, type AskPanelProps, Citations } from "./ask/index.js";
 export {
   ForgotPasswordForm,
   type ForgotPasswordFormProps,

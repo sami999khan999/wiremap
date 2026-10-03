@@ -29,11 +29,20 @@ export interface GraphExplorerProps {
   readonly layout?: GraphLayouter;
   // The scan picker and saved views, above the canvas.
   readonly toolbar?: ReactNode;
+  // The Ask tab, when Ask is on for the organization; absent, the tab is not shown at all.
+  readonly renderAsk?: (selected: string | null, select: (path: string) => void) => ReactNode;
 }
 
 // Roles on the left, the canvas in the middle, the overview or a node's detail on the
 // right. The whole of it fills the viewport under the shell.
-export function GraphExplorer({ document, state, onState, layout, toolbar }: GraphExplorerProps) {
+export function GraphExplorer({
+  document,
+  state,
+  onState,
+  layout,
+  toolbar,
+  renderAsk,
+}: GraphExplorerProps) {
   const { t } = useMessages("graph");
   const view = useMemo(() => ExplorerModel.build(document, state), [document, state]);
   const [positions, setPositions] = useState<ReadonlyMap<string, Placed>>(() =>
@@ -95,38 +104,39 @@ export function GraphExplorer({ document, state, onState, layout, toolbar }: Gra
         storageKey="wiremap.explorer"
         start={<RoleSidebar document={document} view={view} state={state} onState={onState} />}
         end={
-          state.selected ? (
-            <div className="h-full overflow-y-auto">
-              <NodeDetail
-                document={document}
-                path={state.selected}
-                impact={state.impact}
-                onImpact={(impact) => onState({ impact })}
-                onSelect={select}
-                onClose={() => select(null)}
-              />
-            </div>
-          ) : (
-            <Tabs
-              label={t("graph.title")}
-              value={tab}
-              onValueChange={setTab}
-              items={[
-                { value: "overview", label: t("graph.tab.overview") },
-                { value: "ask", label: t("graph.tab.ask") },
-              ]}
-            >
-              {(value) =>
-                value === "overview" ? (
-                  <div className="h-full overflow-y-auto">
-                    <OverviewPanel document={document} onSelect={select} />
-                  </div>
-                ) : (
-                  <p className="m-0 p-3 text-sm text-fg-muted">{t("graph.ask.soon")}</p>
-                )
-              }
-            </Tabs>
-          )
+          <Tabs
+            label={t("graph.title")}
+            value={renderAsk ? tab : "overview"}
+            onValueChange={setTab}
+            items={[
+              {
+                value: "overview",
+                label: state.selected ? t("graph.tab.detail") : t("graph.tab.overview"),
+              },
+              ...(renderAsk ? [{ value: "ask", label: t("graph.tab.ask") }] : []),
+            ]}
+          >
+            {(value) =>
+              value === "ask" && renderAsk ? (
+                renderAsk(state.selected, select)
+              ) : state.selected ? (
+                <div className="h-full overflow-y-auto">
+                  <NodeDetail
+                    document={document}
+                    path={state.selected}
+                    impact={state.impact}
+                    onImpact={(impact) => onState({ impact })}
+                    onSelect={select}
+                    onClose={() => select(null)}
+                  />
+                </div>
+              ) : (
+                <div className="h-full overflow-y-auto">
+                  <OverviewPanel document={document} onSelect={select} />
+                </div>
+              )
+            }
+          </Tabs>
         }
       >
         <div className="flex h-full min-w-0 flex-col">
