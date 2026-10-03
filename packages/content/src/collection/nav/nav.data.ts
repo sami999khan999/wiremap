@@ -14,9 +14,12 @@ interface NavRecord {
 const ITEMS = [
   { module: "rbac", labelKey: "nav.roles", icon: "check", order: 10 },
   { module: "member", labelKey: "nav.members", icon: "user", order: 20 },
+  { module: "team", labelKey: "nav.teams", icon: "team", order: 25 },
   { module: "apikey", labelKey: "nav.apiKeys", icon: "key", order: 30 },
   { module: "document", labelKey: "nav.documents", icon: "check", order: 40 },
   { module: "notification", labelKey: "nav.notifications", icon: "bell", order: 50 },
+  { module: "organization", labelKey: "nav.organizationSettings", icon: "settings", order: 5 },
+  { module: "audit", labelKey: "nav.audit", icon: "activity", order: 60 },
   { module: "doc", labelKey: "nav.docs", icon: "book", order: 85 },
   // Last, and invisible to everyone but a platform admin: `ModuleRegistry.isVisible`
   // calls `can()`, and a tenant's wildcard does not reach the platform scope.

@@ -25,5 +25,7 @@ export const CLIENT_CATALOG: Readonly<
     notification: async () => (await import("./en/notification.js")).notification,
     platform: async () => (await import("./en/platform.js")).platform,
     doc: async () => (await import("./en/doc.js")).doc,
+    team: async () => (await import("./en/team.js")).team,
+    activity: async () => (await import("./en/activity.js")).activity,
   },
 };

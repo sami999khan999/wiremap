@@ -50,4 +50,42 @@ export const member = {
   "member.action.access": "Access",
   "member.access.title": "Access and exceptions",
   "member.access.close": "Close",
+
+  // ── remove ──
+  "member.remove": "Remove",
+  "member.remove.confirm":
+    "Remove {name} from this organization? They lose access to every project at once.",
+  "member.remove.self":
+    "You cannot remove yourself. Ask another administrator, or transfer ownership first.",
+  "member.remove.lastOwner": "This is the last owner. Transfer ownership before removing them.",
+
+  // ── shareable links ──
+  "member.links.title": "Invitation links",
+  "member.links.intro":
+    "Anyone with a verified email address who opens a link joins with its role.",
+  "member.links.create": "Create link",
+  "member.links.role": "Role",
+  "member.links.expires": "Expires after",
+  "member.links.days": "{count} days",
+  "member.links.maxUses": "Uses",
+  "member.links.unlimited": "Unlimited",
+  "member.links.uses": "{uses} of {max} used",
+  "member.links.usesUnlimited": "{uses} used",
+  "member.links.copy": "Copy link",
+  "member.links.copied": "Link copied. It will not be shown again.",
+  "member.links.revoke": "Revoke",
+  "member.links.empty": "No active links.",
+
+  // ── auto-join domains ──
+  "member.domains.title": "Auto-join domains",
+  "member.domains.intro":
+    "Anyone who signs up with a verified address at one of these domains joins this organization automatically.",
+  "member.domains.domain": "Domain",
+  "member.domains.role": "Joins as",
+  "member.domains.add": "Add domain",
+  "member.domains.remove": "Remove",
+  "member.domains.empty": "No domains.",
+  "member.domains.publicDomain": "Public email providers cannot be claimed.",
+  "member.domains.notYourDomain": "You can only add the domain of your own verified email address.",
+  "member.domains.claimed": "Another organization already uses this domain.",
 } as const;

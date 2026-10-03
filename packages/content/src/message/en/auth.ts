@@ -58,6 +58,7 @@ export const auth = {
 
   // ── social ──
   "auth.continueWithGoogle": "Continue with Google",
+  "auth.continueWithGitHub": "Continue with GitHub",
   "auth.orDivider": "or",
   "auth.socialFailed": "That sign-in did not complete.",
 } as const;
