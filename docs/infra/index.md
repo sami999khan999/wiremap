@@ -17,8 +17,9 @@ reached over a protocol the code was going to speak anyway.
 explains *why* each choice was made. **This is the reference:** what each file does, how each service
 works, and how they connect.
 
-**Wiremap's production is [deployment](deployment.md)**: Vercel, Cloudflare, Neon, Upstash and B2, inside the budget in [free-tier](free-tier.md). **Running it on a box of your own is [self-hosted](self-hosted.md)** — the same services on a
-VPS, and the order to move them to managed services in when one box stops fitting.
+**Wiremap's production is [deployment](deployment.md)**: Vercel, Cloudflare, Neon, Upstash and B2, inside the budget in [free-tier](free-tier.md). **Running it on your own machine is [self-hosted](self-hosted.md)**: one Docker container or a
+compose file, then the same services on a VPS, and the order to move them to managed services in
+when one box stops fitting.
 
 ---
 

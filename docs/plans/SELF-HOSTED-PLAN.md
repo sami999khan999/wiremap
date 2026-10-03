@@ -280,20 +280,23 @@ one port and one public hostname.
 
 ### Phase 6 — Verification, CI and docs
 
-- [ ] `SH6.1` **CI builds the image**, and a smoke job runs it:
+- [x] `SH6.1` **CI builds the image**, and a smoke job runs it:
   1. start the container;
   2. wait until it is healthy;
   3. sign up through the API, and read the verification mail through Mailpit's API;
   4. create a project and upload a fixture graph with the CLI against the container;
   5. read it back through `/api/v1`;
   6. stop the container and start it again, then confirm the data is still there.
-- [ ] `SH6.2` **Docs.**
+  - done: 2026-10-04. A `container` job in `.github/workflows/ci.yml` builds the image and runs `tooling/scripts/container-smoke.mjs`, which ends with a restart that must keep the data.
+- [x] `SH6.2` **Docs.**
   - `docs/infra/self-hosted.md` opens with the one-container path: the command, the env file,
     the ports, GitHub, the tunnel, backups and upgrades. The kit's VPS guide moves below it.
   - `README.md` gets a "Run it yourself" section.
   - `docs/infra/index.md` gets a row.
-- [ ] `SH6.3` **`TESTS.md` rows**: what CI covers, and what is owed by hand. That is a real
+  - done: 2026-10-04. `docs/infra/self-hosted.md` opens with the single container (command, env keys, GitHub, backups, upgrades, resources, compose); `README.md` has "Run it yourself"; the infra index points at it.
+- [x] `SH6.3` **`TESTS.md` rows**: what CI covers, and what is owed by hand. That is a real
   GitHub App on localhost, a tunnel with live webhooks, and an arm64 machine.
+  - done: 2026-10-04. Row `SH` in `TESTS.md`.
 - [ ] `SH6.4` **The cloud resources from the free-tier attempt.** These are the Neon project
   `cool-truth-78829166`, the Vercel project `wiremap`, and the Worker `wiremap-dispatcher` with
   its queues `wiremap-jobs` and `wiremap-jobs-dead`. The owner decides whether to keep or delete

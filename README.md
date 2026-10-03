@@ -13,6 +13,18 @@ ts-morph and tree-sitter · React Flow with ELK · Gemini (each organization's o
 kit fix ports across as a file copy. [`UPSTREAM.md`](UPSTREAM.md) records the kit commit, and
 [`docs/plans/WIREMAP-PLAN.md`](docs/plans/WIREMAP-PLAN.md) is the live plan.
 
+## Run it yourself
+
+One container holds everything (Postgres, Redis, storage, mail, the app and the worker):
+
+```bash
+docker build -f docker/wiremap/Dockerfile -t wiremap .
+docker run -d --name wiremap -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 -v wiremap-data:/data wiremap
+```
+
+Then open `http://localhost:43000`. Connecting GitHub, backups, upgrades and the compose
+alternative are in [`docs/infra/self-hosted.md`](docs/infra/self-hosted.md).
+
 ## Running it locally
 
 Node ≥ 24, pnpm ≥ 11.21, Docker running.

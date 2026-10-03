@@ -1,14 +1,95 @@
 ---
 title: self-hosted
-description: The kit's own deployment — one VPS now, managed services later. Wiremap deploys to free tiers instead (deployment.md); this is the path for running it on your own box.
+description: Wiremap in one Docker container on your own machine, the compose alternative, GitHub without a public address, backups and upgrades — then the kit's guide for a VPS.
 ---
 
 # Self-hosted
 
-> **Wiremap's production path is [deployment](deployment.md):** Vercel, Cloudflare, Neon, Upstash
-> and B2, all on free tiers. This page is the kit's original guide, kept for running wiremap on a
-> box of your own with the worker on BullMQ. Its apps/realtime steps no longer apply; see
-> [`docs/scale/realtime.md`](../scale/realtime.md).
+## One container on your own machine
+
+Everything wiremap needs runs in one image, and its data lives on one volume:
+- Postgres with pgvector, Redis, and MinIO for graph files;
+- Mailpit, to catch mail until you give it SMTP;
+- the web app, the worker, and git with the CLI for scans.
+
+```bash
+docker build -f docker/wiremap/Dockerfile -t wiremap .
+docker run -d --name wiremap --restart unless-stopped \
+  -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 \
+  -v wiremap-data:/data --env-file wiremap.env wiremap
+```
+
+Open `http://localhost:43000` and sign up. The verification mail is in Mailpit at
+`http://localhost:48025`. To make yourself the platform admin:
+
+```bash
+docker exec wiremap wiremap-admin grant you@example.com
+```
+
+**Ports are bound to `127.0.0.1`.** Only this machine reaches them: Docker's published ports
+skip a host firewall (see below). Leave out `-p …48025` once mail goes out through SMTP.
+
+**The env file** holds only what is yours. Every internal URL and setting is derived
+inside the container. The secrets (`AUTH_SECRET`, the encryption key, the database and
+storage passwords) are generated on first start into `/data/secrets.env`, and anything you
+pass overrides them:
+
+| Key | When |
+|---|---|
+| `GITHUB_APP_ID`, `GITHUB_APP_SLUG`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | To connect repositories. Register the App as in [github-app](github-app.md), section "On your own machine" |
+| `SMTP_URL`, `EMAIL_FROM` | To send real mail. Without them, mail goes to Mailpit |
+| `CLOUDFLARE_TUNNEL_TOKEN`, `WIREMAP_PUBLIC_URL` | A public hostname, so GitHub webhooks arrive (optional) |
+| `AUTH_REQUIRE_EMAIL_VERIFICATION=false` | A single-person install with no mail at all |
+| `GITHUB_POLLING=false` | Turns off hourly branch polling |
+| `WIREMAP_BACKUP_HOUR` | The UTC hour of the daily backup (`4`), or `off` |
+| `WEB_PROCESSES`, `POSTGRES_SHARED_BUFFERS`, `REDIS_MAXMEMORY` | Sizing: `2`, `128MB`, `256mb` by default |
+
+**GitHub.** Connecting, reading repositories and scanning all work from a machine GitHub
+cannot reach. Scans run inside the container, and the source is deleted after each one. Push
+webhooks cannot arrive, so each hour the container checks every tracked branch and scans the
+ones that moved. With a Cloudflare Tunnel, webhooks arrive and pushes scan within seconds.
+Both are covered in [github-app](github-app.md).
+
+**Backups.** Every day at 04:00 UTC the container writes `/data/backups/wiremap-<time>/`, and
+keeps seven. Each holds `database.dump`, `objects.tar.gz`, and `secrets.env`, without which the
+stored keys cannot be read.
+
+```bash
+docker exec wiremap wiremap-admin backup              # one now
+docker exec wiremap wiremap-admin backups             # list them
+docker exec wiremap wiremap-admin restore wiremap-20261004T040000Z && docker restart wiremap
+```
+
+Copy `/data/backups` off the machine as well. A backup on the same volume does not survive
+losing the volume.
+
+**Upgrades.** Build or pull the new image, then `docker rm -f wiremap` and run the same
+`docker run`. The volume is kept and migrations run on start. A volume made by a different
+Postgres major version is refused, with a message. Restore a backup into a fresh volume
+instead.
+
+**Resources.** About 420 MB of memory at idle, and an image of about 1.2 GB. `docker logs
+wiremap` is the whole system: each support service is prefixed, and the app writes JSON lines.
+
+**The compose alternative.** `docker/wiremap/compose.yml` runs the stores as their own
+containers (pgvector, Redis, MinIO, Mailpit) beside one app container, the same image with
+`WIREMAP_EXTERNAL_STORES=1`:
+1. Put `POSTGRES_PASSWORD`, `MINIO_PASSWORD` and the keys above in `docker/wiremap/.env`,
+   which is gitignored.
+2. Run `docker compose -f docker/wiremap/compose.yml up -d`.
+
+Back up its volumes the usual way; `wiremap-admin backup` covers only the single container's
+own stores.
+
+The image, its scripts and the services it supervises are in `docker/wiremap/`, and the plan
+behind them is [`SELF-HOSTED-PLAN.md`](../plans/SELF-HOSTED-PLAN.md).
+
+## A VPS, then managed services
+
+> **Wiremap's cloud path is [deployment](deployment.md):** Vercel, Cloudflare, Neon, Upstash
+> and B2, all on free tiers. What follows is the kit's original guide for running the
+> separate processes on a box of your own, with the worker on BullMQ. Its apps/realtime steps
+> no longer apply; see [`docs/scale/realtime.md`](../scale/realtime.md).
 
 The same services, on a machine you rent. Then, service by service, on machines somebody else
 operates.
