@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
+  AskPanel,
+  AskQueries,
   type ClientNamespace,
   EmptyState,
   type ExplorerState,
@@ -23,7 +25,7 @@ import {
 import { elkLayout } from "~/route/-graph-layout.js";
 import { ProjectTabs } from "~/route/-project-tabs.js";
 
-const MESSAGES = ["project", "scan", "graph"] as const satisfies readonly ClientNamespace[];
+const MESSAGES = ["project", "scan", "graph", "ask"] as const satisfies readonly ClientNamespace[];
 
 // Every piece of the explorer's state is in the URL, so any view is a link to send.
 const Search = z.object({
@@ -68,6 +70,7 @@ function Explorer({ project }: { readonly project: ProjectDto }) {
     enabled: linkData !== undefined,
   });
   const scans = useAppQuery(ScanQueries.list(client, project.id, { limit: 50, offset: 0 }));
+  const ask = useAppQuery(AskQueries.available(client));
   const succeeded: readonly ScanDto[] = (scans.data?.items ?? []).filter(
     (scan) => scan.state === "succeeded",
   );
@@ -99,6 +102,18 @@ function Explorer({ project }: { readonly project: ProjectDto }) {
         void navigate({ search: toSearch({ ...state, ...change }, search.scan), replace: true })
       }
       layout={elkLayout}
+      {...(ask.data?.available
+        ? {
+            renderAsk: (selected: string | null, select: (path: string) => void) => (
+              <AskPanel
+                projectId={project.id}
+                document={document.data}
+                selected={selected}
+                onSelect={select}
+              />
+            ),
+          }
+        : {})}
       toolbar={
         <>
           <ViewsMenu

@@ -7,6 +7,7 @@ const SETTINGS_MODULES = [
   "member",
   "team",
   "access",
+  "ai",
   "rbac",
   "apikey",
   "audit",

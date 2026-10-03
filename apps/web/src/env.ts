@@ -107,6 +107,17 @@ const Schema = z
     // Shared with the workflow, which derives each scan's callback token from it.
     WIREMAP_RUNNER_SECRET: z.string().min(32).optional(),
     WIREMAP_CLI_PATH: z.string().min(1).default("../cli/dist/index.js"),
+    // 32 bytes as 64 hex characters: `openssl rand -hex 32`. Encrypts each organization's
+    // model key. Retired keys stay readable as `v0:hex,v-1:hex` during a rotation.
+    SECRET_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/i)
+      .optional(),
+    SECRET_ENCRYPTION_KEY_VERSION: z
+      .string()
+      .regex(/^[\w-]{1,16}$/)
+      .default("v1"),
+    SECRET_ENCRYPTION_KEYS_RETIRED: z.string().optional(),
 
     // One URL rather than five fields, and required: with verification on by default, a
     // process that cannot send is one whose sign-ups never complete.
@@ -346,6 +357,23 @@ export class Env {
               ? { kind: "local" as const, cliPath: nodePath.resolve(e.WIREMAP_CLI_PATH) }
               : { kind: "none" as const },
       },
+      secrets: e.SECRET_ENCRYPTION_KEY
+        ? {
+            current: e.SECRET_ENCRYPTION_KEY_VERSION,
+            keys: {
+              ...Object.fromEntries(
+                (e.SECRET_ENCRYPTION_KEYS_RETIRED ?? "")
+                  .split(",")
+                  .map((entry) => entry.trim().split(":"))
+                  .filter(
+                    (pair): pair is [string, string] =>
+                      pair.length === 2 && pair[0] !== "" && pair[1] !== "",
+                  ),
+              ),
+              [e.SECRET_ENCRYPTION_KEY_VERSION]: e.SECRET_ENCRYPTION_KEY,
+            },
+          }
+        : undefined,
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
       embedding: {
         provider: e.EMBEDDING_PROVIDER,

@@ -862,6 +862,9 @@ importers:
       '@loadbearing/errors':
         specifier: workspace:*
         version: link:../errors
+      '@loadbearing/graph':
+        specifier: workspace:*
+        version: link:../graph
       '@loadbearing/permissions':
         specifier: workspace:*
         version: link:../permissions

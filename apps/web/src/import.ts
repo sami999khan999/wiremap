@@ -53,7 +53,9 @@ export {
   AccountPanel,
   ActiveSessionList,
   ActivityList,
+  AiSettingsForm,
   ApiKeyList,
+  AskPanel,
   ChangeEmailForm,
   ChangePasswordForm,
   CompareView,
@@ -154,6 +156,7 @@ export {
 export {
   ApiClientProvider,
   ApiKeyQueries,
+  AskQueries,
   createQueryClient,
   DocQueries,
   MemberQueries,
