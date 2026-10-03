@@ -8,6 +8,7 @@ const SETTINGS_MODULES = [
   "team",
   "access",
   "ai",
+  "webhook",
   "rbac",
   "apikey",
   "audit",

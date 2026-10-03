@@ -143,6 +143,7 @@ export {
   useSession,
   VerifyEmailNotice,
   ViewsMenu,
+  WebhookPanel,
 } from "@loadbearing/feature";
 
 // ── @loadbearing/permissions ─────────────────────────────────────────────────
@@ -176,6 +177,7 @@ export {
   ScanQueries,
   useApiClient,
   useAppQuery,
+  WebhookQueries,
 } from "@loadbearing/query";
 
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────

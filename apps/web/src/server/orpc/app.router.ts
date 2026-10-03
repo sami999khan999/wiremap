@@ -19,6 +19,7 @@ import { RoleRouter } from "./role.router.js";
 import { ScanRouter } from "./scan.router.js";
 import { TeamRouter } from "./team.router.js";
 import { ViewRouter } from "./view.router.js";
+import { WebhookRouter } from "./webhook.router.js";
 
 // The merge point, mirroring `contract` from `@loadbearing/contracts` exactly — a
 // mismatch is a type error. One line per slice: `task: TaskRouter.all`.
@@ -43,5 +44,6 @@ export const appRouter = {
   view: ViewRouter.all,
   comment: CommentRouter.all,
   graph: GraphRouter.all,
+  webhook: WebhookRouter.all,
   ask: AskRouter.all,
 };
