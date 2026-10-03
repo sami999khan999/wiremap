@@ -108,6 +108,21 @@ export class QueryKeys {
     list: (params: unknown) => ["activity", "list", params] as const,
   };
 
+  // A project write invalidates `all()`: the list, the detail and its grants move together,
+  // and a visibility change alters who sees the list at all.
+  public static readonly project = {
+    all: () => ["project"] as const,
+    list: (params: unknown) => ["project", "list", params] as const,
+    detail: (slug: string) => ["project", "detail", slug] as const,
+    available: () => ["project", "available"] as const,
+    access: (projectId: string) => ["project", "access", projectId] as const,
+  };
+
+  public static readonly github = {
+    all: () => ["github"] as const,
+    status: () => ["github", "status"] as const,
+  };
+
   // Inviting and revoking both invalidate `all()`: an invitation becoming a membership
   // changes both lists at once.
   public static readonly member = {

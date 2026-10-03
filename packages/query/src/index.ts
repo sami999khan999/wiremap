@@ -5,6 +5,7 @@ export { ActivityQueries } from "./activity/index.js";
 export { ApiKeyMutations, ApiKeyQueries } from "./apikey/index.js";
 export { DocMutations, DocQueries } from "./doc/index.js";
 export { DocumentMutations } from "./document/index.js";
+export { GithubQueries } from "./github/index.js";
 export { QueryKeys } from "./key/index.js";
 export { MemberMutations, MemberQueries } from "./member/index.js";
 export { NotificationMutations, NotificationQueries } from "./notification/index.js";
@@ -15,6 +16,7 @@ export {
 } from "./organization/index.js";
 export { OverrideMutations, OverrideQueries } from "./override/index.js";
 export { PlatformMutations, PlatformQueries } from "./platform/index.js";
+export { ProjectMutations, ProjectQueries } from "./project/index.js";
 export { RoleMutations, RoleQueries } from "./rbac/index.js";
 export {
   RealtimeProvider,
