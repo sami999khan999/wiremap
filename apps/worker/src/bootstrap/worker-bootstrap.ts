@@ -84,6 +84,8 @@ export class WorkerBootstrap {
       [QueueName.MAINTENANCE, { concurrency: Env.maintenanceConcurrency, lockDuration: 300_000 }],
       // One at a time: a dispatch is one call to GitHub, and nothing waits on it.
       [QueueName.SCAN, { concurrency: 1 }],
+      // A few at once: each is a wait on someone else's server, bounded at ten seconds.
+      [QueueName.WEBHOOK, { concurrency: 4 }],
     ];
   }
 
