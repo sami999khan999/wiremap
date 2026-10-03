@@ -38,6 +38,12 @@ const CATALOG = Object.freeze([
   // Who outside the platform may read a granted doc space. Read before a request is
   // placed, and it names organizations, people and plans across every tenant.
   "doc_space_grants",
+  // Wiremap: looked up by token or by email domain with no tenant in hand, and teams sit
+  // beside `goal_members` because the capability read joins them.
+  "invitation_links",
+  "organization_domains",
+  "teams",
+  "team_members",
 ] as const);
 
 // Present on every physical database and written in whichever transaction is open.

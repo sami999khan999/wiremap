@@ -177,3 +177,5 @@ Lite declares no flags, so nothing calls it yet. The big kit's widget flags are 
 
 - [Docs](reference/doc.md) — why the platform's docs are the platform organization's rows, a
   page rendered once and read from one row, and who may read a public or granted space.
+- [Organization access](reference/organization-access.md) — wiremap's viewer role, member removal,
+  shareable links, auto-join domains, teams, ownership transfer, owner deletion and the audit log.

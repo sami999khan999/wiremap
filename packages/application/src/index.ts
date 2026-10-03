@@ -3,6 +3,13 @@ import { ServerOnly } from "./import.js";
 ServerOnly.assert("@loadbearing/application");
 
 export {
+  type ActivityEntry,
+  type ActivityPage,
+  type ActivityQuery,
+  ActivityReader,
+  ListActivityUseCase,
+} from "./activity/index.js";
+export {
   type IndexDocumentInput,
   type IndexDocumentResult,
   IndexDocumentUseCase,
@@ -99,7 +106,15 @@ export {
 export { FlagCache, type FlagRecord, FlagRepository, type FlagTarget } from "./flag/index.js";
 export { type SendMailInput, SendMailUseCase } from "./mail/index.js";
 export {
+  type AddMemberDomainInput,
+  AddMemberDomainUseCase,
   ChangeMemberRoleUseCase,
+  type CreatedInvitationLink,
+  type CreateInvitationLinkInput,
+  CreateInvitationLinkUseCase,
+  type InvitationLinkPage,
+  type InvitationLinkRecord,
+  InvitationLinkRepository,
   type InvitationMail,
   InvitationMailer,
   type InvitationPage,
@@ -107,19 +122,32 @@ export {
   InvitationRepository,
   type InviteMemberInput,
   InviteMemberUseCase,
+  ListInvitationLinksUseCase,
   type ListInvitationsResult,
   ListInvitationsUseCase,
+  ListMemberDomainsUseCase,
   type ListMembersResult,
   ListMembersUseCase,
+  type MemberDomainPage,
+  type MemberDomainRecord,
+  MemberDomainRepository,
+  MemberDomainRules,
   type MemberPage,
   MemberRealtimeSubscriber,
   type MemberRecord,
   MemberRepository,
   MemberRules,
   type NewInvitation,
+  type NewInvitationLink,
+  type RemoveMemberDomainInput,
+  RemoveMemberDomainUseCase,
+  type RemoveMemberInput,
+  RemoveMemberUseCase,
   type ResendInvitationInput,
   ResendInvitationUseCase,
   type RevokeInvitationInput,
+  type RevokeInvitationLinkInput,
+  RevokeInvitationLinkUseCase,
   RevokeInvitationUseCase,
   SetMemberActiveUseCase,
 } from "./member/index.js";
@@ -147,6 +175,17 @@ export {
   type UnreadQuery,
   UpdateNotificationPreferenceUseCase,
 } from "./notification/index.js";
+export {
+  GetOrganizationUseCase,
+  type OrganizationRecord,
+  OrganizationRepository,
+  type RemoveOrganizationInput,
+  RemoveOrganizationUseCase,
+  type TransferOwnershipInput,
+  TransferOwnershipUseCase,
+  type UpdateOrganizationInput,
+  UpdateOrganizationUseCase,
+} from "./organization/index.js";
 export {
   type AccountDeny,
   type AccountMembership,
@@ -349,3 +388,19 @@ export {
   EventSubscriber,
   SubscriberRegistry,
 } from "./subscriber/index.js";
+export {
+  AddTeamMemberUseCase,
+  type CreateTeamInput,
+  CreateTeamUseCase,
+  ListTeamMembersUseCase,
+  ListTeamsUseCase,
+  RemoveTeamMemberUseCase,
+  RemoveTeamUseCase,
+  type TeamMemberRecord,
+  type TeamMembershipInput,
+  type TeamPage,
+  type TeamRecord,
+  TeamRepository,
+  type UpdateTeamInput,
+  UpdateTeamUseCase,
+} from "./team/index.js";

@@ -9,6 +9,7 @@ import type {
   MemberRecord,
   MemberRepository,
 } from "../../src/member/member.repository.js";
+import { RemoveMemberUseCase } from "../../src/member/remove-member.use-case.js";
 import { SetMemberActiveUseCase } from "../../src/member/set-member-active.use-case.js";
 import type {
   ActivityLogger,
@@ -77,6 +78,7 @@ function member(overrides: Partial<MemberRecord> = {}): MemberRecord {
 class RecordingMembers implements MemberRepository {
   public readonly roleChanges: { userId: UserId; roleId: RoleId }[] = [];
   public readonly deactivations: { userId: UserId; at: Date | null }[] = [];
+  public readonly deletions: UserId[] = [];
   public locked = 0;
   public readonly lockedKeys: (readonly string[])[] = [];
 
@@ -112,6 +114,11 @@ class RecordingMembers implements MemberRepository {
 
   public setDeactivatedAt(_org: OrganizationId, userId: UserId, at: Date | null): Promise<void> {
     this.deactivations.push({ userId, at });
+    return Promise.resolve();
+  }
+
+  public delete(_org: OrganizationId, userId: UserId): Promise<void> {
+    this.deletions.push(userId);
     return Promise.resolve();
   }
 
@@ -721,5 +728,67 @@ describe("a platform admin is protected like an owner", () => {
       roleId: MEMBER_ROLE,
     });
     expect(members.lockedKeys).toEqual([["owner", "platform_admin"]]);
+  });
+});
+
+const remove = (members: RecordingMembers, activity = new RecordingActivityLogger()) => ({
+  activity,
+  useCase: new RemoveMemberUseCase(
+    new Authorizer(),
+    members,
+    new RecordingCapabilities(),
+    activity,
+    new DirectUnitOfWork(),
+    new StubRoles(),
+    planOf(UNLIMITED),
+  ),
+});
+
+describe("RemoveMemberUseCase", () => {
+  it("refuses a principal without member.remove", async () => {
+    const { useCase } = remove(
+      new RecordingMembers(member({ roleId: MEMBER_ROLE, roleKey: "member" }), 2),
+    );
+
+    await expect(
+      useCase.execute(actorHolding("member.deactivate"), { userId: TARGET }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("removes a member and records it", async () => {
+    const members = new RecordingMembers(member({ roleId: MEMBER_ROLE, roleKey: "member" }), 2);
+    const { useCase, activity } = remove(members);
+
+    await useCase.execute(actorHolding("member.remove", "member.read"), { userId: TARGET });
+
+    expect(members.deletions).toEqual([TARGET]);
+    expect(activity.records.map((record) => record.action)).toContain("member.removed");
+  });
+
+  // Removing the last owner leaves a tenant nobody can administer.
+  it("refuses to remove the last active owner", async () => {
+    const members = new RecordingMembers(member(), 1);
+    const { useCase } = remove(members);
+
+    await expect(
+      useCase.execute(actorHolding("member.remove", "member.invite"), { userId: TARGET }),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(members.deletions).toEqual([]);
+  });
+
+  it("refuses to remove yourself and answers NOT_FOUND for a stranger", async () => {
+    const self = new RecordingMembers(
+      member({ userId: ACTOR, roleId: MEMBER_ROLE, roleKey: "member" }),
+      2,
+    );
+    await expect(
+      remove(self).useCase.execute(actorHolding("member.remove"), { userId: ACTOR }),
+    ).rejects.toBeInstanceOf(ConflictError);
+
+    await expect(
+      remove(new RecordingMembers(null, 2)).useCase.execute(actorHolding("member.remove"), {
+        userId: TARGET,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 });

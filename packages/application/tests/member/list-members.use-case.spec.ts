@@ -54,6 +54,10 @@ class RecordingMemberRepository implements MemberRepository {
     throw new Error("not under test");
   }
 
+  public delete(): Promise<void> {
+    throw new Error("not under test");
+  }
+
   public countActiveHolders(): Promise<number> {
     throw new Error("not under test");
   }

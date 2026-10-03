@@ -52,6 +52,10 @@ export abstract class MemberRepository {
     at: Date | null,
   ): Promise<void>;
 
+  // Ends the membership and everything that hangs off it in this tenant: per-project
+  // grants, team places and overrides. The audit trail keeps its rows; it names no FK.
+  public abstract delete(organizationId: OrganizationId, userId: UserId): Promise<void>;
+
   // Active, unsuspended holders of any of `roleKeys`. The last-owner rule is about who can
   // still act, so a deactivated or suspended owner does not keep a tenant unlockable.
   public abstract countActiveHolders(
