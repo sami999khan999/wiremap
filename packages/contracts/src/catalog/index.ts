@@ -12,6 +12,7 @@ import { projectProcedurePermissions } from "./project.permissions.js";
 import { realtimeProcedurePermissions } from "./realtime.permissions.js";
 import { roleProcedurePermissions } from "./role.permissions.js";
 import { teamProcedurePermissions } from "./team.permissions.js";
+import { webhookProcedurePermissions } from "./webhook.permissions.js";
 
 // Merged from team-owned fragments, one per slice — add them here. Not re-exported:
 // nothing outside this package may read it.
@@ -29,6 +30,7 @@ export const PROCEDURE_PERMISSIONS: Readonly<Record<string, PermissionKey>> = {
   ...teamProcedurePermissions,
   ...activityProcedurePermissions,
   ...projectProcedurePermissions,
+  ...webhookProcedurePermissions,
 };
 
 export { ACTIVITY_ACTIONS } from "./activity-actions.js";

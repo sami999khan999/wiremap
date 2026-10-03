@@ -8,6 +8,7 @@ import { platformActions } from "./platform.actions.js";
 import { projectActions } from "./project.actions.js";
 import { roleActions } from "./role.actions.js";
 import { teamActions } from "./team.actions.js";
+import { webhookActions } from "./webhook.actions.js";
 
 // Merged from team-owned fragments, one per slice — the same shape `DOMAIN_EVENTS` has
 // and a different vocabulary: an activity is the audit trail, an event is a fan-out.
@@ -17,6 +18,7 @@ export const ACTIVITY_ACTIONS = {
   ...overrideActions,
   ...apiKeyActions,
   ...aiActions,
+  ...webhookActions,
   ...platformActions,
   ...docActions,
   ...organizationActions,

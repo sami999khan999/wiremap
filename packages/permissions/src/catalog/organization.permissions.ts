@@ -14,6 +14,12 @@ export const organizationPermissions = {
     module: "organization",
     label: "Manage AI settings",
   },
+  // Where scan and finding events are sent off the platform: a URL, a secret, a Slack hook.
+  "organization.webhook.manage": {
+    scope: "org",
+    module: "organization",
+    label: "Manage webhooks",
+  },
   "organization.ownership.transfer": {
     scope: "org",
     module: "organization",

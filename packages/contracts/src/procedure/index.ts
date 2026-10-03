@@ -18,6 +18,7 @@ import { RoleProcedures } from "../role/index.js";
 import { ScanProcedures } from "../scan/index.js";
 import { TeamProcedures } from "../team/index.js";
 import { ViewProcedures } from "../view/index.js";
+import { WebhookProcedures } from "../webhook/index.js";
 
 // The merge point for every slice's procedures, and registering one here binds three
 // files to the same commit: its permissions, its procedure map, and its `apps/web` router.
@@ -42,6 +43,7 @@ export const contract = {
   ask: AskProcedures.all,
   comment: CommentProcedures.all,
   graph: GraphProcedures.all,
+  webhook: WebhookProcedures.all,
   github: GithubProcedures.all,
 } as const satisfies AnyContractRouter;
 

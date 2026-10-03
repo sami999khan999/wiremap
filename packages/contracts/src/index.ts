@@ -252,6 +252,7 @@ export {
   type TaskId,
   type TeamId,
   type UserId,
+  type WebhookId,
 } from "./primitive/index.js";
 export { type AppContract, contract } from "./procedure/index.js";
 export {
@@ -341,3 +342,15 @@ export {
   ViewContract,
   ViewProcedures,
 } from "./view/index.js";
+export {
+  type CreatedWebhookDto,
+  type CreateWebhookInput,
+  type UpdateWebhookInput,
+  WEBHOOK_EVENTS,
+  WEBHOOK_KINDS,
+  WebhookContract,
+  type WebhookDto,
+  type WebhookEventName,
+  type WebhookKind,
+  WebhookProcedures,
+} from "./webhook/index.js";

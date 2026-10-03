@@ -20,6 +20,7 @@ export {
   type TaskId,
   type TeamId,
   type UserId,
+  type WebhookId,
 } from "./identifiers.js";
 export { Keyset, type KeysetQuery } from "./keyset.js";
 export { Pagination, type PaginationQuery } from "./pagination.js";
