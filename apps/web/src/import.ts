@@ -41,6 +41,7 @@ export type {
 // `@loadbearing/query`.
 export {
   type FileRole,
+  type GraphDocument,
   type GraphLinkDto,
   Identifiers,
   type ProjectDto,
@@ -55,6 +56,7 @@ export {
   ApiKeyList,
   ChangeEmailForm,
   ChangePasswordForm,
+  CompareView,
   CreateApiKeyForm,
   CreateOrganizationForm,
   CreateRoleForm,
@@ -76,7 +78,9 @@ export {
   ForgotPasswordForm,
   GraphExplorer,
   type GraphLayouter,
+  ImpactExplorer,
   IndexDocumentForm,
+  InsightsOverview,
   InvitationAccept,
   InvitationLinkJoin,
   InvitationLinkPanel,

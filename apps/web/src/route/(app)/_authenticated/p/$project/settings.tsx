@@ -17,6 +17,7 @@ const MESSAGES = [
   "team",
   "member",
   "scan",
+  "graph",
 ] as const satisfies readonly ClientNamespace[];
 
 const Search = z.object({

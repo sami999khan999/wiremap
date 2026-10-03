@@ -16,6 +16,7 @@ export function ProjectTabs({
 }) {
   const { t } = useMessages("project");
   const scan = useMessages("scan");
+  const graph = useMessages("graph");
   const capabilities = useCapabilities();
   const manages = (
     ["project.settings.manage", "project.access.manage", "project.delete"] as const
@@ -32,6 +33,12 @@ export function ProjectTabs({
         className={linkClass}
       >
         {t("project.overview")}
+      </Link>
+      <Link to="/p/$project/insights" params={{ project: slug }} className={linkClass}>
+        {graph.t("insight.title")}
+      </Link>
+      <Link to="/p/$project/compare" params={{ project: slug }} className={linkClass}>
+        {graph.t("compare.title")}
       </Link>
       <Link to="/p/$project/scans" params={{ project: slug }} className={linkClass}>
         {scan.t("scan.title")}

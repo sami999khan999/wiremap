@@ -11,7 +11,7 @@ import {
 } from "~/import.js";
 import { ProjectTabs } from "~/route/-project-tabs.js";
 
-const MESSAGES = ["project", "scan"] as const satisfies readonly ClientNamespace[];
+const MESSAGES = ["project", "scan", "graph"] as const satisfies readonly ClientNamespace[];
 
 export const Route = createFileRoute("/(app)/_authenticated/p/$project/scans")({
   staticData: { messages: MESSAGES },
