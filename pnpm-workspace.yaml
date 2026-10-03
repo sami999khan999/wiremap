@@ -96,8 +96,8 @@ catalog:
   # ── isomorphic — server, browser, worker, webview, edge ──
   zod: ^4.4.3
   # Keep every @orpc/* entry on one version line; see Tier 3 for why.
-  "@orpc/contract": ^1.15.0
-  "@orpc/client": ^1.15.0
+  "@orpc/contract": ^1.15.4
+  "@orpc/client": ^1.15.4
   # QR rendering for two-factor enrolment. Zero dependencies, ESM, and it emits an SVG
   # string rather than drawing to a canvas — which is what makes it isomorphic and lets
   # the QR render during SSR like everything else. The alternative is asking people to
@@ -147,11 +147,15 @@ catalog:
   #    Ships fetch, node, and Nest adapters. The adapters stay in the apps; the
   #    router half is `api-server`, so two apps can mount one chain.
   #
-  #    ⚠ All four @orpc/* entries must stay on one version line, here and in
+  #    ⚠ All six @orpc/* entries must stay on one version line, here and in
   #    Tier 2. They pin @orpc/shared **exactly** rather than with a caret, so a
   #    skew puts two copies of it in the tree. `syncpack lint` does not catch
   #    this — it checks one dependency across packages, not a declared group.
-  "@orpc/server": ^1.15.0
+  "@orpc/server": ^1.15.4
+  # The public API at /api/v1: REST over the same contract, and its spec from the zod
+  # schemas. apps/web/src/server only, like the RPC adapter beside it.
+  "@orpc/openapi": ^1.15.4
+  "@orpc/zod": ^1.15.4
 
   # ── multi-framework by export map — ./node, ./next-js, ./tanstack-start ──
   #    ./node covers pure Node, Express, Fastify and Nest; the core web handler
@@ -161,7 +165,7 @@ catalog:
   # ── React-scoped — packages/{query,ui,feature} and apps/{web,desktop} ──
   #    Inside the target set: all three front-end targets are React.
   "@tanstack/react-query": ^5.101.4
-  "@orpc/tanstack-query": ^1.15.0
+  "@orpc/tanstack-query": ^1.15.4
   # Headless primitives for everything with hard interaction semantics: focus, keyboard
   # and dismissal. Styling is ours, through Tailwind utilities in packages/ui.
   "@base-ui/react": ^1.8.0
