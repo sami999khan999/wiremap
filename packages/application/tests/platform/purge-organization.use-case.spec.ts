@@ -1,5 +1,6 @@
 import { Identifiers } from "@loadbearing/contracts";
 import { describe, expect, it } from "vitest";
+import type { DocImageSweep } from "../../src/doc/doc-image-sweep.js";
 import type { PlatformReader } from "../../src/platform/platform.reader.js";
 import { PurgeOrganizationUseCase } from "../../src/platform/purge-organization.use-case.js";
 import type { TenantRecord, TenantRepository } from "../../src/platform/tenant.repository.js";
@@ -136,6 +137,7 @@ interface Parts {
   readonly activity: FakeActivity;
   readonly capabilities: FakeInvalidator;
   readonly shards: FakeShards;
+  readonly sweep: { readonly prefixes: string[]; sweep(prefix: string): Promise<number> };
 }
 
 const build = (overrides: Partial<Parts> = {}) => {
@@ -147,6 +149,13 @@ const build = (overrides: Partial<Parts> = {}) => {
     activity: new FakeActivity(),
     capabilities: new FakeInvalidator(),
     shards: new FakeShards(),
+    sweep: {
+      prefixes: [] as string[],
+      sweep(prefix: string) {
+        this.prefixes.push(prefix);
+        return Promise.resolve(1);
+      },
+    },
     ...overrides,
   };
 
@@ -169,6 +178,7 @@ const build = (overrides: Partial<Parts> = {}) => {
       unitOfWork,
       { now: () => NOW },
       parts.shards as unknown as ShardResolver,
+      parts.sweep as unknown as DocImageSweep,
     ),
   };
 };
@@ -176,6 +186,15 @@ const build = (overrides: Partial<Parts> = {}) => {
 const input = { organizationId: TENANT, actorId: ACTOR };
 
 describe("PurgeOrganizationUseCase", () => {
+  // Objects have no partition to drop with the tenant: each prefix has to be swept by name.
+  it("sweeps the tenant's doc images and every project's graphs from storage", async () => {
+    const { parts, useCase } = build();
+    await useCase.execute(input);
+
+    expect(parts.sweep.prefixes).toContain(`graphs/${TENANT}/`);
+    expect(parts.sweep.prefixes).toHaveLength(2);
+  });
+
   // The cutoff is the first of *next* month, not now: the partitions are about to be
   // dropped, so a month left unarchived is rows nothing can hand back.
   it("archives every month that exists, including the current one", async () => {

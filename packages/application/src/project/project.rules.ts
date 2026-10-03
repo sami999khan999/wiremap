@@ -20,7 +20,12 @@ export class ProjectRules {
 
   // Every object a project owns sits under this prefix, so deleting it is one sweep.
   public static storagePrefix(organizationId: string, projectId: string): string {
-    return `graphs/${organizationId}/${projectId}/`;
+    return `${ProjectRules.tenantPrefix(organizationId)}${projectId}/`;
+  }
+
+  // Every project's graphs in one tenant: what deleting the organization sweeps.
+  public static tenantPrefix(organizationId: string): string {
+    return `graphs/${organizationId}/`;
   }
 
   // The higher of two: `project_admin` outranks `project_editor` outranks `project_viewer`.

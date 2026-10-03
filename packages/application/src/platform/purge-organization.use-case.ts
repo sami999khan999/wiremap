@@ -10,6 +10,7 @@ import type {
   UnitOfWork,
 } from "../port/index.js";
 import { PartitionedTable, Principal, Shard } from "../primitive/index.js";
+import { ProjectRules } from "../project/index.js";
 import type { PlatformReader } from "./platform.reader.js";
 import type { TenantRepository } from "./tenant.repository.js";
 
@@ -63,6 +64,9 @@ export class PurgeOrganizationUseCase {
     // level, so the partition drop above never reaches its rows.
     const outboxRows = await this.outbox.deleteFor(input.organizationId);
     const images = (await this.images?.sweep(DocImageKey.tenantPrefix(input.organizationId))) ?? 0;
+    // The sweep is a prefix delete, so it takes the projects' graphs too: no partition drop
+    // reaches an object, and a graph is the one thing here that maps a customer's code.
+    const graphs = (await this.images?.sweep(ProjectRules.tenantPrefix(input.organizationId))) ?? 0;
 
     // `system`, and with no capabilities: this actor authorizes nothing, it only names
     // who asked. The permission was asserted when the job was queued.
@@ -89,6 +93,7 @@ export class PurgeOrganizationUseCase {
         partitions: partitions.length,
         outboxRows,
         images,
+        graphs,
       });
     });
 
