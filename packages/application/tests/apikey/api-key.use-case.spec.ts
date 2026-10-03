@@ -133,6 +133,27 @@ describe("ListApiKeysUseCase", () => {
 });
 
 describe("CreateApiKeyUseCase", () => {
+  // A project scope holds in every project, so only someone holding it organization-wide
+  // may hand it to a key; a grant in one project is not enough.
+  it("issues a project scope to an org-wide holder and refuses a one-project holder", async () => {
+    const input = { name: "CLI", scopes: ["project.scan.run"], expiresAt: null };
+    await expect(
+      create().execute(actorHolding("apikey.manage", "project.scan.run"), input),
+    ).resolves.toBeDefined();
+    const onOne = new Principal(
+      ORG,
+      ACTOR,
+      CapabilitySet.from({
+        wildcard: false,
+        org: { grants: ["apikey.manage"], denies: [] },
+        goals: {
+          "018f8c00-0000-7000-8000-0000000000c1": { grants: ["project.scan.run"], denies: [] },
+        },
+      }),
+    );
+    await expect(create().execute(onOne, input)).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
   it("refuses a principal without apikey.manage", async () => {
     await expect(
       create().execute(actorHolding("apikey.read"), {

@@ -11,4 +11,5 @@ export {
   type GithubWebhookEvent,
   type GithubWebhookOutcome,
   HandleGithubWebhookUseCase,
+  type PushTarget,
 } from "./handle-github-webhook.use-case.js";

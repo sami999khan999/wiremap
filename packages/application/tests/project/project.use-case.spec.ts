@@ -34,6 +34,7 @@ import {
   ProjectRepository,
   type ReachMember,
   type ReachSource,
+  type TrackingProject,
 } from "../../src/project/project.repository.js";
 import { ProjectRules } from "../../src/project/project.rules.js";
 import { PurgeProjectUseCase } from "../../src/project/purge-project.use-case.js";
@@ -124,10 +125,11 @@ class MemoryProjects extends ProjectRepository {
   public revokeGrant() {
     return Promise.resolve();
   }
+  public tracking: TrackingProject[] = [];
   public trackingRepository() {
-    return Promise.resolve([]);
+    return Promise.resolve(this.tracking);
   }
-  public withSchedule() {
+  public claimScheduled() {
     return Promise.resolve([]);
   }
   public reach() {
@@ -467,9 +469,9 @@ describe("GitHub", () => {
     const webhook = new HandleGithubWebhookUseCase(installations, projects, CLOCK);
     const base = { installationId: 9, repository: null };
 
-    expect(await webhook.execute({ ...base, event: "installation", action: "deleted" })).toBe(
-      "applied",
-    );
+    expect(await webhook.execute({ ...base, event: "installation", action: "deleted" })).toEqual({
+      kind: "applied",
+    });
     expect(
       await webhook.execute({
         ...base,
@@ -477,8 +479,10 @@ describe("GitHub", () => {
         action: "renamed",
         repository: { id: 7, fullName: "acme/api-v2" },
       }),
-    ).toBe("applied");
-    expect(await webhook.execute({ ...base, event: "push", action: null })).toBe("ignored");
+    ).toEqual({ kind: "applied" });
+    expect(await webhook.execute({ ...base, event: "push", action: null })).toEqual({
+      kind: "ignored",
+    });
 
     expect(installations.removed).toEqual([9]);
     expect(projects.renamed).toEqual({ externalId: "7", fullName: "acme/api-v2" });
@@ -534,5 +538,36 @@ describe("GetProjectAccessOverviewUseCase", () => {
     expect(cell(VIEWER)).toMatchObject({ role: "project_viewer", via: "direct" });
     expect(result.members[0]).not.toHaveProperty("orgWide");
     await expect(overview.execute(holding("member.read"))).rejects.toBeInstanceOf(ForbiddenError);
+  });
+});
+
+describe("HandleGithubWebhookUseCase on a push", () => {
+  it("names the projects tracking the pushed branch, and nothing for another branch", async () => {
+    const projects = new MemoryProjects();
+    const PROJECT = "018f8c00-0000-7000-8000-0000000000f1" as ProjectId;
+    projects.tracking = [
+      {
+        organizationId: ORG,
+        projectId: PROJECT,
+        repositoryId: "018f8c00-0000-7000-8000-0000000000f2" as never,
+        branches: ["main"],
+      },
+    ];
+    const webhook = new HandleGithubWebhookUseCase(new MemoryInstallations(), projects, CLOCK);
+    const push = (ref: string) =>
+      webhook.execute({
+        event: "push",
+        action: null,
+        installationId: 9,
+        repository: { id: 7, fullName: "acme/api" },
+        ref,
+      });
+
+    expect(await push("refs/heads/main")).toEqual({
+      kind: "push",
+      targets: [{ organizationId: ORG, projectId: PROJECT, branch: "main" }],
+    });
+    expect(await push("refs/heads/feature")).toEqual({ kind: "ignored" });
+    expect(await push("refs/tags/v1")).toEqual({ kind: "ignored" });
   });
 });

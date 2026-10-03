@@ -177,11 +177,14 @@ export abstract class ProjectRepository {
     readonly sources: readonly ReachSource[];
   }>;
 
+  // Projects whose schedule is due at `now`, across tenants, each marked scheduled in the
+  // same statement so two ticks never queue one twice.
+  public abstract claimScheduled(
+    now: Date,
+  ): Promise<readonly { readonly organizationId: OrganizationId; readonly projectId: ProjectId }[]>;
+
   public abstract trackingRepository(
     provider: "github",
     externalId: string,
   ): Promise<readonly TrackingProject[]>;
-
-  // Every project of every tenant with a schedule due, read by the hourly tick.
-  public abstract withSchedule(schedule: "daily" | "weekly"): Promise<readonly TrackingProject[]>;
 }

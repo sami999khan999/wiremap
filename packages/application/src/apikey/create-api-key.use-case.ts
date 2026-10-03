@@ -34,9 +34,9 @@ export class CreateApiKeyUseCase {
 
     const scopes = ApiKeyRules.assertKnownScopes(input.scopes);
 
-    // `ApiKeyResolver` intersects a key with its issuer's live capabilities on every
-    // request, so a scope the actor lacks would grant nothing — until they are promoted.
-    const excess = scopes.find((scope) => !actor.can(scope));
+    // Tenant-wide, since a scope holds in every project; `can` on a goal key with no goal is
+    // always false. `ApiKeyResolver` intersects with the issuer's live set on every request.
+    const excess = scopes.find((scope) => !actor.canTenantWide(scope));
     if (excess) throw new ForbiddenError(excess);
 
     const now = this.clock.now();

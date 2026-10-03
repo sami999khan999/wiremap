@@ -8,6 +8,7 @@
     "notification-policy",
     "doc",
     "organization-access",
-    "project"
+    "project",
+    "scan"
   ]
 }

@@ -7,6 +7,8 @@ const DOC_SPACES = "doc_spaces";
 const DOC_PAGES = "doc_pages";
 const DOC_REVISION = "doc_revision";
 const DOC_SECTIONS = "doc_sections";
+const SCANS = "scans";
+const SCAN_FINDINGS = "scan_findings";
 
 // The column the table is ranged by. A closed union rather than `string`: it is inlined
 // into DDL and into every predicate that wants a partition pruned.
@@ -95,6 +97,21 @@ const ALL = Object.freeze([
     column: null,
     retentionMonths: null,
   }),
+  // A scan per push, so the calendar is what grows it; `created_at` is when it was queued.
+  // Kept a year: the history page and the compare view read back that far at most.
+  Object.freeze({
+    name: SCANS,
+    tenantKey: "organization_id",
+    column: "created_at",
+    retentionMonths: 12,
+  }),
+  // A project's open findings, replaced on every completed scan: bounded, not a history.
+  Object.freeze({
+    name: SCAN_FINDINGS,
+    tenantKey: "organization_id",
+    column: null,
+    retentionMonths: null,
+  }),
 ] as const) satisfies readonly PartitionedTableEntry[];
 
 // A closed union rather than `string`: Postgres accepts no bind parameters in DDL, so
@@ -134,6 +151,8 @@ export class PartitionedTable {
   public static readonly DOC_PAGES = DOC_PAGES;
   public static readonly DOC_REVISION = DOC_REVISION;
   public static readonly DOC_SECTIONS = DOC_SECTIONS;
+  public static readonly SCANS = SCANS;
+  public static readonly SCAN_FINDINGS = SCAN_FINDINGS;
 
   public static readonly ALL = ALL;
 

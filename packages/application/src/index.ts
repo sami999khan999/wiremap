@@ -114,6 +114,7 @@ export {
   type GithubWebhookEvent,
   type GithubWebhookOutcome,
   HandleGithubWebhookUseCase,
+  type PushTarget,
 } from "./github/index.js";
 export { type SendMailInput, SendMailUseCase } from "./mail/index.js";
 export {
@@ -429,6 +430,36 @@ export {
   type UpdateRoleInput,
   UpdateRoleUseCase,
 } from "./rbac/index.js";
+export {
+  CheckoutScanUseCase,
+  CompleteScanUseCase,
+  CreateScanUploadUseCase,
+  DispatchScanUseCase,
+  FailScanUseCase,
+  type FindingKey,
+  FindingRules,
+  GetGraphUseCase,
+  GraphArchive,
+  type GraphLink,
+  ListScansUseCase,
+  type NewScan,
+  type QueueScanInput,
+  QueueScanUseCase,
+  RunScanUseCase,
+  type ScanCheckout,
+  ScanProtocol,
+  type ScanRecord,
+  type ScanRef,
+  ScanRefs,
+  ScanRepository,
+  ScanRunner,
+  ScanTokens,
+  type ScanUpload,
+  SweepScansUseCase,
+  type SweptScan,
+  TriggerScanUseCase,
+  UploadScanUseCase,
+} from "./scan/index.js";
 export {
   ActivityRelaySubscriber,
   EventSubscriber,
