@@ -5,4 +5,5 @@ import { ROUTES } from "../route/index.js";
 // the list it opens filters itself to the projects the viewer may read.
 export const projectGates = {
   project: { permission: "member.read", route: ROUTES.project.list },
+  access: { permission: "project.access.overview", route: ROUTES.project.access },
 } as const satisfies Record<string, ModuleGate>;

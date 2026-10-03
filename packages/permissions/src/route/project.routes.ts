@@ -5,4 +5,5 @@ export const projectRoutes = {
   list: "/projects",
   create: "/projects/new",
   show: "/p",
+  access: "/settings/access",
 } as const satisfies Record<string, RoutePath>;

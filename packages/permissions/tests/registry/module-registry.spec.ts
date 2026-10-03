@@ -42,6 +42,7 @@ describe("ModuleRegistry", () => {
     // ignore a deny.
     expect(registry.visibleModules(caps)).toEqual([
       "project",
+      "access",
       "member",
       "apikey",
       "team",

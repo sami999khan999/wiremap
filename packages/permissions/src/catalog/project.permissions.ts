@@ -10,6 +10,14 @@ export const projectPermissions = {
     label: "Create projects",
     requires: ["member.read"],
   },
+  // Organization-wide too: the access overview reads every project's grants at once, and a
+  // module cannot be gated on a goal-scoped key.
+  "project.access.overview": {
+    scope: "org",
+    module: "project",
+    label: "See who can open every project",
+    requires: ["member.read"],
+  },
   "project.graph.read": {
     scope: "goal",
     module: "project",
