@@ -70,6 +70,10 @@ export class GithubEndpoint {
 
     const installationId = payload.installation?.id;
     const repository = payload.repository;
+    // Webhooks reach this installation, so the hourly branch polling can leave it alone.
+    if (typeof installationId === "number") {
+      await container.scans.poll.webhookSeen(installationId).catch(() => undefined);
+    }
     const outcome = await container.github.webhook.execute({
       event: request.headers.get("x-github-event") ?? "",
       action: typeof payload.action === "string" ? payload.action : null,
