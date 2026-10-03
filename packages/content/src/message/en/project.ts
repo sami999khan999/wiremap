@@ -70,5 +70,14 @@ export const project = {
   "project.overview.noScans": "No scans yet",
   "project.overview.noScans.description":
     "Scans arrive with the next phase of wiremap. Repositories are connected and ready.",
+  "project.accessOverview.title": "Project access",
+  "project.accessOverview.intro":
+    "Who can open each project, and the role they get. Hover a cell to see where it comes from.",
+  "project.accessOverview.empty": "No projects yet.",
+  "project.accessOverview.none": "No access",
+  "project.accessOverview.via.organization": "Their organization role reads every project",
+  "project.accessOverview.via.default": "Everyone in the organization gets this role",
+  "project.accessOverview.via.direct": "Given directly",
+  "project.accessOverview.via.team": "Through the team {team}",
   "project.notFound": "This project does not exist or you cannot see it.",
 } as const;
