@@ -18,6 +18,9 @@ const TABLE: Readonly<Record<string, readonly Entry[]>> = Object.freeze({
   [HOURLY]: [
     { queue: "event", name: "drain", attempts: 3 },
     { queue: "maintenance", name: "spares", attempts: 3 },
+    // Scans: fail the stale ones, then queue the projects whose schedule came due.
+    { queue: "maintenance", name: "scan-sweep", attempts: 3 },
+    { queue: "maintenance", name: "scan-schedule", attempts: 3 },
   ],
   [NIGHTLY]: [
     { queue: "maintenance", name: "partitions", attempts: 5 },
