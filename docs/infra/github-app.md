@@ -24,8 +24,8 @@ On GitHub, go to **Settings → Developer settings → GitHub Apps → New GitHu
 |---|---|
 | App name | anything; its URL slug becomes `GITHUB_APP_SLUG` |
 | Homepage URL | your `APP_BASE_URL` |
-| Callback URL | `${AUTH_URL}/api/auth/callback/github`, used for GitHub sign-in |
-| Setup URL | `${APP_BASE_URL}/api/github/setup`, with **Redirect on update** ticked |
+| Callback URLs | first `${APP_BASE_URL}/api/github/setup`, then `${AUTH_URL}/api/auth/callback/github` for GitHub sign-in |
+| Request user authorization (OAuth) during installation | **ticked**: it is what proves who installed (see the flow) |
 | Webhook URL | `${APP_BASE_URL}/api/github/webhook` |
 | Webhook secret | `openssl rand -hex 32`, which becomes `GITHUB_WEBHOOK_SECRET` |
 
@@ -46,7 +46,8 @@ connect repositories, otherwise "Only on this account".
 
 After you create the App:
 1. Generate a private key and download the `.pem`.
-2. Under "Client secrets", generate one. The client id and secret are the sign-in pair.
+2. Under "Client secrets", generate one. The client id and secret are `GITHUB_CLIENT_ID` and
+   `GITHUB_CLIENT_SECRET`: connecting an installation needs them, and so does GitHub sign-in.
 
 ## The env keys
 
@@ -56,7 +57,8 @@ GITHUB_APP_SLUG=wiremap-yourname
 # The .pem on one line, newlines as \n. Vercel also takes it multi-line.
 GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----\n"
 GITHUB_WEBHOOK_SECRET=...
-# Sign-in with GitHub. Optional, and independent of the four above.
+# The App's OAuth pair. Without it no installation can be connected, and there is no
+# GitHub sign-in.
 GITHUB_CLIENT_ID=Iv1....
 GITHUB_CLIENT_SECRET=...
 ```
@@ -75,9 +77,11 @@ sequenceDiagram
   U->>W: /projects/new, Connect GitHub
   W-->>U: github.com/apps/<slug>/installations/new?state=<org.time.hmac>
   U->>G: install, pick repositories
-  G-->>U: redirect to /api/github/setup?installation_id&state
+  G-->>U: redirect to /api/github/setup?installation_id&code&state
   U->>W: /api/github/setup
   W->>W: state signed for the caller's active org, under an hour old
+  W->>G: exchange code for a user token, GET /user/installations
+  W->>W: installation_id is in that list, and bound to no other org
   W->>G: GET /app/installations/:id (App JWT)
   W->>W: bind (org, installation), audit github.installation.bound
   W-->>U: /projects/new?github=connected
@@ -86,8 +90,15 @@ sequenceDiagram
 - **The `state` is signed with `AUTH_SECRET`** and carries the organization id and the time. A
   callback whose state names another tenant is refused. That stops a link pasted to someone else
   from binding their installation to your organization.
-- **One installation can be bound to two organizations** (one GitHub account, two wiremap tenants).
-  The key is `(organization_id, installation_id)`.
+- **The installation id is a plain query parameter, so the state alone proves nothing about
+  it.** Every installation of the App exists, so checking existence proved nothing either.
+  The user token from `code` lists the installations the person in the browser can see. The id
+  must be among them, and the token is used for that one call and then dropped. Without this,
+  anyone could type someone else's installation id and read their repositories (`WM12.1`).
+- **One installation, one organization.** Binding an installation that another organization
+  already holds is refused. Two tenants sharing an installation would share its repositories.
+- **To check on a real App:** that GitHub sends the install redirect to the *first* callback
+  URL, and that it passes `state` through with `code`. Both are owed in `docs/plans/TESTS.md`.
 
 ## Webhooks
 

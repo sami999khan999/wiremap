@@ -50,7 +50,7 @@ and `&` escaped.
 ## The address guard
 
 The request leaves from inside our network to a URL a customer typed, so
-`FetchWebhookSender` does four things:
+`HttpsWebhookSender` does four things:
 - it sends to https only;
 - it resolves the host, and refuses it unless **every** address is public (no loopback,
   private, link-local, carrier-NAT or multicast range, IPv4 or IPv6);
@@ -59,6 +59,9 @@ The request leaves from inside our network to a URL a customer typed, so
 
 A refused send counts as a failure with no status.
 
-One gap remains: `fetch` resolves the name again, so a host that answers DNS differently on
-the second lookup could still reach an inside address. Closing it means pinning the checked
-address into the connection. That is noted for the security review (`WM12.1`).
+The check runs twice. `send` checks the name before anything is built. Then the connection's
+own `lookup` checks every address again as it connects. A name that answers DNS one way for the
+check and another way for the connection (DNS rebinding) is therefore still refused. An IPv6
+address that carries an IPv4 one is judged as that IPv4: mapped `::ffff:7f00:1`, compatible,
+NAT64 `64:ff9b::/96` and 6to4 `2002::/16`. A spec shows both halves. A loopback listener
+receives no connection with the guard, and receives one without it.
