@@ -62,6 +62,28 @@ export const nav = {
   "nav.landing.lead":
     "Wiremap scans your repositories and draws the import graph by folder, every file's role, the routes your backend exposes and the frontend calls that reach them.",
   "nav.landing.start": "Get started",
+  "nav.privacy.link": "Privacy",
+  "nav.privacy.title": "Privacy",
+  "nav.privacy.lead":
+    "wiremap keeps a map of your code, never the code itself. This page says exactly what is kept, where, and for how long.",
+  "nav.privacy.kept.title": "What is kept",
+  "nav.privacy.kept.body":
+    "Your account (name, email, sign-in sessions) and your organization, its members, roles and audit trail. Each project's settings and the names of the repositories it reads. For each scan: its branch, commit, counts and findings, and the graph itself: file paths, what kind of file each is, which files import which, exported names, HTTP routes with their file and line, and the URLs the frontend calls. Comments people write on the graph.",
+  "nav.privacy.never.title": "What is never kept",
+  "nav.privacy.never.body":
+    "Source code. A scan clones a repository one commit deep onto a short-lived GitHub Actions runner, reads it there, uploads the graph, and the runner is discarded. GitHub access tokens are minted per scan, read-only and for one repository, and are never written down.",
+  "nav.privacy.local.title": "Analyzing on your own machine",
+  "nav.privacy.local.body":
+    "The command wiremap analyze reads a folder and writes a file on your computer, and sends nothing anywhere. Only wiremap upload and wiremap scan send something, and what they send is the graph.",
+  "nav.privacy.ask.title": "Ask, the AI assistant",
+  "nav.privacy.ask.body":
+    "Off unless an organization turns it on with its own Google Gemini key, which is stored encrypted and never shown again. A question sends the parts of the graph it is about, and up to eight of the files it names, fetched from GitHub at the scanned commit, to Google under that key. A fetched file is cached for at most ten minutes, and an answer for an hour.",
+  "nav.privacy.where.title": "Where it lives",
+  "nav.privacy.where.body":
+    "The web app on Vercel; background jobs scheduled by Cloudflare; the database on Neon; the cache on Upstash; graphs on Backblaze B2, encrypted at rest; scans on GitHub Actions; email through an SMTP provider. Secrets you hand over (a model key, a webhook URL and its signing secret) are encrypted before they are stored.",
+  "nav.privacy.delete.title": "Deleting it",
+  "nav.privacy.delete.body":
+    "Deleting a project removes its graphs, scans, findings, comments, saved views and access grants; the audit trail keeps a line saying it was deleted. Deleting an organization removes everything it holds. An export you asked for is kept for seven days.",
   "nav.landing.graph.title": "The graph, by folder",
   "nav.landing.graph.body":
     "Folders you can open, files coloured by role, and the imports between them.",
