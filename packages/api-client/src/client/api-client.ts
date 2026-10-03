@@ -156,6 +156,10 @@ export class ApiClient {
     return this.rpc.ask;
   }
 
+  public get comment(): AppClient["comment"] {
+    return this.rpc.comment;
+  }
+
   // The escape hatch for a namespace with no accessor yet.
   public get raw(): AppClient {
     return this.rpc;
