@@ -39,7 +39,7 @@ export type {
 // ── @loadbearing/contracts ───────────────────────────────────────────────────
 // The branded ids a route casts to. The shapes a component renders arrive through
 // `@loadbearing/query`.
-export { Identifiers, type ProjectDto } from "@loadbearing/contracts";
+export { type GraphLinkDto, Identifiers, type ProjectDto } from "@loadbearing/contracts";
 
 // ── @loadbearing/feature ─────────────────────────────────────────────────────
 export {
@@ -100,6 +100,7 @@ export {
   ResetPasswordForm,
   RoleList,
   RoleMatrix,
+  ScanHistory,
   SessionProvider,
   type SessionUser,
   SignInForm,
@@ -147,6 +148,7 @@ export {
   ProjectQueries,
   RealtimeProvider,
   RoleQueries,
+  ScanQueries,
   useApiClient,
   useAppQuery,
 } from "@loadbearing/query";

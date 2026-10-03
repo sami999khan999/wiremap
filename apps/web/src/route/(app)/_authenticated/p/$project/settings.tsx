@@ -10,8 +10,14 @@ import {
   useMessages,
   z,
 } from "~/import.js";
+import { ProjectTabs } from "~/route/-project-tabs.js";
 
-const MESSAGES = ["project", "team", "member"] as const satisfies readonly ClientNamespace[];
+const MESSAGES = [
+  "project",
+  "team",
+  "member",
+  "scan",
+] as const satisfies readonly ClientNamespace[];
 
 const Search = z.object({
   tab: z.enum(["general", "repositories", "access", "delete"]).optional().catch(undefined),
@@ -55,6 +61,7 @@ function ProjectSettingsPage() {
         </Link>
         <h1 className="m-0 mt-1 text-2xl font-semibold">{t("project.settings")}</h1>
       </div>
+      <ProjectTabs slug={slug} projectId={data.id} />
       <ProjectSettings
         project={data}
         tab={tab ?? "general"}

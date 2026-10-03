@@ -12,6 +12,8 @@ export {
   Container,
   JobSignatureHasher,
   type QueueJob,
+  ScanRefs,
+  SystemPrincipal,
 } from "@loadbearing/composition";
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────

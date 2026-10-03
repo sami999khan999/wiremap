@@ -1,6 +1,7 @@
 // The marker that makes this file server-only to Vite as well as to the reader: Start
 // fails the build if it reaches the client graph. See docs/reference/env.md.
 import "@tanstack/react-start/server-only";
+import nodePath from "node:path";
 import { z } from "zod";
 
 // One of exactly two `process.env` readers in the repository — the other is
@@ -95,6 +96,17 @@ const Schema = z
     GITHUB_APP_SLUG: z.string().min(1).optional(),
     GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
     GITHUB_WEBHOOK_SECRET: z.string().min(16).optional(),
+    // Where scans run: `github` dispatches the workflow in `WIREMAP_RUNNER_REPO`, `local`
+    // spawns the built CLI, `none` refuses "scan now". See docs/infra/scan-runner.md.
+    SCAN_RUNNER: z.enum(["none", "local", "github"]).default("none"),
+    WIREMAP_RUNNER_REPO: z
+      .string()
+      .regex(/^[\w.-]+\/[\w.-]+$/)
+      .optional(),
+    WIREMAP_RUNNER_TOKEN: z.string().min(1).optional(),
+    // Shared with the workflow, which derives each scan's callback token from it.
+    WIREMAP_RUNNER_SECRET: z.string().min(32).optional(),
+    WIREMAP_CLI_PATH: z.string().min(1).default("../cli/dist/index.js"),
 
     // One URL rather than five fields, and required: with verification on by default, a
     // process that cannot send is one whose sign-ups never complete.
@@ -315,6 +327,25 @@ export class Env {
               stateSecret: e.AUTH_SECRET,
             }
           : undefined,
+      scan: {
+        // Without its own secret the runner workflow cannot derive tokens, so only the local
+        // runner and CLI uploads work; the auth secret then signs them.
+        secret: e.WIREMAP_RUNNER_SECRET ?? e.AUTH_SECRET,
+        serverUrl: e.APP_BASE_URL,
+        runner:
+          e.SCAN_RUNNER === "github" &&
+          e.WIREMAP_RUNNER_REPO &&
+          e.WIREMAP_RUNNER_TOKEN &&
+          e.WIREMAP_RUNNER_SECRET
+            ? {
+                kind: "github" as const,
+                repository: e.WIREMAP_RUNNER_REPO,
+                token: e.WIREMAP_RUNNER_TOKEN,
+              }
+            : e.SCAN_RUNNER === "local"
+              ? { kind: "local" as const, cliPath: nodePath.resolve(e.WIREMAP_CLI_PATH) }
+              : { kind: "none" as const },
+      },
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
       embedding: {
         provider: e.EMBEDDING_PROVIDER,

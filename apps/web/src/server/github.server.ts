@@ -2,6 +2,8 @@ import { container } from "./container.js";
 
 interface DeliveryPayload {
   readonly action?: unknown;
+  readonly ref?: unknown;
+  readonly deleted?: unknown;
   readonly installation?: { readonly id?: unknown } | null;
   readonly repository?: { readonly id?: unknown; readonly full_name?: unknown } | null;
 }
@@ -54,7 +56,7 @@ export class GithubEndpoint {
 
     const installationId = payload.installation?.id;
     const repository = payload.repository;
-    await container.github.webhook.execute({
+    const outcome = await container.github.webhook.execute({
       event: request.headers.get("x-github-event") ?? "",
       action: typeof payload.action === "string" ? payload.action : null,
       installationId: typeof installationId === "number" ? installationId : null,
@@ -62,7 +64,17 @@ export class GithubEndpoint {
         repository && typeof repository.id === "number" && typeof repository.full_name === "string"
           ? { id: repository.id, fullName: repository.full_name }
           : null,
+      ref: typeof payload.ref === "string" ? payload.ref : null,
+      deleted: payload.deleted === true,
     });
+    // Each project the push tracks, queued on its own tenant's node.
+    if (outcome.kind === "push") {
+      for (const target of outcome.targets) {
+        await container.placedAt(target.organizationId, () =>
+          container.scans.trigger.execute({ ...target, trigger: "push" }),
+        );
+      }
+    }
     return new Response(null, { status: 202 });
   }
 }

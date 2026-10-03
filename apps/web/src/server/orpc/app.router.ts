@@ -13,6 +13,7 @@ import { OverrideRouter } from "./override.router.js";
 import { PlatformRouter } from "./platform.router.js";
 import { ProjectRouter } from "./project.router.js";
 import { RoleRouter } from "./role.router.js";
+import { ScanRouter } from "./scan.router.js";
 import { TeamRouter } from "./team.router.js";
 
 // The merge point, mirroring `contract` from `@loadbearing/contracts` exactly — a
@@ -34,4 +35,5 @@ export const appRouter = {
   activity: ActivityRouter.all,
   project: ProjectRouter.all,
   github: GithubRouter.all,
+  scan: ScanRouter.all,
 };
