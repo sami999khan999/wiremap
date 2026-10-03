@@ -1,5 +1,6 @@
 import { ActivityProcedures } from "../activity/index.js";
 import { ApiKeyProcedures } from "../apikey/index.js";
+import { AskProcedures } from "../ask/index.js";
 import { DocGrantProcedures, DocPageProcedures, DocSpaceProcedures } from "../doc/index.js";
 import { DocumentProcedures } from "../document/index.js";
 import { GithubProcedures } from "../github/index.js";
@@ -36,6 +37,7 @@ export const contract = {
   project: ProjectProcedures.all,
   scan: ScanProcedures.all,
   view: ViewProcedures.all,
+  ask: AskProcedures.all,
   github: GithubProcedures.all,
 } as const satisfies AnyContractRouter;
 

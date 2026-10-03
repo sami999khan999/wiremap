@@ -15,6 +15,15 @@ export {
   type RevokeApiKeyInput,
 } from "./apikey/index.js";
 export {
+  AI_PROVIDERS,
+  type AiSettingsDto,
+  type AskChunk,
+  AskContract,
+  AskProcedures,
+  type AskQuestionInput,
+  type UpdateAiSettingsInput,
+} from "./ask/index.js";
+export {
   type CreateDocPageInput,
   type CreateDocSpaceInput,
   DocAccessContract,

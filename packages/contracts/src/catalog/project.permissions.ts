@@ -24,4 +24,9 @@ export const projectProcedurePermissions = {
   "view.list": "project.graph.read",
   "view.save": "project.graph.read",
   "view.remove": "project.graph.read",
+  "ask.settings": "organization.ai.manage",
+  "ask.updateSettings": "organization.ai.manage",
+  "ask.testKey": "organization.ai.manage",
+  "ask.available": "member.read",
+  "ask.question": "project.ask.use",
 } as const satisfies Record<string, PermissionKey>;
