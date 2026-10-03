@@ -40,6 +40,7 @@ export const project = {
   "project.repositories.remove": "Remove",
   "project.settings": "Settings",
   "project.overview": "Overview",
+  "project.activity": "Activity",
   "project.settings.general": "General",
   "project.settings.analysis": "Analysis",
   "project.settings.access": "Access",

@@ -1,6 +1,14 @@
 // One title and body per `NotificationKind`, interpolated from the row's `params`. The
 // row carries no snapshot of what happened, so the copy has to stand on its own.
 export const notification = {
+  "notification.kind.scan.failed.title": "A scan failed",
+  "notification.kind.scan.failed.body":
+    "A scan of one of your projects did not finish. Its error is on the project's scans page.",
+  "notification.kind.finding.created.title": "Something new to look at",
+  "notification.kind.finding.created.body":
+    "A scan found a new import cycle or an unguarded route.",
+  "notification.kind.comment.created.title": "A comment for you",
+  "notification.kind.comment.created.body": "Someone mentioned you, or replied to your comment.",
   "notification.kind.member.joined.title": "Someone joined",
   "notification.kind.member.joined.body": "A new member has joined this organization.",
   "notification.kind.member.role.changed.title": "Your role changed",
@@ -30,6 +38,8 @@ export const notification = {
   "notification.preference.description":
     "Choose how each kind of update reaches you. In-app notifications always appear in this list; these settings decide whether you are interrupted and whether we email you.",
   "notification.preference.category.membership": "People and roles",
+  "notification.preference.category.scans": "Scans and findings",
+  "notification.preference.category.comments": "Comments and mentions",
   "notification.preference.channel.in_app": "In the app",
   "notification.preference.channel.email": "By email",
   "notification.preference.mode.immediate": "Straight away",
