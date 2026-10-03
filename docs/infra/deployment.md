@@ -87,7 +87,16 @@ domain (SPF and DKIM), or the mail lands in spam.
 openssl rand -hex 32   # AUTH_SECRET
 openssl rand -hex 32   # DISPATCHER_SECRET
 openssl rand -hex 32   # INTERNAL_JOB_SECRET
+openssl rand -hex 32   # SECRET_ENCRYPTION_KEY
 ```
+
+| Key | Value |
+|---|---|
+| `SECRET_ENCRYPTION_KEY` | 64 hex characters. It encrypts each organization's Gemini key and every webhook URL and secret. Without it, Ask and webhooks cannot be turned on |
+| `SECRET_ENCRYPTION_KEY_VERSION` | `v1`. A rotation adds a new key under a new version and moves the old one to `SECRET_ENCRYPTION_KEYS_RETIRED`, so stored secrets still decrypt |
+
+Keep the key somewhere besides Vercel. Losing it makes every stored secret unreadable, and each
+organization must enter its keys again.
 
 ## 6 · Vercel (web app and API)
 

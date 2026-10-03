@@ -109,15 +109,18 @@ repository and still works. This plan adds a deployment; it rewrites no feature.
 
 ### Phase 0 — Groundwork
 
-- [ ] `SH0.1` **Plan registered.** This file goes in `docs/plans/index.md` and `meta.json`.
+- [x] `SH0.1` **Plan registered.** This file goes in `docs/plans/index.md` and `meta.json`.
   `HANDOFF.md` names it as next.
-- [ ] `SH0.2` **The deploy guide gap.** `SECRET_ENCRYPTION_KEY` and its version go into
+  - done: 2026-10-04.
+- [x] `SH0.2` **The deploy guide gap.** `SECRET_ENCRYPTION_KEY` and its version go into
   `docs/infra/deployment.md`. It was missing there, and its absence switched Ask and webhooks
   off.
-- [ ] `SH0.3` **Commit the dispatcher's single cron** made during the free-tier attempt. One
+  - done: 2026-10-04. A table in step 5, with the rotation and the warning to keep the key outside Vercel.
+- [x] `SH0.3` **Commit the dispatcher's single cron** made during the free-tier attempt. One
   trigger whose hour decides the nightly and morning work fits the free plan's per-account
   limit, and it stays the right shape for the cloud path. Specs pass, and the README is
   updated.
+  - done: 2026-10-04. 14 dispatcher specs pass.
 
 ### Phase 1 — Storage through the web app
 
