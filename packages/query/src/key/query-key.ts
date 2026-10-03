@@ -90,11 +90,31 @@ export class QueryKeys {
     list: (userId: string) => ["override", "list", userId] as const,
   };
 
+  // The active organization's profile. A rename invalidates it and the session, since the
+  // top bar reads the name off the session snapshot.
+  public static readonly organization = {
+    all: () => ["organization"] as const,
+    get: () => ["organization", "get"] as const,
+  };
+
+  public static readonly team = {
+    all: () => ["team"] as const,
+    list: (params: unknown) => ["team", "list", params] as const,
+    members: (teamId: string) => ["team", "members", teamId] as const,
+  };
+
+  public static readonly activity = {
+    all: () => ["activity"] as const,
+    list: (params: unknown) => ["activity", "list", params] as const,
+  };
+
   // Inviting and revoking both invalidate `all()`: an invitation becoming a membership
   // changes both lists at once.
   public static readonly member = {
     all: () => ["member"] as const,
     list: (params: unknown) => ["member", "list", params] as const,
     invitations: (params: unknown) => ["member", "invitation", "list", params] as const,
+    links: (params: unknown) => ["member", "link", "list", params] as const,
+    domains: (params: unknown) => ["member", "domain", "list", params] as const,
   };
 }

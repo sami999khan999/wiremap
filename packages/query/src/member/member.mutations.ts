@@ -1,12 +1,19 @@
 import type {
+  AddDomainInput,
   ApiClient,
   ChangeMemberRoleInput,
+  CreatedInvitationLinkDto,
+  CreateInvitationLinkInput,
+  DomainDto,
   InvitationDto,
   InviteMemberInput,
   MemberDto,
   PaginationQuery,
+  RemoveDomainInput,
+  RemoveMemberInput,
   ResendInvitationInput,
   RevokeInvitationInput,
+  RevokeInvitationLinkInput,
   SetMemberActiveInput,
 } from "../import.js";
 import { QueryKeys } from "../key/index.js";
@@ -77,6 +84,42 @@ export class MemberMutations {
   public static useReactivate(client: ApiClient) {
     return useAppMutation<MemberDto, SetMemberActiveInput>({
       mutationFn: (input) => client.member.reactivate(input),
+      invalidates: [QueryKeys.member.all()],
+    });
+  }
+
+  // `team.all()` too: a removed member leaves every team they were in.
+  public static useRemove(client: ApiClient) {
+    return useAppMutation<{ ok: true }, RemoveMemberInput>({
+      mutationFn: (input) => client.member.remove(input),
+      invalidates: [QueryKeys.member.all(), QueryKeys.team.all()],
+    });
+  }
+
+  public static useCreateLink(client: ApiClient) {
+    return useAppMutation<CreatedInvitationLinkDto, CreateInvitationLinkInput>({
+      mutationFn: (input) => client.member.createLink(input),
+      invalidates: [QueryKeys.member.all()],
+    });
+  }
+
+  public static useRevokeLink(client: ApiClient) {
+    return useAppMutation<{ ok: true }, RevokeInvitationLinkInput>({
+      mutationFn: (input) => client.member.revokeLink(input),
+      invalidates: [QueryKeys.member.all()],
+    });
+  }
+
+  public static useAddDomain(client: ApiClient) {
+    return useAppMutation<DomainDto, AddDomainInput>({
+      mutationFn: (input) => client.member.addDomain(input),
+      invalidates: [QueryKeys.member.all()],
+    });
+  }
+
+  public static useRemoveDomain(client: ApiClient) {
+    return useAppMutation<{ ok: true }, RemoveDomainInput>({
+      mutationFn: (input) => client.member.removeDomain(input),
       invalidates: [QueryKeys.member.all()],
     });
   }

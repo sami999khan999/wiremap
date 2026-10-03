@@ -35,6 +35,13 @@ export class SessionMutations {
     });
   }
 
+  public static useSignInWithGitHub(auth: AuthClient) {
+    return useAppMutation<void, { callbackURL: string; errorCallbackURL: string }>({
+      mutationFn: ({ callbackURL, errorCallbackURL }) =>
+        auth.signInWithGitHub(callbackURL, errorCallbackURL),
+    });
+  }
+
   // Resolves whether or not the address exists — see `AuthClient.requestPasswordReset`.
   // The form renders one message either way, and `isSuccess` is that signal.
   public static useRequestPasswordReset(auth: AuthClient) {

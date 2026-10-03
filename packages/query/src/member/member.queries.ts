@@ -26,4 +26,20 @@ export class MemberQueries {
       staleTime: 10_000,
     });
   }
+
+  public static links(client: ApiClient, params: PaginationQuery) {
+    return queryOptions({
+      queryKey: QueryKeys.member.links(params),
+      queryFn: () => client.member.listLinks(params),
+      staleTime: 10_000,
+    });
+  }
+
+  public static domains(client: ApiClient, params: PaginationQuery) {
+    return queryOptions({
+      queryKey: QueryKeys.member.domains(params),
+      queryFn: () => client.member.listDomains(params),
+      staleTime: 60_000,
+    });
+  }
 }

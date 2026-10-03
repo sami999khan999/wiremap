@@ -20,6 +20,14 @@ export class OrganizationMutations {
     });
   }
 
+  // Wiremap's shareable link: the same rebind as an emailed invitation.
+  public static useAcceptInvitationLink(organization: OrganizationClient, onDone?: () => void) {
+    return useAppMutation<OrganizationSwitch, { token: string }>({
+      mutationFn: ({ token }) => organization.acceptInvitationLink(token),
+      onSuccess: onDone,
+    });
+  }
+
   public static useAcceptInvitation(organization: OrganizationClient, onDone?: () => void) {
     return useAppMutation<OrganizationSwitch, { token: string }>({
       mutationFn: ({ token }) => organization.acceptInvitation(token),
