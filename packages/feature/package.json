@@ -46,8 +46,11 @@
     "@loadbearing/content": "workspace:*",
     "@loadbearing/contracts": "workspace:*",
     "@loadbearing/errors": "workspace:*",
+    "@loadbearing/graph": "workspace:*",
     "@loadbearing/permissions": "workspace:*",
     "@loadbearing/query": "workspace:*",
-    "@loadbearing/ui": "workspace:*"
+    "@loadbearing/ui": "workspace:*",
+    "@xyflow/react": "catalog:",
+    "elkjs": "catalog:"
   }
 }

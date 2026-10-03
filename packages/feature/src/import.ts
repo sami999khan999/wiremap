@@ -49,8 +49,14 @@ export {
   type DocSpaceId,
   type DocumentHitDto,
   type DomainDto,
+  type EdgeKind,
   type ExplanationDto,
+  type FileRole,
   type FlagDto,
+  type GraphDocument,
+  type GraphFile,
+  type GraphRoute,
+  type GraphViewDto,
   type InvitationDto,
   type InvitationLinkDto,
   type MemberDto,
@@ -75,7 +81,9 @@ export {
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────
 export { type ErrorEnvelope, ErrorNormalizer } from "@loadbearing/errors";
-
+// ── react ────────────────────────────────────────────────────────────────────
+// ── @loadbearing/graph ───────────────────────────────────────────────────────
+export { GraphIndex } from "@loadbearing/graph";
 // ── @loadbearing/permissions ─────────────────────────────────────────────────
 export {
   CapabilitySet,
@@ -90,7 +98,6 @@ export {
   PLATFORM_ROUTE_PERMISSION,
   ROUTES,
 } from "@loadbearing/permissions";
-
 // ── @loadbearing/query ───────────────────────────────────────────────────────
 // Defined queries and the two runtime hooks, never the cache library: a component naming
 // `useQuery` directly would be a read outside the seam.
@@ -128,8 +135,9 @@ export {
   useApiClient,
   useAppInfiniteQuery,
   useAppQuery,
+  ViewMutations,
+  ViewQueries,
 } from "@loadbearing/query";
-
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────
 export {
   ActionMenu,
@@ -186,7 +194,24 @@ export {
   useHotkey,
 } from "@loadbearing/ui";
 
-// ── react ────────────────────────────────────────────────────────────────────
+// ── @xyflow/react ────────────────────────────────────────────────────────────
+export {
+  Background,
+  Controls,
+  type Edge as FlowEdge,
+  Handle,
+  MiniMap,
+  type Node as FlowNode,
+  type NodeProps,
+  Position,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+} from "@xyflow/react";
+
+// ── elkjs ────────────────────────────────────────────────────────────────────
+export type { ElkExtendedEdge, ElkNode } from "elkjs/lib/elk-api";
+
 export {
   createContext,
   type FormEvent,

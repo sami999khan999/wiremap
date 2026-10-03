@@ -79,6 +79,18 @@ export {
 export { DocumentSearch, IndexDocumentForm } from "./document/index.js";
 export { type ErrorMessage, useErrorMessage } from "./error/index.js";
 export {
+  ExplorerLayout,
+  ExplorerModel,
+  type ExplorerSearch,
+  type ExplorerState,
+  ExplorerUrl,
+  GraphExplorer,
+  type GraphExplorerProps,
+  type GraphLayouter,
+  ViewsMenu,
+  type ViewsMenuProps,
+} from "./graph/index.js";
+export {
   MessageProvider,
   type MessageProviderProps,
   useMessages,
