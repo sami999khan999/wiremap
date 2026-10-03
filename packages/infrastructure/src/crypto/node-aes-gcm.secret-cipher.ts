@@ -34,7 +34,10 @@ export class NodeAesGcmSecretCipher extends SecretCipher {
     const [version, iv, tag, body] = ciphertext.split(":");
     const key = version ? this.keys.get(version) : undefined;
     if (!key || !iv || !tag || body === undefined) throw new Error("Unreadable secret");
-    const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(iv, "base64url"));
+    // A pinned tag length: without it a truncated tag is accepted, and forging one is easier.
+    const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(iv, "base64url"), {
+      authTagLength: 16,
+    });
     decipher.setAuthTag(Buffer.from(tag, "base64url"));
     return Buffer.concat([
       decipher.update(Buffer.from(body, "base64url")),

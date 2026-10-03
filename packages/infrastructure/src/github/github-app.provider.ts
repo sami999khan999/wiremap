@@ -18,6 +18,9 @@ export interface GithubAppConfig {
   readonly webhookSecret: string;
   // Signs the install `state`. The auth secret is enough: it never leaves the server.
   readonly stateSecret: string;
+  // The App's own OAuth pair: what proves the person installing can see the installation.
+  readonly oauth?: { readonly clientId: string; readonly clientSecret: string };
+  readonly oauthUrl?: string;
   readonly apiUrl?: string;
   readonly fetch?: typeof fetch;
 }
@@ -72,6 +75,44 @@ export class GithubAppProvider extends RepositoryProvider {
     return { installationId: body.id, accountLogin: body.account?.login ?? "" };
   }
 
+  // The user token lives for this call alone: exchanged, used for one listing, dropped.
+  public override async installationsOfUser(code: string): Promise<readonly number[] | null> {
+    const oauth = this.config.oauth;
+    if (!oauth) return null;
+    const exchange = await this.http(
+      `${this.config.oauthUrl ?? "https://github.com"}/login/oauth/access_token`,
+      {
+        method: "POST",
+        headers: { accept: "application/json", "content-type": "application/json" },
+        body: JSON.stringify({
+          client_id: oauth.clientId,
+          client_secret: oauth.clientSecret,
+          code,
+        }),
+      },
+    );
+    const token = ((await exchange.json().catch(() => ({}))) as { access_token?: unknown })
+      .access_token;
+    if (!exchange.ok || typeof token !== "string") return null;
+    const ids: number[] = [];
+    for (let page = 1; ; page += 1) {
+      const response = await this.http(
+        `${this.api}/user/installations?per_page=${GithubAppProvider.PAGE}&page=${page}`,
+        {
+          headers: {
+            authorization: `Bearer ${token}`,
+            accept: "application/vnd.github+json",
+            "x-github-api-version": "2022-11-28",
+          },
+        },
+      );
+      if (!response.ok) return null;
+      const body = (await response.json()) as { installations: { id: number }[] };
+      ids.push(...body.installations.map((installation) => installation.id));
+      if (body.installations.length < GithubAppProvider.PAGE) return ids;
+    }
+  }
+
   public override async repositories(
     installationId: number,
   ): Promise<readonly ProviderRepository[]> {
@@ -121,6 +162,12 @@ export class GithubAppProvider extends RepositoryProvider {
     ref: string,
     path: string,
   ): Promise<string | null> {
+    // The path comes from an uploaded graph: a `..` segment would walk the API URL out of
+    // the repository's contents, since `fetch` resolves it before sending.
+    const segments = path.split("/");
+    if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
+      return null;
+    }
     const { token } = await this.readToken(installationId, fullName);
     const response = await this.http(
       `${this.api}/repos/${fullName}/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(ref)}`,

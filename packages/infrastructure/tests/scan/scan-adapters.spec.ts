@@ -10,11 +10,28 @@ const ref = {
   scanId: "018f8c00-0000-7000-8000-0000000000e1" as ScanId,
 };
 
-const storage = (bytes: Uint8Array | null) =>
-  ({
-    sizeOf: () => Promise.resolve(bytes ? bytes.length : null),
-    get: () => Promise.resolve(bytes ?? new Uint8Array()),
-  }) as never;
+// Objects by key, streamed in small chunks so the size cap is met mid-read.
+class MemoryObjects {
+  public readonly objects = new Map<string, Uint8Array>();
+  public constructor(initial: Record<string, Uint8Array> = {}) {
+    for (const [key, bytes] of Object.entries(initial)) this.objects.set(key, bytes);
+  }
+  public async *getStream(key: string) {
+    const bytes = this.objects.get(key);
+    if (!bytes) throw new Error("NoSuchKey");
+    for (let at = 0; at < bytes.length; at += 64 * 1024) yield bytes.subarray(at, at + 64 * 1024);
+  }
+  public put(key: string, bytes: Uint8Array) {
+    this.objects.set(key, bytes);
+    return Promise.resolve({ key, size: bytes.length });
+  }
+  public delete(key: string) {
+    this.objects.delete(key);
+    return Promise.resolve();
+  }
+}
+
+const storage = (bytes: Uint8Array | null) => new MemoryObjects(bytes ? { k: bytes } : {}) as never;
 
 const minimal = {
   version: GRAPH_VERSION,
@@ -81,6 +98,25 @@ describe("StorageGraphArchive", () => {
     ).toEqual({
       refused: "This server reads graph version 1; the upload is version 2.",
     });
+  });
+
+  // The cap is applied while streaming: the bytes past it are never held.
+  it("refuses a graph over the cap without reading it whole", async () => {
+    const huge = new Uint8Array(StorageGraphArchive.MAX_GZIPPED + 1);
+    expect(await new StorageGraphArchive(storage(huge)).read("k")).toEqual({
+      refused: "The graph is larger than 25 MB compressed.",
+    });
+  });
+
+  it("promotes a valid upload to the graph key, and deletes the upload either way", async () => {
+    const good = gzipSync(JSON.stringify(minimal));
+    const objects = new MemoryObjects({ up: good, bad: new Uint8Array([1, 2]) });
+    const archive = new StorageGraphArchive(objects as never);
+
+    expect(await archive.promote("up", "graph")).toMatchObject({ bytes: good.length });
+    expect([...objects.objects.keys()].sort()).toEqual(["bad", "graph"]);
+    expect(await archive.promote("bad", "graph2")).toMatchObject({ refused: expect.any(String) });
+    expect([...objects.objects.keys()]).toEqual(["graph"]);
   });
 });
 

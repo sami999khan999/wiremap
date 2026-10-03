@@ -6,6 +6,7 @@ import {
   type NewWebhook,
   type OrganizationId,
   type Placement,
+  type ProjectId,
   sql,
   type WebhookEventName,
   type WebhookId,
@@ -79,6 +80,15 @@ export class PgWebhookRepository extends BaseRepository implements WebhookReposi
 
   public async delete(organizationId: OrganizationId, id: WebhookId): Promise<void> {
     await this.db.delete(webhooks).where(this.one(organizationId, id));
+  }
+
+  public async removeForProject(
+    organizationId: OrganizationId,
+    projectId: ProjectId,
+  ): Promise<void> {
+    await this.db
+      .delete(webhooks)
+      .where(and(eq(webhooks.organizationId, organizationId), eq(webhooks.projectId, projectId)));
   }
 
   public async recordDelivery(

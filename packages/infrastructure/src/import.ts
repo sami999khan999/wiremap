@@ -15,8 +15,10 @@ export {
   randomBytes,
   timingSafeEqual,
 } from "node:crypto";
+export type { LookupAddress } from "node:dns";
 export { lookup } from "node:dns/promises";
 export { once } from "node:events";
+export { request as httpsRequest } from "node:https";
 export { isIP } from "node:net";
 export { Readable } from "node:stream";
 export { pipeline } from "node:stream/promises";
@@ -61,6 +63,7 @@ export {
   type ApiKeySummary,
   type ArchivedObject,
   type ArchivedPartition,
+  type ArchiveRead,
   CacheStore,
   type CancellationSignal,
   type CancelSignal,

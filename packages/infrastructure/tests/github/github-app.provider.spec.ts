@@ -98,3 +98,46 @@ describe("GithubAppProvider", () => {
     expect(await provider(fetcher).fileAt(9, "acme/api", "main", "missing.ts")).toBeNull();
   });
 });
+
+describe("GithubAppProvider.installationsOfUser", () => {
+  const withOauth = (fetcher: typeof fetch) =>
+    new GithubAppProvider({
+      appId: "1",
+      slug: "wiremap-test",
+      privateKey: pem,
+      webhookSecret: "hook",
+      stateSecret: "state",
+      oauth: { clientId: "cid", clientSecret: "csecret" },
+      fetch: fetcher,
+    });
+
+  it("exchanges the code and lists what the person can see, keeping no token", async () => {
+    const seen: string[] = [];
+    const fetcher = (async (url: string | URL | Request, init?: RequestInit) => {
+      seen.push(
+        `${init?.method ?? "GET"} ${String(url)} ${new Headers(init?.headers).get("authorization") ?? "-"}`,
+      );
+      if (String(url).endsWith("/login/oauth/access_token")) {
+        expect(JSON.parse(String(init?.body))).toEqual({
+          client_id: "cid",
+          client_secret: "csecret",
+          code: "c0de",
+        });
+        return json({ access_token: "user-token" });
+      }
+      return json({ installations: [{ id: 9 }, { id: 12 }] });
+    }) as typeof fetch;
+
+    expect(await withOauth(fetcher).installationsOfUser("c0de")).toEqual([9, 12]);
+    expect(seen).toEqual([
+      "POST https://github.com/login/oauth/access_token -",
+      "GET https://api.github.com/user/installations?per_page=100&page=1 Bearer user-token",
+    ]);
+  });
+
+  it("answers null for a refused code, and with no OAuth pair at all", async () => {
+    const refused = (async () => json({ error: "bad_verification_code" })) as typeof fetch;
+    expect(await withOauth(refused).installationsOfUser("old")).toBeNull();
+    expect(await provider().installationsOfUser("c0de")).toBeNull();
+  });
+});

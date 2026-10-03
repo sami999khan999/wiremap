@@ -24,7 +24,7 @@ export {
   GithubAppProvider,
   NullRepositoryProvider,
 } from "./github/index.js";
-export { FetchWebhookSender } from "./http/index.js";
+export { HttpsWebhookSender } from "./http/index.js";
 export { type OpenAiEmbeddingConfig, OpenAiEmbeddingProvider } from "./openai/index.js";
 export {
   BaseRepository,

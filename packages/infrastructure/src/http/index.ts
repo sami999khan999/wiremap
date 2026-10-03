@@ -1,1 +1,1 @@
-export { FetchWebhookSender } from "./fetch-webhook.sender.js";
+export { HttpsWebhookSender } from "./https-webhook.sender.js";
