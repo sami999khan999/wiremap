@@ -49,6 +49,7 @@ export {
   PgPlatformReader,
   PgProjectRepository,
   PgRoleRepository,
+  PgScanRepository,
   PgShardMapReader,
   PgShardResolver,
   PgTeamRepository,

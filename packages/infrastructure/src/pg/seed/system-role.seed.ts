@@ -43,6 +43,7 @@ const DOC_AUTHOR: readonly PermissionKey[] = Object.freeze([
 // list the same keys hold them in every project at once.
 const PROJECT_ADMIN: readonly PermissionKey[] = Object.freeze([
   "project.graph.read",
+  "project.scan.run",
   "project.settings.manage",
   "project.access.manage",
   "project.delete",
@@ -97,7 +98,7 @@ const ROLES: readonly SystemRole[] = Object.freeze([
     key: "project_editor",
     name: "Project editor",
     scope: "goal",
-    permissions: ["project.graph.read"],
+    permissions: ["project.graph.read", "project.scan.run"],
   },
   {
     key: "project_viewer",

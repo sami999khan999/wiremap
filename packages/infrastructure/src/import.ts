@@ -4,11 +4,12 @@
 // ── node ─────────────────────────────────────────────────────────────────────
 export { AsyncLocalStorage } from "node:async_hooks";
 export { Buffer } from "node:buffer";
+export { spawn } from "node:child_process";
 export { createHash, createHmac, createSign, type Hash, timingSafeEqual } from "node:crypto";
 export { once } from "node:events";
 export { Readable } from "node:stream";
 export { pipeline } from "node:stream/promises";
-export { createGunzip, createGzip } from "node:zlib";
+export { createGunzip, createGzip, gunzipSync } from "node:zlib";
 
 // ── @aws-sdk/client-s3 ───────────────────────────────────────────────────────
 export {
@@ -81,11 +82,13 @@ export {
   type EmbeddingPurpose,
   type EntitlementRepository,
   type ExportedObject,
+  type FindingKey,
   type FlagRecord,
   type FlagRepository,
   type FlagTarget,
   type GithubInstallationRecord,
   type GithubInstallationRepository,
+  GraphArchive,
   type IndexedSource,
   type InvitationLinkPage,
   type InvitationLinkRecord,
@@ -112,6 +115,7 @@ export {
   type NewInvitationLink,
   type NewNotification,
   type NewRepository,
+  type NewScan,
   type NotificationPage,
   type NotificationPreferenceRepository,
   type NotificationRecipientReader,
@@ -165,6 +169,12 @@ export {
   type RolePage,
   type RoleRecord,
   type RoleRepository,
+  type ScanRecord,
+  type ScanRef,
+  ScanRefs,
+  type ScanRepository,
+  ScanRunner,
+  ScanTokens,
   type SearchHit,
   Shard,
   type ShardKey,
@@ -178,6 +188,7 @@ export {
   type StoredObject,
   type SubscribeOptions,
   type SweepOutcome,
+  type SweptScan,
   TablePlacement,
   type TeamMemberRecord,
   type TeamPage,
@@ -216,6 +227,8 @@ export {
   type DomainEventName,
   type DomainId,
   type GoalId,
+  GraphContract,
+  type GraphDocument,
   Identifiers,
   type InvitationId,
   type InvitationLinkId,
@@ -232,6 +245,10 @@ export {
   type RealtimeMessage,
   type RepositoryId,
   type RoleId,
+  type ScanCounts,
+  type ScanId,
+  type ScanState,
+  type ScanTrigger,
   type TeamId,
   type UserId,
 } from "@loadbearing/contracts";

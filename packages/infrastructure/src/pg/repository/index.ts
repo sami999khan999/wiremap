@@ -40,6 +40,7 @@ export { PgPlatformReader } from "./pg-platform.reader.js";
 export { PgPlatformPolicyRepository } from "./pg-platform-policy.repository.js";
 export { PgProjectRepository } from "./pg-project.repository.js";
 export { PgRoleRepository } from "./pg-role.repository.js";
+export { PgScanRepository } from "./pg-scan.repository.js";
 export { PgShardResolver } from "./pg-shard.resolver.js";
 export { PgShardMapReader } from "./pg-shard-map.reader.js";
 export { PgTeamRepository } from "./pg-team.repository.js";

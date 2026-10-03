@@ -15,6 +15,7 @@ export * from "./outbox.schema.js";
 export * from "./platform.schema.js";
 export * from "./project.schema.js";
 export * from "./rbac.schema.js";
+export { scanFindings, scans } from "./scan.schema.js";
 export * from "./shard.schema.js";
 export * from "./team.schema.js";
 export * from "./vector.schema.js";

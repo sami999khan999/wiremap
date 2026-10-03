@@ -6,7 +6,6 @@ import {
   isNotNull,
   isNull,
   type NewRepository,
-  ne,
   type OrganizationId,
   type Placement,
   type ProjectFields,
@@ -381,24 +380,28 @@ export class PgProjectRepository extends BaseRepository implements ProjectReposi
     return renamed.length;
   }
 
-  public async withSchedule(schedule: "daily" | "weekly"): Promise<readonly TrackingProject[]> {
-    const rows = await this.db
-      .select({
-        organizationId: projectRepositories.organizationId,
-        projectId: projectRepositories.projectId,
-        repositoryId: projectRepositories.id,
-        branches: projectRepositories.branches,
-      })
-      .from(projects)
-      .innerJoin(projectRepositories, eq(projectRepositories.projectId, projects.id))
-      .where(
-        and(
-          eq(projects.schedule, schedule),
-          isNull(projects.deletedAt),
-          ne(projectRepositories.provider, "upload"),
-        ),
-      );
-    return rows.map((row) => PgProjectRepository.tracking(row));
+  // One statement claims and marks, so two ticks racing never queue one project twice. Five
+  // minutes of slack keeps an hourly tick from slipping a daily schedule by a whole hour.
+  public async claimScheduled(
+    now: Date,
+  ): Promise<
+    readonly { readonly organizationId: OrganizationId; readonly projectId: ProjectId }[]
+  > {
+    const rows = await this.db.execute<{ organization_id: OrganizationId; id: ProjectId }>(sql`
+      update projects
+      set last_scheduled_at = ${now}
+      where deleted_at is null
+        and (
+          (schedule = 'daily'
+            and (last_scheduled_at is null
+              or last_scheduled_at <= ${now}::timestamptz - interval '1 day' + interval '5 minutes'))
+          or (schedule = 'weekly'
+            and (last_scheduled_at is null
+              or last_scheduled_at <= ${now}::timestamptz - interval '7 days' + interval '5 minutes'))
+        )
+      returning organization_id, id
+    `);
+    return rows.rows.map((row) => ({ organizationId: row.organization_id, projectId: row.id }));
   }
 
   private async withRepositories(

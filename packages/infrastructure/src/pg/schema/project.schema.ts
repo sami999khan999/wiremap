@@ -50,6 +50,8 @@ export const projects = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     // Set by a delete; the purge job removes the row once its data is gone.
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    // When the schedule last queued a scan; the hourly tick claims a project due by it.
+    lastScheduledAt: timestamp("last_scheduled_at", { withTimezone: true }),
   },
   (t) => [
     // Live projects only, so a deleted project's slug is free again at once.

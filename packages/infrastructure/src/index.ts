@@ -11,8 +11,15 @@ export {
   type DispatchedMessage,
   JobSignatureHasher,
 } from "./cloudflare/index.js";
+export { HmacScanTokens } from "./crypto/index.js";
 export { type GeminiEmbeddingConfig, GeminiEmbeddingProvider } from "./gemini/index.js";
-export { type GithubAppConfig, GithubAppProvider, NullRepositoryProvider } from "./github/index.js";
+export {
+  type GithubActionsRunnerConfig,
+  GithubActionsScanRunner,
+  type GithubAppConfig,
+  GithubAppProvider,
+  NullRepositoryProvider,
+} from "./github/index.js";
 export { type OpenAiEmbeddingConfig, OpenAiEmbeddingProvider } from "./openai/index.js";
 export {
   BaseRepository,
@@ -60,6 +67,7 @@ export {
   PgPlatformReader,
   PgProjectRepository,
   PgRoleRepository,
+  PgScanRepository,
   PgShardMapReader,
   PgShardResolver,
   PgTeamRepository,
@@ -74,6 +82,7 @@ export {
   ShardScope,
   TransactionScope,
 } from "./pg/index.js";
+export { type LocalRunnerConfig, LocalScanRunner, NullScanRunner } from "./process/index.js";
 export {
   RedisCacheStore,
   type RedisConfig,
@@ -88,6 +97,7 @@ export {
   type S3Config,
   S3StorageGateway,
   S3StoragePolicyGateway,
+  StorageGraphArchive,
   StorageKey,
 } from "./s3/index.js";
 export { type SmtpConfig, SmtpEmailSender } from "./smtp/index.js";

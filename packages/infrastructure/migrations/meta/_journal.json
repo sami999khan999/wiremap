@@ -57,6 +57,13 @@
       "when": 1790991051421,
       "tag": "0007_project_access_overview",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790996133946,
+      "tag": "0008_wiremap_scans",
+      "breakpoints": true
     }
   ]
 }
