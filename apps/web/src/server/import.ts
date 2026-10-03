@@ -18,11 +18,16 @@ export {
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────
 export { NotFoundError } from "@loadbearing/errors";
-
+// ── @orpc/openapi ────────────────────────────────────────────────────────────
+export { OpenAPIGenerator } from "@orpc/openapi";
+// ── @orpc/openapi/fetch ──────────────────────────────────────────────────────
+export { OpenAPIHandler } from "@orpc/openapi/fetch";
 // ── @orpc/server ─────────────────────────────────────────────────────────────
 // Never `EventPublisher` from here. It is oRPC's own in-process fan-out, and reaching
 // for it would put a second, replica-local realtime path beside the Redis one.
 export { createRouterClient } from "@orpc/server";
-
 // ── @orpc/server/fetch ───────────────────────────────────────────────────────
 export { RPCHandler } from "@orpc/server/fetch";
+
+// ── @orpc/zod/zod4 ───────────────────────────────────────────────────────────
+export { experimental_ZodSmartCoercionPlugin, ZodToJsonSchemaConverter } from "@orpc/zod/zod4";

@@ -8,6 +8,7 @@ import { DocPageRouter } from "./doc-page.router.js";
 import { DocSpaceRouter } from "./doc-space.router.js";
 import { DocumentRouter } from "./document.router.js";
 import { GithubRouter } from "./github.router.js";
+import { GraphRouter } from "./graph.router.js";
 import { MemberRouter } from "./member.router.js";
 import { NotificationRouter } from "./notification.router.js";
 import { OrganizationRouter } from "./organization.router.js";
@@ -41,5 +42,6 @@ export const appRouter = {
   scan: ScanRouter.all,
   view: ViewRouter.all,
   comment: CommentRouter.all,
+  graph: GraphRouter.all,
   ask: AskRouter.all,
 };
