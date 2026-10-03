@@ -80,6 +80,9 @@ export {
   type ScanDto,
   type TeamDto,
   type TeamMemberDto,
+  WEBHOOK_EVENTS,
+  type WebhookDto,
+  type WebhookEventName,
 } from "@loadbearing/contracts";
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────
@@ -143,6 +146,8 @@ export {
   useAppQuery,
   ViewMutations,
   ViewQueries,
+  WebhookMutations,
+  WebhookQueries,
 } from "@loadbearing/query";
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────
 export {

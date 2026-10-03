@@ -205,3 +205,4 @@ export {
   TeamMembersPanel,
   type TeamMembersPanelProps,
 } from "./team/index.js";
+export { WebhookPanel } from "./webhook/index.js";
