@@ -40,6 +40,7 @@ export const nav = {
   "nav.teams": "Teams",
   "nav.projects": "Projects",
   "nav.access": "Project access",
+  "nav.ai": "AI",
   "nav.audit": "Audit log",
   "nav.documents": "Documents",
   "nav.notifications": "Notifications",

@@ -21,8 +21,7 @@ export const graph = {
   "graph.partial.hide": "Hide",
   "graph.tab.overview": "Overview",
   "graph.tab.ask": "Ask",
-  "graph.ask.soon":
-    "Ask arrives with the next phase: questions about this graph, answered with citations.",
+  "graph.tab.detail": "Detail",
   "graph.overview.repositories": "Repositories",
   "graph.overview.frameworks": "Frameworks",
   "graph.overview.files": "Files",

@@ -1,6 +1,7 @@
 import type { account } from "./en/account.js";
 import type { activity } from "./en/activity.js";
 import type { apikey } from "./en/apikey.js";
+import type { ask } from "./en/ask.js";
 import type { auth } from "./en/auth.js";
 import type { common } from "./en/common.js";
 import type { doc } from "./en/doc.js";
@@ -38,6 +39,7 @@ interface NamespaceShape {
   readonly project: typeof project;
   readonly scan: typeof scan;
   readonly graph: typeof graph;
+  readonly ask: typeof ask;
   readonly error: typeof error;
   readonly email: typeof email;
 }
@@ -62,7 +64,8 @@ export type ClientNamespace =
   | "activity"
   | "project"
   | "scan"
-  | "graph";
+  | "graph"
+  | "ask";
 // Never reachable from a client catalog — only `SERVER_CATALOG` carries a loader for it.
 export type ServerNamespace = "email";
 export type Namespace = ClientNamespace | ServerNamespace;
@@ -105,4 +108,5 @@ export const CLIENT_NAMESPACES: readonly ClientNamespace[] = [
   "project",
   "scan",
   "graph",
+  "ask",
 ];

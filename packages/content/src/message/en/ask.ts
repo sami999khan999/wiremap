@@ -1,0 +1,41 @@
+// Ask: questions about a project's graph, and the organization's AI settings.
+export const ask = {
+  "ask.placeholder": "Ask about this codebase…",
+  "ask.send": "Ask",
+  "ask.stop": "Stop",
+  "ask.thinking": "Reading the graph…",
+  "ask.you": "You",
+  "ask.answer": "Answer",
+  "ask.cached": "From cache",
+  "ask.grounded": "Grounded on {count} files",
+  "ask.preset.onboarding": "Onboarding summary",
+  "ask.preset.file": "Explain {name}",
+  "ask.question.onboarding":
+    "Summarise this project for someone joining the team: what it is, how it is laid out, where requests come in and where the core logic lives.",
+  "ask.question.file": "Explain {path}: what it does, who uses it, and what it depends on.",
+  "ask.question.folder":
+    "Explain the {path} folder: what lives there and how it connects to the rest.",
+  "ask.off":
+    "Ask is off. An organization admin can turn it on with a Gemini key in Settings, then AI.",
+  "ask.failed": "The question could not be answered.",
+  "ask.limited": "That is the limit of questions for now. Try again later.",
+  "ask.clear": "New thread",
+  "ai.title": "AI",
+  "ai.intro":
+    "Ask answers questions about your projects with your organization's own Gemini key. Without one, Ask is off.",
+  "ai.enabled": "Turn on Ask",
+  "ai.provider": "Provider",
+  "ai.provider.none": "None",
+  "ai.provider.gemini": "Google Gemini",
+  "ai.model": "Model",
+  "ai.key": "API key",
+  "ai.key.hint": "Stored encrypted. Leave empty to keep the current one ({hint}).",
+  "ai.key.none": "Stored encrypted, never shown again.",
+  "ai.key.remove": "Remove key",
+  "ai.save": "Save",
+  "ai.saved": "Saved.",
+  "ai.test": "Test key",
+  "ai.test.ok": "The key works.",
+  "ai.test.failed": "The key did not work with that model.",
+  "ai.keyRequired": "Add a key to turn Ask on.",
+} as const;
