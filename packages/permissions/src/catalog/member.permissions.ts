@@ -24,4 +24,28 @@ export const memberPermissions = {
     label: "Change a member's role",
     requires: ["member.read", "rbac.role.read"],
   },
+  // Ends the membership outright, where `deactivate` keeps it switchable back. A key of its
+  // own: a role that may pause someone need not be able to make them leave.
+  "member.remove": {
+    scope: "org",
+    module: "member",
+    label: "Remove members",
+    requires: ["member.read"],
+  },
+  // Teams are groups of members that projects are shared with, not roles: belonging to
+  // one grants nothing until a project names it.
+  "member.team.manage": {
+    scope: "org",
+    module: "member",
+    label: "Manage teams",
+    requires: ["member.read"],
+  },
+  // Who joins on their own: anyone with a verified address at a claimed domain arrives
+  // with the role chosen here, so it needs the same reading of roles an invitation does.
+  "member.domain.manage": {
+    scope: "org",
+    module: "member",
+    label: "Manage auto-join domains",
+    requires: ["member.read", "rbac.role.read"],
+  },
 } as const satisfies Record<string, PermissionMeta>;
