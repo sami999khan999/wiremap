@@ -153,7 +153,7 @@ one port and one public hostname.
 
 ### Phase 2 — The image
 
-- [ ] `SH2.1` **`docker/wiremap/Dockerfile`, multi-stage.**
+- [x] `SH2.1` **`docker/wiremap/Dockerfile`, multi-stage.**
   - *Build*: `node:24-bookworm`, pnpm from `packageManager`, `pnpm install --frozen-lockfile`,
     `pnpm build:packages`, the web build (Node preset), the worker build, the CLI bundle.
   - *Runtime*: `node:24-bookworm-slim`, plus:
@@ -166,7 +166,8 @@ one port and one public hostname.
     `apps/cli/dist`, `packages/infrastructure` (migrate, seed, migrations), and the production
     `node_modules` from `pnpm deploy`.
   - It runs as a non-root `wiremap` user. Postgres runs as `postgres`.
-- [ ] `SH2.2` **Services under s6**, each with a readiness check, in this order:
+  - done: 2026-10-04 (amd64; arm64 is `SH2.4`). **Changed from the plan:** the worker and the database scripts are bundled into single files with esbuild instead of copied with `pnpm deploy`. `pnpm deploy --legacy` links workspace packages back to their sources, which the runtime image does not have, and a prune that followed those links deleted the build stage's sources. MinIO, Mailpit and `cloudflared` are copied from their images pinned by digest; s6-overlay is checked against its published checksums.
+- [x] `SH2.2` **Services under s6**, each with a readiness check, in this order:
   1. `postgres`;
   2. `redis` (AOF on, `maxmemory-policy noeviction`, as `docs/ai/rules/data.md` requires);
   3. `minio`;
@@ -175,17 +176,19 @@ one port and one public hostname.
   6. `web` (`cluster.mjs`, `WEB_PROCESSES` defaulting to 2);
   7. `worker`;
   8. `cloudflared`, only when `CLOUDFLARE_TUNNEL_TOKEN` is set.
+  - done: 2026-10-04. Order: `setup` (env, `/data`, initdb) → postgres, redis, minio, mailpit → `bootstrap` (waits, role, extensions, bucket, migrate, seed) → web, worker → cloudflared. The crash guard was seen working: Mailpit failing three times stopped the container.
 
   A service that dies is restarted. If one dies three times in a minute, the container exits,
   so Docker's restart policy and logs show it.
-- [ ] `SH2.3` **One log stream.** Every service writes to stdout with its name as a prefix. The
+- [x] `SH2.3` **One log stream.** Every service writes to stdout with its name as a prefix. The
   app's JSON lines pass through unchanged, so `docker logs` is the whole system.
+  - done: 2026-10-04. Support services are prefixed (`[postgres]`, `[redis]`, `[minio]`, `[mailpit]`, `[tunnel]`); the app's JSON lines are left as they are.
 - [ ] `SH2.4` **Size and platforms.** Images for `linux/amd64` and `linux/arm64`, the latter
   for Apple Silicon. The goal is under 1 GB, and the result is recorded in the docs.
 
 ### Phase 3 — First start and every start
 
-- [ ] `SH3.1` **The `init` one-shot**, idempotent:
+- [x] `SH3.1` **The `init` one-shot**, idempotent:
   - Create `/data/{postgres,redis,minio,backups}` with the right owners.
   - On first start: `initdb`, `infra/postgres.init.sql`, and the secrets in
     `/data/secrets.env`.
@@ -194,21 +197,26 @@ one port and one public hostname.
     - create the bucket if it is missing;
     - run the migrations;
     - seed when the catalog is empty.
-- [ ] `SH3.2` **The env, derived.** The container fills every internal URL itself:
+  - done: 2026-10-04. `wiremap-env.mjs` generates the secrets once (`/data/secrets.env`, `0600`), a passed value wins without rewriting it, and values are single-quoted so a `$` in a password survives.
+- [x] `SH3.2` **The env, derived.** The container fills every internal URL itself:
   `DATABASE_URL`, `DATABASE_DIRECT_URL`, `REDIS_CACHE_URL` and `REDIS_QUEUE_URL` (two names,
   one instance), the `S3_*` keys and `SMTP_URL` (Mailpit). Its fixed settings are:
   - `QUEUE_DRIVER=bullmq`, `SCAN_RUNNER=local`, `REALTIME_DRIVER=none`, `S3_ACCESS=proxied`;
   - `WIREMAP_CLI_PATH` pointing at the bundled CLI.
+  - done: 2026-10-04. Two required keys were missing on the first run (`AUTH_SESSION_MAX_AGE_SECONDS`, `AUTH_COOKIE_CACHE_MAX_AGE_SECONDS`); they now default to `.env.example`'s values.
 
   `APP_BASE_URL` defaults to `http://localhost:43000`, and to the tunnel's hostname when one is
   set. The person running it passes only what is genuinely theirs.
-- [ ] `SH3.3` **Health.** The image's `HEALTHCHECK` calls `/api/health`. `docker ps` shows the
+- [x] `SH3.3` **Health.** The image's `HEALTHCHECK` calls `/api/health`. `docker ps` shows the
   container healthy only when the database, cache and queue all answer.
-- [ ] `SH3.4` **Mail without SMTP.** Mailpit's inbox is published only with `-p
+  - done: 2026-10-04. Healthy 34 s after a cold start of the image on an existing volume, 15 s after `docker restart`.
+- [x] `SH3.4` **Mail without SMTP.** Mailpit's inbox is published only with `-p
   127.0.0.1:48025:48025`. The first-start banner in the logs prints the address and says to
   read the verification mail there.
-- [ ] `SH3.5` **The first platform admin.** `docker exec wiremap wiremap-admin grant <email>`
+  - done: 2026-10-04. A sign-up's verification mail arrives in the container's Mailpit, the link verifies, and sign-in works.
+- [x] `SH3.5` **The first platform admin.** `docker exec wiremap wiremap-admin grant <email>`
   wraps `pnpm platform:grant` for the first account.
+  - done: 2026-10-04. `docker exec <container> wiremap-admin grant <email>`.
 
 ### Phase 4 — GitHub from a private machine
 
