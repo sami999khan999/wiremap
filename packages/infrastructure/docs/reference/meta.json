@@ -14,6 +14,7 @@
     "realtime",
     "fan-out",
     "doc-renderer",
-    "cloudflare-queue"
+    "cloudflare-queue",
+    "storage-access"
   ]
 }

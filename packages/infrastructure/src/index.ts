@@ -103,6 +103,8 @@ export {
   type RedisRole,
 } from "./redis/index.js";
 export {
+  type ProxiedMethod,
+  ProxiedStorageGateway,
   type S3Config,
   S3StorageGateway,
   S3StoragePolicyGateway,

@@ -255,3 +255,5 @@ guessing one.
   where it does, what it lets through, and the type stub that keeps the DOM out of this package.
 - [Cloudflare queue](reference/cloudflare-queue.md) — the round trip through the dispatcher Worker,
   the signature both hops carry, and which `JobOptions` change meaning off BullMQ.
+- [Storage access](reference/storage-access.md) — presigned bucket links or signed links
+  through the web app, and what `/api/storage/` refuses.

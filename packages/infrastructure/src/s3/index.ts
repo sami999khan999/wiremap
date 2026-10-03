@@ -1,3 +1,4 @@
+export { type ProxiedMethod, ProxiedStorageGateway } from "./proxied-storage.gateway.js";
 export { S3ClientFactory } from "./s3-client.factory.js";
 export { type S3Config, S3StorageGateway } from "./s3-storage.gateway.js";
 export { S3StoragePolicyGateway } from "./s3-storage-policy.gateway.js";
