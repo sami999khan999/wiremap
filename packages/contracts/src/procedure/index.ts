@@ -2,12 +2,14 @@ import { ActivityProcedures } from "../activity/index.js";
 import { ApiKeyProcedures } from "../apikey/index.js";
 import { DocGrantProcedures, DocPageProcedures, DocSpaceProcedures } from "../doc/index.js";
 import { DocumentProcedures } from "../document/index.js";
+import { GithubProcedures } from "../github/index.js";
 import type { AnyContractRouter } from "../import.js";
 import { MemberProcedures } from "../member/index.js";
 import { NotificationProcedures } from "../notification/index.js";
 import { OrganizationProcedures } from "../organization/index.js";
 import { OverrideProcedures } from "../override/index.js";
 import { PlatformProcedures } from "../platform/index.js";
+import { ProjectProcedures } from "../project/index.js";
 import { RealtimeProcedures } from "../realtime/index.js";
 import { RoleProcedures } from "../role/index.js";
 import { TeamProcedures } from "../team/index.js";
@@ -29,6 +31,8 @@ export const contract = {
   organization: OrganizationProcedures.all,
   team: TeamProcedures.all,
   activity: ActivityProcedures.all,
+  project: ProjectProcedures.all,
+  github: GithubProcedures.all,
 } as const satisfies AnyContractRouter;
 
 export type AppContract = typeof contract;

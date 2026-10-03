@@ -20,6 +20,10 @@ export class Identifiers {
   public static readonly teamId = z.uuid().brand<"TeamId">();
   public static readonly invitationLinkId = z.uuid().brand<"InvitationLinkId">();
   public static readonly domainId = z.uuid().brand<"DomainId">();
+  // A project is the kit's goal: its id is the `goalId` a goal-scoped key is checked against.
+  public static readonly projectId = z.uuid().brand<"ProjectId">();
+  public static readonly repositoryId = z.uuid().brand<"RepositoryId">();
+  public static readonly projectGrantId = z.uuid().brand<"ProjectGrantId">();
 }
 
 export type OrganizationId = z.infer<typeof Identifiers.organizationId>;
@@ -35,3 +39,6 @@ export type DocPageId = z.infer<typeof Identifiers.docPageId>;
 export type TeamId = z.infer<typeof Identifiers.teamId>;
 export type InvitationLinkId = z.infer<typeof Identifiers.invitationLinkId>;
 export type DomainId = z.infer<typeof Identifiers.domainId>;
+export type ProjectId = z.infer<typeof Identifiers.projectId>;
+export type RepositoryId = z.infer<typeof Identifiers.repositoryId>;
+export type ProjectGrantId = z.infer<typeof Identifiers.projectGrantId>;

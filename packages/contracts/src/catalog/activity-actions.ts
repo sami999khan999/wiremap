@@ -5,6 +5,7 @@ import { memberActions } from "./member.actions.js";
 import { organizationActions } from "./organization.actions.js";
 import { overrideActions } from "./override.actions.js";
 import { platformActions } from "./platform.actions.js";
+import { projectActions } from "./project.actions.js";
 import { roleActions } from "./role.actions.js";
 import { teamActions } from "./team.actions.js";
 
@@ -20,4 +21,5 @@ export const ACTIVITY_ACTIONS = {
   ...docActions,
   ...organizationActions,
   ...teamActions,
+  ...projectActions,
 } as const;

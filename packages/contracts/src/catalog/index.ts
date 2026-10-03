@@ -8,6 +8,7 @@ import { notificationProcedurePermissions } from "./notification.permissions.js"
 import { organizationProcedurePermissions } from "./organization.permissions.js";
 import { overrideProcedurePermissions } from "./override.permissions.js";
 import { platformProcedurePermissions } from "./platform.permissions.js";
+import { projectProcedurePermissions } from "./project.permissions.js";
 import { realtimeProcedurePermissions } from "./realtime.permissions.js";
 import { roleProcedurePermissions } from "./role.permissions.js";
 import { teamProcedurePermissions } from "./team.permissions.js";
@@ -27,6 +28,7 @@ export const PROCEDURE_PERMISSIONS: Readonly<Record<string, PermissionKey>> = {
   ...organizationProcedurePermissions,
   ...teamProcedurePermissions,
   ...activityProcedurePermissions,
+  ...projectProcedurePermissions,
 };
 
 export { ACTIVITY_ACTIONS } from "./activity-actions.js";

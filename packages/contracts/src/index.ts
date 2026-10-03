@@ -79,6 +79,12 @@ export {
   type SearchDocumentsInput as SearchDocumentsContractInput,
 } from "./document/index.js";
 export {
+  GithubContract,
+  type GithubInstallationDto,
+  GithubProcedures,
+  type GithubStatusDto,
+} from "./github/index.js";
+export {
   type MailTemplateKey,
   type MailTemplateParams,
   MailTemplates,
@@ -188,12 +194,35 @@ export {
   Pagination,
   type PaginationQuery,
   Password,
+  type ProjectGrantId,
+  type ProjectId,
+  type RepositoryId,
   type RoleId,
   type TaskId,
   type TeamId,
   type UserId,
 } from "./primitive/index.js";
 export { type AppContract, contract } from "./procedure/index.js";
+export {
+  type AddRepositoryInput,
+  type AvailableRepositoryDto,
+  type CreateProjectInput,
+  PROJECT_ROLES,
+  type ProjectBySlugInput,
+  ProjectContract,
+  type ProjectDto,
+  ProjectEntity,
+  type ProjectGrantDto,
+  ProjectProcedures,
+  type ProjectRefInput,
+  type ProjectRole,
+  type RemoveRepositoryInput,
+  type RepositoryDto,
+  type RevokeProjectGrantInput,
+  type SaveProjectGrantInput,
+  type UpdateProjectInput,
+  type UpdateRepositoryInput,
+} from "./project/index.js";
 export {
   RealtimeContract,
   type RealtimeEventName,
