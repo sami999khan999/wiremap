@@ -1,0 +1,53 @@
+name: wiremap scan
+description: Analyze this repository on the runner and send its graph, never its source, to wiremap.
+author: wiremap
+branding:
+  icon: share-2
+  color: purple
+
+inputs:
+  server:
+    description: The wiremap server, such as https://wiremap.example.
+    required: true
+  api-key:
+    description: An API key holding project.scan.run. Pass it from a secret.
+    required: true
+  project:
+    description: The project's URL name in wiremap.
+    required: true
+  path:
+    description: The folder to analyze, relative to the workspace.
+    default: "."
+  args:
+    description: More `wiremap scan` options, such as `--artisan` or `--ignore 'legacy/**'`.
+    default: ""
+  version:
+    description: The wiremap CLI version from npm.
+    default: latest
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    # Every input reaches the script through `env`, never `${{ }}` inside `run`: an
+    # expression there is pasted into the shell, so a crafted input would run as code.
+    - name: Analyze and upload
+      shell: bash
+      env:
+        WIREMAP_SERVER: ${{ inputs.server }}
+        WIREMAP_API_KEY: ${{ inputs.api-key }}
+        WIREMAP_PROJECT: ${{ inputs.project }}
+        WIREMAP_PATH: ${{ inputs.path }}
+        WIREMAP_ARGS: ${{ inputs.args }}
+        WIREMAP_VERSION: ${{ inputs.version }}
+      run: |
+        # No globbing: `--ignore 'legacy/**'` must reach the CLI as written.
+        set -euo pipefail -f
+        branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+        # `args` is split on spaces on purpose, so it can carry several options.
+        read -r -a extra <<< "$WIREMAP_ARGS"
+        npx --yes "wiremap@${WIREMAP_VERSION}" scan "$WIREMAP_PATH" \
+          --project "$WIREMAP_PROJECT" --branch "$branch" --commit "$GITHUB_SHA" "${extra[@]}"

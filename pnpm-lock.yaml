@@ -518,6 +518,8 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  apps/action: {}
+
   apps/cli:
     dependencies:
       typescript:

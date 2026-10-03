@@ -1,0 +1,6 @@
+{
+  "name": "@loadbearing/action",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The wiremap GitHub Action: run `wiremap scan` in a workflow. Nothing to build."
+}
