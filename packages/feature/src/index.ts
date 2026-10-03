@@ -167,6 +167,7 @@ export {
   type RoleMatrixProps,
   useRoleFailure,
 } from "./rbac/index.js";
+export { ScanHistory } from "./scan/index.js";
 export {
   TeamList,
   type TeamListProps,
