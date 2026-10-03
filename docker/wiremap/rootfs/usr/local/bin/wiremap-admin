@@ -1,0 +1,11 @@
+#!/bin/bash
+# Admin tasks inside the running container: `docker exec wiremap wiremap-admin <command>`.
+set -euo pipefail
+set -a; . /run/wiremap/env; set +a
+case "${1:-}" in
+  grant)
+    [ -n "${2:-}" ] || { echo "usage: wiremap-admin grant <email>" >&2; exit 2; }
+    cd /app/infra && exec s6-setuidgid wiremap node platform-grant.mjs "$2" ;;
+  *)
+    echo "usage: wiremap-admin grant <email>" >&2; exit 2 ;;
+esac

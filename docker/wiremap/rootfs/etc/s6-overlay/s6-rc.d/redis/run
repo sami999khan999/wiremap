@@ -1,0 +1,8 @@
+#!/bin/bash
+set -a; . /run/wiremap/env; set +a
+# The queue lives here: AOF so a restart keeps it, and no eviction, as the data rules require.
+# The service itself is the supervised process; only its output goes through sed.
+exec > >(sed -u 's/^/[redis] /') 2>&1
+exec s6-setuidgid redis redis-server --bind 127.0.0.1 --port 6379 --dir /data/redis \
+  --appendonly yes --maxmemory "${REDIS_MAXMEMORY:-256mb}" --maxmemory-policy noeviction \
+  --save "" --loglevel warning

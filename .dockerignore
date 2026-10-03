@@ -1,0 +1,13 @@
+# The image is built from source: none of these belong in its context.
+.git
+.claude
+**/node_modules
+**/dist
+**/.output
+**/.wrangler
+**/.vercel
+**/coverage
+**/*.tsbuildinfo
+.env
+.env.*
+!.env.example

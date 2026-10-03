@@ -1,0 +1,2 @@
+#!/bin/bash
+exec /usr/local/bin/wiremap-finish cloudflared "$1" "$2"

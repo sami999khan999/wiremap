@@ -1,0 +1,21 @@
+#!/command/with-contenv bash
+# Builds the environment, then prepares /data: owners, and a Postgres cluster on first start.
+set -euo pipefail
+node /usr/local/bin/wiremap-env.mjs
+set -a; . /run/wiremap/env; set +a
+mkdir -p /data/postgres /data/redis /data/minio /data/mailpit /data/backups
+chown -R postgres:postgres /data/postgres
+chown -R redis:redis /data/redis
+chown -R wiremap:wiremap /data/minio /data/mailpit /data/backups
+chmod 700 /data/postgres
+if [ ! -s /data/postgres/PG_VERSION ]; then
+  echo "wiremap: first start, creating the database cluster"
+  s6-setuidgid postgres /usr/lib/postgresql/17/bin/initdb -D /data/postgres \
+    --auth-local=peer --auth-host=scram-sha-256 --encoding=UTF8 --locale=C.UTF-8 >/dev/null
+fi
+# A cluster made by another major version would not start; say so plainly instead.
+if [ "$(cat /data/postgres/PG_VERSION)" != "17" ]; then
+  echo "wiremap: /data/postgres holds Postgres $(cat /data/postgres/PG_VERSION), this image runs 17." >&2
+  echo "wiremap: restore a backup into a fresh volume instead (docs/infra/self-hosted.md)." >&2
+  exit 1
+fi

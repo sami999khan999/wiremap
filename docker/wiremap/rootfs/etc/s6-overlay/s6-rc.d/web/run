@@ -1,0 +1,4 @@
+#!/bin/bash
+set -a; . /run/wiremap/env; set +a
+cd /app/web
+exec s6-setuidgid wiremap node cluster.mjs 2>&1

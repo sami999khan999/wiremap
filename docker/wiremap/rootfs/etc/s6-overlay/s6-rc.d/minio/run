@@ -1,0 +1,6 @@
+#!/bin/bash
+set -a; . /run/wiremap/env; set +a
+export MINIO_ROOT_USER=wiremap MINIO_ROOT_PASSWORD="${MINIO_PASSWORD}" MINIO_BROWSER=off
+# The service itself is the supervised process; only its output goes through sed.
+exec > >(sed -u 's/^/[minio] /') 2>&1
+exec s6-setuidgid wiremap minio server /data/minio --address 127.0.0.1:9000 --quiet

@@ -1,0 +1,4 @@
+#!/bin/bash
+set -a; . /run/wiremap/env; set +a
+cd /app/worker
+exec s6-setuidgid wiremap node main.mjs 2>&1

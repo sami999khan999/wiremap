@@ -1,0 +1,7 @@
+#!/bin/bash
+set -a; . /run/wiremap/env; set +a
+# Optional: a public hostname for webhooks, from a tunnel made in the Cloudflare dashboard.
+if [ -z "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then exec sleep infinity; fi
+# The service itself is the supervised process; only its output goes through sed.
+exec > >(sed -u 's/^/[tunnel] /') 2>&1
+exec s6-setuidgid wiremap cloudflared tunnel --no-autoupdate run --token "${CLOUDFLARE_TUNNEL_TOKEN}"

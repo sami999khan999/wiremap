@@ -1,0 +1,8 @@
+#!/bin/bash
+set -a; . /run/wiremap/env; set +a
+# Only when no real SMTP was given: then every message the app sends lands in this inbox.
+if [ "${WIREMAP_MAILPIT}" != "1" ]; then exec sleep infinity; fi
+# The service itself is the supervised process; only its output goes through sed.
+exec > >(sed -u 's/^/[mailpit] /') 2>&1
+exec s6-setuidgid wiremap mailpit --smtp 127.0.0.1:1025 --listen 0.0.0.0:48025 \
+  --database /data/mailpit/mailpit.db --quiet

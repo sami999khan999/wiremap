@@ -1,0 +1,14 @@
+#!/bin/bash
+# s6 restarts a service that exits. One that dies three times in a minute is not going to
+# recover, so the container stops and Docker's restart policy and logs show it.
+name="$1"; code="${2:-0}"
+[ "$code" = "256" ] && exit 0   # stopped by s6 on shutdown
+log="/run/wiremap/deaths-${name}"
+now=$(date +%s)
+echo "$now" >> "$log"
+recent=$(awk -v now="$now" 'now - $1 < 60' "$log" | wc -l)
+echo "wiremap: ${name} exited (${code}), ${recent} time(s) in the last minute" >&2
+if [ "$recent" -ge 3 ]; then
+  echo "wiremap: ${name} keeps failing; stopping the container" >&2
+  /run/s6/basedir/bin/halt
+fi

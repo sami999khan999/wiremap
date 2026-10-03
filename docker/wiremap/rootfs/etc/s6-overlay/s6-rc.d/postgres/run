@@ -1,0 +1,8 @@
+#!/bin/bash
+set -a; . /run/wiremap/env; set +a
+mkdir -p /run/postgresql && chown postgres:postgres /run/postgresql
+exec s6-setuidgid postgres /usr/lib/postgresql/17/bin/postgres -D /data/postgres \
+  -c listen_addresses=127.0.0.1 -c unix_socket_directories=/run/postgresql \
+  -c shared_preload_libraries=pg_stat_statements \
+  -c shared_buffers="${POSTGRES_SHARED_BUFFERS:-128MB}" -c max_connections=60 \
+  -c logging_collector=off -c log_line_prefix='[postgres] ' 2>&1
