@@ -223,6 +223,43 @@ jobs:
         if: always()
         run: pnpm infra:down
 
+  # The single container: built from this commit, started on a fresh volume, then signed up
+  # to, uploaded into, read back and restarted. docs/plans/SELF-HOSTED-PLAN.md, SH6.1.
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      # The smoke drives the CLI from the runner, as someone uploading from their machine.
+      - run: pnpm --filter "@loadbearing/cli..." run build
+
+      - name: Build the image
+        run: docker build -f docker/wiremap/Dockerfile -t wiremap:ci .
+
+      - name: Start it
+        run: >-
+          docker run -d --name wiremap-ci
+          -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025
+          -v wiremap-ci-data:/data wiremap:ci
+
+      - name: Smoke
+        run: node tooling/scripts/container-smoke.mjs wiremap-ci
+
+      - name: Image size
+        if: always()
+        run: docker image ls wiremap:ci --format '{{.Size}}'
+
+      - name: Container logs
+        if: failure()
+        run: docker logs --tail 200 wiremap-ci
+
   # Deliberately its own job, and deliberately not required. Blocking a merge on a
   # transitive advisory nobody can fix today is how people learn to ignore a red build —
   # and once they do, the advisories that *are* actionable are ignored with them.
