@@ -1,4 +1,9 @@
-import { AuthFactory, InvitationClaimingEnroller, NullMembershipEnroller } from "@loadbearing/auth";
+import {
+  AuthFactory,
+  DomainJoiningEnroller,
+  InvitationClaimingEnroller,
+  NullMembershipEnroller,
+} from "@loadbearing/auth";
 import {
   PgBootstrapMembershipEnroller,
   PgPersonalOrganizationEnroller,
@@ -64,8 +69,12 @@ describe("Container — the enrolment branch", () => {
 
 // The wrapper holds its inner enroller privately; reading it is the only way to say
 // which of the three was chosen without standing up three deployments.
+// ──
+// Two layers since wiremap: the invitation claim wraps the domain join, which wraps the mode.
 function inner(enroller: unknown): unknown {
-  return (enroller as { inner: unknown }).inner;
+  const domains = (enroller as { inner: unknown }).inner;
+  expect(domains).toBeInstanceOf(DomainJoiningEnroller);
+  return (domains as { inner: unknown }).inner;
 }
 
 describe("Container — what a process built without auth cannot reach", () => {

@@ -1,6 +1,8 @@
 import {
   type ActivityLogger,
   ActivityRelaySubscriber,
+  AddMemberDomainUseCase,
+  AddTeamMemberUseCase,
   AdjustEntitlementUseCase,
   ApiKeyResolver,
   AssignPlanUseCase,
@@ -24,7 +26,9 @@ import {
   CreateApiKeyUseCase,
   CreateDocPageUseCase,
   CreateDocSpaceUseCase,
+  CreateInvitationLinkUseCase,
   CreateRoleUseCase,
+  CreateTeamUseCase,
   type Database,
   DatabaseCluster,
   type DatabaseStats,
@@ -44,6 +48,7 @@ import {
   DocSearch,
   DocTree,
   type DomainEventPublisher,
+  DomainJoiningEnroller,
   type EmailSender,
   ExpireEntitlementAdjustmentsUseCase,
   ExpirePermissionOverridesUseCase,
@@ -57,6 +62,7 @@ import {
   GetEntitlementUseCase,
   GetNotificationPreferencesUseCase,
   GetOrganizationEntitlementUseCase,
+  GetOrganizationUseCase,
   GrantPermissionOverrideUseCase,
   GrantPermissionUseCase,
   IndexDocumentUseCase,
@@ -66,6 +72,7 @@ import {
   InvitationClaimingEnroller,
   InviteMemberUseCase,
   JsonLogger,
+  ListActivityUseCase,
   ListApiKeysUseCase,
   ListDocAccessOptionsUseCase,
   ListDocGrantsUseCase,
@@ -73,7 +80,9 @@ import {
   ListDocRevisionsUseCase,
   ListDocSpacesUseCase,
   ListFlagsUseCase,
+  ListInvitationLinksUseCase,
   ListInvitationsUseCase,
+  ListMemberDomainsUseCase,
   ListMembersUseCase,
   ListModuleSwitchesUseCase,
   ListNotificationsUseCase,
@@ -81,6 +90,8 @@ import {
   ListPlansUseCase,
   ListPlatformDocSpacesUseCase,
   ListRolesUseCase,
+  ListTeamMembersUseCase,
+  ListTeamsUseCase,
   ListTenantExportsUseCase,
   type Logger,
   type MailPublisher,
@@ -89,6 +100,7 @@ import {
   MarkAllNotificationsReadUseCase,
   type MarkdownRenderer,
   MarkNotificationReadUseCase,
+  type MemberDomainClaimer,
   MemberRealtimeSubscriber,
   type MembershipEnroller,
   type MembershipReader,
@@ -104,6 +116,7 @@ import {
   type PartitionArchiveGateway,
   PgAccountRepository,
   PgActivityLogger,
+  PgActivityReader,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
@@ -113,8 +126,12 @@ import {
   PgEntitlementRepository,
   PgFlagRepository,
   PgInvitationClaimer,
+  PgInvitationLinkClaimer,
+  PgInvitationLinkRepository,
   PgInvitationRepository,
   PgMaintenanceGateway,
+  PgMemberDomainClaimer,
+  PgMemberDomainRepository,
   PgMemberRepository,
   PgMembershipReader,
   PgNotificationPreferenceRepository,
@@ -122,6 +139,7 @@ import {
   PgNotificationRepository,
   PgOrganizationFounder,
   PgOrganizationReader,
+  PgOrganizationRepository,
   PgOutboxGateway,
   PgOutboxPublisher,
   PgPartitionArchiveGateway,
@@ -132,8 +150,10 @@ import {
   PgRoleRepository,
   PgShardMapReader,
   PgShardResolver,
+  PgTeamRepository,
   PgTenantRepository,
   PgUnitOfWork,
+  PgUserReader,
   PgVectorStore,
   type PlatformPolicyRepository,
   type PlatformReader,
@@ -159,11 +179,17 @@ import {
   ReembedChunksUseCase,
   ReinstateAccountUseCase,
   type RelayedActivityStore,
+  RemoveMemberDomainUseCase,
+  RemoveMemberUseCase,
+  RemoveOrganizationUseCase,
+  RemoveTeamMemberUseCase,
+  RemoveTeamUseCase,
   type ReplicaHealth,
   ResendInvitationUseCase,
   RestoreDocRevisionUseCase,
   RevokeApiKeyUseCase,
   RevokeDocGrantUseCase,
+  RevokeInvitationLinkUseCase,
   RevokeInvitationUseCase,
   RevokePermissionUseCase,
   S3StorageGateway,
@@ -195,6 +221,7 @@ import {
   type TenantMembershipReader,
   ToggleReplicaReadsUseCase,
   TransactionScope,
+  TransferOwnershipUseCase,
   UnifiedMarkdownRenderer,
   type UnitOfWork,
   UpdateDefaultPlanUseCase,
@@ -202,7 +229,9 @@ import {
   UpdateFlagTargetUseCase,
   UpdateFlagUseCase,
   UpdateNotificationPreferenceUseCase,
+  UpdateOrganizationUseCase,
   UpdateRoleUseCase,
+  UpdateTeamUseCase,
   UploadDocImageUseCase,
   type UserId,
   type VectorStore,
@@ -251,6 +280,13 @@ export interface MemberUseCases {
   // One use-case behind two procedures: the direction is an argument, because the
   // column is one value and two classes would let them disagree about "active".
   readonly setMemberActive: SetMemberActiveUseCase;
+  readonly removeMember: RemoveMemberUseCase;
+  readonly listInvitationLinks: ListInvitationLinksUseCase;
+  readonly createInvitationLink: CreateInvitationLinkUseCase;
+  readonly revokeInvitationLink: RevokeInvitationLinkUseCase;
+  readonly listMemberDomains: ListMemberDomainsUseCase;
+  readonly addMemberDomain: AddMemberDomainUseCase;
+  readonly removeMemberDomain: RemoveMemberDomainUseCase;
 }
 
 // One field per dependency the deployment cannot serve requests without, plus the
@@ -384,6 +420,24 @@ export class Container {
   // the same question in the opposite argument order — see `tenant-membership.reader.ts`.
   public readonly tenantMemberships: TenantMembershipReader;
   public readonly invitationClaimer: InvitationClaimer;
+  // Wiremap: a shareable link's claim, and the join page's preview of it.
+  public readonly invitationLinkClaimer: PgInvitationLinkClaimer;
+  public readonly organization: {
+    readonly get: GetOrganizationUseCase;
+    readonly update: UpdateOrganizationUseCase;
+    readonly transferOwnership: TransferOwnershipUseCase;
+    readonly remove: RemoveOrganizationUseCase;
+  };
+  public readonly teams: {
+    readonly list: ListTeamsUseCase;
+    readonly members: ListTeamMembersUseCase;
+    readonly create: CreateTeamUseCase;
+    readonly update: UpdateTeamUseCase;
+    readonly remove: RemoveTeamUseCase;
+    readonly addMember: AddTeamMemberUseCase;
+    readonly removeMember: RemoveTeamMemberUseCase;
+  };
+  public readonly activityLog: { readonly list: ListActivityUseCase };
   public readonly organizationFounder: OrganizationFounder;
 
   // ── use-cases, one field each, constructed eagerly ────────
@@ -805,12 +859,37 @@ export class Container {
       this.activity,
       this.eventPublisher,
     );
+    this.invitationLinkClaimer = new PgInvitationLinkClaimer(
+      this.cluster,
+      this.transactions,
+      this.shards,
+      this.activity,
+      this.eventPublisher,
+    );
+    const domainClaimer = new PgMemberDomainClaimer(
+      this.cluster,
+      this.transactions,
+      this.shards,
+      this.activity,
+      this.eventPublisher,
+    );
 
     // One instance each: they hold no state beyond the pool and the scope, so a second
     // copy would be a second name.
     const roles = new PgRoleRepository(this.cluster, this.transactions, this.shards);
     const members = new PgMemberRepository(this.cluster, this.transactions, this.shards);
     const invitations = new PgInvitationRepository(this.cluster, this.transactions, this.shards);
+    const invitationLinks = new PgInvitationLinkRepository(
+      this.cluster,
+      this.transactions,
+      this.shards,
+    );
+    const memberDomains = new PgMemberDomainRepository(
+      this.cluster,
+      this.transactions,
+      this.shards,
+    );
+    const teamRepository = new PgTeamRepository(this.cluster, this.transactions, this.shards);
 
     // Skipped when `config.auth` is absent: `apps/worker` builds a `SystemPrincipal`
     // from a named grant list and never resolves a credential.
@@ -825,6 +904,7 @@ export class Container {
         this.shards,
         this.organizationFounder,
         this.invitationClaimer,
+        domainClaimer,
       );
 
       this.authInstance = AuthFactory.create(
@@ -838,6 +918,7 @@ export class Container {
         new QueuedAuthMailer(this.mailPublisher),
         this.invitationClaimer,
         this.organizationFounder,
+        this.invitationLinkClaimer,
       );
       this.sessionResolver = new BetterAuthSessionResolver(this.authInstance);
 
@@ -922,6 +1003,47 @@ export class Container {
           this.clock,
           roles,
           capabilityRepository,
+        ),
+        removeMember: new RemoveMemberUseCase(
+          this.authorizer,
+          members,
+          this.capabilities,
+          this.activity,
+          this.catalogUnitOfWork,
+          roles,
+          capabilityRepository,
+        ),
+        listInvitationLinks: new ListInvitationLinksUseCase(this.authorizer, invitationLinks),
+        createInvitationLink: new CreateInvitationLinkUseCase(
+          this.authorizer,
+          invitationLinks,
+          roles,
+          capabilityRepository,
+          this.activity,
+          this.catalogUnitOfWork,
+          this.clock,
+        ),
+        revokeInvitationLink: new RevokeInvitationLinkUseCase(
+          this.authorizer,
+          invitationLinks,
+          this.activity,
+          this.catalogUnitOfWork,
+          this.clock,
+        ),
+        listMemberDomains: new ListMemberDomainsUseCase(this.authorizer, memberDomains),
+        addMemberDomain: new AddMemberDomainUseCase(
+          this.authorizer,
+          memberDomains,
+          roles,
+          capabilityRepository,
+          this.activity,
+          this.catalogUnitOfWork,
+        ),
+        removeMemberDomain: new RemoveMemberDomainUseCase(
+          this.authorizer,
+          memberDomains,
+          this.activity,
+          this.catalogUnitOfWork,
         ),
       };
 
@@ -1153,6 +1275,82 @@ export class Container {
       ),
     };
 
+    const organizationRepository = new PgOrganizationRepository(
+      this.cluster,
+      this.transactions,
+      this.shards,
+    );
+    this.organization = {
+      get: new GetOrganizationUseCase(this.authorizer, organizationRepository),
+      update: new UpdateOrganizationUseCase(
+        this.authorizer,
+        organizationRepository,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      transferOwnership: new TransferOwnershipUseCase(
+        this.authorizer,
+        members,
+        roles,
+        this.capabilities,
+        this.activity,
+        this.eventPublisher,
+        this.catalogUnitOfWork,
+      ),
+      // The same `tenant-delete` job the platform's delete queues.
+      remove: new RemoveOrganizationUseCase(
+        this.authorizer,
+        new PgTenantRepository(this.cluster, this.transactions, this.shards),
+        this.queuePublisher,
+        this.activity,
+      ),
+    };
+    this.teams = {
+      list: new ListTeamsUseCase(this.authorizer, teamRepository),
+      members: new ListTeamMembersUseCase(this.authorizer, teamRepository),
+      create: new CreateTeamUseCase(
+        this.authorizer,
+        teamRepository,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      update: new UpdateTeamUseCase(
+        this.authorizer,
+        teamRepository,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      remove: new RemoveTeamUseCase(
+        this.authorizer,
+        teamRepository,
+        this.capabilities,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      addMember: new AddTeamMemberUseCase(
+        this.authorizer,
+        teamRepository,
+        members,
+        this.capabilities,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      removeMember: new RemoveTeamMemberUseCase(
+        this.authorizer,
+        teamRepository,
+        this.capabilities,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+    };
+    this.activityLog = {
+      list: new ListActivityUseCase(
+        this.authorizer,
+        new PgActivityReader(this.cluster, this.transactions, this.shards),
+        new PgUserReader(this.cluster, this.transactions, this.shards),
+      ),
+    };
+
     this.rbac = {
       listRoles: new ListRolesUseCase(this.authorizer, roles),
       // The same repository `CapabilityCache` reads, deliberately un-cached: an
@@ -1246,6 +1444,7 @@ export class Container {
     // shape structurally, which is what lets this stay the one place a class is named.
     founder: OrganizationFounder,
     claimer: InvitationClaimer,
+    domains: MemberDomainClaimer,
   ): MembershipEnroller {
     const inner = ((): MembershipEnroller => {
       switch (mode) {
@@ -1263,7 +1462,8 @@ export class Container {
       }
     })();
 
-    return new InvitationClaimingEnroller(claimer, inner);
+    // An invitation first, then a claimed email domain, then the mode's own answer.
+    return new InvitationClaimingEnroller(claimer, new DomainJoiningEnroller(domains, inner));
   }
 
   // Getters rather than optional fields, so a process that skipped auth fails loudly at
