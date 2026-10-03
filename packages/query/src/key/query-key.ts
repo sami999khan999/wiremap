@@ -116,6 +116,7 @@ export class QueryKeys {
     detail: (slug: string) => ["project", "detail", slug] as const,
     available: () => ["project", "available"] as const,
     access: (projectId: string) => ["project", "access", projectId] as const,
+    accessOverview: () => ["project", "accessOverview"] as const,
   };
 
   public static readonly github = {

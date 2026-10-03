@@ -37,4 +37,12 @@ export class ProjectQueries {
       staleTime: 30_000,
     });
   }
+
+  public static accessOverview(client: ApiClient) {
+    return queryOptions({
+      queryKey: QueryKeys.project.accessOverview(),
+      queryFn: () => client.project.accessOverview({}),
+      staleTime: 30_000,
+    });
+  }
 }
