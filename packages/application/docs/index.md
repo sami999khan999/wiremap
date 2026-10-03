@@ -179,3 +179,11 @@ Lite declares no flags, so nothing calls it yet. The big kit's widget flags are 
   page rendered once and read from one row, and who may read a public or granted space.
 - [Organization access](reference/organization-access.md) — wiremap's viewer role, member removal,
   shareable links, auto-join domains, teams, ownership transfer, owner deletion and the audit log.
+- [Projects](reference/project.md) — a project as a goal, its visibility and grants, and how its
+  data is purged.
+- [Scans](reference/scan.md) — the scan state machine, the runner protocol and its token, and
+  how completion diffs findings.
+- [Ask](reference/ask.md) — grounding by name, the org's own encrypted key, citations, and the
+  limits.
+- [Comments](reference/comment.md) — one level of threads, text bodies, mentions that respect
+  project access, notes, and the project feed.

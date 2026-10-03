@@ -671,7 +671,7 @@ the same layout.
 
 ### Phase 10 — Collaboration and notifications
 
-- [ ] `WM10.1` **Comments.**
+- [x] `WM10.1` **Comments.**
   - `comments`: org, project, target kind `file|folder|route|node`, target key, body (Markdown,
     sanitised), author, parent (one level of threads), `resolved_at`, `pinned`, edited and deleted
     timestamps.
@@ -679,22 +679,33 @@ the same layout.
   - Procedures `comment.list`, `comment.create`, `comment.update`, `comment.remove`,
     `comment.resolve` and `comment.pin`.
   - Comment counts show on nodes, and the thread shows in node detail.
-- [ ] `WM10.2` **Mentions.**
+  - done: 2026-10-03. Target kinds are `file|folder|route|project`. The body is plain text,
+    rendered as text, not sanitised Markdown: a sanitiser is a second parser to keep in step
+    forever. A node's count also rolls up to every folder above it.
+- [x] `WM10.2` **Mentions.**
   - The `@` picker searches project members. Stored as `@[userId]`, rendered as a name.
   - A mention notifies, but only members who can read the project.
-- [ ] `WM10.3` **Pinned notes.** A pinned comment is a note. Notes show as a pin on the node and in
+  - done: 2026-10-03. The picker offers the organization's first 100 active members. Delivery
+    drops anyone `NotificationAccess.readsProject` refuses, so the picker need not be exact.
+- [x] `WM10.3` **Pinned notes.** A pinned comment is a note. Notes show as a pin on the node and in
   an "Notes" list in Overview.
-- [ ] `WM10.4` **Project activity feed.**
+- [x] `WM10.4` **Project activity feed.**
   - `/p/$project/activity` reads `activity_log` through `ActivityReader` with
     `payload->>'projectId'`, backed by an expression index (org, project id, `occurred_at`).
   - It shows scans, settings changes, comments and access changes.
-- [ ] `WM10.5` **Notification policies:**
+  - done: 2026-10-03. Procedure `activity.project` on `project.graph.read`, not the audit
+    log's `audit.log.read`. Notification links go through `/go/project/$projectId`.
+- [x] `WM10.5` **Notification policies:**
   - `scan.failed` goes to the project's admins and whoever requested the scan;
   - `finding.created` goes to project admins, as a digest when there are more than 5;
   - `comment.mentioned`, and `comment.replied` to the thread author;
   - invitations already exist.
 
   Each one gets email and in-app. Categories are added to preferences, and copy is written.
+
+  done: 2026-10-03. One `comment.created` event covers mentions and replies. "Project admins"
+  is the org-wide holders of `project.access.overview` (owner, admin): the recipient reader
+  resolves org grants, not goal grants. `finding.created` is always a digest.
 
 ### Phase 11 — Integrations
 

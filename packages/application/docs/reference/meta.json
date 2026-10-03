@@ -10,6 +10,7 @@
     "organization-access",
     "project",
     "scan",
-    "ask"
+    "ask",
+    "comment"
   ]
 }
