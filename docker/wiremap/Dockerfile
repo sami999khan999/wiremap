@@ -8,7 +8,9 @@ FROM axllent/mailpit:v1.29@sha256:757f22b56c1da03570afdb3d259effe5091018008a81bb
 FROM cloudflare/cloudflared:2025.9.1@sha256:4604b477520dc8322af5427da68b44f0bf814938e9d2e4814f2249ee4b03ffdf AS cloudflared
 
 # ── Build: every package, the web app, the worker, the CLI ───────────────────────────────
-FROM node:24-bookworm@sha256:64af3819f9275802414d7cdc38c27e9d82bd564dec4d4da87d008255d36c63b4 AS build
+# On the machine's own platform for every target: the output is JavaScript and WebAssembly,
+# so an arm64 image needs no emulated pnpm install.
+FROM --platform=$BUILDPLATFORM node:24-bookworm@sha256:64af3819f9275802414d7cdc38c27e9d82bd564dec4d4da87d008255d36c63b4 AS build
 ENV CI=true HUSKY=0
 RUN npm install -g pnpm@11.21.0 --no-audit --no-fund
 WORKDIR /src
@@ -47,7 +49,8 @@ ARG TARGETARCH
 ARG S6_VERSION=3.2.3.2
 
 # Postgres 17 and pgvector from the PostgreSQL project's own repository. The package's
-# default cluster is switched off: the data lives on /data, made on first start.
+# default cluster is switched off: the data lives on /data, made on first start. The JIT and
+# its LLVM (about 150 MB) go too: postgres runs with jit=off, and the binary does not link it.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl gnupg xz-utils git redis-server \
  && install -d /usr/share/postgresql-common/pgdg /etc/postgresql-common \
@@ -59,7 +62,10 @@ RUN apt-get update \
  && apt-get update \
  && apt-get install -y --no-install-recommends postgresql-17 postgresql-17-pgvector \
  && apt-get purge -y gnupg && apt-get autoremove -y \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* /usr/share/doc/* /usr/share/man/* \
+ && rm -rf /usr/lib/postgresql/17/lib/llvmjit* /usr/lib/postgresql/17/lib/bitcode \
+ && rm -f /usr/lib/*-linux-gnu/libLLVM* \
+ && ! ldd /usr/lib/postgresql/17/bin/postgres | grep -qi "not found"
 
 # s6-overlay, each tarball checked against the checksum its release publishes.
 RUN case "${TARGETARCH}" in \
