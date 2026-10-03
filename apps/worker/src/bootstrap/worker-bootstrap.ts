@@ -14,6 +14,7 @@ import {
   OutboxDrainSchedule,
   PartitionsSchedule,
   RetentionSchedule,
+  ScanSchedule,
   SparesSchedule,
 } from "../schedule/index.js";
 
@@ -54,6 +55,7 @@ export class WorkerBootstrap {
     await new RetentionSchedule(this.container, this.redis.queueClient()).register();
     await new OrphansSchedule(this.container, this.redis.queueClient()).register();
     await new SparesSchedule(this.container, this.redis.queueClient()).register();
+    await new ScanSchedule(this.container, this.redis.queueClient()).register();
 
     this.warnIfOversubscribed();
 
@@ -80,6 +82,8 @@ export class WorkerBootstrap {
       // Five minutes, not BullMQ's 30 s: a runway pass logged nothing for its first
       // half-minute, the lock expired, and the job ran a second time.
       [QueueName.MAINTENANCE, { concurrency: Env.maintenanceConcurrency, lockDuration: 300_000 }],
+      // One at a time: a dispatch is one call to GitHub, and nothing waits on it.
+      [QueueName.SCAN, { concurrency: 1 }],
     ];
   }
 
