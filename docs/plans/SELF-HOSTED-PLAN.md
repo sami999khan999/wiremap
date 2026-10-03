@@ -258,21 +258,25 @@ one port and one public hostname.
 
 ### Phase 5 — Running it day to day
 
-- [ ] `SH5.1` **`docker/wiremap/compose.yml`**, the same services as separate containers, for
+- [x] `SH5.1` **`docker/wiremap/compose.yml`**, the same services as separate containers, for
   someone who prefers that shape. One `docker compose up -d`, the same env file and the same
   volume layout.
-- [ ] `SH5.2` **Backups.**
+  - done: 2026-10-04. **Changed from the plan:** the stores (pgvector, Redis, MinIO, Mailpit) are separate containers, and web and worker share one app container: the same image with `WIREMAP_EXTERNAL_STORES=1`. Splitting web from worker too would need a second entrypoint to keep in step for no gain on one machine. The full smoke passes against it.
+- [x] `SH5.2` **Backups.**
   - A nightly worker job writes `pg_dump` and the MinIO bucket into `/data/backups`. Seven are
     kept.
   - `docker exec wiremap wiremap-admin backup` runs one now.
   - `docker exec wiremap wiremap-admin restore <file>` restores into a stopped app.
   - Docs: `docs/infra/self-hosted.md`.
-- [ ] `SH5.3` **Upgrades.** Pull the new image and recreate the container with the same volume.
+  - done: 2026-10-04. **Changed from the plan:** an s6 service, not a worker job, because `pg_dump` is the container's. A backup holds `database.dump`, `objects.tar.gz` and `secrets.env`, without which restored keys cannot be decrypted. Restore drops and recreates the database, makes the extensions as the superuser, then loads as `wiremap` with `--exit-on-error`. Verified on the container: back up, add a project, restore, restart, and the project is gone with the rest intact. An earlier `--clean` restore reached the right state but ignored 564 errors, and was replaced.
+- [x] `SH5.3` **Upgrades.** Pull the new image and recreate the container with the same volume.
   The `init` step migrates. A Postgres major-version change is refused with a message that names
   the backup-and-restore steps, rather than starting on an unreadable cluster.
-- [ ] `SH5.4` **Resource defaults.** Postgres shared buffers and Redis memory are sized for a
+  - done: 2026-10-04. Migrations run on every start (every restart above). A volume holding Postgres 16 is refused with a message, and the container exits without touching it.
+- [x] `SH5.4` **Resource defaults.** Postgres shared buffers and Redis memory are sized for a
   laptop, so the whole container idles under 1 GB of memory. The defaults are documented, and
   overridable through env.
+  - done: 2026-10-04. 420 MB at idle (`docker stats`). `POSTGRES_SHARED_BUFFERS`, `REDIS_MAXMEMORY` and `WEB_PROCESSES` override the defaults (128MB, 256mb, 2).
 
 ### Phase 6 — Verification, CI and docs
 
