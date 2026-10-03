@@ -7,4 +7,9 @@ export class DateFormat {
   public static day(value: Date): string {
     return value.toISOString().slice(0, 10);
   }
+
+  // `YYYY-MM-DD HH:MM` in UTC, for a trail where the order within a day matters.
+  public static dateTime(value: Date): string {
+    return `${value.toISOString().slice(0, 10)} ${value.toISOString().slice(11, 16)}`;
+  }
 }
