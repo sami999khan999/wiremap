@@ -75,6 +75,7 @@ const ROLES: readonly SystemRole[] = Object.freeze([
       "project.create",
       "project.access.overview",
       "organization.ai.manage",
+      "organization.webhook.manage",
       ...PROJECT_ADMIN,
       ...NOTIFICATION,
       ...DOC_AUTHOR,

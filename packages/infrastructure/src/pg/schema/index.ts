@@ -22,3 +22,4 @@ export { scanFindings, scans } from "./scan.schema.js";
 export * from "./shard.schema.js";
 export * from "./team.schema.js";
 export * from "./vector.schema.js";
+export { webhooks } from "./webhook.schema.js";

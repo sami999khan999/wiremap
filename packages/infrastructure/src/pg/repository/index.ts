@@ -50,3 +50,4 @@ export { PgTeamRepository } from "./pg-team.repository.js";
 export { PgTenantRepository } from "./pg-tenant.repository.js";
 export { PgUserReader } from "./pg-user.reader.js";
 export { PgVectorStore } from "./pg-vector.store.js";
+export { PgWebhookRepository } from "./pg-webhook.repository.js";

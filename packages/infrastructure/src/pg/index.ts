@@ -59,6 +59,7 @@ export {
   PgTenantRepository,
   PgUserReader,
   PgVectorStore,
+  PgWebhookRepository,
 } from "./repository/index.js";
 export {
   type OpenTransaction,

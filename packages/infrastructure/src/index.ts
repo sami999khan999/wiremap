@@ -24,6 +24,7 @@ export {
   GithubAppProvider,
   NullRepositoryProvider,
 } from "./github/index.js";
+export { FetchWebhookSender } from "./http/index.js";
 export { type OpenAiEmbeddingConfig, OpenAiEmbeddingProvider } from "./openai/index.js";
 export {
   BaseRepository,
@@ -83,6 +84,7 @@ export {
   type PgUnitOfWorkConfig,
   PgUserReader,
   PgVectorStore,
+  PgWebhookRepository,
   type PlacedShard,
   type ReplicaHealth,
   type ShardConfig,

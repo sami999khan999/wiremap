@@ -15,7 +15,9 @@ export {
   randomBytes,
   timingSafeEqual,
 } from "node:crypto";
+export { lookup } from "node:dns/promises";
 export { once } from "node:events";
+export { isIP } from "node:net";
 export { Readable } from "node:stream";
 export { pipeline } from "node:stream/promises";
 export { createGunzip, createGzip, gunzipSync } from "node:zlib";
@@ -70,6 +72,7 @@ export {
   type CommentRecord,
   type CommentRepository,
   type DeletedTenantSweep,
+  type Delivery,
   type DocDraftFields,
   type DocGrantee,
   type DocGrantRecord,
@@ -134,6 +137,7 @@ export {
   type NewNotification,
   type NewRepository,
   type NewScan,
+  type NewWebhook,
   type NotificationPage,
   type NotificationPreferenceRepository,
   type NotificationRecipientReader,
@@ -222,6 +226,11 @@ export {
   type UnreadQuery,
   type UserReader,
   type VectorStore,
+  type WebhookRecord,
+  type WebhookRepository,
+  type WebhookRequest,
+  type WebhookResponse,
+  WebhookSender,
 } from "@loadbearing/application";
 
 // ── @loadbearing/content ─────────────────────────────────────────────────────
@@ -273,6 +282,8 @@ export {
   type ScanTrigger,
   type TeamId,
   type UserId,
+  type WebhookEventName,
+  type WebhookId,
 } from "@loadbearing/contracts";
 
 // ── @loadbearing/core ────────────────────────────────────────────────────────
