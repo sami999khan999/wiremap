@@ -9,6 +9,7 @@ import type {
   NotificationRecord,
   NotificationRepository,
 } from "../../src/notification/notification.repository.js";
+import type { NotificationAccess } from "../../src/notification/notification-access.js";
 import type {
   NotificationPreferenceRepository,
   PreferenceRecord,
@@ -219,6 +220,7 @@ let cache: Cache;
 const build = (
   preferences: readonly PreferenceRecord[] = [],
   members: readonly Recipient[] = [],
+  access?: NotificationAccess,
 ) => {
   notifications = new Notifications();
   mail = new Mail();
@@ -233,6 +235,7 @@ const build = (
     realtime,
     cache,
     { run: (work: () => Promise<unknown>) => work() } as never,
+    access,
   );
 };
 
@@ -337,5 +340,45 @@ describe("DeliverNotificationUseCase", () => {
     await deliver.execute(system(), roleChanged());
 
     expect(cache.deleted).toContain(`notification:unread:${ORG}:${TARGET}`);
+  });
+});
+
+describe("DeliverNotificationUseCase on a comment", () => {
+  const OTHER = Identifiers.userId.parse("018f8c00-0000-7000-8000-000000000014");
+  const PROJECT = "018f8c00-0000-7000-8000-000000000015";
+  const mentioned = (): DomainEvent =>
+    ({
+      id: "018f8c00-0000-7000-8000-000000000022",
+      organizationId: ORG,
+      name: "comment.created",
+      actorId: ACTOR,
+      occurredAt: new Date("2026-08-15T00:00:00Z"),
+      payload: {
+        projectId: PROJECT,
+        commentId: "018f8c00-0000-7000-8000-000000000023",
+        authorId: ACTOR,
+        targetKind: "file",
+        targetKey: "src/a.ts",
+        replyTo: null,
+        mentions: [TARGET, OTHER],
+        excerpt: "look",
+      },
+    }) as DomainEvent;
+
+  it("tells only the named people who can read the project, never the author", async () => {
+    const access = {
+      readsProject: (_org: unknown, userId: string) => Promise.resolve(userId === TARGET),
+    } as NotificationAccess;
+    const useCase = build([], [recipient(TARGET), recipient(OTHER), recipient(ACTOR)], access);
+
+    await useCase.execute(system(), mentioned());
+
+    expect(notifications.saved.map((row) => row.userId)).toEqual([TARGET]);
+  });
+
+  it("tells nobody when it cannot check who reads the project", async () => {
+    const useCase = build([], [recipient(TARGET)]);
+    await useCase.execute(system(), mentioned());
+    expect(notifications.saved).toEqual([]);
   });
 });

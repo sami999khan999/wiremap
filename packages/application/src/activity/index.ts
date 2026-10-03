@@ -5,3 +5,4 @@ export {
   ActivityReader,
 } from "./activity.reader.js";
 export { ListActivityUseCase } from "./list-activity.use-case.js";
+export { ListProjectActivityUseCase } from "./list-project-activity.use-case.js";

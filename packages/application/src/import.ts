@@ -11,6 +11,8 @@ export {
   type ActivityAction,
   ActivityActions,
   type ApiKeyId,
+  type CommentId,
+  type CommentTarget,
   type CreateDocPageInput,
   type CreateDocSpaceInput,
   type DocAccessOptionsDto,

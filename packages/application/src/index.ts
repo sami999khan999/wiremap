@@ -8,6 +8,7 @@ export {
   type ActivityQuery,
   ActivityReader,
   ListActivityUseCase,
+  ListProjectActivityUseCase,
 } from "./activity/index.js";
 export {
   type IndexDocumentInput,
@@ -54,6 +55,13 @@ export {
   type ChatTurn,
   ManageAiSettingsUseCase,
 } from "./ask/index.js";
+export {
+  type CommentRecord,
+  CommentRepository,
+  CommentRules,
+  type CommentView,
+  ManageCommentsUseCase,
+} from "./comment/index.js";
 export {
   CreateDocPageUseCase,
   CreateDocSpaceUseCase,
@@ -187,6 +195,7 @@ export {
   MarkAllNotificationsReadUseCase,
   MarkNotificationReadUseCase,
   type NewNotification,
+  NotificationAccess,
   type NotificationPage,
   NotificationPolicy,
   NotificationPreferenceRepository,

@@ -20,6 +20,7 @@ export {
   type UnreadQuery,
 } from "./notification.repository.js";
 export { NotificationSubscriber } from "./notification.subscriber.js";
+export { NotificationAccess } from "./notification-access.js";
 export {
   NotificationPreferenceRepository,
   type PreferenceRecord,

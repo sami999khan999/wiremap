@@ -10,6 +10,7 @@ import { type Principal, RealtimeChannels } from "../primitive/index.js";
 import { CountUnreadNotificationsUseCase } from "./count-unread-notifications.use-case.js";
 import { NotificationPolicy, type PolicyRow } from "./notification.policy.js";
 import type { NewNotification, NotificationRepository } from "./notification.repository.js";
+import type { NotificationAccess } from "./notification-access.js";
 import type {
   NotificationPreferenceRepository,
   PreferenceRecord,
@@ -35,6 +36,8 @@ export class DeliverNotificationUseCase {
     private readonly realtime: RealtimePublisher,
     private readonly cache: CacheStore,
     private readonly unitOfWork: UnitOfWork,
+    // Absent: no project-scoped row is delivered at all, which is safer than to everyone.
+    private readonly access?: NotificationAccess,
   ) {}
 
   public async execute(actor: Principal, event: DomainEvent): Promise<void> {
@@ -92,6 +95,30 @@ export class DeliverNotificationUseCase {
         // Never the actor: being told about a thing you just did is noise, and it is the
         // single most common reason a notification system gets muted.
         return all.filter((recipient) => recipient.userId !== event.actorId);
+      }
+      case "named": {
+        const rule = row.recipients;
+        const projectId = rule.project(event);
+        const named = await this.recipients.users(organizationId, [...new Set(rule.users(event))]);
+        const holders = rule.holding
+          ? await this.recipients.organizationMembers(
+              organizationId,
+              rule.holding,
+              RECIPIENT_LIMIT,
+              null,
+            )
+          : [];
+        const unique = new Map(
+          [...named, ...holders].map((recipient) => [recipient.userId, recipient]),
+        );
+        unique.delete(event.actorId);
+        if (!projectId || !this.access) return [];
+        const readers: Recipient[] = [];
+        for (const recipient of unique.values()) {
+          if (await this.access.readsProject(organizationId, recipient.userId, projectId))
+            readers.push(recipient);
+        }
+        return readers;
       }
     }
   }

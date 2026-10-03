@@ -6,6 +6,7 @@ import type {
   NotificationKind,
   NotificationMode,
   PermissionKey,
+  UserId,
 } from "../import.js";
 
 // Who a notification goes to, as a rule rather than a query. `none` is a real answer:
@@ -13,7 +14,15 @@ import type {
 export type RecipientRule =
   | { readonly kind: "none" }
   | { readonly kind: "subject" }
-  | { readonly kind: "organizationMembers"; readonly holding: PermissionKey };
+  | { readonly kind: "organizationMembers"; readonly holding: PermissionKey }
+  // People the event names (a requester, the mentioned), plus, when `holding` is set, the
+  // members holding that key. `project` limits both to who can read the event's project.
+  | {
+      readonly kind: "named";
+      readonly users: (event: DomainEvent) => readonly UserId[];
+      readonly holding?: PermissionKey;
+      readonly project: (event: DomainEvent) => string | null;
+    };
 
 export interface PolicyRow {
   readonly kind: NotificationKind;
@@ -58,6 +67,58 @@ const ROWS = Object.freeze({
     recipients: { kind: "subject" },
     defaultMode: { in_app: "immediate", email: "immediate" },
     link: () => "/settings/members",
+  },
+  // Whoever started the scan, and the organization's admins: a failure needs a person.
+  "scan.failed": {
+    kind: "scan.failed",
+    category: "scans",
+    recipients: {
+      kind: "named",
+      users: (event) =>
+        event.name === "scan.failed" && event.payload.requestedBy
+          ? [event.payload.requestedBy]
+          : [],
+      holding: "project.access.overview",
+      project: (event) => (event.name === "scan.failed" ? event.payload.projectId : null),
+    },
+    defaultMode: { in_app: "immediate", email: "immediate" },
+    link: (event) =>
+      event.name === "scan.failed" ? `/go/project/${event.payload.projectId}?to=scans` : null,
+  },
+  // A new cycle or an unguarded route. A daily digest by default: a refactor finds many.
+  "finding.created": {
+    kind: "finding.created",
+    category: "scans",
+    recipients: {
+      kind: "named",
+      users: () => [],
+      holding: "project.access.overview",
+      project: (event) => (event.name === "finding.created" ? event.payload.projectId : null),
+    },
+    defaultMode: { in_app: "digest", email: "digest" },
+    link: (event) =>
+      event.name === "finding.created"
+        ? `/go/project/${event.payload.projectId}?to=insights`
+        : null,
+  },
+  // The people a comment names, and the author of the thread it replies to. Only those who
+  // can read the project: a mention never tells anyone else a project exists.
+  "comment.created": {
+    kind: "comment.created",
+    category: "comments",
+    recipients: {
+      kind: "named",
+      users: (event) =>
+        event.name === "comment.created"
+          ? [...event.payload.mentions, ...(event.payload.replyTo ? [event.payload.replyTo] : [])]
+          : [],
+      project: (event) => (event.name === "comment.created" ? event.payload.projectId : null),
+    },
+    defaultMode: { in_app: "immediate", email: "immediate" },
+    link: (event) =>
+      event.name === "comment.created"
+        ? `/go/project/${event.payload.projectId}?to=graph&sel=${encodeURIComponent(event.payload.targetKey)}`
+        : null,
   },
 } as const satisfies Partial<Record<DomainEventName, PolicyRow>>);
 
