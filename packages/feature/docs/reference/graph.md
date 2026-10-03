@@ -69,3 +69,24 @@ A saved view is a name and the explorer's query string, stored in `graph_views`.
 - Anyone who can read the project can list and save views.
 - A view is removed by its author, or by someone holding `project.settings.manage`.
 - Deleting a project sweeps its views, with its scans (`PurgeProjectUseCase`'s tenant-row sweeps).
+
+## Insights, impact and compare
+
+`/p/$project/insights` reads the latest scan's `insights`:
+- the most depended-on files;
+- each cycle, drawn as a ring beside its members;
+- routes without a guard;
+- unused files and exports.
+
+Every path links into the explorer with the file selected and its folder open (`ExplorerUrl.select`).
+
+**Change impact** (`ImpactExplorer`) takes one file. The file is in the URL as `?file=`.
+- It lists the file's transitive dependents by distance. `api` edges are left out, because a call
+  reaching a route is not an import.
+- It lists every route whose handler is among them.
+
+**Compare** (`/p/$project/compare?a=&b=`) diffs two succeeded scans in the browser with
+`GraphDiff.between`, the diff the server uses for findings. It shows files, imports and routes
+added and removed, and cycles introduced and fixed. By default it compares the latest scan with the
+one before it. The scan picker labels each scan with its branch, so two branches' latest scans are
+a comparison too.

@@ -83,7 +83,7 @@ export {
 export { type ErrorEnvelope, ErrorNormalizer } from "@loadbearing/errors";
 // ── react ────────────────────────────────────────────────────────────────────
 // ── @loadbearing/graph ───────────────────────────────────────────────────────
-export { GraphIndex } from "@loadbearing/graph";
+export { GraphDiff, GraphIndex } from "@loadbearing/graph";
 // ── @loadbearing/permissions ─────────────────────────────────────────────────
 export {
   CapabilitySet,

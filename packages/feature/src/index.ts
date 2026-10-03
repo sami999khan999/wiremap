@@ -97,6 +97,13 @@ export {
   useTranslator,
 } from "./i18n/index.js";
 export {
+  CompareView,
+  ImpactExplorer,
+  type ImpactExplorerProps,
+  InsightsOverview,
+  type RenderPath,
+} from "./insight/index.js";
+export {
   InvitationLinkPanel,
   type InvitationLinkPanelProps,
   InvitationList,

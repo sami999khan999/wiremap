@@ -1,4 +1,4 @@
-import type { FileRole } from "../import.js";
+import { type FileRole, GraphIndex } from "../import.js";
 import type { ExplorerState } from "./explorer-model.js";
 
 // The explorer's URL parameters. Short names, because the folder list grows with every
@@ -28,6 +28,11 @@ export class ExplorerUrl {
       selected: search.sel ?? null,
       impact: search.impact ?? false,
     };
+  }
+
+  // A link into the explorer that selects one file and opens the folder it sits in.
+  public static select(path: string): ExplorerSearch {
+    return { sel: path, open: GraphIndex.folderOf(path, ExplorerUrl.DEFAULT_DEPTH) };
   }
 
   // Only what differs from the default, so an untouched explorer has a bare URL.
