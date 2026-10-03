@@ -639,32 +639,34 @@ the same layout.
 
 ### Phase 9 — Ask
 
-- [ ] `WM9.1` **`SecretCipher` port**, with `NodeAesGcmSecretCipher` (key from
+- [x] `WM9.1` **`SecretCipher` port**, with `NodeAesGcmSecretCipher` (key from
   `SECRET_ENCRYPTION_KEY`, a versioned key id for rotation). Specs.
-- [ ] `WM9.2` **AI settings.**
+- [x] `WM9.2` **AI settings.**
   - `organization_ai` (org, enabled, provider `gemini|none`, encrypted key, model).
   - Procedures `ai.settings` and `ai.updateSettings` (owner, admin). The key is write-only and
     shows as `••••last4`. A "Test key" button.
-- [ ] `WM9.3` **`ChatProvider` port**, with `GeminiChatProvider`.
+- [x] `WM9.3` **`ChatProvider` port**, with `GeminiChatProvider`.
   - REST `streamGenerateContent` over `fetch`, with a model default of `gemini-2.5-flash`.
   - Streamed as an oRPC event iterator.
   - Errors are mapped to the kit's codes.
-- [ ] `WM9.4` **Grounding** (`AskProjectUseCase`).
+- [x] `WM9.4` **Grounding** (`AskProjectUseCase`).
   - It retrieves from the graph: file and route matches by name, the neighbourhood of the
     mentioned files, and the overview counts.
   - Contents of up to 8 files are fetched live through the GitHub App at the scan's commit. They
     are not stored, are cached in Redis for 10 minutes, and are capped by size.
   - The answer must cite `path:line` or `METHOD /path`. Citations render as links that select the
     node.
-- [ ] `WM9.5` **Ask tab.**
+  - done: 2026-10-03. Retrieval is by name (paths, file names, exports), not embeddings: names
+    are what people ask about, and it costs no second model call.
+- [x] `WM9.5` **Ask tab.**
   - A thread for the session, with a stop button.
   - Presets: "Explain this file / module / route" (from node detail) and "Onboarding summary".
     The onboarding summary is cached per scan, in Postgres, on `scans.summary`.
-- [ ] `WM9.6` **Limits.**
+- [x] `WM9.6` **Limits.**
   - `RateLimitPolicy` allows 20 questions per user per hour and 200 per org per day.
   - Answers are cached by (scan, normalised question) for 1 hour.
   - Ask is hidden when AI is off.
-- [ ] `WM9.7` Specs (fake provider, citation parsing, no-key path) and docs:
+- [x] `WM9.7` Specs (fake provider, citation parsing, no-key path) and docs:
   `application/docs/reference/ask.md`.
 
 ### Phase 10 — Collaboration and notifications
