@@ -961,9 +961,14 @@ assert("both pnpm version declarations agree", (failures) => {
 // role, and the failure arrives as a duplicate-key error on someone else's signup.
 // See docs/ai/rules/vocabulary.md.
 
-// The two lookups that arrive holding no tenant: a request presents the token, or the
-// hash, and nothing else, so the tenant is what the index is being used to find.
-const TENANT_LEADING_EXEMPT = new Set(["invitations_token_uq", "api_keys_hash_uq"]);
+// The lookups that arrive holding no tenant: a request presents a token, a hash or an
+// email domain and nothing else, so the tenant is what the index is being used to find.
+const TENANT_LEADING_EXEMPT = new Set([
+  "invitations_token_uq",
+  "api_keys_hash_uq",
+  "invitation_links_token_uq",
+  "organization_domains_domain_uq",
+]);
 
 assert("every unique index on a tenant table leads with `organization_id`", (failures) => {
   const blocks = pgTableBlocks();
