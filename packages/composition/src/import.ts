@@ -153,6 +153,7 @@ export {
   PublishDocPageUseCase,
   PurgeOrganizationUseCase,
   PurgeProjectUseCase,
+  QueryGraphUseCase,
   QueueDocumentIndexUseCase,
   QueueName,
   QueuePublisher,

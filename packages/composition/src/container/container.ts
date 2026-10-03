@@ -201,6 +201,7 @@ import {
   PublishDocPageUseCase,
   PurgeOrganizationUseCase,
   PurgeProjectUseCase,
+  QueryGraphUseCase,
   QueueDocumentIndexUseCase,
   type QueuePublisher,
   QueueScanUseCase,
@@ -512,6 +513,7 @@ export class Container {
     readonly run: RunScanUseCase;
     readonly createUpload: CreateScanUploadUseCase;
     readonly graph: GetGraphUseCase;
+    readonly query: QueryGraphUseCase;
     readonly checkout: CheckoutScanUseCase;
     readonly upload: UploadScanUseCase;
     readonly complete: CompleteScanUseCase;
@@ -1558,6 +1560,12 @@ export class Container {
         scanConfig.serverUrl,
       ),
       graph: new GetGraphUseCase(this.authorizer, projectRepository, scanRepository, this.storage),
+      query: new QueryGraphUseCase(
+        this.authorizer,
+        projectRepository,
+        scanRepository,
+        new StorageGraphArchive(this.storage),
+      ),
       checkout: new CheckoutScanUseCase(
         scanTokens,
         scanRepository,
