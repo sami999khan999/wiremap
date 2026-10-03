@@ -508,17 +508,19 @@ and a coverage line like the screenshot's, and every fixture snapshot passes.
 
 ### Phase 6 — Scans
 
-- [ ] `WM6.1` **`scans`.**
+- [x] `WM6.1` **`scans`.**
   - Columns: org, project, trigger, state, branch, commit sha, `requested_by`, `queued_at`,
     `started_at`, `finished_at`, error, `graph_key`, `graph_bytes`, `counts` jsonb (files,
     imports, resolved, routes, cycles, unguarded), `analyzer_version`.
   - `PARTITION BY LIST (organization_id)`, then `RANGE (queued_at)`.
   - `scan_findings` (org, project, scan, kind, key, first seen).
-- [ ] `WM6.2` **`ScanRunner` port**, with two adapters:
+  - done: 2026-10-03. `created_at` is the queue time and the month key, since the partition
+    registry's column union has no `queued_at`. Findings are a project's open set, not a history.
+- [x] `WM6.2` **`ScanRunner` port**, with two adapters:
   - `GithubActionsScanRunner` dispatches `.github/workflows/scan.yml` in `WIREMAP_RUNNER_REPO`
     using `WIREMAP_RUNNER_TOKEN`.
   - `LocalScanRunner` spawns `node apps/cli/dist/index.js runner` in development.
-- [ ] `WM6.3` **Runner protocol.** These endpoints are under `/api/scan/$id/`. They authenticate
+- [x] `WM6.3` **Runner protocol.** These endpoints are under `/api/scan/$id/`. They authenticate
   with a scan token (HMAC of scan id and expiry, 1 hour), are single-use where it matters, and
   check the scan state.
   - `checkout` returns the repos, refs, ignore and settings, and a read-only installation token
@@ -527,32 +529,37 @@ and a coverage line like the screenshot's, and every fixture snapshot passes.
   - `complete` takes the counts. The server reads the graph back and validates it against the
     schema and a size cap of 25 MB gzipped.
   - `fail` takes an error.
-- [ ] `WM6.4` **`scan.yml` and the `runner` command.**
+  - done: 2026-10-03. **Deviation:** the token is an HMAC of the scan reference under a secret
+    the workflow also holds, with no expiry in it. The scan's state is the gate, and the sweep ends any run at 30 minutes.
+- [x] `WM6.4` **`scan.yml` and the `runner` command.**
   - Checkout of each repo, `--depth 1`, with `::add-mask::` on tokens.
   - Analyze, gzip, upload and complete. On any failure it calls `fail`.
   - The workflow logs no paths from the target repository.
   - A timeout of 20 minutes.
-- [ ] `WM6.5` **Triggers.**
+- [x] `WM6.5` **Triggers.**
   - Manual is `scan.run`, deduplicated while one is queued or running.
   - Push comes from `WM4.3`.
   - Schedule: the hourly dispatcher tick runs `ScheduleScansUseCase` for projects that are due.
   - A stuck scan (running for more than 30 minutes) is failed by the hourly tick.
-- [ ] `WM6.6` **Upload path.**
+  - done: 2026-10-03. Push dedupe is one queued or running scan per project, not `(repo, sha)`.
+- [x] `WM6.6` **Upload path.**
   - `scan.createUpload` (API key, `project.scan.run`) returns a presigned PUT and a scan token.
   - `wiremap upload graph.json --project <slug>` and `wiremap scan` (analyze and upload).
   - Source never leaves the machine.
-- [ ] `WM6.7` **Completion.**
+  - done: 2026-10-03. Verified end to end against the local stack. Fixed on the way: an API key
+    could not carry a project scope, because `can` on a goal key with no goal is false.
+- [x] `WM6.7` **Completion.**
   - It saves counts and findings, diffing against the last succeeded scan on that branch.
   - It emits `scan.succeeded` or `scan.failed`, and `finding.created` per new cycle or unguarded
     route, through the outbox.
-- [ ] `WM6.8` **History UI.**
+- [x] `WM6.8` **History UI.**
   - `/p/$project/scans` is a `DataTable` of state, trigger, branch, commit, duration and error.
   - A "Scan now" button sits behind `<Can>`.
   - A running row polls (`WM1.6`).
-- [ ] `WM6.9` **Graph read.** `graph.get(projectId, scanId?)` checks access, then returns a
+- [x] `WM6.9` **Graph read.** `graph.get(projectId, scanId?)` checks access, then returns a
   presigned GET of the gzipped file with a 5-minute TTL. The browser fetches and caches it by scan
   id, and it is immutable.
-- [ ] `WM6.10` Specs (state machine, token, dedup, diff → findings) and docs:
+- [x] `WM6.10` Specs (state machine, token, dedup, diff → findings) and docs:
   `application/docs/reference/scan.md`.
 
 **Exit.** A push to a connected repo produces a succeeded scan on GitHub Actions within a few

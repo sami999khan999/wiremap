@@ -17,10 +17,11 @@ and every open item. This page holds the state of the tree and the traps that co
 | after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
 | after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
 | after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
+| after Phase 5 | Phase 6: scans, the runner protocol and workflow, push and schedule triggers, CLI upload, the scans page |
 | after Phase 4 | Phase 5: the graph document, `@loadbearing/graph`, `@loadbearing/analyzer` with four framework plugins, and the `wiremap` CLI |
 | after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
 
-**Next, in order:** Phase 6 from `WM6.1` (scans).
+**Next, in order:** Phase 7 from `WM7.1` (the graph explorer).
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.
@@ -76,6 +77,9 @@ pnpm -r --no-bail run test                # not `pnpm test`: that stops at the f
 - **A Python edit after Biome has reformatted a file can match nothing and say nothing.**
   Assert the old text is present (`assert old in s`) or replace by locating the method's
   boundaries; a silent no-op cost a debugging round in Phase 5.
+- **Local scan smoke:** an API key (`project.scan.run`, `project.graph.read`) and
+  `node apps/cli/dist/index.js scan <dir> --project <slug> --server http://localhost:43000 --api-key …`
+  exercises the whole upload path without a GitHub App.
 - **Query results that cross packages are annotated with their DTO type** (`const items:
   readonly ProjectDto[] = ...`). Unannotated, a branded id arrives as `any` through `query`'s
   `.d.ts`, `tsc` stays quiet and only ESLint's unsafe-assignment rule notices.

@@ -1,5 +1,13 @@
 {
   "title": "infra",
   "description": "The local stack, and the free-tier production deployment \u2014 every service, how they reach each other, and the budget each one lives in",
-  "pages": ["index", "deployment", "free-tier", "github-app", "self-hosted", "reference"]
+  "pages": [
+    "index",
+    "deployment",
+    "free-tier",
+    "github-app",
+    "scan-runner",
+    "self-hosted",
+    "reference"
+  ]
 }
