@@ -39,6 +39,8 @@ export const scans = pgTable(
     graphBytes: integer("graph_bytes"),
     counts: jsonb("counts").$type<ScanCounts>(),
     analyzerVersion: text("analyzer_version"),
+    // The onboarding summary Ask wrote for this scan: generated once, read by everyone after.
+    summary: text("summary"),
   },
   (t) => [
     primaryKey({ columns: [t.id, t.organizationId, t.createdAt] }),

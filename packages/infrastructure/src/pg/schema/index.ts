@@ -1,4 +1,5 @@
 export * from "./activity.schema.js";
+export { organizationAi } from "./ai.schema.js";
 export * from "./api-key.schema.js";
 export * from "./archive.schema.js";
 export * from "./auth.schema.js";

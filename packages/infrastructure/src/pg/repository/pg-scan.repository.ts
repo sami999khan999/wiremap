@@ -157,6 +157,26 @@ export class PgScanRepository extends BaseRepository implements ScanRepository {
     return rows;
   }
 
+  public async summary(organizationId: OrganizationId, id: ScanId): Promise<string | null> {
+    const [row] = await this.db
+      .select({ summary: scans.summary })
+      .from(scans)
+      .where(and(eq(scans.organizationId, organizationId), eq(scans.id, id)))
+      .limit(1);
+    return row?.summary ?? null;
+  }
+
+  public async saveSummary(
+    organizationId: OrganizationId,
+    id: ScanId,
+    summary: string,
+  ): Promise<void> {
+    await this.db
+      .update(scans)
+      .set({ summary })
+      .where(and(eq(scans.organizationId, organizationId), eq(scans.id, id)));
+  }
+
   public async removeForProject(
     organizationId: OrganizationId,
     projectId: ProjectId,

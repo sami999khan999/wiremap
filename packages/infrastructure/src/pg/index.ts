@@ -16,6 +16,7 @@ export {
   PgAccountRepository,
   PgActivityLogger,
   PgActivityReader,
+  PgAiSettingsRepository,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,

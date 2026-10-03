@@ -11,8 +11,12 @@ export {
   type DispatchedMessage,
   JobSignatureHasher,
 } from "./cloudflare/index.js";
-export { HmacScanTokens } from "./crypto/index.js";
-export { type GeminiEmbeddingConfig, GeminiEmbeddingProvider } from "./gemini/index.js";
+export { HmacScanTokens, NodeAesGcmSecretCipher } from "./crypto/index.js";
+export {
+  GeminiChatProvider,
+  type GeminiEmbeddingConfig,
+  GeminiEmbeddingProvider,
+} from "./gemini/index.js";
 export {
   type GithubActionsRunnerConfig,
   GithubActionsScanRunner,
@@ -34,6 +38,7 @@ export {
   PgAccountRepository,
   PgActivityLogger,
   PgActivityReader,
+  PgAiSettingsRepository,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,

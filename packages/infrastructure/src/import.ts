@@ -5,7 +5,16 @@
 export { AsyncLocalStorage } from "node:async_hooks";
 export { Buffer } from "node:buffer";
 export { spawn } from "node:child_process";
-export { createHash, createHmac, createSign, type Hash, timingSafeEqual } from "node:crypto";
+export {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  createHmac,
+  createSign,
+  type Hash,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
 export { once } from "node:events";
 export { Readable } from "node:stream";
 export { pipeline } from "node:stream/promises";
@@ -42,6 +51,8 @@ export {
   type ActivityReader,
   type AdjustmentInput,
   type AdjustmentRecord,
+  type AiSettingsRecord,
+  type AiSettingsRepository,
   type ApiKeyPage,
   type ApiKeyRecord,
   type ApiKeyRepository,
@@ -50,9 +61,12 @@ export {
   type ArchivedPartition,
   CacheStore,
   type CancellationSignal,
+  type CancelSignal,
   type CapabilityExplanation,
   type CapabilityRepository,
   CapabilityResolution,
+  ChatProvider,
+  type ChatRequest,
   type DeletedTenantSweep,
   type DocDraftFields,
   type DocGrantee,
@@ -178,6 +192,7 @@ export {
   ScanRunner,
   ScanTokens,
   type SearchHit,
+  SecretCipher,
   Shard,
   type ShardKey,
   type ShardMapReader,
