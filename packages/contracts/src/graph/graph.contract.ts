@@ -5,7 +5,15 @@ import { z } from "../import.js";
 export const GRAPH_VERSION = 1 as const;
 
 export const GRAPH_LANGUAGES = ["typescript", "javascript", "php"] as const;
-export const GRAPH_FRAMEWORKS = ["nextjs", "tanstack-start", "nestjs", "laravel", "react"] as const;
+// `other` is a route an OpenAPI file declares in a repository with no framework detected.
+export const GRAPH_FRAMEWORKS = [
+  "nextjs",
+  "tanstack-start",
+  "nestjs",
+  "laravel",
+  "react",
+  "other",
+] as const;
 
 // One closed list across frameworks; a framework shows the subset its files use.
 export const FILE_ROLES = [
