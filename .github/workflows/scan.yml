@@ -1,0 +1,51 @@
+name: scan
+# One scan of one wiremap project, started by the server through `workflow_dispatch`. The
+# scan reference is the only input; the callback token is derived here from a secret.
+on:
+  workflow_dispatch:
+    inputs:
+      scan:
+        description: The scan reference, <organization>.<scan>
+        required: true
+        type: string
+
+# Read-only: this run checks out wiremap itself, and reaches the scanned repositories
+# only with the one-repository tokens the server hands it.
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SCAN: ${{ inputs.scan }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter "@loadbearing/cli..."
+      - run: pnpm --filter "@loadbearing/cli..." run build
+
+      # base64url(HMAC-SHA256(secret, "scan:<ref>")), as the server's HmacScanTokens does.
+      # Masked before it is written anywhere, and refused for a malformed reference.
+      - name: Derive the scan token
+        env:
+          SECRET: ${{ secrets.WIREMAP_RUNNER_SECRET }}
+        run: |
+          [[ "$SCAN" =~ ^[0-9a-f-]{36}\.[0-9a-f-]{36}$ ]] || { echo "Malformed scan reference"; exit 1; }
+          token=$(printf 'scan:%s' "$SCAN" | openssl dgst -sha256 -hmac "$SECRET" -binary | base64 | tr '+/' '-_' | tr -d '=\n')
+          echo "::add-mask::$token"
+          echo "WIREMAP_SCAN_TOKEN=$token" >> "$GITHUB_ENV"
+
+      # `--mask` masks each repository token as the checkout returns it. The runner prints
+      # counts only, never a path from the scanned code.
+      - name: Scan
+        env:
+          SERVER: ${{ vars.WIREMAP_SERVER_URL }}
+        run: node apps/cli/dist/index.js runner --server "$SERVER" --scan "$SCAN" --token "$WIREMAP_SCAN_TOKEN" --mask
