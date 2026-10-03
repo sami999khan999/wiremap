@@ -7,6 +7,7 @@ import type { doc } from "./en/doc.js";
 import type { document } from "./en/document.js";
 import type { email } from "./en/email.js";
 import type { error } from "./en/error.js";
+import type { graph } from "./en/graph.js";
 import type { member } from "./en/member.js";
 import type { nav } from "./en/nav.js";
 import type { notification } from "./en/notification.js";
@@ -36,6 +37,7 @@ interface NamespaceShape {
   readonly activity: typeof activity;
   readonly project: typeof project;
   readonly scan: typeof scan;
+  readonly graph: typeof graph;
   readonly error: typeof error;
   readonly email: typeof email;
 }
@@ -59,7 +61,8 @@ export type ClientNamespace =
   | "team"
   | "activity"
   | "project"
-  | "scan";
+  | "scan"
+  | "graph";
 // Never reachable from a client catalog — only `SERVER_CATALOG` carries a loader for it.
 export type ServerNamespace = "email";
 export type Namespace = ClientNamespace | ServerNamespace;
@@ -101,4 +104,5 @@ export const CLIENT_NAMESPACES: readonly ClientNamespace[] = [
   "activity",
   "project",
   "scan",
+  "graph",
 ];
