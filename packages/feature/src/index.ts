@@ -140,6 +140,16 @@ export {
   TenantExportPanel,
 } from "./platform/index.js";
 export {
+  ProjectAccessPanel,
+  ProjectCreateForm,
+  type ProjectCreateFormProps,
+  ProjectList,
+  type ProjectListProps,
+  ProjectSettings,
+  type ProjectSettingsProps,
+  type ProjectSettingsTab,
+} from "./project/index.js";
+export {
   CreateRoleForm,
   EffectivePermissionsInspector,
   type EffectivePermissionsInspectorProps,
