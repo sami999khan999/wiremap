@@ -42,6 +42,7 @@ describe("ConsumerRegistry", () => {
         QueueName.NOTIFICATION,
         QueueName.EVENT,
         QueueName.SCAN,
+        QueueName.WEBHOOK,
       ].sort(),
     );
   });

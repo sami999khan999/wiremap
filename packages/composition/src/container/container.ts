@@ -44,6 +44,7 @@ import {
   DeletePlanUseCase,
   DeleteRoleUseCase,
   DeliverNotificationUseCase,
+  DeliverWebhookUseCase,
   DenyAccountPermissionUseCase,
   DenyPermissionOverrideUseCase,
   DispatchScanUseCase,
@@ -61,6 +62,7 @@ import {
   ExpirePermissionOverridesUseCase,
   ExportOrganizationUseCase,
   FailScanUseCase,
+  FetchWebhookSender,
   FindAccountUseCase,
   FlagCache,
   GeminiChatProvider,
@@ -125,6 +127,7 @@ import {
   ManageProjectAccessUseCase,
   ManageProjectRepositoryUseCase,
   ManageViewsUseCase,
+  ManageWebhooksUseCase,
   MarkAllNotificationsReadUseCase,
   type MarkdownRenderer,
   MarkNotificationReadUseCase,
@@ -192,6 +195,7 @@ import {
   PgUnitOfWork,
   PgUserReader,
   PgVectorStore,
+  PgWebhookRepository,
   type PlatformPolicyRepository,
   type PlatformReader,
   PreviewDocPageUseCase,
@@ -284,6 +288,7 @@ import {
   UploadScanUseCase,
   type UserId,
   type VectorStore,
+  WebhookSubscriber,
 } from "../import.js";
 import {
   ContentMailRenderer,
@@ -523,6 +528,11 @@ export class Container {
     readonly sweep: SweepScansUseCase;
   };
   public readonly views: ManageViewsUseCase;
+  public readonly webhooks: {
+    readonly manage: ManageWebhooksUseCase;
+    // The `webhook` queue's job: one event to one endpoint, retried by the queue.
+    readonly deliver: DeliverWebhookUseCase;
+  };
   public readonly comments: ManageCommentsUseCase;
   public readonly ask: {
     readonly settings: ManageAiSettingsUseCase;
@@ -934,11 +944,13 @@ export class Container {
 
     // A frozen list, and the registry rejects a duplicate name or an unknown event at
     // construction — so a wiring mistake is a startup crash rather than a lost event.
+    const webhookRepository = new PgWebhookRepository(this.cluster, this.transactions, this.shards);
     this.subscribers = new SubscriberRegistry([
       // `24.2a`: the logger is also where a relayed audit row is written, on its node.
       new ActivityRelaySubscriber(this.relayedActivity),
       new MemberRealtimeSubscriber(this.realtime),
       new NotificationSubscriber(this.notification.deliver),
+      new WebhookSubscriber(webhookRepository, this.queuePublisher),
     ]);
 
     // Where `infrastructure`'s adapters bind to the ports `auth` declares. The binding
@@ -1630,6 +1642,27 @@ export class Container {
         this.cache,
         this.rateLimits,
       ),
+    };
+    const deliverWebhook = new DeliverWebhookUseCase(
+      webhookRepository,
+      projectRepository,
+      new FetchWebhookSender(),
+      cipher,
+      this.clock,
+      config.email.baseUrl,
+    );
+    this.webhooks = {
+      manage: new ManageWebhooksUseCase(
+        this.authorizer,
+        webhookRepository,
+        projectRepository,
+        cipher,
+        deliverWebhook,
+        this.activity,
+        this.routedUnitOfWork,
+        this.clock,
+      ),
+      deliver: deliverWebhook,
     };
     this.github = {
       status: new GetGithubStatusUseCase(this.authorizer, installations, this.repositoryProvider),

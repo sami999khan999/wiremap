@@ -39,6 +39,7 @@ export {
   DeletePlanUseCase,
   DeleteRoleUseCase,
   DeliverNotificationUseCase,
+  DeliverWebhookUseCase,
   DenyAccountPermissionUseCase,
   DenyPermissionOverrideUseCase,
   DispatchScanUseCase,
@@ -124,6 +125,7 @@ export {
   ManageProjectAccessUseCase,
   ManageProjectRepositoryUseCase,
   ManageViewsUseCase,
+  ManageWebhooksUseCase,
   MarkAllNotificationsReadUseCase,
   MarkdownRenderer,
   MarkNotificationReadUseCase,
@@ -246,6 +248,8 @@ export {
   UploadScanUseCase,
   UserReader,
   VectorStore,
+  type WebhookJob,
+  WebhookSubscriber,
 } from "@loadbearing/application";
 
 // ── @loadbearing/auth ────────────────────────────────────────────────────────
@@ -314,6 +318,7 @@ export {
   Database,
   DatabaseCluster,
   type DatabaseStats,
+  FetchWebhookSender,
   GeminiChatProvider,
   GeminiEmbeddingProvider,
   GithubActionsScanRunner,
@@ -372,6 +377,7 @@ export {
   PgUnitOfWork,
   PgUserReader,
   PgVectorStore,
+  PgWebhookRepository,
   RedisCacheStore,
   RedisConnection,
   RedisRateLimitStore,

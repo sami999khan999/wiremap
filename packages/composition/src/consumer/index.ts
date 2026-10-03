@@ -8,3 +8,4 @@ export { QueueConsumer } from "./queue.consumer.js";
 export type { QueueJob } from "./queue-job.js";
 export { ScanConsumer } from "./scan.consumer.js";
 export { SystemPrincipal } from "./system-principal.js";
+export { WebhookConsumer } from "./webhook.consumer.js";

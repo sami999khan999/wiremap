@@ -7,6 +7,7 @@ import { OutboxConsumer } from "./outbox.consumer.js";
 import type { QueueConsumer } from "./queue.consumer.js";
 import type { QueueJob } from "./queue-job.js";
 import { ScanConsumer } from "./scan.consumer.js";
+import { WebhookConsumer } from "./webhook.consumer.js";
 
 // Every queue's consumer, by queue name. The worker and `/api/internal/job` both run
 // jobs through this, so a job behaves the same whichever host delivered it.
@@ -21,6 +22,7 @@ export class ConsumerRegistry {
       new NotificationConsumer(container),
       new OutboxConsumer(container),
       new ScanConsumer(container),
+      new WebhookConsumer(container),
     ];
     this.byQueue = new Map(consumers.map((consumer) => [consumer.queue, consumer]));
   }
