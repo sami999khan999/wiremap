@@ -6,4 +6,5 @@ export { NotificationConsumer } from "./notification.consumer.js";
 export { OutboxConsumer } from "./outbox.consumer.js";
 export { QueueConsumer } from "./queue.consumer.js";
 export type { QueueJob } from "./queue-job.js";
+export { ScanConsumer } from "./scan.consumer.js";
 export { SystemPrincipal } from "./system-principal.js";

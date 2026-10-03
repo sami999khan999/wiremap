@@ -59,5 +59,5 @@ export {
 } from "./fake/index.js";
 // `FixedClock` is `TestHarness.clock`'s type. `JobSignatureHasher` lets `/api/internal/job`
 // verify with the publisher's own code without the web app naming infrastructure.
-export { FixedClock, JobSignatureHasher } from "./import.js";
+export { FixedClock, JobSignatureHasher, ScanRefs } from "./import.js";
 export { OrganizationShardingStrategy } from "./shard/index.js";

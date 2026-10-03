@@ -17,11 +17,13 @@ import {
   CapabilityCache,
   CapabilitySet,
   ChangeMemberRoleUseCase,
+  CheckoutScanUseCase,
   ClearAccountDenyUseCase,
   ClearEntitlementAdjustmentUseCase,
   ClearPermissionOverrideUseCase,
   type Clock,
   CloudflareQueuePublisher,
+  CompleteScanUseCase,
   type ContentSource,
   CountUnreadNotificationsUseCase,
   CreateApiKeyUseCase,
@@ -30,6 +32,7 @@ import {
   CreateInvitationLinkUseCase,
   CreateProjectUseCase,
   CreateRoleUseCase,
+  CreateScanUploadUseCase,
   CreateTeamUseCase,
   type Database,
   DatabaseCluster,
@@ -42,6 +45,7 @@ import {
   DeliverNotificationUseCase,
   DenyAccountPermissionUseCase,
   DenyPermissionOverrideUseCase,
+  DispatchScanUseCase,
   DocAccess,
   DocCache,
   DocFeaturePolicy,
@@ -55,6 +59,7 @@ import {
   ExpireEntitlementAdjustmentsUseCase,
   ExpirePermissionOverridesUseCase,
   ExportOrganizationUseCase,
+  FailScanUseCase,
   FindAccountUseCase,
   FlagCache,
   GeminiEmbeddingProvider,
@@ -63,16 +68,19 @@ import {
   GetDocSpaceUseCase,
   GetEntitlementUseCase,
   GetGithubStatusUseCase,
+  GetGraphUseCase,
   GetNotificationPreferencesUseCase,
   GetOrganizationEntitlementUseCase,
   GetOrganizationUseCase,
   GetProjectAccessOverviewUseCase,
   GetProjectUseCase,
+  GithubActionsScanRunner,
   GithubAppProvider,
   type GithubInstallationRepository,
   GrantPermissionOverrideUseCase,
   GrantPermissionUseCase,
   HandleGithubWebhookUseCase,
+  HmacScanTokens,
   IndexDocumentUseCase,
   InspectEffectivePermissionsUseCase,
   InspectPlatformStatusUseCase,
@@ -100,9 +108,11 @@ import {
   ListPlatformDocSpacesUseCase,
   ListProjectsUseCase,
   ListRolesUseCase,
+  ListScansUseCase,
   ListTeamMembersUseCase,
   ListTeamsUseCase,
   ListTenantExportsUseCase,
+  LocalScanRunner,
   type Logger,
   type MailPublisher,
   type MailRenderer,
@@ -120,6 +130,7 @@ import {
   NotificationSubscriber,
   NullMembershipEnroller,
   NullRepositoryProvider,
+  NullScanRunner,
   OpenAiEmbeddingProvider,
   OpenDocImageUseCase,
   type OrganizationFounder,
@@ -163,6 +174,7 @@ import {
   PgPlatformReader,
   PgProjectRepository,
   PgRoleRepository,
+  PgScanRepository,
   PgShardMapReader,
   PgShardResolver,
   PgTeamRepository,
@@ -181,6 +193,7 @@ import {
   PurgeProjectUseCase,
   QueueDocumentIndexUseCase,
   type QueuePublisher,
+  QueueScanUseCase,
   type RateLimitStore,
   ReadDocNavUseCase,
   ReadDocPageUseCase,
@@ -211,6 +224,7 @@ import {
   RevokeInvitationLinkUseCase,
   RevokeInvitationUseCase,
   RevokePermissionUseCase,
+  RunScanUseCase,
   S3StorageGateway,
   S3StoragePolicyGateway,
   SaveDocGrantUseCase,
@@ -232,15 +246,18 @@ import {
   SmtpEmailSender,
   StaticContentSource,
   type StorageGateway,
+  StorageGraphArchive,
   type StoragePolicyGateway,
   SubscriberRegistry,
   SuspendAccountUseCase,
+  SweepScansUseCase,
   SwitchModuleUseCase,
   SystemClock,
   type TenantMembershipReader,
   ToggleReplicaReadsUseCase,
   TransactionScope,
   TransferOwnershipUseCase,
+  TriggerScanUseCase,
   UnifiedMarkdownRenderer,
   type UnitOfWork,
   UpdateDefaultPlanUseCase,
@@ -253,6 +270,7 @@ import {
   UpdateRoleUseCase,
   UpdateTeamUseCase,
   UploadDocImageUseCase,
+  UploadScanUseCase,
   type UserId,
   type VectorStore,
 } from "../import.js";
@@ -473,6 +491,19 @@ export class Container {
     readonly accessOverview: GetProjectAccessOverviewUseCase;
     // Read by the push webhook and the schedule tick, across tenants.
     readonly tracking: ProjectRepository;
+  };
+  public readonly scans: {
+    readonly list: ListScansUseCase;
+    readonly run: RunScanUseCase;
+    readonly createUpload: CreateScanUploadUseCase;
+    readonly graph: GetGraphUseCase;
+    readonly checkout: CheckoutScanUseCase;
+    readonly upload: UploadScanUseCase;
+    readonly complete: CompleteScanUseCase;
+    readonly fail: FailScanUseCase;
+    readonly dispatch: DispatchScanUseCase;
+    readonly trigger: TriggerScanUseCase;
+    readonly sweep: SweepScansUseCase;
   };
   public readonly github: {
     readonly status: GetGithubStatusUseCase;
@@ -1456,6 +1487,71 @@ export class Container {
       ),
       accessOverview: new GetProjectAccessOverviewUseCase(this.authorizer, projectRepository),
       tracking: projectRepository,
+    };
+    const scanRepository = new PgScanRepository(this.cluster, this.transactions, this.shards);
+    const scanConfig = config.scan ?? {
+      secret: config.auth?.secret ?? "unconfigured",
+      serverUrl: config.email.baseUrl,
+      runner: { kind: "none" as const },
+    };
+    const scanTokens = new HmacScanTokens(scanConfig.secret);
+    const scanRunner =
+      scanConfig.runner.kind === "github"
+        ? new GithubActionsScanRunner({
+            repository: scanConfig.runner.repository,
+            token: scanConfig.runner.token,
+          })
+        : scanConfig.runner.kind === "local"
+          ? new LocalScanRunner(
+              { cliPath: scanConfig.runner.cliPath, serverUrl: scanConfig.serverUrl },
+              scanTokens,
+            )
+          : new NullScanRunner();
+    const queueScan = new QueueScanUseCase(
+      scanRepository,
+      scanRunner,
+      this.repositoryProvider,
+      this.queuePublisher,
+    );
+    this.scans = {
+      list: new ListScansUseCase(this.authorizer, projectRepository, scanRepository),
+      run: new RunScanUseCase(this.authorizer, projectRepository, queueScan, this.activity),
+      createUpload: new CreateScanUploadUseCase(
+        this.authorizer,
+        projectRepository,
+        scanRepository,
+        scanTokens,
+        this.storage,
+        this.activity,
+        scanConfig.serverUrl,
+      ),
+      graph: new GetGraphUseCase(this.authorizer, projectRepository, scanRepository, this.storage),
+      checkout: new CheckoutScanUseCase(
+        scanTokens,
+        scanRepository,
+        projectRepository,
+        this.repositoryProvider,
+        this.clock,
+      ),
+      upload: new UploadScanUseCase(scanTokens, scanRepository, this.storage),
+      complete: new CompleteScanUseCase(
+        scanTokens,
+        scanRepository,
+        new StorageGraphArchive(this.storage),
+        this.eventPublisher,
+        this.routedUnitOfWork,
+        this.clock,
+      ),
+      fail: new FailScanUseCase(
+        scanTokens,
+        scanRepository,
+        this.eventPublisher,
+        this.routedUnitOfWork,
+        this.clock,
+      ),
+      dispatch: new DispatchScanUseCase(scanRepository, scanRunner, this.clock),
+      trigger: new TriggerScanUseCase(projectRepository, queueScan),
+      sweep: new SweepScansUseCase(scanRepository, this.eventPublisher, this.clock),
     };
     this.github = {
       status: new GetGithubStatusUseCase(this.authorizer, installations, this.repositoryProvider),

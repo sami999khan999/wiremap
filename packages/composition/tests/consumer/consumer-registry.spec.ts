@@ -41,6 +41,7 @@ describe("ConsumerRegistry", () => {
         QueueName.MAINTENANCE,
         QueueName.NOTIFICATION,
         QueueName.EVENT,
+        QueueName.SCAN,
       ].sort(),
     );
   });

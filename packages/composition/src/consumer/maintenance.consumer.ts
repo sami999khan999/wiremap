@@ -83,6 +83,10 @@ export class MaintenanceConsumer extends QueueConsumer {
         return this.rerender(job.data as RerenderJob);
       case "project-delete":
         return this.projectDelete(job.data as ProjectDeleteJob);
+      case "scan-sweep":
+        return this.scanSweep();
+      case "scan-schedule":
+        return this.scanSchedule();
       default:
         throw new Error(`Unknown maintenance job: ${job.name}`);
     }
@@ -135,6 +139,27 @@ export class MaintenanceConsumer extends QueueConsumer {
       projectId: data.projectId,
       objects: purged.objects,
     });
+  }
+
+  // Node by node: scans are tenant rows, and a dead runner's scan is failed where it lives.
+  private async scanSweep(): Promise<void> {
+    await this.container.eachShard(async (node) => {
+      const swept = await this.container.scans.sweep.execute((organizationId) =>
+        SystemPrincipal.forOrganization(organizationId),
+      );
+      if (swept.length > 0)
+        this.container.logger.emit("scan.sweep.failed", { node, scans: swept.length });
+    });
+  }
+
+  // Projects claim their own slot in the catalog; each scan is then queued on its tenant's node.
+  private async scanSchedule(): Promise<void> {
+    const due = await this.container.projects.tracking.claimScheduled(new Date());
+    for (const project of due) {
+      await this.placed(project.organizationId, () =>
+        this.container.scans.trigger.execute({ ...project, trigger: "schedule", branch: null }),
+      );
+    }
   }
 
   // Off `pnpm doc:rerender`, one job per organization, placed on the tenant's node.

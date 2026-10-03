@@ -82,6 +82,16 @@ export interface ContainerConfig {
     readonly webhookSecret: string;
     readonly stateSecret: string;
   };
+  // Where scans run. `secret` signs each scan's callback token, and the runner workflow holds
+  // the same value. `serverUrl` is where a runner calls back. See docs/infra/scan-runner.md.
+  readonly scan?: {
+    readonly secret: string;
+    readonly serverUrl: string;
+    readonly runner:
+      | { readonly kind: "none" }
+      | { readonly kind: "local"; readonly cliPath: string }
+      | { readonly kind: "github"; readonly repository: string; readonly token: string };
+  };
   // Not optional: with `requireEmailVerification` on, a container that cannot send is
   // one whose sign-ups never complete. SMTP, so swapping vendors is this URL.
   readonly email: {
