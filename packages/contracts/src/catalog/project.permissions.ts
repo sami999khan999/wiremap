@@ -15,5 +15,6 @@ export const projectProcedurePermissions = {
   "project.access": "project.access.manage",
   "project.saveGrant": "project.access.manage",
   "project.revokeGrant": "project.access.manage",
+  "project.accessOverview": "project.access.overview",
   "github.status": "project.create",
 } as const satisfies Record<string, PermissionKey>;

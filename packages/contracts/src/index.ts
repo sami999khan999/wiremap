@@ -208,6 +208,7 @@ export {
   type AvailableRepositoryDto,
   type CreateProjectInput,
   PROJECT_ROLES,
+  type ProjectAccessOverviewDto,
   type ProjectBySlugInput,
   ProjectContract,
   type ProjectDto,

@@ -138,11 +138,49 @@ export class ProjectContract {
     grantId: Identifiers.projectGrantId,
   });
 
+  // Every project against every active member: the role each one ends up with, and why.
+  // A missing cell is no access. `via` names the source that won.
+  public static readonly accessOverview = z.object({
+    projects: z
+      .array(
+        z.object({
+          id: Identifiers.projectId,
+          slug,
+          name: z.string(),
+          visibility,
+          defaultRole: role,
+        }),
+      )
+      .readonly(),
+    members: z
+      .array(
+        z.object({
+          userId: Identifiers.userId,
+          name: z.string(),
+          email: z.string(),
+          roleKey: z.string(),
+        }),
+      )
+      .readonly(),
+    cells: z
+      .array(
+        z.object({
+          projectId: Identifiers.projectId,
+          userId: Identifiers.userId,
+          role,
+          via: z.enum(["organization", "default", "direct", "team"]),
+          teamName: z.string().nullable(),
+        }),
+      )
+      .readonly(),
+  });
+
   public static readonly listQuery = Pagination.query;
 }
 
 export type ProjectRole = z.infer<typeof ProjectContract.role>;
 export type ProjectDto = z.infer<typeof ProjectContract.entity>;
+export type ProjectAccessOverviewDto = z.infer<typeof ProjectContract.accessOverview>;
 export type RepositoryDto = z.infer<typeof ProjectContract.repository>;
 export type AvailableRepositoryDto = z.infer<typeof ProjectContract.available>;
 export type ProjectGrantDto = z.infer<typeof ProjectContract.grant>;

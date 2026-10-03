@@ -66,6 +66,11 @@ export class ProjectProcedures {
     .input(ProjectContract.revokeGrant)
     .output(Envelope.acknowledged);
 
+  public static readonly accessOverview = oc
+    .route({ method: "GET", path: "/projects/access-overview" })
+    .input(z.object({}))
+    .output(ProjectContract.accessOverview);
+
   public static readonly all = {
     list: ProjectProcedures.list,
     get: ProjectProcedures.get,
@@ -79,5 +84,6 @@ export class ProjectProcedures {
     access: ProjectProcedures.access,
     saveGrant: ProjectProcedures.saveGrant,
     revokeGrant: ProjectProcedures.revokeGrant,
+    accessOverview: ProjectProcedures.accessOverview,
   } as const;
 }
