@@ -31,6 +31,10 @@ catalog:
   "@tailwindcss/vite": ^4.3.3
   tsx: ^4.19.0
   rimraf: ^6.0.1
+  # The editor extension's types and its packager. `@types/vscode` is the oldest API the
+  # extension promises, so it moves only with `engines.vscode` in apps/vscode.
+  "@types/vscode": ~1.95.0
+  "@vscode/vsce": ^4.0.0
   vitest: ^3.1.4
   # The React renderer the component packages test through. Tier 1: never ships, and
   # `packages/{ui,feature}` are the only consumers.
@@ -228,6 +232,9 @@ allowBuilds:
   workerd: true
   # The analyzer loads `tree-sitter-php.wasm`; the native addon this would compile is unused.
   tree-sitter-php: false
+  # vsce's install script fetches a binary that signs for the Marketplace. Denied:
+  # `vsce package` builds the .vsix without it, and publishing is the owner's step.
+  "@vscode/vsce-sign": false
 
 minimumReleaseAgeExclude:
   - glass-scroll@0.2.0
