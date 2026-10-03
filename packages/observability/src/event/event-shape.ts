@@ -111,13 +111,17 @@ export interface EventShape {
     readonly rows: number;
     readonly bytes: number;
   };
-  // `outboxRows` is here because `24.1` moved that sweep out of the database: a zero
-  // when the tenant had events is the shape of the sweep silently not running.
+  readonly "scan.sweep.failed": {
+    readonly node: number;
+    readonly scans: number;
+  };
   readonly "project.purge.completed": {
     readonly organizationId: string;
     readonly projectId: string;
     readonly objects: number;
   };
+  // `outboxRows` is here because `24.1` moved that sweep out of the database: a zero
+  // when the tenant had events is the shape of the sweep silently not running.
   readonly "tenant.purge.completed": {
     readonly organizationId: string;
     readonly archived: number;
