@@ -1,0 +1,4 @@
+{
+  "extends": "@loadbearing/tsconfig/node-esm.json",
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
+}

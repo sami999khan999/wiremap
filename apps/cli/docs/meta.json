@@ -1,0 +1,5 @@
+{
+  "title": "cli",
+  "description": "The wiremap command line — analyze a repository into a graph on your own machine",
+  "pages": ["index"]
+}

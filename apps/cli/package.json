@@ -1,0 +1,36 @@
+{
+  "name": "@loadbearing/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "wiremap's command line: analyze a repository into a graph, on your own machine.",
+  "type": "module",
+  "bin": {
+    "wiremap": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/main.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "typescript": "catalog:",
+    "web-tree-sitter": "catalog:",
+    "yaml": "catalog:"
+  },
+  "devDependencies": {
+    "@loadbearing/analyzer": "workspace:*",
+    "@loadbearing/contracts": "workspace:*",
+    "@loadbearing/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "rimraf": "catalog:",
+    "tree-sitter-php": "catalog:",
+    "tsup": "catalog:",
+    "tsx": "catalog:",
+    "vitest": "catalog:"
+  }
+}
