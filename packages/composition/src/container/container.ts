@@ -66,6 +66,7 @@ import {
   GetNotificationPreferencesUseCase,
   GetOrganizationEntitlementUseCase,
   GetOrganizationUseCase,
+  GetProjectAccessOverviewUseCase,
   GetProjectUseCase,
   GithubAppProvider,
   type GithubInstallationRepository,
@@ -469,6 +470,7 @@ export class Container {
     readonly available: ListAvailableRepositoriesUseCase;
     readonly repository: ManageProjectRepositoryUseCase;
     readonly access: ManageProjectAccessUseCase;
+    readonly accessOverview: GetProjectAccessOverviewUseCase;
     // Read by the push webhook and the schedule tick, across tenants.
     readonly tracking: ProjectRepository;
   };
@@ -1452,6 +1454,7 @@ export class Container {
         this.activity,
         this.catalogUnitOfWork,
       ),
+      accessOverview: new GetProjectAccessOverviewUseCase(this.authorizer, projectRepository),
       tracking: projectRepository,
     };
     this.github = {

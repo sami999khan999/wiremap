@@ -67,6 +67,7 @@ export {
   GetNotificationPreferencesUseCase,
   GetOrganizationEntitlementUseCase,
   GetOrganizationUseCase,
+  GetProjectAccessOverviewUseCase,
   GetProjectUseCase,
   type GithubInstallationRepository,
   type GithubWebhookEvent,
