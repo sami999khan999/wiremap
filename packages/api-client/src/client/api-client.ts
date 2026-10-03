@@ -136,6 +136,14 @@ export class ApiClient {
     return this.rpc.activity;
   }
 
+  public get project(): AppClient["project"] {
+    return this.rpc.project;
+  }
+
+  public get github(): AppClient["github"] {
+    return this.rpc.github;
+  }
+
   // The escape hatch for a namespace with no accessor yet.
   public get raw(): AppClient {
     return this.rpc;
