@@ -23,6 +23,8 @@ export default tseslint.config(
       "{packages,apps,tooling}/*/*.config.ts",
       "{packages,apps,tooling}/*/*.config.mts",
       "**/*.d.ts",
+      // The analyzer's sample apps: source it reads, never builds, with no dependencies.
+      "packages/analyzer/tests/fixture/**",
     ],
   },
 

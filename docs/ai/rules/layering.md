@@ -32,7 +32,7 @@ errors → core → permissions · observability → contracts → asset · cont
 - **`graph` is wiremap's isomorphic algorithms package** (`GraphIndex`, `GraphDiff`). It imports
   types from `contracts` and nothing at runtime, so the browser, the server and the CLI run the
   same traversal. It carries the server-only ban, like `content`.
-- **`analyzer` is node-only, and the CLI app is its only host.** It may name `typescript`
+- **`analyzer` is node-only and sits beside `apps/cli`**, its only host. It may name `typescript`
   and `web-tree-sitter`; nothing left of `apps/` imports it, so it never reaches the web bundle.
 - **`apps/*` are thin, deletable, framework-shaped.** Business logic never lands there.
 

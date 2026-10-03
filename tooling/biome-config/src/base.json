@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/.output", "!**/migrations"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/.output",
+      "!**/migrations",
+      "!packages/analyzer/tests/fixture",
+      "!packages/analyzer/tests/golden"
+    ]
   },
   "formatter": {
     "enabled": true,

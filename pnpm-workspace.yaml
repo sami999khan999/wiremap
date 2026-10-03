@@ -44,6 +44,14 @@ catalog:
   wrangler: ~4.145.0
   "@cloudflare/workers-types": ~5.20260930.2
 
+  # ── analyzer ──
+  #    `packages/analyzer` only, node-side, never in a web bundle. The PHP grammar is used
+  #    for its prebuilt `.wasm`; its native binding is denied a build below.
+  web-tree-sitter: ^0.25.0
+  tree-sitter-php: ~0.24.2
+  # OpenAPI files in YAML, read as ground truth for routes.
+  yaml: ^2.8.0
+
   # ── types ──
   "@types/node": ^24.3.0
   "@types/nodemailer": ^8.0.1
@@ -210,6 +218,8 @@ allowBuilds:
   # Wrangler's local runtime: its install script fetches the platform binary that
   # `wrangler dev` runs the dispatcher in. Without it there is no local Worker.
   workerd: true
+  # The analyzer loads `tree-sitter-php.wasm`; the native addon this would compile is unused.
+  tree-sitter-php: false
 
 minimumReleaseAgeExclude:
   - glass-scroll@0.2.0

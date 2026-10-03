@@ -36,6 +36,8 @@ const SKIP_DIRS = new Set([
   ".claude",
   "migrations",
   "src-tauri",
+  // The analyzer's sample apps: input it reads, written as their frameworks write code.
+  "fixture",
 ]);
 
 const results = [];
