@@ -8,6 +8,7 @@ import {
   useMemo,
   useMessages,
 } from "~/import.js";
+import { AuthFrame } from "~/route/-auth-frame.js";
 import { refreshSession } from "~/route/-session.js";
 import { fetchInvitation } from "~/server/invitation.fn.js";
 
@@ -49,7 +50,7 @@ function InvitationPage() {
     });
 
   return (
-    <main>
+    <AuthFrame>
       <h1>{t("organization.invitation.title")}</h1>
       <InvitationAccept
         preview={preview}
@@ -64,6 +65,6 @@ function InvitationPage() {
         // verified address.
         onSignUp={() => void navigate({ to: "/sign-up" })}
       />
-    </main>
+    </AuthFrame>
   );
 }

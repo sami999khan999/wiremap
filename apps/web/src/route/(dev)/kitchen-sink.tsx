@@ -1,6 +1,8 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import {
+  ActionMenu,
   AlertDialog,
+  Avatar,
   type BadgeTone,
   Button,
   type ButtonVariant,
@@ -21,8 +23,12 @@ import {
   Prose,
   QrCode,
   type ReactNode,
+  ResizablePanels,
+  RoleDot,
+  type RoleTone,
   Select,
   StatusBadge,
+  Tabs,
   Textarea,
   type ThemeKey,
   ThemeRegistry,
@@ -81,8 +87,7 @@ const CODES: readonly string[] = [
 
 // A real `otpauth://` URI: `QrCode` re-encodes nothing, so a trimmed sample would
 // render a QR that scans into an authenticator generating the wrong codes.
-const OTPAUTH =
-  "otpauth://totp/Loadbearing:you@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Loadbearing";
+const OTPAUTH = "otpauth://totp/Wiremap:you@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Wiremap";
 const PREFERENCES: readonly ModePreference[] = ["light", "dark", "system"];
 
 const SAMPLE_OPTIONS = [
@@ -139,6 +144,26 @@ function Pair({ fg, bg, label }: { fg: string; bg: string; label: string }) {
     >
       {label}
     </div>
+  );
+}
+
+function ShellTabs() {
+  const [tab, setTab] = useState("overview");
+  return (
+    <Tabs
+      label="Panel"
+      value={tab}
+      onValueChange={setTab}
+      items={[
+        { value: "overview", label: "Overview" },
+        { value: "ask", label: "Ask" },
+      ]}
+      className="max-w-sm"
+    >
+      {(open) => (
+        <p className="p-3 text-sm">{open === "overview" ? "Routes 21" : "Ask anything"}</p>
+      )}
+    </Tabs>
   );
 }
 
@@ -339,6 +364,94 @@ function KitchenSink() {
           cancelLabel="Cancel"
           onConfirm={() => {}}
         />
+      </Section>
+
+      <Section title="Shell">
+        <div className={ROW}>
+          <ActionMenu
+            label="Organization menu"
+            align="start"
+            trigger={
+              <>
+                <Avatar name="Acme Labs" size="sm" className="rounded-sm" />
+                <span className="text-sm">Acme Labs</span>
+                <Icon name="chevron-up-down" size={14} />
+              </>
+            }
+            header={<span className="text-xs text-fg-muted">Organizations</span>}
+            entries={[
+              {
+                kind: "item",
+                key: "a",
+                label: "Acme Labs",
+                detail: "Owner",
+                checked: true,
+                onSelect: () => {},
+              },
+              { kind: "item", key: "b", label: "Beta", detail: "Member", onSelect: () => {} },
+              { kind: "separator", key: "s" },
+              {
+                kind: "item",
+                key: "n",
+                label: "New organization",
+                icon: "plus",
+                onSelect: () => {},
+              },
+            ]}
+          />
+          <ActionMenu
+            label="Account menu"
+            trigger={<Avatar name="Ada Lovelace" />}
+            entries={[
+              { kind: "item", key: "a", label: "Account", icon: "user", onSelect: () => {} },
+              {
+                kind: "item",
+                key: "o",
+                label: "Sign out",
+                icon: "logout",
+                tone: "danger",
+                onSelect: () => {},
+              },
+            ]}
+          />
+          <ThemeToggle
+            label="Mode"
+            variant="labels"
+            mode="dark"
+            onModeChange={() => {}}
+            lightLabel="light"
+            darkLabel="dark"
+            system={{ label: "system", preference: "system", onPreferenceChange: () => {} }}
+          />
+        </div>
+        <div className={GAP} />
+        <div className={ROW}>
+          {(
+            [
+              "primary",
+              "cool",
+              "warm",
+              "success",
+              "warning",
+              "neutral",
+            ] as const satisfies readonly RoleTone[]
+          ).map((tone) => (
+            <span key={tone} className="inline-flex items-center gap-2 text-sm">
+              <RoleDot tone={tone} />
+              {tone}
+            </span>
+          ))}
+        </div>
+        <div className={GAP} />
+        <ShellTabs />
+        <div className={GAP} />
+        <ResizablePanels
+          className="h-48 rounded-md border border-border"
+          start={<div className="p-3 text-sm">Roles</div>}
+          end={<div className="p-3 text-sm">Overview</div>}
+        >
+          <div className="p-3 text-sm">Canvas</div>
+        </ResizablePanels>
       </Section>
 
       <Section title="Composites">

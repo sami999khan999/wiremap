@@ -5,26 +5,32 @@ import {
   Can,
   CapabilitySet,
   type ClientNamespace,
+  Icon,
   ModuleNav,
   NotificationBell,
   NotificationQueries,
   OrganizationClient,
-  OrganizationSwitcher,
+  OrganizationMenu,
   RealtimeProvider,
   ROUTES,
-  SignOutButton,
+  UserMenu,
   useApiClient,
   useCapabilities,
   useMemo,
   useMessages,
 } from "~/import.js";
+import { ModeSwitcher } from "~/route/-appearance.js";
 import { Pending } from "~/route/-boundary.js";
 import { RouteGuard } from "~/route/-guard.js";
 import { LocaleSwitcher } from "~/route/-locale.js";
 import { refreshSession } from "~/route/-session.js";
 
-// `nav` for the gated destinations below; `auth` for everything else the header says.
-const MESSAGES = ["nav"] as const satisfies readonly ClientNamespace[];
+// The product's own sections sit in the top bar. The administrative ones are in the
+// settings sidebar (`settings.tsx`), which renders every other module.
+const TOP_BAR_MODULES = ["doc", "platform"] as const;
+
+// `nav` for the top bar, and `notification` for the bell's name and its peek list.
+const MESSAGES = ["nav", "notification"] as const satisfies readonly ClientNamespace[];
 
 // The one place that says every page under `(app)` needs a session. Pathless: the
 // leading underscore keeps `_authenticated` out of the URL.
@@ -42,16 +48,13 @@ export const Route = createFileRoute("/(app)/_authenticated")({
       ? context.queryClient.ensureQueryData(NotificationQueries.unreadCount(context.api))
       : Promise.resolve(null);
 
-    // The logo goes through `ContentSource.media()` rather than importing the file:
-    // content records hold `"brand.logo"`, never a path, so a CDN is one adapter.
-    const [, nav, logo] = await Promise.all([
+    const [, nav] = await Promise.all([
       context.messages.ensure(MESSAGES),
       context.content.nav(),
-      context.content.media("brand.logo"),
       counted,
     ]);
 
-    return { nav, logo };
+    return { nav };
   },
   component: AuthenticatedLayout,
   // Covers every page below, so a leaf whose loader prefetches — `/settings/roles`
@@ -61,7 +64,7 @@ export const Route = createFileRoute("/(app)/_authenticated")({
 
 function AuthenticatedLayout() {
   const { t } = useMessages("nav");
-  const { nav, logo } = Route.useLoaderData();
+  const { nav } = Route.useLoaderData();
   const capabilities = useCapabilities();
   const navigate = useNavigate();
   const router = useRouter();
@@ -99,27 +102,23 @@ function AuthenticatedLayout() {
       <a className="ui-skip-link" href="#main">
         {t("nav.skip")}
       </a>
-      <header>
-        <img src={logo.src} width={logo.width} height={logo.height} alt={logo.alt} />
-        <OrganizationSwitcher
+      <header className="ui-top-bar sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-border bg-bg px-3 sm:gap-3 sm:px-4">
+        <Link
+          to="/"
+          className="flex items-center gap-2 font-mono text-sm font-semibold text-fg no-underline"
+        >
+          <Icon name="graph" size={18} className="text-primary" />
+          <span className="hidden sm:inline">{t("nav.product")}</span>
+        </Link>
+        <span aria-hidden="true" className="hidden text-fg-muted sm:inline">
+          /
+        </span>
+        <OrganizationMenu
           organization={organization}
           onSwitched={switched}
           onCreate={() => void navigate({ to: "/organization/new" })}
+          onSettings={() => void navigate({ to: "/settings" })}
         />
-        {
-          // An affordance, so `<Can>`: the inbox route and its procedures are the gate.
-          <Can permission="notification.inbox.read" capabilities={capabilities}>
-            <NotificationBell href={ROUTES.notification.inbox} />
-          </Can>
-        }
-        {
-          // Ungated on purpose: your own account and security pages need no capability,
-          // which is why `account.routes.ts` declares no gate for them.
-          <nav aria-label={t("nav.account")}>
-            <Link to="/settings/account">{t("nav.account")}</Link>
-            <Link to="/settings/security">{t("nav.security")}</Link>
-          </nav>
-        }
         {
           // The gated half, from `ContentSource.nav()` joined to `MODULE_GATES`. A link
           // hidden here still answers FORBIDDEN if the path is typed by hand.
@@ -127,21 +126,43 @@ function AuthenticatedLayout() {
         <ModuleNav
           items={nav}
           capabilities={capabilities}
-          renderLink={(route, label, icon) => (
-            <Link key={route} to={route}>
-              {icon}
+          modules={TOP_BAR_MODULES}
+          className="hidden items-center gap-1 md:flex"
+          renderLink={(route, label) => (
+            <Link
+              key={route}
+              to={route}
+              className="rounded-sm px-2 py-1 text-sm text-fg-muted no-underline hover:bg-muted hover:text-fg"
+              activeProps={{ className: "text-fg" }}
+            >
               {label}
             </Link>
           )}
         />
-        <LocaleSwitcher appearance={appearance} current={appearanceSnapshot.locale} />
-        <SignOutButton auth={auth} onSignedOut={signedOut} />
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          {
+            // An affordance, so `<Can>`: the inbox route and its procedures are the gate.
+            <Can permission="notification.inbox.read" capabilities={capabilities}>
+              <NotificationBell href={ROUTES.notification.inbox} />
+            </Can>
+          }
+          <span className="hidden sm:inline-flex">
+            <ModeSwitcher appearance={appearance} snapshot={appearanceSnapshot} />
+          </span>
+          <LocaleSwitcher appearance={appearance} current={appearanceSnapshot.locale} />
+          <UserMenu
+            auth={auth}
+            onSignedOut={signedOut}
+            onAccount={() => void navigate({ to: "/settings/account" })}
+            onSecurity={() => void navigate({ to: "/settings/security" })}
+          />
+        </div>
       </header>
       {
         // The landmark the skip link targets, and the one a screen reader jumps to.
         // `tabIndex={-1}` so the anchor moves focus rather than only scrolling.
       }
-      <main id="main" tabIndex={-1}>
+      <main id="main" tabIndex={-1} className="min-h-[calc(100dvh-3rem)] outline-none">
         <Outlet />
       </main>
     </RealtimeProvider>

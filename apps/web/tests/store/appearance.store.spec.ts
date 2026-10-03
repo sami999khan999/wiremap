@@ -9,7 +9,7 @@ const parse = (cookie: string | null, prefersDark = false): AppearanceSnapshot =
 describe("AppearanceStore.fromCookieHeader", () => {
   it("falls back to the palette that seeds :root when there is no cookie", () => {
     expect(parse(null)).toEqual({
-      theme: "slate",
+      theme: "wiremap",
       mode: "light",
       preference: "system",
       font: "sans",
@@ -37,14 +37,14 @@ describe("AppearanceStore.fromCookieHeader", () => {
   it("ignores everything it does not recognise", () => {
     // A cookie is a string the user can edit. An unknown key renders a page with every
     // colour undefined, so neither value is trusted before its guard has run.
-    expect(parse("theme=solarized; mode=sepia").theme).toBe("slate");
+    expect(parse("theme=solarized; mode=sepia").theme).toBe("wiremap");
     expect(parse("theme=solarized; mode=sepia").mode).toBe("light");
   });
 
   it("does not admit a prototype member from a cookie", () => {
     // The same `Object.hasOwn` guard the registries pin, checked at the boundary the
     // untrusted string actually crosses.
-    expect(parse("theme=__proto__; mode=toString").theme).toBe("slate");
+    expect(parse("theme=__proto__; mode=toString").theme).toBe("wiremap");
     expect(parse("theme=constructor; mode=constructor").mode).toBe("light");
   });
 
@@ -72,7 +72,7 @@ describe("AppearanceStore.fromCookieHeader", () => {
 
   it("does not match a cookie whose name merely ends in the one it wants", () => {
     // `split("=")` on `"other-theme=ocean"` yields the key `other-theme`, not `theme`.
-    expect(parse("other-theme=ocean").theme).toBe("slate");
+    expect(parse("other-theme=ocean").theme).toBe("wiremap");
   });
 });
 

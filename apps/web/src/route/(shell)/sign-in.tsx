@@ -10,6 +10,7 @@ import {
   useMessages,
   useState,
 } from "~/import.js";
+import { AuthFrame } from "~/route/-auth-frame.js";
 import { LocaleSwitcher } from "~/route/-locale.js";
 import { RedirectSearch } from "~/route/-redirect.js";
 import { completeSignIn } from "~/route/-session.js";
@@ -50,7 +51,7 @@ function SignInPage() {
     );
 
   return (
-    <main>
+    <AuthFrame>
       {
         // The one signed-out page that needs it: a reader who cannot read this form is
         // not going to find a switcher behind it.
@@ -81,6 +82,6 @@ function SignInPage() {
           </nav>
         </>
       )}
-    </main>
+    </AuthFrame>
   );
 }

@@ -70,7 +70,7 @@ const Schema = z
       .transform((v) => v === "true"),
     // What an authenticator app shows beside a TOTP code. Changing it after anyone has
     // enrolled leaves their authenticator naming a product that no longer exists.
-    AUTH_APP_NAME: z.string().min(1).default("Loadbearing"),
+    AUTH_APP_NAME: z.string().min(1).default("Wiremap"),
     // How a new user acquires the membership without which no session is issued.
     // `personal` is the only mode that works against an empty database.
     AUTH_ENROLMENT_MODE: z.enum(["personal", "bootstrap", "invite"]).default("personal"),

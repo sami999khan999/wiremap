@@ -10,6 +10,7 @@ import {
   useState,
   VerifyEmailNotice,
 } from "~/import.js";
+import { AuthFrame } from "~/route/-auth-frame.js";
 
 const MESSAGES = ["auth"] as const satisfies readonly ClientNamespace[];
 
@@ -30,7 +31,7 @@ function SignUpPage() {
   const auth = useMemo(() => new AuthClient({ baseUrl: Endpoint.auth }), []);
 
   return (
-    <main>
+    <AuthFrame>
       {registered ? (
         <VerifyEmailNotice auth={auth} email={registered} verifyCallbackUrl="/verify-email" />
       ) : (
@@ -48,6 +49,6 @@ function SignUpPage() {
           <Link to="/sign-in">{t("auth.haveAccount")}</Link>
         </>
       )}
-    </main>
+    </AuthFrame>
   );
 }

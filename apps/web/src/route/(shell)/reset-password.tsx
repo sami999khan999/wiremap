@@ -10,6 +10,7 @@ import {
   useMessages,
   z,
 } from "~/import.js";
+import { AuthFrame } from "~/route/-auth-frame.js";
 
 const MESSAGES = ["auth"] as const satisfies readonly ClientNamespace[];
 
@@ -35,7 +36,7 @@ function ResetPasswordPage() {
   const complete = () => void navigate({ to: "/sign-in" });
 
   return (
-    <main>
+    <AuthFrame>
       <h1>{t("auth.resetTitle")}</h1>
       {token ? (
         <ResetPasswordForm auth={auth} token={token} onSuccess={complete} />
@@ -45,6 +46,6 @@ function ResetPasswordPage() {
           <Link to="/forgot-password">{t("auth.resetRequest")}</Link>
         </>
       )}
-    </main>
+    </AuthFrame>
   );
 }

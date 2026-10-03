@@ -7,6 +7,7 @@ import {
   useMemo,
   useMessages,
 } from "~/import.js";
+import { AuthFrame } from "~/route/-auth-frame.js";
 
 const MESSAGES = ["auth"] as const satisfies readonly ClientNamespace[];
 
@@ -21,13 +22,13 @@ function ForgotPasswordPage() {
   const auth = useMemo(() => new AuthClient({ baseUrl: Endpoint.auth }), []);
 
   return (
-    <main>
+    <AuthFrame>
       {
         // Where Better Auth redirects once it has spent the emailed token, carrying a
         // fresh one on the query string.
       }
       <ForgotPasswordForm auth={auth} resetUrl="/reset-password" />
       <Link to="/sign-in">{t("auth.signIn")}</Link>
-    </main>
+    </AuthFrame>
   );
 }

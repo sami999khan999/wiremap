@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Callout, type ClientNamespace, useMessages, z } from "~/import.js";
+import { AuthFrame } from "~/route/-auth-frame.js";
 
 const MESSAGES = ["auth"] as const satisfies readonly ClientNamespace[];
 
@@ -22,7 +23,7 @@ function VerifyEmailPage() {
   // The token is already spent by the time this renders, which is why the page holds no
   // client and makes no request.
   return (
-    <main>
+    <AuthFrame>
       {error ? (
         <Callout tone="danger">{t("auth.verifyEmailFailed")}</Callout>
       ) : (
@@ -33,6 +34,6 @@ function VerifyEmailPage() {
         // this link is the whole next step.
       }
       <Link to="/sign-in">{t("auth.signIn")}</Link>
-    </main>
+    </AuthFrame>
   );
 }
