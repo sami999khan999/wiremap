@@ -510,3 +510,20 @@ export {
   UpdateTeamUseCase,
 } from "./team/index.js";
 export { type GraphViewRecord, GraphViewRepository, ManageViewsUseCase } from "./view/index.js";
+export {
+  DeliverWebhookUseCase,
+  type Delivery,
+  ManageWebhooksUseCase,
+  type NewWebhook,
+  type RenderContext,
+  type WebhookEvent,
+  type WebhookJob,
+  type WebhookRecord,
+  WebhookRenderer,
+  WebhookRepository,
+  type WebhookRequest,
+  type WebhookResponse,
+  WebhookSender,
+  WebhookSubscriber,
+  type WebhookView,
+} from "./webhook/index.js";

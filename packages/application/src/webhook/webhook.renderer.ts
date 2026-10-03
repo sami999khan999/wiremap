@@ -1,4 +1,13 @@
-import type { DomainEvent, WebhookKind } from "../import.js";
+import type { OrganizationId, WebhookKind } from "../import.js";
+
+// A domain event as a delivery sees it, or the synthetic one a test sends.
+export interface WebhookEvent {
+  readonly id: string;
+  readonly name: string;
+  readonly organizationId: OrganizationId;
+  readonly occurredAt: Date;
+  readonly payload: Readonly<Record<string, unknown>>;
+}
 
 export interface RenderContext {
   readonly projectName: string;
@@ -18,13 +27,15 @@ const TITLES: Readonly<Record<string, string>> = Object.freeze({
 export class WebhookRenderer {
   private constructor() {}
 
-  public static body(kind: WebhookKind, event: DomainEvent, context: RenderContext): string {
+  public static body(kind: WebhookKind, event: WebhookEvent, context: RenderContext): string {
     return JSON.stringify(
-      kind === "slack" ? WebhookRenderer.slack(event, context) : WebhookRenderer.generic(event, context),
+      kind === "slack"
+        ? WebhookRenderer.slack(event, context)
+        : WebhookRenderer.generic(event, context),
     );
   }
 
-  private static generic(event: DomainEvent, context: RenderContext) {
+  private static generic(event: WebhookEvent, context: RenderContext) {
     return {
       id: event.id,
       event: event.name,
@@ -35,7 +46,7 @@ export class WebhookRenderer {
     };
   }
 
-  private static slack(event: DomainEvent, context: RenderContext) {
+  private static slack(event: WebhookEvent, context: RenderContext) {
     const title = `${TITLES[event.name] ?? event.name} · ${context.projectName}`;
     const detail = WebhookRenderer.detail(event);
     return {
@@ -48,15 +59,19 @@ export class WebhookRenderer {
         {
           type: "actions",
           elements: [
-            { type: "button", text: { type: "plain_text", text: "Open in wiremap" }, url: context.link },
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Open in wiremap" },
+              url: context.link,
+            },
           ],
         },
       ],
     };
   }
 
-  private static detail(event: DomainEvent): string | null {
-    const payload = event.payload as Readonly<Record<string, unknown>>;
+  private static detail(event: WebhookEvent): string | null {
+    const { payload } = event;
     switch (event.name) {
       case "scan.succeeded": {
         const found = Number(payload.newFindings ?? 0);
@@ -65,7 +80,7 @@ export class WebhookRenderer {
       case "scan.failed":
         return typeof payload.error === "string" ? payload.error : null;
       case "finding.created":
-        return `${payload.kind === "cycle" ? "Import cycle" : "Unguarded route"}: ${String(payload.key ?? "")}`;
+        return `${payload.kind === "cycle" ? "Import cycle" : "Unguarded route"}: ${typeof payload.key === "string" ? payload.key : ""}`;
       default:
         return null;
     }

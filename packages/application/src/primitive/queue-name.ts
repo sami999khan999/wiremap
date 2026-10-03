@@ -4,10 +4,19 @@ const MAINTENANCE = "maintenance";
 const MAIL = "mail";
 const EVENT = "event";
 const SCAN = "scan";
+const WEBHOOK = "webhook";
 
 // Frozen at module load rather than left as a `static readonly`: the keyword freezes the
 // binding and not the array, which is the shape `docs/ai/rules/classes.md` bans.
-const ALL = Object.freeze([EMBEDDING, NOTIFICATION, MAINTENANCE, MAIL, EVENT, SCAN] as const);
+const ALL = Object.freeze([
+  EMBEDDING,
+  NOTIFICATION,
+  MAINTENANCE,
+  MAIL,
+  EVENT,
+  SCAN,
+  WEBHOOK,
+] as const);
 
 // A handful of queues by concern, not one per job type. A queue is a concurrency
 // and priority boundary: embedding is slow and rate-limited, notifications bursty.
@@ -28,6 +37,9 @@ export class QueueName {
   // Starting a scan's runner: a call to GitHub that may need a retry, kept off the
   // maintenance queue so a sweep never waits behind it.
   public static readonly SCAN = SCAN;
+  // Outgoing webhooks: a customer's endpoint that may be slow or down, retried eight times,
+  // and kept off every queue whose work a person is waiting on.
+  public static readonly WEBHOOK = WEBHOOK;
 
   public static readonly ALL = ALL;
 }

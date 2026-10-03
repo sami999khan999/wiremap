@@ -100,6 +100,10 @@ export {
   type UpdateNotificationPreferenceInput,
   type UploadDocImageInput,
   type UserId,
+  WEBHOOK_EVENTS,
+  type WebhookEventName,
+  type WebhookId,
+  type WebhookKind,
 } from "@loadbearing/contracts";
 
 // ── @loadbearing/core ────────────────────────────────────────────────────────
