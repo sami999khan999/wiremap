@@ -30,6 +30,13 @@ export const projectPermissions = {
     label: "Scan a project",
     requires: ["project.graph.read"],
   },
+  // Editor and up: a viewer reads the thread and does not add to it.
+  "project.comment.write": {
+    scope: "goal",
+    module: "project",
+    label: "Comment on a project",
+    requires: ["project.graph.read"],
+  },
   // Every role that reads a project may ask about it; the organization's key pays for it.
   "project.ask.use": {
     scope: "goal",

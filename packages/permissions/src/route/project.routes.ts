@@ -5,6 +5,8 @@ export const projectRoutes = {
   list: "/projects",
   create: "/projects/new",
   show: "/p",
+  // A notification's link: the project by id, redirected to its slug page.
+  go: "/go/project",
   access: "/settings/access",
   ai: "/settings/ai",
 } as const satisfies Record<string, RoutePath>;
