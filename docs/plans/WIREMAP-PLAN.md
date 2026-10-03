@@ -624,18 +624,18 @@ the same layout.
 
 ### Phase 8 — Insights
 
-- [ ] `WM8.1` **Insights tab** `/p/$project/insights`, with sections that each link into the graph:
+- [x] `WM8.1` **Insights tab** `/p/$project/insights`, with sections that each link into the graph:
   - most depended-on;
   - cycles, each one drawn;
   - unused files and exports;
   - unguarded routes.
-- [ ] `WM8.2` **Change impact.** Pick a file to highlight its transitive dependents by depth, list
+- [x] `WM8.2` **Change impact.** Pick a file to highlight its transitive dependents by depth, list
   them, and list the routes whose handler files are affected.
-- [ ] `WM8.3` **Compare.**
+- [x] `WM8.3` **Compare.**
   - `/p/$project/compare?a=&b=` across two scans or two branches' latest scans.
   - Files, edges and routes added or removed, and cycles introduced or fixed.
   - The diff is computed in the browser with `GraphIndex.diff`.
-- [ ] `WM8.4` Specs and docs.
+- [x] `WM8.4` Specs and docs.
 
 ### Phase 9 — Ask
 
