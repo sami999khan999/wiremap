@@ -183,8 +183,9 @@ one port and one public hostname.
 - [x] `SH2.3` **One log stream.** Every service writes to stdout with its name as a prefix. The
   app's JSON lines pass through unchanged, so `docker logs` is the whole system.
   - done: 2026-10-04. Support services are prefixed (`[postgres]`, `[redis]`, `[minio]`, `[mailpit]`, `[tunnel]`); the app's JSON lines are left as they are.
-- [ ] `SH2.4` **Size and platforms.** Images for `linux/amd64` and `linux/arm64`, the latter
+- [x] `SH2.4` **Size and platforms.** Images for `linux/amd64` and `linux/arm64`, the latter
   for Apple Silicon. The goal is under 1 GB, and the result is recorded in the docs.
+  - done: 2026-10-04. 976 MB on amd64, from 1.19 GB, by dropping the Postgres JIT and its LLVM (jit=off; the server binary does not link it). The build stage runs on the build machine's own platform, since its output is JavaScript and WebAssembly. CI builds and smokes the image natively on `ubuntu-24.04-arm` as well (713 MB as that runner reports it). Running it on an Apple Silicon Mac is owed by hand.
 
 ### Phase 3 — First start and every start
 

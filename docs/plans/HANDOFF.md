@@ -17,6 +17,7 @@ and every open item. This page holds the state of the tree and the traps that co
 | after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
 | after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
 | after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
+| after Phase 12 | Self-hosted: wiremap in one Docker container (`docker/wiremap/`), storage through the web app, branch polling, backups, a compose file, CI on amd64 and arm64 |
 | after Phase 11 | Phase 12: the security review and its fixes, deletion that leaves nothing, the privacy page, the full gate |
 | after Phase 10 | Phase 11: the public REST API, CLI login and npm package, the GitHub Action, the MCP server, the VS Code extension, outgoing webhooks and Slack |
 | after Phase 9 | Phase 10: comments, mentions, notes, the project feed, scan and finding notifications |
@@ -27,7 +28,7 @@ and every open item. This page holds the state of the tree and the traps that co
 | after Phase 4 | Phase 5: the graph document, `@loadbearing/graph`, `@loadbearing/analyzer` with four framework plugins, and the `wiremap` CLI |
 | after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
 
-**Next, in order:** [`SELF-HOSTED-PLAN.md`](SELF-HOSTED-PLAN.md) from `SH0.1`: wiremap in one Docker container on the owner's machine. The free-tier deploy stopped on Cloudflare's per-account cron limit; what it created is listed in `SH6.4`. Commit `19b6729` (`feat(webhooks)`) was made outside the agent session from staged work; its scope is not in the commitlint list.
+**Next, in order:** what [`TESTS.md`](TESTS.md) owes by hand, first a GitHub App registered for localhost and a scan run inside the container. Then the decision in `SH6.4`: keep or delete the Neon, Vercel and Cloudflare resources from the free-tier attempt. Commit `19b6729` (`feat(webhooks)`) was made outside the agent session from staged work; its scope is not in the commitlint list.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.

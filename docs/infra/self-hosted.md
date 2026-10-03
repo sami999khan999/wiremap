@@ -68,7 +68,7 @@ losing the volume.
 Postgres major version is refused, with a message. Restore a backup into a fresh volume
 instead.
 
-**Resources.** About 420 MB of memory at idle, and an image of about 1.2 GB. `docker logs
+**Resources.** About 420 MB of memory at idle, and an image just under 1 GB, for amd64 and arm64. `docker logs
 wiremap` is the whole system: each support service is prefixed, and the app writes JSON lines.
 
 **The compose alternative.** `docker/wiremap/compose.yml` runs the stores as their own
