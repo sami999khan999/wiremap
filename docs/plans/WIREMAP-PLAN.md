@@ -354,7 +354,7 @@ horizontal scroll at 375 px.
 
 ### Phase 4 — Projects and repositories
 
-- [ ] `WM4.1` **GitHub App gateway** (`application/src/port/repository.provider.ts`,
+- [x] `WM4.1` **GitHub App gateway** (`application/src/port/repository.provider.ts`,
   `infrastructure/src/github/github-app.provider.ts`).
   - It mints the App JWT (RS256, `node:crypto`) and a one-repository read-only installation token.
   - It lists installation repositories, gets the default branch and branches, and fetches a file
@@ -362,18 +362,20 @@ horizontal scroll at 375 px.
   - It dispatches a workflow.
   - It verifies `X-Hub-Signature-256`.
   - All of this is plain `fetch`, with no Octokit.
-- [ ] `WM4.2` **Installations.**
+- [x] `WM4.2` **Installations.**
   - `github_installations` (org, `installation_id`, account login, `suspended_at`).
   - The install link is `https://github.com/apps/<slug>/installations/new?state=<signed org id>`.
   - The callback route `/api/github/setup` binds the installation to the org.
   - The App manifest and permissions (contents read, metadata read, push events) are in
     `docs/infra/github-app.md`.
-- [ ] `WM4.3` **Webhook route** `/api/github/webhook`.
+- [x] `WM4.3` **Webhook route** `/api/github/webhook`.
   - It reads the raw body and verifies the signature.
   - It handles `push`, `installation`, `installation_repositories` and `repository` (renamed or
     deleted).
   - A push to a tracked branch enqueues a scan, deduplicated by `(repo, sha)`.
-- [ ] `WM4.4` **Projects.**
+  - done: 2026-10-03. Installation and repository events apply now. A push is acknowledged and
+    ignored until scans exist; `WM6.5` turns it into a scan.
+- [x] `WM4.4` **Projects.**
   - `projects` (org, slug, name, description, `visibility`, `default_role`, `schedule`
     (`off|daily|weekly`), `ignore` text[], `settings` jsonb holding `tsconfigPath` and
     `workspace`, `deleted_at`).
@@ -386,7 +388,7 @@ horizontal scroll at 375 px.
     `/p/$project/settings`.
   - Default ignores: `node_modules`, `dist`, `build`, `.next`, `.output`, `vendor` and
     `coverage`.
-- [ ] `WM4.5` **Per-project access (goal scope).**
+- [x] `WM4.5` **Per-project access (goal scope).**
   - Project keys:
     - `project.graph.read`
     - `project.scan.run`
@@ -401,9 +403,12 @@ horizontal scroll at 375 px.
   - The project's Access tab lists who has access and why (role, team or org default).
   - Specs: the goal-scope matrix (owner, admin, member, viewer × org or restricted × direct or team
     grant), plus a query count.
-- [ ] `WM4.6` **Delete a project's data.** `project.remove` soft-deletes it, then a maintenance job
+  - done: 2026-10-03. The keys that exist today are `graph.read`, `settings.manage`,
+    `access.manage` and `delete`; `scan.run`, `comment.write` and `ask.use` arrive with the
+    procedures that assert them (§28), so editor and viewer hold the same keys until `WM6`.
+- [x] `WM4.6` **Delete a project's data.** `project.remove` soft-deletes it, then a maintenance job
   deletes its storage prefix, scans, comments, grants and views. An audit row is kept.
-- [ ] `WM4.7` Specs and docs: `application/docs/reference/project.md` and `docs/infra/github-app.md`.
+- [x] `WM4.7` Specs and docs: `application/docs/reference/project.md` and `docs/infra/github-app.md`.
 
 **Exit.** Install the App on a test account, create a project from two repos, and restrict it:
 - a member without a grant gets `NOT_FOUND`;

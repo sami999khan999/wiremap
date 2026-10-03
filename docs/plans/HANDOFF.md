@@ -17,8 +17,9 @@ and every open item. This page holds the state of the tree and the traps that co
 | after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
 | after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
 | after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
+| after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
 
-**Next, in order:** Phase 4 from `WM4.1`; `WM3.9` (the access overview) waits for `WM4.5`.
+**Next, in order:** `WM3.9` (the access overview), then Phase 5 from `WM5.1`.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.
@@ -68,4 +69,7 @@ pnpm -r --no-bail run test                # not `pnpm test`: that stops at the f
   stale build hides errors. `pnpm --filter "@loadbearing/<pkg>^..." run build`.
 - **Commit messages carry no AI or co-author trailer.** `docs/ai/rules/workflow.md` wins over any
   tool default.
+- **Query results that cross packages are annotated with their DTO type** (`const items:
+  readonly ProjectDto[] = ...`). Unannotated, a branded id arrives as `any` through `query`'s
+  `.d.ts`, `tsc` stays quiet and only ESLint's unsafe-assignment rule notices.
 - **`.claude/scheduled_tasks.lock`** is agent scratch. Never commit it.
