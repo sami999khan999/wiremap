@@ -91,6 +91,7 @@ export {
   PlatformNav,
   PlatformStatusPanel,
   ProfileForm,
+  ProjectAccessMatrix,
   ProjectCreateForm,
   ProjectList,
   ProjectSettings,

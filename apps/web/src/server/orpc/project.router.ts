@@ -87,6 +87,10 @@ export class ProjectRouter {
     },
   );
 
+  public static readonly accessOverview = authed.project.accessOverview.handler(({ context }) =>
+    context.container.projects.accessOverview.execute(context.principal),
+  );
+
   public static readonly all = {
     list: ProjectRouter.list,
     get: ProjectRouter.get,
@@ -100,5 +104,6 @@ export class ProjectRouter {
     access: ProjectRouter.access,
     saveGrant: ProjectRouter.saveGrant,
     revokeGrant: ProjectRouter.revokeGrant,
+    accessOverview: ProjectRouter.accessOverview,
   } as const;
 }
