@@ -28,7 +28,7 @@ export function ProjectTabs({
       <Link
         to="/p/$project"
         params={{ project: slug }}
-        activeOptions={{ exact: true }}
+        activeOptions={{ exact: true, includeSearch: false }}
         className={linkClass}
       >
         {t("project.overview")}

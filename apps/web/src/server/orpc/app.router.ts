@@ -15,6 +15,7 @@ import { ProjectRouter } from "./project.router.js";
 import { RoleRouter } from "./role.router.js";
 import { ScanRouter } from "./scan.router.js";
 import { TeamRouter } from "./team.router.js";
+import { ViewRouter } from "./view.router.js";
 
 // The merge point, mirroring `contract` from `@loadbearing/contracts` exactly — a
 // mismatch is a type error. One line per slice: `task: TaskRouter.all`.
@@ -36,4 +37,5 @@ export const appRouter = {
   project: ProjectRouter.all,
   github: GithubRouter.all,
   scan: ScanRouter.all,
+  view: ViewRouter.all,
 };

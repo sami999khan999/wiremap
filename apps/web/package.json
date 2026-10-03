@@ -31,6 +31,8 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "@xyflow/react": "catalog:",
+    "elkjs": "catalog:",
     "nitro": "catalog:",
     "react": "catalog:react",
     "react-dom": "catalog:react",

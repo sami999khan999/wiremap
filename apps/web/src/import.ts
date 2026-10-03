@@ -39,7 +39,13 @@ export type {
 // ── @loadbearing/contracts ───────────────────────────────────────────────────
 // The branded ids a route casts to. The shapes a component renders arrive through
 // `@loadbearing/query`.
-export { type GraphLinkDto, Identifiers, type ProjectDto } from "@loadbearing/contracts";
+export {
+  type FileRole,
+  type GraphLinkDto,
+  Identifiers,
+  type ProjectDto,
+  type ScanDto,
+} from "@loadbearing/contracts";
 
 // ── @loadbearing/feature ─────────────────────────────────────────────────────
 export {
@@ -64,8 +70,12 @@ export {
   DocSpaceList,
   DocumentSearch,
   EffectivePermissionsInspector,
+  type ExplorerState,
+  ExplorerUrl,
   FlagList,
   ForgotPasswordForm,
+  GraphExplorer,
+  type GraphLayouter,
   IndexDocumentForm,
   InvitationAccept,
   InvitationLinkJoin,
@@ -120,6 +130,7 @@ export {
   useMessages,
   useSession,
   VerifyEmailNotice,
+  ViewsMenu,
 } from "@loadbearing/feature";
 
 // ── @loadbearing/permissions ─────────────────────────────────────────────────

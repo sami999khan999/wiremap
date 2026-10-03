@@ -10,6 +10,9 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 
 @import "@loadbearing/ui/style.css";
+/* The graph canvas's structural rules only; its colours are set from the twelve tokens in
+   packages/feature, never from React Flow's own theme. */
+@import "@xyflow/react/dist/base.css";
 
 /* Outside this app's root, so Tailwind's own detection never reaches them. */
 @source "../../../../packages/ui/src";

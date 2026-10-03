@@ -168,6 +168,10 @@ catalog:
   # The overlay scrollbar for the page and the themed thin bar for every inner scroller.
   # Coloured only from the twelve tokens; see packages/ui/docs/reference/scrollbar.md.
   glass-scroll: ^0.2.0
+  # The graph explorer's canvas and its layout. `feature` renders; ELK runs in a web worker
+  # the app supplies, so neither blocks the page on a large graph.
+  "@xyflow/react": ^12.12.0
+  elkjs: ^0.12.0
 
   # ── router-scoped — apps/ only, never a package ──
   #    Routing is app-shaped, not product-shaped. A Next app brings its own
