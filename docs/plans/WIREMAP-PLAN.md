@@ -297,9 +297,11 @@ horizontal scroll at 375 px.
 
 ### Phase 3 — Organizations and access
 
-- [ ] `WM3.1` **Viewer role.** It is seeded with read keys only. A migration adds it to existing
+- [x] `WM3.1` **Viewer role.** It is seeded with read keys only. A migration adds it to existing
+  done: 2026-10-03. Migration `0004_wiremap_access.sql` (schema plus the role data half).
   orgs. Docs: `permissions/docs`.
-- [ ] `WM3.2` **Organization settings.**
+- [x] `WM3.2` **Organization settings.**
+  done: 2026-10-03. **As built:** keys `organization.profile.update`, `organization.ownership.transfer`, `organization.delete`; activity `organization.deletion.requested` rather than `deleted`, because the job's own rows go with the tenant. Page `/settings/organization`.
   - `organization.update` (name, slug, logo URL) and `organization.delete`. Delete is owner only,
     behind a typed confirmation, and reuses `DeleteOrganizationUseCase` through the maintenance
     job.
@@ -307,32 +309,38 @@ horizontal scroll at 375 px.
     becomes admin.
   - Activities `organization.updated`, `organization.ownership.transferred` and
     `organization.deleted`.
-- [ ] `WM3.3` **Shareable invite links.**
+- [x] `WM3.3` **Shareable invite links.**
+  done: 2026-10-03. **As built:** `PgInvitationLinkClaimer` behind `POST /api/auth/invitation-link/accept` (rate-limited 5 a minute); the link row is locked `for update` so the last use cannot be spent twice. `invitation_links_token_uq` joined §17's exempt list.
   - `invitation_links` (org, token hash, role, `expires_at`, `max_uses`, `uses`, `revoked_at`).
   - Procedures `member.createLink`, `member.listLinks` and `member.revokeLink`. Route
     `/join/$token`.
   - A claim needs a verified email. The role is capped by `RoleRules.assertAssignableBy` against
     the link's creator.
-- [ ] `WM3.4` **Remove member.**
+- [x] `WM3.4` **Remove member.**
+  done: 2026-10-03.
   - `member.remove` hard-deletes the membership, guarded by the last-owner rule.
   - It also removes their goal and team rows, and clears capability caches.
-- [ ] `WM3.5` **Teams.**
+- [x] `WM3.5` **Teams.**
+  done: 2026-10-03. Teams are catalog tables beside `goal_members`.
   - `teams` and `team_members` (org-scoped).
   - Procedures `team.list`, `team.create`, `team.update`, `team.remove`, `team.addMember` and
     `team.removeMember`. Page `/settings/teams`.
   - Permission `member.team.manage`.
-- [ ] `WM3.6` **Domain auto-join.**
+- [x] `WM3.6` **Domain auto-join.**
+  done: 2026-10-03. **As built:** `PgMemberDomainClaimer`; the joiner is not notified separately, since `member.joined` already fans out to `member.invite` holders through the existing policy. `organization_domains_domain_uq` joined §17's exempt list.
   - `organization_domains` (org, domain, `auto_join_role`).
   - A domain can be claimed only by an admin whose own verified email is at that domain. Public
     mail domains are refused from a frozen list.
   - `DomainJoiningEnroller` sits after `InvitationClaimingEnroller`. A verified sign-up at a
     claimed domain joins as that role.
   - The joiner is notified, and so are the org's `member.invite` holders.
-- [ ] `WM3.7` **GitHub sign-in.**
+- [x] `WM3.7` **GitHub sign-in.**
+  done: 2026-10-03. Account linking now trusts `github` too.
   - `socialProviders.github` in `AuthFactory` when `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
     are set (the App's OAuth credentials).
   - A button in `social-sign-in.tsx`, and an entry in the linked accounts list.
-- [ ] `WM3.8` **Audit log.**
+- [x] `WM3.8` **Audit log.**
+  done: 2026-10-03. **As built:** the key is `audit.log.read` in a new `audit` module, because `core.*` keys are held by every principal. The reader is `local` and names come from `UserReader` in one call.
   - `ActivityReader` port and `PgActivityReader`, keyset-paged per tenant and filtered by action,
     actor and date.
   - Procedure `activity.list` with permission `core.activity.read` (admin, owner).
@@ -340,7 +348,8 @@ horizontal scroll at 375 px.
   - Every wiremap action is declared in `*.actions.ts`.
 - [ ] `WM3.9` **Access overview.** `/settings/access` is a matrix of projects × members and teams
   showing the effective project role. It comes after `WM4.5`.
-- [ ] `WM3.10` Specs for each use-case. Docs: `application/docs/reference/member.md`,
+- [x] `WM3.10` Specs for each use-case. Docs: `application/docs/reference/member.md`,
+  done: 2026-10-03. Docs: `packages/application/docs/reference/organization-access.md`. Integration spec `infrastructure/tests/member/pg-wiremap-access.spec.ts`.
   `organization.md` and `team.md`.
 
 ### Phase 4 — Projects and repositories

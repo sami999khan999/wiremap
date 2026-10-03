@@ -37,7 +37,7 @@ failure — a permission is a right you hold, an activity is a fact that happene
 - **`organization_id` on every domain table, and every unique index on one leads with it.**
   `roles_key_uq` on `(key)` alone means two tenants cannot both have an `owner` role. The only
   exceptions are the tenant table and the two lookups that arrive holding no tenant —
-  `invitations_token_uq`, `api_keys_hash_uq` — plus Better Auth's own tables. Both halves are CI
+  `invitations_token_uq`, `api_keys_hash_uq`, and wiremap's `invitation_links_token_uq` and `organization_domains_domain_uq` (a link's token, a sign-up's email domain) — plus Better Auth's own tables. Both halves are CI
   assertions. Spell it `organization`, never `organisation`.
 - **A nullable column in a unique index is not covered by it.** NULLs are distinct, so a unique
   index over one enforces nothing for the rows where it is null. Two partial indexes, split on

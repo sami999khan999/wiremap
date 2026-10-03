@@ -157,6 +157,8 @@ There are exactly three kinds of exception, and each has a reason a reader can c
 | `organizations_platform_uq` | The same table, and partial: at most one row may be the platform tier, and any number may not |
 | `invitations_token_uq` | The landing page and the accept endpoint arrive holding a token and no tenant — resolving it is the point |
 | `api_keys_hash_uq` | Same: a key arrives as a bare header, and the lookup is what establishes the organization |
+| `invitation_links_token_uq` | Wiremap's shareable invitation: the join page arrives holding only the link's token |
+| `organization_domains_domain_uq` | Wiremap's auto-join: a sign-up arrives holding only an email address, and a domain belongs to one organization |
 | the Better Auth tables | Generated against that library's own schema |
 
 **A nullable column in a unique index is not covered by it.** NULLs are distinct in Postgres, so

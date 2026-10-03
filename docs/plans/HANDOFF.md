@@ -16,8 +16,9 @@ and every open item. This page holds the state of the tree and the traps that co
 | `c02ec77` | `WM0.1`–`WM0.4`: the plan, identity, `4xxxx` ports, English only |
 | after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
 | after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
+| after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
 
-**Next, in order:** Phase 3 from `WM3.1`.
+**Next, in order:** Phase 4 from `WM4.1`; `WM3.9` (the access overview) waits for `WM4.5`.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.
