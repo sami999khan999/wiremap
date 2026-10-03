@@ -27,7 +27,7 @@ and every open item. This page holds the state of the tree and the traps that co
 | after Phase 4 | Phase 5: the graph document, `@loadbearing/graph`, `@loadbearing/analyzer` with four framework plugins, and the `wiremap` CLI |
 | after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
 
-**Next, in order:** the plan is built. What remains is owed by hand with real accounts, row by row in [`TESTS.md`](TESTS.md): first the GitHub App (with OAuth during installation), then the deploy in [`docs/infra/deployment.md`](../infra/deployment.md), then publishing the CLI and the extension once a licence is chosen. Commit `19b6729` (`feat(webhooks)`) was made outside the agent session from staged work; its scope is not in the commitlint list.
+**Next, in order:** [`SELF-HOSTED-PLAN.md`](SELF-HOSTED-PLAN.md) from `SH0.1`: wiremap in one Docker container on the owner's machine. The free-tier deploy stopped on Cloudflare's per-account cron limit; what it created is listed in `SH6.4`. Commit `19b6729` (`feat(webhooks)`) was made outside the agent session from staged work; its scope is not in the commitlint list.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.

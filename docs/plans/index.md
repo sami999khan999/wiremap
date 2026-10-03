@@ -9,6 +9,7 @@ description: Live plans for wiremap, and the lite kit's plans it inherited. Fini
 |---|---|
 | [`HANDOFF.md`](./HANDOFF.md) | **Start here.** Where the build stopped and how to pick it up. |
 | [`WIREMAP-PLAN.md`](./WIREMAP-PLAN.md) | **The live plan, built through `WM12`.** Wiremap on the lite kit, on free-tier infrastructure. What is owed by hand is in [`TESTS.md`](./TESTS.md). |
+| [`SELF-HOSTED-PLAN.md`](./SELF-HOSTED-PLAN.md) | **Next.** Wiremap in one Docker container on your own machine, still connected to GitHub. |
 | [`TESTS.md`](./TESTS.md) | Every test run the build still owes, by plan item. |
 | [`BACKLOG.md`](./BACKLOG.md) | The open ledger. |
 
