@@ -6,4 +6,5 @@ export const projectRoutes = {
   create: "/projects/new",
   show: "/p",
   access: "/settings/access",
+  ai: "/settings/ai",
 } as const satisfies Record<string, RoutePath>;

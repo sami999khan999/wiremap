@@ -30,6 +30,13 @@ export const projectPermissions = {
     label: "Scan a project",
     requires: ["project.graph.read"],
   },
+  // Every role that reads a project may ask about it; the organization's key pays for it.
+  "project.ask.use": {
+    scope: "goal",
+    module: "project",
+    label: "Ask about a project",
+    requires: ["project.graph.read"],
+  },
   "project.settings.manage": {
     scope: "goal",
     module: "project",

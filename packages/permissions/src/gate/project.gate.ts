@@ -6,4 +6,5 @@ import { ROUTES } from "../route/index.js";
 export const projectGates = {
   project: { permission: "member.read", route: ROUTES.project.list },
   access: { permission: "project.access.overview", route: ROUTES.project.access },
+  ai: { permission: "organization.ai.manage", route: ROUTES.project.ai },
 } as const satisfies Record<string, ModuleGate>;

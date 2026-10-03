@@ -8,6 +8,12 @@ export const organizationPermissions = {
     module: "organization",
     label: "Rename the organization",
   },
+  // The organization's own model key for Ask: written once, never read back.
+  "organization.ai.manage": {
+    scope: "org",
+    module: "organization",
+    label: "Manage AI settings",
+  },
   "organization.ownership.transfer": {
     scope: "org",
     module: "organization",

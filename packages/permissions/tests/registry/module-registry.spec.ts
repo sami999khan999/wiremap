@@ -43,6 +43,7 @@ describe("ModuleRegistry", () => {
     expect(registry.visibleModules(caps)).toEqual([
       "project",
       "access",
+      "ai",
       "member",
       "apikey",
       "team",
