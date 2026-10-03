@@ -23,6 +23,7 @@ import type { StorageGateway } from "../../src/port/storage.gateway.js";
 import { Authorizer } from "../../src/primitive/authorizer.js";
 import { Principal } from "../../src/primitive/principal.js";
 import { CreateProjectUseCase } from "../../src/project/create-project.use-case.js";
+import { GetProjectAccessOverviewUseCase } from "../../src/project/get-project-access-overview.use-case.js";
 import { ListProjectsUseCase } from "../../src/project/list-projects.use-case.js";
 import { ManageProjectAccessUseCase } from "../../src/project/manage-project-access.use-case.js";
 import {
@@ -31,6 +32,8 @@ import {
   type ProjectGrantRecord,
   type ProjectRecord,
   ProjectRepository,
+  type ReachMember,
+  type ReachSource,
 } from "../../src/project/project.repository.js";
 import { ProjectRules } from "../../src/project/project.rules.js";
 import { PurgeProjectUseCase } from "../../src/project/purge-project.use-case.js";
@@ -54,6 +57,10 @@ class MemoryProjects extends ProjectRepository {
   public readonly deleted = new Set<string>();
   public readonly purged: ProjectId[] = [];
   public renamed: { externalId: string; fullName: string } | null = null;
+  public reachRows: { members: ReachMember[]; sources: ReachSource[] } = {
+    members: [],
+    sources: [],
+  };
 
   public listAll() {
     return Promise.resolve(this.rows.filter((row) => !this.deleted.has(row.id)));
@@ -122,6 +129,9 @@ class MemoryProjects extends ProjectRepository {
   }
   public withSchedule() {
     return Promise.resolve([]);
+  }
+  public reach() {
+    return Promise.resolve(this.reachRows);
   }
   public renameRepository(_provider: "github", externalId: string, fullName: string) {
     this.renamed = { externalId, fullName };
@@ -472,5 +482,57 @@ describe("GitHub", () => {
 
     expect(installations.removed).toEqual([9]);
     expect(projects.renamed).toEqual({ externalId: "7", fullName: "acme/api-v2" });
+  });
+});
+
+describe("GetProjectAccessOverviewUseCase", () => {
+  it("folds every source into one role per cell: highest wins, viewers capped, org roles read all", async () => {
+    const projects = new MemoryProjects();
+    const { useCase } = creator(projects);
+    const project = await useCase.execute(holding("project.create"), createInput);
+    const VIEWER = "018f8c00-0000-7000-8000-0000000000a3" as UserId;
+    const member = (userId: UserId, roleKey: string, orgWide = false): ReachMember => ({
+      userId,
+      name: roleKey,
+      email: `${roleKey}@example.test`,
+      roleKey,
+      orgWide,
+    });
+    projects.reachRows = {
+      members: [member(ACTOR, "admin", true), member(OTHER, "member"), member(VIEWER, "viewer")],
+      sources: [
+        {
+          projectId: project.id,
+          userId: OTHER,
+          role: "project_editor",
+          via: "default",
+          teamName: null,
+        },
+        {
+          projectId: project.id,
+          userId: OTHER,
+          role: "project_admin",
+          via: "team",
+          teamName: "Core",
+        },
+        {
+          projectId: project.id,
+          userId: VIEWER,
+          role: "project_admin",
+          via: "direct",
+          teamName: null,
+        },
+      ],
+    };
+    const overview = new GetProjectAccessOverviewUseCase(new Authorizer(), projects);
+
+    const result = await overview.execute(holding("project.access.overview"));
+    const cell = (userId: UserId) => result.cells.find((each) => each.userId === userId);
+
+    expect(cell(ACTOR)).toMatchObject({ role: "project_admin", via: "organization" });
+    expect(cell(OTHER)).toMatchObject({ role: "project_admin", via: "team", teamName: "Core" });
+    expect(cell(VIEWER)).toMatchObject({ role: "project_viewer", via: "direct" });
+    expect(result.members[0]).not.toHaveProperty("orgWide");
+    await expect(overview.execute(holding("member.read"))).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

@@ -66,6 +66,24 @@ export interface NewRepository {
   readonly installationId: number | null;
 }
 
+// Every active member, and whether their organization role reads every project already.
+export interface ReachMember {
+  readonly userId: UserId;
+  readonly name: string;
+  readonly email: string;
+  readonly roleKey: string;
+  readonly orgWide: boolean;
+}
+
+// One way a project reaches a member: its org default, a direct grant, or a team's.
+export interface ReachSource {
+  readonly projectId: ProjectId;
+  readonly userId: UserId;
+  readonly role: ProjectRole;
+  readonly via: "default" | "direct" | "team";
+  readonly teamName: string | null;
+}
+
 // A project tracking a repository, as a push webhook resolves it: across tenants, because
 // the push names a repository and nothing else.
 export interface TrackingProject {
@@ -152,6 +170,12 @@ export abstract class ProjectRepository {
     externalId: string,
     fullName: string,
   ): Promise<number>;
+
+  // Every source of project access in the tenant, unreduced: the overview folds it.
+  public abstract reach(organizationId: OrganizationId): Promise<{
+    readonly members: readonly ReachMember[];
+    readonly sources: readonly ReachSource[];
+  }>;
 
   public abstract trackingRepository(
     provider: "github",

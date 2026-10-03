@@ -1,6 +1,11 @@
 export { type CreateProjectInput, CreateProjectUseCase } from "./create-project.use-case.js";
 export { GetProjectUseCase } from "./get-project.use-case.js";
 export {
+  GetProjectAccessOverviewUseCase,
+  type ProjectAccessCell,
+  type ProjectAccessOverview,
+} from "./get-project-access-overview.use-case.js";
+export {
   type AvailableRepository,
   ListAvailableRepositoriesUseCase,
 } from "./list-available-repositories.use-case.js";
@@ -19,6 +24,8 @@ export {
   type ProjectGrantRecord,
   type ProjectRecord,
   ProjectRepository,
+  type ReachMember,
+  type ReachSource,
   type RepositoryRecord,
   type TrackingProject,
 } from "./project.repository.js";

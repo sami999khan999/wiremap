@@ -38,6 +38,24 @@ Every reached role adds its keys, which is "highest wins" because the roles nest
 
 A deleted project (`deleted_at` set) reaches nobody, at once.
 
+## The access overview
+
+`/settings/access` (`project.accessOverview`) is every project against every active member.
+`project.access.overview` gates it. The key is org-scoped because a settings module cannot be
+gated on a goal key; owner and admin hold it.
+
+The overview is the same rules as the capability read, folded in memory from two statements:
+- `ProjectRepository.reach` returns the members, and whether each one's role reads every
+  project.
+- It also returns every source of access, unreduced.
+
+`GetProjectAccessOverviewUseCase` then folds them:
+- the highest role wins;
+- a viewer is capped;
+- an organization role that reads every project wins outright.
+
+Each cell says which source it came from.
+
 ## Not yours is not found
 
 `project.list` returns only projects the caller may read. `project.get` and every write answer
