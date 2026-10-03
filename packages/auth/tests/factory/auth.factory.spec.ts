@@ -141,9 +141,8 @@ describe("AuthFactory — social providers", () => {
 });
 
 describe("AuthFactory — account linking", () => {
-  // Google asserts a verified address, so a match is the same person. The alternative is
+  // Both assert a verified address, so a match is the same person. The alternative is
   // telling a real user their email is taken by themselves.
-  // GitHub joined for wiremap: its sign-in is the GitHub App's own OAuth client.
   it("trusts Google and GitHub and nothing else", () => {
     expect(optionsFor().account?.accountLinking?.trustedProviders).toEqual(["google", "github"]);
   });
