@@ -160,6 +160,10 @@ export class ApiClient {
     return this.rpc.comment;
   }
 
+  public get webhook(): AppClient["webhook"] {
+    return this.rpc.webhook;
+  }
+
   // The escape hatch for a namespace with no accessor yet.
   public get raw(): AppClient {
     return this.rpc;
