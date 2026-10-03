@@ -5,6 +5,7 @@ import {
   AddTeamMemberUseCase,
   AdjustEntitlementUseCase,
   ApiKeyResolver,
+  AskProjectUseCase,
   AssignPlanUseCase,
   AuthFactory,
   type AuthInstance,
@@ -62,6 +63,7 @@ import {
   FailScanUseCase,
   FindAccountUseCase,
   FlagCache,
+  GeminiChatProvider,
   GeminiEmbeddingProvider,
   GetDocPageUseCase,
   GetDocRevisionUseCase,
@@ -117,6 +119,7 @@ import {
   type MailPublisher,
   type MailRenderer,
   type MaintenanceGateway,
+  ManageAiSettingsUseCase,
   ManageProjectAccessUseCase,
   ManageProjectRepositoryUseCase,
   ManageViewsUseCase,
@@ -128,6 +131,7 @@ import {
   type MembershipEnroller,
   type MembershipReader,
   MoveDocPageUseCase,
+  NodeAesGcmSecretCipher,
   NotificationSubscriber,
   NullMembershipEnroller,
   NullRepositoryProvider,
@@ -142,6 +146,7 @@ import {
   PgAccountRepository,
   PgActivityLogger,
   PgActivityReader,
+  PgAiSettingsRepository,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
@@ -287,6 +292,7 @@ import { NoopRealtimePublisher } from "../realtime/index.js";
 import { OrganizationShardingStrategy } from "../shard/index.js";
 import type { ContainerConfig } from "./container.config.js";
 import { ContainerHealthReader } from "./container-health.reader.js";
+import { DisabledSecretCipher } from "./disabled-secret.cipher.js";
 
 // The API-key slice's use-cases. Grouped like the member ones, and absent for the same
 // reason: the worker authenticates nothing and issues nothing.
@@ -508,6 +514,10 @@ export class Container {
     readonly sweep: SweepScansUseCase;
   };
   public readonly views: ManageViewsUseCase;
+  public readonly ask: {
+    readonly settings: ManageAiSettingsUseCase;
+    readonly question: AskProjectUseCase;
+  };
   public readonly github: {
     readonly status: GetGithubStatusUseCase;
     readonly bind: BindGithubInstallationUseCase;
@@ -1561,6 +1571,33 @@ export class Container {
       sweep: new SweepScansUseCase(scanRepository, this.eventPublisher, this.clock),
     };
     this.views = new ManageViewsUseCase(this.authorizer, projectRepository, viewRepository);
+    const cipher = config.secrets
+      ? new NodeAesGcmSecretCipher(config.secrets.current, config.secrets.keys)
+      : new DisabledSecretCipher();
+    const aiSettings = new PgAiSettingsRepository(this.cluster, this.transactions, this.shards);
+    const chat = new GeminiChatProvider();
+    this.ask = {
+      settings: new ManageAiSettingsUseCase(
+        this.authorizer,
+        aiSettings,
+        cipher,
+        chat,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      question: new AskProjectUseCase(
+        this.authorizer,
+        projectRepository,
+        scanRepository,
+        new StorageGraphArchive(this.storage),
+        aiSettings,
+        cipher,
+        chat,
+        this.repositoryProvider,
+        this.cache,
+        this.rateLimits,
+      ),
+    };
     this.github = {
       status: new GetGithubStatusUseCase(this.authorizer, installations, this.repositoryProvider),
       bind: new BindGithubInstallationUseCase(

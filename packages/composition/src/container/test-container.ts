@@ -23,6 +23,7 @@ import {
   RecordingRealtimePublisher,
   RecordingRelayedActivityStore,
   RecordingSessionGateway,
+  ReversibleSecretCipher,
   StubEmbeddingProvider,
   StubMailRenderer,
   StubMarkdownRenderer,
@@ -55,6 +56,7 @@ import {
   type RelayedActivityStore,
   type RepositoryProvider,
   SERVER_CATALOG,
+  type SecretCipher,
   type SessionGateway,
   type SessionResolver,
   type ShardingStrategy,
@@ -93,6 +95,7 @@ export interface TestPorts {
   readonly realtimeSubscriber: RealtimeSubscriber;
   readonly queue: QueuePublisher;
   readonly repositories: RepositoryProvider;
+  readonly secrets: SecretCipher;
   readonly sessions: SessionResolver;
   readonly signOuts: SessionGateway;
   readonly shardResolver: ShardResolver;
@@ -161,6 +164,7 @@ export class TestContainer {
         overrides.realtimeSubscriber ?? new InMemoryRealtimeSubscriber(new InMemoryRealtimeHub()),
       queue: overrides.queue ?? new RecordingQueuePublisher(),
       repositories: overrides.repositories ?? new StubRepositoryProvider(),
+      secrets: overrides.secrets ?? new ReversibleSecretCipher(),
       sessions: overrides.sessions ?? new StubSessionResolver(),
       signOuts: overrides.signOuts ?? new RecordingSessionGateway(),
       shardResolver: overrides.shardResolver ?? new InMemoryShardResolver(),

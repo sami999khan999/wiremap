@@ -92,6 +92,12 @@ export interface ContainerConfig {
       | { readonly kind: "local"; readonly cliPath: string }
       | { readonly kind: "github"; readonly repository: string; readonly token: string };
   };
+  // Encrypts what organizations hand over (model keys, webhook secrets). `current` names
+  // the key that encrypts; the others still decrypt during a rotation. Absent: none stored.
+  readonly secrets?: {
+    readonly current: string;
+    readonly keys: Readonly<Record<string, string>>;
+  };
   // Not optional: with `requireEmailVerification` on, a container that cannot send is
   // one whose sign-ups never complete. SMTP, so swapping vendors is this URL.
   readonly email: {

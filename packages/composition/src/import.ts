@@ -10,6 +10,7 @@ export {
   AdjustEntitlementUseCase,
   type ArchivedObject,
   type ArchivedPartition,
+  AskProjectUseCase,
   AssignPlanUseCase,
   Authorizer,
   BindGithubInstallationUseCase,
@@ -117,6 +118,7 @@ export {
   MailRenderer,
   type MailRequest,
   MaintenanceGateway,
+  ManageAiSettingsUseCase,
   ManageProjectAccessUseCase,
   ManageProjectRepositoryUseCase,
   ManageViewsUseCase,
@@ -199,6 +201,7 @@ export {
   type SearchHit,
   type SearchMode,
   SearchPlatformDocsUseCase,
+  SecretCipher,
   SendMailUseCase,
   SendNotificationDigestUseCase,
   SessionGateway,
@@ -296,7 +299,7 @@ export { DomainEvents } from "@loadbearing/contracts";
 export { type Clock, FixedClock, ServerOnly, SystemClock, Uuid } from "@loadbearing/core";
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────
-export { ConflictError, NotFoundError } from "@loadbearing/errors";
+export { ConflictError, NotFoundError, UnavailableError } from "@loadbearing/errors";
 
 // ── @loadbearing/infrastructure ──────────────────────────────────────────────
 // Every concrete adapter, Postgres included — one block, because one package holds the
@@ -307,18 +310,21 @@ export {
   Database,
   DatabaseCluster,
   type DatabaseStats,
+  GeminiChatProvider,
   GeminiEmbeddingProvider,
   GithubActionsScanRunner,
   GithubAppProvider,
   HmacScanTokens,
   JobSignatureHasher,
   LocalScanRunner,
+  NodeAesGcmSecretCipher,
   NullRepositoryProvider,
   NullScanRunner,
   OpenAiEmbeddingProvider,
   PgAccountRepository,
   PgActivityLogger,
   PgActivityReader,
+  PgAiSettingsRepository,
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,

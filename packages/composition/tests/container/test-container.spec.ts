@@ -60,6 +60,7 @@ describe("TestContainer", () => {
       "realtimeSubscriber",
       "relayedActivity",
       "repositories",
+      "secrets",
       "sessions",
       "shardResolver",
       "sharding",
