@@ -44,6 +44,7 @@ describe("ModuleRegistry", () => {
       "project",
       "access",
       "ai",
+      "webhook",
       "member",
       "apikey",
       "team",

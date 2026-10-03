@@ -7,4 +7,5 @@ export const projectGates = {
   project: { permission: "member.read", route: ROUTES.project.list },
   access: { permission: "project.access.overview", route: ROUTES.project.access },
   ai: { permission: "organization.ai.manage", route: ROUTES.project.ai },
+  webhook: { permission: "organization.webhook.manage", route: ROUTES.project.webhooks },
 } as const satisfies Record<string, ModuleGate>;

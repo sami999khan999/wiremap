@@ -9,4 +9,5 @@ export const projectRoutes = {
   go: "/go/project",
   access: "/settings/access",
   ai: "/settings/ai",
+  webhooks: "/settings/webhooks",
 } as const satisfies Record<string, RoutePath>;
