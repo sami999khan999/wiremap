@@ -12,7 +12,7 @@ export interface ImageAsset {
 // The bundler fingerprints each import, so `src` is a content-hashed URL that can be
 // cached forever and invalidates itself when the file changes.
 const IMAGES = {
-  "brand.logo": { src: brandLogo, width: 160, height: 40, alt: "Loadbearing" },
+  "brand.logo": { src: brandLogo, width: 160, height: 40, alt: "Wiremap" },
 } as const satisfies Record<string, ImageAsset>;
 
 export type ImageKey = keyof typeof IMAGES;

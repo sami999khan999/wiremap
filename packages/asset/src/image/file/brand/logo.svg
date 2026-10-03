@@ -1,6 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" role="img">
-  <title>Loadbearing</title>
-  <rect x="4" y="10" width="20" height="20" rx="4" fill="currentColor" />
-  <rect x="10" y="4" width="8" height="32" rx="2" fill="currentColor" opacity="0.5" />
-  <text x="34" y="26" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="600" fill="currentColor">Loadbearing</text>
+  <title>Wiremap</title>
+  <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <circle cx="9" cy="12" r="3.5" />
+    <circle cx="27" cy="12" r="3.5" />
+    <circle cx="18" cy="29" r="3.5" />
+    <path d="M12.5 12h11M10.8 15l5.4 10.6M25.2 15l-5.4 10.6" />
+  </g>
+  <text x="40" y="26" font-family="JetBrains Mono, ui-monospace, monospace" font-size="18" font-weight="600" fill="currentColor">wiremap</text>
 </svg>
