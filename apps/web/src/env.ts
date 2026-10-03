@@ -55,6 +55,10 @@ const Schema = z
       .enum(["true", "false"])
       .default("true")
       .transform((v) => v === "true"),
+    // `proxied` sends every storage link through the web app's `/api/storage/`, signed with
+    // `STORAGE_URL_SECRET`, so the bucket is never published. The single container runs this.
+    S3_ACCESS: z.enum(["presigned", "proxied"]).default("presigned"),
+    STORAGE_URL_SECRET: z.string().min(32).optional(),
 
     // A short secret is a real weakness, and this schema is the only place anyone will
     // ever check.
@@ -165,6 +169,14 @@ const Schema = z
   })
   // Cross-field rules, each a deploy that would boot and then fail on first use.
   .superRefine((env, ctx) => {
+    // Proxied links with no secret would fall back to presigned ones, quietly unreachable.
+    if (env.S3_ACCESS === "proxied" && !env.STORAGE_URL_SECRET) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["STORAGE_URL_SECRET"],
+        message: 'Required when S3_ACCESS is "proxied".',
+      });
+    }
     // A provider with no key would fail on the first document, long after the deploy.
     if (env.EMBEDDING_PROVIDER !== "none" && !env.EMBEDDING_API_KEY) {
       ctx.addIssue({
@@ -305,6 +317,10 @@ export class Env {
         forcePathStyle: e.S3_FORCE_PATH_STYLE,
         checksums: e.S3_CHECKSUMS,
         lifecycle: e.S3_LIFECYCLE,
+        access:
+          e.S3_ACCESS === "proxied" && e.STORAGE_URL_SECRET
+            ? { mode: "proxied" as const, baseUrl: e.APP_BASE_URL, secret: e.STORAGE_URL_SECRET }
+            : { mode: "presigned" as const },
       },
       auth: {
         secret: e.AUTH_SECRET,
