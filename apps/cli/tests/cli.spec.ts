@@ -94,7 +94,7 @@ describe("login", () => {
       io: {
         ...io,
         fetch: http,
-        env: { server: env.server ?? null, apiKey: env.apiKey ?? null, configHome },
+        env: { server: env.server ?? null, apiKey: env.apiKey ?? null, configHome, inherited: {} },
         readLine: () => Promise.resolve("typed-key"),
       },
     };

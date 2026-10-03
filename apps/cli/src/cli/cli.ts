@@ -135,7 +135,13 @@ export class Cli {
       const repositories = [];
       for (const each of checkout.repositories) {
         const root = nodePath.join(workdir, each.name);
-        const commit = await Git.clone(each.fullName, each.ref, each.token, root);
+        const commit = await Git.clone(
+          each.fullName,
+          each.ref,
+          each.token,
+          root,
+          io.env?.inherited ?? {},
+        );
         repositories.push({ name: each.fullName, root, commit, branch: each.ref });
       }
       if (repositories.length === 0) throw new Error("The project has no repositories to scan.");

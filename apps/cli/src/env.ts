@@ -4,6 +4,8 @@ export interface CliEnv {
   readonly apiKey: string | null;
   // Where the profile lives: `$XDG_CONFIG_HOME`, `%APPDATA%`, or `~/.config`.
   readonly configHome: string | null;
+  // The whole environment, for a child process that must inherit PATH and HOME.
+  readonly inherited: Readonly<Record<string, string | undefined>>;
 }
 
 export class Env {
@@ -16,6 +18,7 @@ export class Env {
       server: env.WIREMAP_SERVER || null,
       apiKey: env.WIREMAP_API_KEY || null,
       configHome: env.XDG_CONFIG_HOME || env.APPDATA || (home ? `${home}/.config` : null),
+      inherited: env,
     };
   }
 }
