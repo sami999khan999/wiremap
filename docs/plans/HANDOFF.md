@@ -17,6 +17,7 @@ and every open item. This page holds the state of the tree and the traps that co
 | after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
 | after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
 | after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
+| after Phase 11 | Phase 12: the security review and its fixes, deletion that leaves nothing, the privacy page, the full gate |
 | after Phase 10 | Phase 11: the public REST API, CLI login and npm package, the GitHub Action, the MCP server, the VS Code extension, outgoing webhooks and Slack |
 | after Phase 9 | Phase 10: comments, mentions, notes, the project feed, scan and finding notifications |
 | after Phase 8 | Phase 9: Ask (grounding, streaming, citations), AI settings, the encrypted-secret port |
@@ -26,7 +27,7 @@ and every open item. This page holds the state of the tree and the traps that co
 | after Phase 4 | Phase 5: the graph document, `@loadbearing/graph`, `@loadbearing/analyzer` with four framework plugins, and the `wiremap` CLI |
 | after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
 
-**Next, in order:** Phase 12 from `WM12.1` (the security review, deletion, the privacy page, the full gate). Commit `19b6729` (`feat(webhooks)`) was made outside the agent session from staged work; its scope is not in the commitlint list.
+**Next, in order:** the plan is built. What remains is owed by hand with real accounts, row by row in [`TESTS.md`](TESTS.md): first the GitHub App (with OAuth during installation), then the deploy in [`docs/infra/deployment.md`](../infra/deployment.md), then publishing the CLI and the extension once a licence is chosen. Commit `19b6729` (`feat(webhooks)`) was made outside the agent session from staged work; its scope is not in the commitlint list.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.

@@ -749,7 +749,7 @@ the same layout.
 
 ### Phase 12 — Security, privacy and wrap-up
 
-- [ ] `WM12.1` **Security review.**
+- [x] `WM12.1` **Security review.**
   - Tokens are never stored: grep shows no installation token persisted.
   - Secrets are encrypted (`SecretCipher` covers Gemini keys and webhook secrets), and graphs use
     SSE-B2.
@@ -757,17 +757,22 @@ the same layout.
   - Scan tokens are single-scope.
   - The webhook signature is checked in constant time.
   - Run `/security-review`.
-- [ ] `WM12.2` **Deletion.** Project delete (`WM4.6`) and org delete (`WM3.2`) remove storage
+  - done: 2026-10-03. A review of every wiremap surface found one high issue. **Any organization could bind another's GitHub App installation** by typing its id into the setup callback. Binding now needs the OAuth `code` from the install, the id must appear in that person's `/user/installations`, and an installation held by another organization is refused. Also fixed: IPv4-in-IPv6 and DNS-rebinding paths past the webhook guard (now checked at connect time); uploads written to their own key and promoted after validation, with a streamed size cap; project webhooks swept on purge; replayed GitHub deliveries dropped; the Ask file cache keyed by tenant; `..` refused in contents paths; a pinned GCM tag length; rate limits on uploads, scans, webhook tests and comments; the clone token kept out of the command line. AAD on stored secrets is not added: it would orphan every existing ciphertext, and exploiting its absence needs database write access.
+- [x] `WM12.2` **Deletion.** Project delete (`WM4.6`) and org delete (`WM3.2`) remove storage
   prefixes. A spec proves no object or row is left except the audit trail.
-- [ ] `WM12.3` **Privacy page** `/privacy`: what is stored (graph, metadata), what is not (source),
+  - done: 2026-10-03. Two gaps found and closed: project-scoped webhooks outlived a project purge, and **an organization delete left every project graph in storage**. Specs: a project purge against Postgres leaves no row in eight tables and no object, and touches no other project; the organization purge sweeps `graphs/<org>/`.
+- [x] `WM12.3` **Privacy page** `/privacy`: what is stored (graph, metadata), what is not (source),
   and local CLI analysis.
-- [ ] `WM12.4` **`TESTS.md`** rows for every phase: what was run, and what is owed by hand (real
+  - done: 2026-10-03. `/privacy`, public, linked from the landing page. Every claim is checked against the code.
+- [x] `WM12.4` **`TESTS.md`** rows for every phase: what was run, and what is owed by hand (real
   GitHub App, B2, Neon, Upstash, Vercel and Cloudflare deploys, Gemini key, Slack).
-- [ ] `WM12.5` **The full gate.** Typecheck, lint, every test, `check:architecture`,
+  - done: 2026-10-03. Rows `WM0`–`WM12`.
+- [x] `WM12.5` **The full gate.** Typecheck, lint, every test, `check:architecture`,
   `check:contrast`, the dispatcher dry run, then push with CI green. Update `HANDOFF.md` and
   `docs/plans/index.md`.
 
 ---
+  - done: 2026-10-03. Typecheck, lint, 2,125 tests in 24 packages, 31 of 31 assertions, contrast, the dispatcher dry run, syncpack and sherif.
 
 ## Verification — the whole plan
 
