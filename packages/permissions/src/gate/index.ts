@@ -3,10 +3,12 @@ import { documentGates } from "./document.gate.js";
 import { notificationGates } from "./notification.gate.js";
 import { organizationGates } from "./organization.gate.js";
 import { platformGates } from "./platform.gate.js";
+import { projectGates } from "./project.gate.js";
 import { rbacGates } from "./rbac.gate.js";
 
 // Merged from team-owned fragments. Add them here — `...taskGates`.
 export const GATES = {
+  ...projectGates,
   ...rbacGates,
   ...documentGates,
   ...notificationGates,

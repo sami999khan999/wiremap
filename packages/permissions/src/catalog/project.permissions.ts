@@ -1,0 +1,36 @@
+import type { PermissionMeta } from "../registry/index.js";
+
+// A project is a goal in the kit's sense: its keys are `goal`-scoped, held per project
+// through a project role, and held for every project by an org role that lists them.
+export const projectPermissions = {
+  // Organization-wide: who may connect repositories and start a project at all.
+  "project.create": {
+    scope: "org",
+    module: "project",
+    label: "Create projects",
+    requires: ["member.read"],
+  },
+  "project.graph.read": {
+    scope: "goal",
+    module: "project",
+    label: "View a project's graph",
+  },
+  "project.settings.manage": {
+    scope: "goal",
+    module: "project",
+    label: "Change a project's settings and repositories",
+    requires: ["project.graph.read"],
+  },
+  "project.access.manage": {
+    scope: "goal",
+    module: "project",
+    label: "Choose who can see a project",
+    requires: ["project.graph.read"],
+  },
+  "project.delete": {
+    scope: "goal",
+    module: "project",
+    label: "Delete a project",
+    requires: ["project.graph.read"],
+  },
+} as const satisfies Record<string, PermissionMeta>;

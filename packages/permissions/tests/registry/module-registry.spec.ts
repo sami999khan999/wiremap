@@ -28,7 +28,7 @@ describe("ModuleRegistry", () => {
     expect(registry.isVisible("member", caps)).toBe(true);
     expect(registry.isVisible("rbac", caps)).toBe(false);
     // `team` is gated on reading members too: a team is a list of them.
-    expect(registry.visibleModules(caps)).toEqual(["member", "team"]);
+    expect(registry.visibleModules(caps)).toEqual(["project", "member", "team"]);
   });
 
   it("hides a module a wildcard holder has been explicitly denied", () => {
@@ -41,6 +41,7 @@ describe("ModuleRegistry", () => {
     // Everything but the denied one, in `GATES` order — a wildcard is not a licence to
     // ignore a deny.
     expect(registry.visibleModules(caps)).toEqual([
+      "project",
       "member",
       "apikey",
       "team",
