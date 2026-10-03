@@ -129,6 +129,12 @@ export class QueryKeys {
     document: (scanId: string) => ["scan", "document", scanId] as const,
   };
 
+  public static readonly ask = {
+    all: () => ["ask"] as const,
+    settings: () => ["ask", "settings"] as const,
+    available: () => ["ask", "available"] as const,
+  };
+
   public static readonly view = {
     all: () => ["view"] as const,
     list: (projectId: string) => ["view", "list", projectId] as const,
