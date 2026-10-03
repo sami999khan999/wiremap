@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import nodePath from "node:path";
 import { z } from "zod";
 
 // The second and last `process.env` reader, and deliberately not sharing the web app's
@@ -43,6 +45,25 @@ const Schema = z
     // `proxied` sends every storage link through the web app's `/api/storage/`, signed with
     // `STORAGE_URL_SECRET`, so the bucket is never published. The single container runs this.
     S3_ACCESS: z.enum(["presigned", "proxied"]).default("presigned"),
+    // The worker runs the scan queue and the hourly schedule on BullMQ, so it reads the App
+    // and starts runners as the web app does. Unset, scans are refused, as in the web app.
+    GITHUB_APP_ID: z.string().min(1).optional(),
+    GITHUB_APP_SLUG: z.string().min(1).optional(),
+    GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
+    SCAN_RUNNER: z.enum(["none", "local"]).default("none"),
+    // What a runner's callback is verified with in the web app: the two must hold the same.
+    WIREMAP_RUNNER_SECRET: z.string().min(32).optional(),
+    WIREMAP_CLI_PATH: z.string().min(1).default("../cli/dist/index.js"),
+    // Webhook deliveries decrypt their URL and secret here; the web app holds the same key.
+    SECRET_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/i)
+      .optional(),
+    SECRET_ENCRYPTION_KEY_VERSION: z
+      .string()
+      .regex(/^[\w-]{1,16}$/)
+      .default("v1"),
+    SECRET_ENCRYPTION_KEYS_RETIRED: z.string().optional(),
     STORAGE_URL_SECRET: z.string().min(32).optional(),
 
     // In both processes because both build a `Container`, which treats mail as required
@@ -104,6 +125,14 @@ const Schema = z
   })
   // One cross-field rule: an embedding provider with no key fails on the first document.
   .superRefine((env, ctx) => {
+    // The worker has no auth secret to fall back on, so a local runner needs its own.
+    if (env.SCAN_RUNNER === "local" && !env.WIREMAP_RUNNER_SECRET) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["WIREMAP_RUNNER_SECRET"],
+        message: 'Required when SCAN_RUNNER is "local".',
+      });
+    }
     // Proxied links with no secret would fall back to presigned ones, quietly unreachable.
     if (env.S3_ACCESS === "proxied" && !env.STORAGE_URL_SECRET) {
       ctx.addIssue({
@@ -238,6 +267,43 @@ export class Env {
             : { mode: "presigned" as const },
       },
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
+      // Reads repositories and mints read tokens only. It never issues an install link or
+      // checks a webhook, so neither secret is needed and neither is ever compared.
+      github:
+        e.GITHUB_APP_ID && e.GITHUB_APP_SLUG && e.GITHUB_APP_PRIVATE_KEY
+          ? {
+              appId: e.GITHUB_APP_ID,
+              slug: e.GITHUB_APP_SLUG,
+              privateKey: e.GITHUB_APP_PRIVATE_KEY,
+              webhookSecret: randomUUID(),
+              stateSecret: randomUUID(),
+            }
+          : undefined,
+      scan:
+        e.SCAN_RUNNER === "local" && e.WIREMAP_RUNNER_SECRET
+          ? {
+              secret: e.WIREMAP_RUNNER_SECRET,
+              serverUrl: e.APP_BASE_URL,
+              runner: { kind: "local" as const, cliPath: nodePath.resolve(e.WIREMAP_CLI_PATH) },
+            }
+          : undefined,
+      secrets: e.SECRET_ENCRYPTION_KEY
+        ? {
+            current: e.SECRET_ENCRYPTION_KEY_VERSION,
+            keys: {
+              ...Object.fromEntries(
+                (e.SECRET_ENCRYPTION_KEYS_RETIRED ?? "")
+                  .split(",")
+                  .map((entry) => entry.trim().split(":"))
+                  .filter(
+                    (pair): pair is [string, string] =>
+                      pair.length === 2 && pair[0] !== "" && pair[1] !== "",
+                  ),
+              ),
+              [e.SECRET_ENCRYPTION_KEY_VERSION]: e.SECRET_ENCRYPTION_KEY,
+            },
+          }
+        : undefined,
       embedding: {
         provider: e.EMBEDDING_PROVIDER,
         dimensions: e.EMBEDDING_DIMENSIONS,
