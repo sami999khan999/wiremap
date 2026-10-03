@@ -33,6 +33,10 @@ const DECIDED = {
   EMAIL_FROM: "smoke@web-smoke.test",
   EMBEDDING_MODEL: "text-embedding-3-small",
   EMBEDDING_DIMENSIONS: "1536",
+  // The kept seams this suite exercises: the stream it reads a frame from, and the BullMQ
+  // worker it boots. Wiremap's own deployment runs `none` and `cloudflare` instead.
+  REALTIME_DRIVER: "redis",
+  QUEUE_DRIVER: "bullmq",
 };
 
 // **`LOG_LEVEL` is deliberately not here.** The worker is waited on by a line it emits
