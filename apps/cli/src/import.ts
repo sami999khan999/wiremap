@@ -15,4 +15,7 @@ export { gunzipSync, gzipSync } from "node:zlib";
 export { Analyzer } from "@loadbearing/analyzer";
 
 // ── @loadbearing/contracts ───────────────────────────────────────────────────
-export type { GraphDocument } from "@loadbearing/contracts";
+export { GraphContract, type GraphDocument, type GraphRoute } from "@loadbearing/contracts";
+
+// ── @loadbearing/graph ───────────────────────────────────────────────────────
+export { GraphIndex } from "@loadbearing/graph";

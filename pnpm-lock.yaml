@@ -538,6 +538,9 @@ importers:
       '@loadbearing/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@loadbearing/graph':
+        specifier: workspace:*
+        version: link:../../packages/graph
       '@loadbearing/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig

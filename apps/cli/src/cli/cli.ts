@@ -3,7 +3,9 @@ import {
   Analyzer,
   existsSync,
   fileURLToPath,
+  GraphContract,
   type GraphDocument,
+  gunzipSync,
   gzipSync,
   mkdtemp,
   nodePath,
@@ -12,6 +14,7 @@ import {
   tmpdir,
   writeFile,
 } from "../import.js";
+import { GraphTools, McpServer } from "../mcp/index.js";
 import { Arguments, type ParsedArguments } from "./arguments.js";
 import { Git } from "./git.js";
 import { Profile } from "./profile.js";
@@ -26,6 +29,9 @@ export interface CliIo {
   readonly env?: CliEnv;
   // One line from stdin, for a key typed rather than left in the shell's history.
   readonly readLine?: () => Promise<string | null>;
+  // Every line of stdin, for `mcp`. Opened only when the server is ready: a reader opened
+  // earlier emits the client's first lines to nobody while the graph loads.
+  readonly lines?: () => AsyncIterable<string>;
 }
 
 interface Credentials {
@@ -45,6 +51,7 @@ Usage:
   wiremap login --server <url>      Save a server and an API key for the commands below
   wiremap logout                    Forget them
   wiremap whoami                    Which server, and what the key can read
+  wiremap mcp [options]             Serve a graph to an AI assistant over MCP, on stdio
   wiremap runner [options]          What a scan workflow runs (see docs/infra/scan-runner.md)
 
 Options:
@@ -59,6 +66,7 @@ Options:
   --project <slug>        The project's URL name (upload, scan)
   --branch <name>         The branch the graph was built from (upload, scan)
   --commit <sha>          The commit the graph was built from (upload, scan)
+  --graph <file>          A graph.json or .json.gz to serve (mcp). Else --project's latest scan
   -h, --help              This text
   -v, --version           The version
 
@@ -102,6 +110,8 @@ export class Cli {
           return await Cli.logout(io);
         case "whoami":
           return await Cli.whoami(parsed, io);
+        case "mcp":
+          return await Cli.mcp(parsed, io);
         default:
           io.err(`Unknown command: ${parsed.command}\n\n${HELP}`);
           return 2;
@@ -223,6 +233,45 @@ export class Cli {
     }>("/projects", { limit: "100" });
     io.out(`${server}\n${page.total} projects: ${page.items.map((p) => p.slug).join(", ")}\n`);
     return 0;
+  }
+
+  // stdout carries the protocol and nothing else; anything for a person goes to stderr.
+  private static async mcp(parsed: ParsedArguments, io: CliIo): Promise<number> {
+    const document = await Cli.graphFor(parsed, io);
+    const server = new McpServer(
+      new GraphTools(document),
+      GraphTools.definitions,
+      VERSION,
+      (line) => io.out(`${line}\n`),
+    );
+    io.err(
+      `wiremap MCP server: ${document.files.length} files, ${document.routes.length} routes.\n`,
+    );
+    for await (const line of io.lines?.() ?? []) server.receive(line);
+    return 0;
+  }
+
+  // A local file, or the latest succeeded scan of a project, fetched through the API.
+  private static async graphFor(parsed: ParsedArguments, io: CliIo): Promise<GraphDocument> {
+    const file = Arguments.one(parsed, "graph");
+    if (file) {
+      const raw = await readFile(nodePath.resolve(io.cwd, file));
+      return GraphContract.document.parse(
+        JSON.parse((file.endsWith(".gz") ? gunzipSync(raw) : raw).toString("utf8")),
+      );
+    }
+    const slug = Arguments.one(parsed, "project");
+    if (!slug) throw new Error("mcp needs --graph <file> or --project <slug>.");
+    const { server, apiKey } = await Cli.credentials(parsed, io);
+    const client = new PublicClient(server, apiKey, io.fetch);
+    const project = await client.get<{ id: string }>(
+      `/projects/by-slug/${encodeURIComponent(slug)}`,
+    );
+    const link = await client.get<{ url: string }>(`/projects/${project.id}/graph`);
+    const response = await (io.fetch ?? fetch)(link.url);
+    if (!response.ok) throw new Error(`The graph download failed (${response.status}).`);
+    const raw = gunzipSync(new Uint8Array(await response.arrayBuffer()));
+    return GraphContract.document.parse(JSON.parse(raw.toString("utf8")));
   }
 
   // A flag, then the environment, then the saved login: the order a CI job expects.

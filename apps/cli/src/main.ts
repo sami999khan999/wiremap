@@ -7,6 +7,7 @@ const code = await Cli.run(process.argv.slice(2), {
   err: (text) => process.stderr.write(text),
   cwd: process.cwd(),
   env: Env.read(),
+  lines: () => createInterface({ input: process.stdin }),
   readLine: () =>
     new Promise((resolve) => {
       const lines = createInterface({ input: process.stdin });

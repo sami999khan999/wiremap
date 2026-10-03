@@ -46,6 +46,15 @@ environment, and the environment beats the saved login.
 
 `wiremap --help` lists every option.
 
+## For AI assistants
+
+`wiremap mcp` serves a graph over the Model Context Protocol: overview, file search,
+dependencies and dependents, change impact, routes, the route for a URL, and cycles.
+
+```bash
+claude mcp add wiremap -- npx -y wiremap mcp --project shop-api
+```
+
 ## Where the login is kept
 
 `$XDG_CONFIG_HOME/wiremap/credentials.json`, or `~/.config/wiremap/` (`%APPDATA%\wiremap\` on

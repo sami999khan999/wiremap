@@ -26,6 +26,7 @@
   "devDependencies": {
     "@loadbearing/analyzer": "workspace:*",
     "@loadbearing/contracts": "workspace:*",
+    "@loadbearing/graph": "workspace:*",
     "@loadbearing/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "rimraf": "catalog:",

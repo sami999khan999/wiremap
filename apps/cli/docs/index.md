@@ -97,3 +97,42 @@ cd apps/cli/dist/npm && npm publish
 
 The package's licence is `UNLICENSED` until the owner chooses one. Publishing is the owner's
 step, from their npm account.
+
+## The MCP server
+
+`wiremap mcp` serves one graph to an AI assistant over the Model Context Protocol, on stdio.
+The graph comes from `--graph graph.json[.gz]`, or from `--project <slug>`. The second takes
+the latest succeeded scan through the public API, with the login above. Every tool runs on
+that one document through `@loadbearing/graph`. The server makes no call per question.
+
+| Tool | Answers |
+|---|---|
+| `overview` | Repositories, frameworks, counts, coverage, files by role, the most depended-on |
+| `find_files` | Paths or exported names containing a text, optionally of one role |
+| `dependencies`, `dependents` | Transitive imports either way, with distances |
+| `impact` | Every dependent of a file and the routes whose handler is among them |
+| `routes` | Routes, filtered by method or path text |
+| `route_for_path` | The route serving a concrete URL such as `/api/articles/42` |
+| `cycles` | Import cycles |
+
+Claude Code:
+
+```bash
+claude mcp add wiremap -- npx -y wiremap mcp --project shop-api
+```
+
+Cursor, in `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "wiremap": { "command": "npx", "args": ["-y", "wiremap", "mcp", "--graph", "graph.json"] }
+  }
+}
+```
+
+The protocol is written by hand in `src/mcp/mcp-server.ts`: `initialize`, `ping`,
+`tools/list` and `tools/call`. The SDK would add an HTTP server and a second zod to every
+`npx`. A failing tool call returns `isError` with a message the model can act on. An unknown
+method is a JSON-RPC error. stdout carries the protocol only, and everything for a person
+goes to stderr.
