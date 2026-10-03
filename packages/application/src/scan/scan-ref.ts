@@ -30,4 +30,10 @@ export class ScanRefs {
   public static graphKey(organizationId: string, projectId: string, scanId: string): string {
     return `${ProjectRules.storagePrefix(organizationId, projectId)}${scanId}.json.gz`;
   }
+
+  // Where a runner or the CLI uploads, presigned. Only completion moves it to `graphKey`,
+  // so nothing a link can still write is ever what the app reads.
+  public static uploadKey(organizationId: string, projectId: string, scanId: string): string {
+    return `${ProjectRules.storagePrefix(organizationId, projectId)}upload/${scanId}.json.gz`;
+  }
 }

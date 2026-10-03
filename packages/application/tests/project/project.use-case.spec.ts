@@ -159,8 +159,12 @@ class MemoryInstallations extends GithubInstallationRepository {
     this.rows.push({ organizationId, ...installation, suspended: false });
     return Promise.resolve();
   }
-  public organizationsOf() {
-    return Promise.resolve([]);
+  public organizationsOf(installationId: number) {
+    return Promise.resolve(
+      this.rows
+        .filter((row) => row.installationId === installationId)
+        .map((row) => row.organizationId),
+    );
   }
   public setSuspended(installationId: number, at: Date | null) {
     for (const row of this.rows) {
@@ -187,6 +191,10 @@ class FakeProvider extends RepositoryProvider {
   }
   public installation(installationId: number): Promise<ProviderInstallation | null> {
     return Promise.resolve({ installationId, accountLogin: "acme" });
+  }
+  // The person behind code "mine" can see installation 9 and nothing else.
+  public installationsOfUser(code: string) {
+    return Promise.resolve(code === "mine" ? [9] : null);
   }
   public repositories() {
     return Promise.resolve(this.available);
@@ -458,11 +466,59 @@ describe("GitHub", () => {
     );
 
     await expect(
-      bind.execute(holding("project.create"), { installationId: 9, state: "forged" }),
+      bind.execute(holding("project.create"), { installationId: 9, state: "forged", code: "mine" }),
     ).rejects.toBeInstanceOf(ForbiddenError);
-    await bind.execute(holding("project.create"), { installationId: 9, state: "good" });
+    await bind.execute(holding("project.create"), {
+      installationId: 9,
+      state: "good",
+      code: "mine",
+    });
 
     expect(installations.rows).toMatchObject([{ installationId: 9, accountLogin: "acme" }]);
+  });
+
+  // The installation id is a URL parameter: a valid state of one's own must not be enough
+  // to claim an installation somebody else made.
+  it("refuses an installation the person installing cannot see, or with no code", async () => {
+    const installations = new MemoryInstallations();
+    const bind = new BindGithubInstallationUseCase(
+      new Authorizer(),
+      installations,
+      new FakeProvider(),
+      new RecordingActivity(),
+      new DirectUnitOfWork(),
+    );
+    const actor = holding("project.create");
+
+    await expect(
+      bind.execute(actor, { installationId: 10, state: "good", code: "mine" }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      bind.execute(actor, { installationId: 9, state: "good", code: null }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      bind.execute(actor, { installationId: 9, state: "good", code: "someone-else" }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(installations.rows).toEqual([]);
+  });
+
+  it("refuses an installation another organization already holds", async () => {
+    const installations = new MemoryInstallations();
+    await installations.bind("018f8c00-0000-7000-8000-0000000000ff" as typeof ORG, {
+      installationId: 9,
+      accountLogin: "acme",
+    });
+    const bind = new BindGithubInstallationUseCase(
+      new Authorizer(),
+      installations,
+      new FakeProvider(),
+      new RecordingActivity(),
+      new DirectUnitOfWork(),
+    );
+
+    await expect(
+      bind.execute(holding("project.create"), { installationId: 9, state: "good", code: "mine" }),
+    ).rejects.toBeInstanceOf(ConflictError);
   });
 
   it("applies installation and repository events and ignores the rest", async () => {

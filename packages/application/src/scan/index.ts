@@ -5,7 +5,7 @@ export { DispatchScanUseCase } from "./dispatch-scan.use-case.js";
 export { FailScanUseCase } from "./fail-scan.use-case.js";
 export { FindingRules } from "./finding-rules.js";
 export { GetGraphUseCase, type GraphLink } from "./get-graph.use-case.js";
-export { GraphArchive } from "./graph-archive.js";
+export { type ArchiveRead, GraphArchive } from "./graph-archive.js";
 export { ListScansUseCase } from "./list-scans.use-case.js";
 export { QueryGraphUseCase } from "./query-graph.use-case.js";
 export { type QueueScanInput, QueueScanUseCase } from "./queue-scan.use-case.js";

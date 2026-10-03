@@ -1,4 +1,4 @@
-import { ForbiddenError, NotFoundError } from "../import.js";
+import { ConflictError, ForbiddenError, NotFoundError } from "../import.js";
 import type { ActivityLogger, RepositoryProvider, UnitOfWork } from "../port/index.js";
 import type { Authorizer, Principal } from "../primitive/index.js";
 import type { GithubInstallationRepository } from "./github-installation.repository.js";
@@ -6,6 +6,9 @@ import type { GithubInstallationRepository } from "./github-installation.reposit
 export interface BindGithubInstallationInput {
   readonly installationId: number;
   readonly state: string;
+  // GitHub's OAuth code from the same redirect. The installation id is a plain parameter
+  // anyone can type, so only this proves the person can see that installation.
+  readonly code: string | null;
 }
 
 // The App's setup callback: GitHub sends the person back with the installation id and the
@@ -25,6 +28,15 @@ export class BindGithubInstallationUseCase {
     // A state signed for another tenant is someone else's install link replayed.
     if (this.provider.organizationFromState(input.state) !== actor.organizationId) {
       throw new ForbiddenError("project.create");
+    }
+
+    const visible = input.code ? await this.provider.installationsOfUser(input.code) : null;
+    if (!visible?.includes(input.installationId)) throw new ForbiddenError("project.create");
+
+    // One organization per installation: a second binding would share its repositories.
+    const bound = await this.installations.organizationsOf(input.installationId);
+    if (bound.some((organizationId) => organizationId !== actor.organizationId)) {
+      throw new ConflictError("githubInstallation", "bound");
     }
 
     const installation = await this.provider.installation(input.installationId);

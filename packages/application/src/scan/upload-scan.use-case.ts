@@ -17,7 +17,7 @@ export class UploadScanUseCase {
 
   public async execute(ref: ScanRef, token: string | null): Promise<{ readonly url: string }> {
     const scan = await ScanProtocol.load(this.tokens, this.scans, ref, token, ["running"]);
-    const key = ScanRefs.graphKey(ref.organizationId, scan.projectId, scan.id);
+    const key = ScanRefs.uploadKey(ref.organizationId, scan.projectId, scan.id);
     return {
       url: await this.storage.presignUpload(key, "application/gzip", UploadScanUseCase.TTL_SECONDS),
     };

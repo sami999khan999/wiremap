@@ -31,7 +31,10 @@ export class CompleteScanUseCase {
   ): Promise<{ readonly state: "succeeded" | "failed" }> {
     const scan = await ScanProtocol.load(this.tokens, this.scans, ref, token, ["running"]);
     const key = ScanRefs.graphKey(ref.organizationId, scan.projectId, scan.id);
-    const read = await this.archive.read(key);
+    const read = await this.archive.promote(
+      ScanRefs.uploadKey(ref.organizationId, scan.projectId, scan.id),
+      key,
+    );
     const base = {
       projectId: scan.projectId,
       scanId: scan.id,

@@ -68,6 +68,9 @@ class MemoryWebhooks extends WebhookRepository {
     );
     return Promise.resolve();
   }
+  public removeForProject() {
+    return Promise.resolve();
+  }
   public recordDelivery(_org: OrganizationId, id: WebhookId, delivery: Delivery) {
     const row = this.rows.find((each) => each.id === id) as WebhookRecord;
     const failureCount = delivery.ok ? 0 : row.failureCount + 1;

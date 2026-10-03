@@ -64,7 +64,7 @@ export class CreateScanUploadUseCase {
       ref: formatted,
       token: this.tokens.issue(ref),
       uploadUrl: await this.storage.presignUpload(
-        ScanRefs.graphKey(actor.organizationId, project.id, id),
+        ScanRefs.uploadKey(actor.organizationId, project.id, id),
         "application/gzip",
         CreateScanUploadUseCase.TTL_SECONDS,
       ),

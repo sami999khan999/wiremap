@@ -61,6 +61,12 @@ export abstract class WebhookRepository {
 
   public abstract delete(organizationId: OrganizationId, id: WebhookId): Promise<void>;
 
+  // The project purge's sweep: a webhook scoped to a deleted project goes with it.
+  public abstract removeForProject(
+    organizationId: OrganizationId,
+    projectId: ProjectId,
+  ): Promise<void>;
+
   // One statement, so two deliveries finishing together cannot both read the old count.
   public abstract recordDelivery(
     organizationId: OrganizationId,

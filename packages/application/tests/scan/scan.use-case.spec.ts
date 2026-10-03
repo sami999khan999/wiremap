@@ -282,9 +282,15 @@ describe("the runner protocol", () => {
       { kind: "unguarded_route", key: "GET /old" },
       { kind: "unguarded_route", key: "GET /users" },
     ];
+    const promoted: string[] = [];
     const archive = {
-      read: () =>
-        Promise.resolve({ document: document([["b.ts", "a.ts"]], ["GET /users"]), bytes: 120 }),
+      promote: (from: string, to: string) => {
+        promoted.push(`${from} -> ${to}`);
+        return Promise.resolve({
+          document: document([["b.ts", "a.ts"]], ["GET /users"]),
+          bytes: 120,
+        });
+      },
     } as unknown as GraphArchive;
     const events = new Events();
     const complete = new CompleteScanUseCase(
@@ -301,6 +307,10 @@ describe("the runner protocol", () => {
     });
 
     expect(scans.rows[0]?.state).toBe("succeeded");
+    // The upload is read from its own key and the app's copy is written by the server.
+    expect(promoted).toEqual([
+      `graphs/${ORG}/${scans.rows[0]?.projectId}/upload/${ref.scanId}.json.gz -> ${scans.rows[0]?.graphKey}`,
+    ]);
     expect(scans.rows[0]?.counts).toMatchObject({ resolved: 3, total: 4, cycles: 1, unguarded: 1 });
     expect(scans.replaced).toEqual({
       added: [{ kind: "cycle", key: "a.ts → b.ts" }],
@@ -316,7 +326,7 @@ describe("the runner protocol", () => {
     const first = await queued();
     await first.scans.start(ORG, first.ref.scanId, CLOCK.now());
     const archive = {
-      read: () => Promise.resolve({ refused: "The graph is larger than 25 MB." }),
+      promote: () => Promise.resolve({ refused: "The graph is larger than 25 MB." }),
     } as unknown as GraphArchive;
     const events = new Events();
     const publisher = events as unknown as DomainEventPublisher;

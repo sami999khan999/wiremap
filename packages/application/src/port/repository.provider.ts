@@ -27,6 +27,10 @@ export abstract class RepositoryProvider {
 
   public abstract installation(installationId: number): Promise<ProviderInstallation | null>;
 
+  // The installations the person who just installed can see, from the OAuth `code` GitHub
+  // sends with the redirect. Null when the code is refused or no OAuth pair is configured.
+  public abstract installationsOfUser(code: string): Promise<readonly number[] | null>;
+
   public abstract repositories(installationId: number): Promise<readonly ProviderRepository[]>;
 
   public abstract branches(installationId: number, fullName: string): Promise<readonly string[]>;

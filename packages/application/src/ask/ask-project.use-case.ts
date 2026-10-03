@@ -1,6 +1,7 @@
 import {
   type GraphDocument,
   NotFoundError,
+  type OrganizationId,
   type ProjectId,
   RateLimitedError,
   type ScanId,
@@ -108,7 +109,12 @@ export class AskProjectUseCase {
     const read = await this.archive.read(scan.graphKey);
     if ("refused" in read) throw new NotFoundError("graph", scan.id);
     const grounding = AskContext.ground(read.document, input.question, input.preset);
-    const contents = await this.contents(project, read.document, grounding.files);
+    const contents = await this.contents(
+      actor.organizationId,
+      project,
+      read.document,
+      grounding.files,
+    );
 
     const context = [grounding.overview, ...contents].join("\n\n");
     const turns: ChatTurn[] = [
@@ -141,6 +147,7 @@ export class AskProjectUseCase {
   // Each picked file's text at the scanned commit, numbered for citation. A repository the
   // App cannot read (an uploaded graph) contributes no contents; the graph still grounds.
   private async contents(
+    organizationId: OrganizationId,
     project: ProjectRecord,
     document: GraphDocument,
     paths: readonly string[],
@@ -154,7 +161,8 @@ export class AskProjectUseCase {
       const meta = document.meta.repositories.find((each) => each.name === file.repository);
       if (!repository?.installationId || !meta?.commit) continue;
       const local = multi ? path.slice(path.indexOf("/") + 1) : path;
-      const cacheKey = `ask:file:${repository.fullName}:${meta.commit}:${local}`;
+      // Tenant first: the same repository read by two organizations is two entries.
+      const cacheKey = `ask:file:${organizationId}:${repository.fullName}:${meta.commit}:${local}`;
       let text = await this.cache.get<string>(cacheKey);
       if (text === null) {
         text =

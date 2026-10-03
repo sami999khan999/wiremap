@@ -458,6 +458,7 @@ export {
   UpdateRoleUseCase,
 } from "./rbac/index.js";
 export {
+  type ArchiveRead,
   CheckoutScanUseCase,
   CompleteScanUseCase,
   CreateScanUploadUseCase,
