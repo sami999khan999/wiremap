@@ -128,24 +128,28 @@ The browser downloads graphs, and the CLI uploads them, through presigned URLs t
 storage host. In one container that host is internal. Proxying both through the web app keeps
 one port and one public hostname.
 
-- [ ] `SH1.1` **A storage access mode in the container config**: `storage.access: "presigned" |
+- [x] `SH1.1` **A storage access mode in the container config**: `storage.access: "presigned" |
   "proxied"`, from `S3_ACCESS=presigned|proxied` (default `presigned`, so the cloud path is
   unchanged).
-- [ ] `SH1.2` **Signed app URLs.** In `proxied` mode, the gateway's `presignDownload` and
+  - done: 2026-10-04. `S3_ACCESS` in both apps. `proxied` without `STORAGE_URL_SECRET` stops startup; the worker issues links too and carries no auth secret, so the key is its own.
+- [x] `SH1.2` **Signed app URLs.** In `proxied` mode, the gateway's `presignDownload` and
   `presignUpload` return `${APP_BASE_URL}/api/storage/<key>?exp=&sig=`, an HMAC over method, key
   and expiry with `AUTH_SECRET`. The expiry is the one the use-case already asks for, so no
   use-case changes. The adapter is `ProxiedStorageGateway`, wrapping `S3StorageGateway` in
   `infrastructure/src/s3/`.
-- [ ] `SH1.3` **The route** `apps/web/src/route/api/storage/$.ts`:
+  - done: 2026-10-04. `ProxiedStorageGateway` decorates the bucket gateway, and the container exposes it as `storageProxy`.
+- [x] `SH1.3` **The route** `apps/web/src/route/api/storage/$.ts`:
   - It verifies the signature in constant time, and the method it was signed for.
   - `GET` streams the object, with `content-type` and `cache-control: private, immutable` for
     graphs.
   - `PUT` streams the body to the object, capped at 25 MB, the graph cap. Anything larger is
     refused while streaming.
   - It is never a listing, and never a key outside the one signed.
-- [ ] `SH1.4` **Specs.** A signature for one key does not open another. An expired or tampered
+  - done: 2026-10-04. Live against MinIO through the dev server: put and get round-trip the same bytes, a tampered link and an upload link used to read are 403, a missing key is 404, 26 MB is 413 and leaves nothing.
+- [x] `SH1.4` **Specs.** A signature for one key does not open another. An expired or tampered
   signature gets 403. `PUT` past the cap gets 413 and nothing is stored. A round trip of a
   real graph works. Docs: `packages/infrastructure/docs/reference/` gets a storage-access page.
+  - done: 2026-10-04. Gateway spec (5), path parsing spec, and `packages/infrastructure/docs/reference/storage-access.md`.
 
 ### Phase 2 — The image
 
