@@ -41,6 +41,8 @@ export {
   type SocialSignInProps,
   TwoFactorForm,
   type TwoFactorFormProps,
+  UserMenu,
+  type UserMenuProps,
   useCapabilities,
   useFlags,
   useIsPlatformOrganization,
@@ -107,6 +109,8 @@ export {
   InvitationAccept,
   type InvitationAcceptProps,
   type InvitationPreview,
+  OrganizationMenu,
+  type OrganizationMenuProps,
   OrganizationSwitcher,
   type OrganizationSwitcherProps,
 } from "./organization/index.js";

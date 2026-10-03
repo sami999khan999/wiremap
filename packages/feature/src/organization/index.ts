@@ -7,6 +7,7 @@ export {
   type InvitationAcceptProps,
   type InvitationPreview,
 } from "./invitation-accept.js";
+export { OrganizationMenu, type OrganizationMenuProps } from "./organization-menu.js";
 export {
   OrganizationSwitcher,
   type OrganizationSwitcherProps,

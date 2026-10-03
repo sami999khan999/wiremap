@@ -106,7 +106,10 @@ export {
 
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────
 export {
+  ActionMenu,
+  type ActionMenuEntry,
   AlertDialog,
+  Avatar,
   type BadgeTone,
   Button,
   ByteFormat,
@@ -138,12 +141,17 @@ export {
   Prose,
   QrCode,
   ReaderLayout,
+  ResizablePanels,
+  RoleDot,
+  type RoleTone,
   readerClassName,
   SearchTrigger,
   Select,
   Sidebar,
   StatusBadge,
+  type TabItem,
   type TableColumn,
+  Tabs,
   Textarea,
   type ThemeKey,
   ThemeRegistry,

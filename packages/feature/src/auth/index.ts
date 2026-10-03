@@ -20,4 +20,5 @@ export { SignOutButton, type SignOutButtonProps } from "./sign-out.button.js";
 export { SignUpForm, type SignUpFormProps } from "./sign-up.form.js";
 export { SocialSignIn, type SocialSignInProps } from "./social-sign-in.js";
 export { TwoFactorForm, type TwoFactorFormProps } from "./two-factor.form.js";
+export { UserMenu, type UserMenuProps } from "./user-menu.js";
 export { VerifyEmailNotice, type VerifyEmailNoticeProps } from "./verify-email.notice.js";
