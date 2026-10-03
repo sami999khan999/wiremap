@@ -147,6 +147,7 @@ export {
   PlatformPolicyRepository,
   PlatformReader,
   type PlatformStatus,
+  PollTrackedBranchesUseCase,
   PreviewDocPageUseCase,
   Principal,
   type ProjectRepository,

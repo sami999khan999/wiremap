@@ -163,6 +163,12 @@ export class MaintenanceConsumer extends QueueConsumer {
         this.container.scans.trigger.execute({ ...project, trigger: "schedule", branch: null }),
       );
     }
+    // Branches that moved since the last tick, where no webhook delivery has been seen.
+    for (const target of await this.container.scans.poll.due()) {
+      await this.placed(target.organizationId, () =>
+        this.container.scans.trigger.execute({ ...target, trigger: "push" }),
+      );
+    }
   }
 
   // Off `pnpm doc:rerender`, one job per organization, placed on the tenant's node.

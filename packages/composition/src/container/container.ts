@@ -198,6 +198,7 @@ import {
   PgWebhookRepository,
   type PlatformPolicyRepository,
   type PlatformReader,
+  PollTrackedBranchesUseCase,
   PreviewDocPageUseCase,
   Principal,
   PrincipalBuilder,
@@ -529,6 +530,8 @@ export class Container {
     readonly dispatch: DispatchScanUseCase;
     readonly trigger: TriggerScanUseCase;
     readonly sweep: SweepScansUseCase;
+    // The hourly tick's push signal when webhooks cannot arrive.
+    readonly poll: PollTrackedBranchesUseCase;
   };
   public readonly views: ManageViewsUseCase;
   public readonly webhooks: {
@@ -1614,6 +1617,12 @@ export class Container {
       dispatch: new DispatchScanUseCase(scanRepository, scanRunner, this.clock),
       trigger: new TriggerScanUseCase(projectRepository, queueScan),
       sweep: new SweepScansUseCase(scanRepository, this.eventPublisher, this.clock),
+      poll: new PollTrackedBranchesUseCase(
+        projectRepository,
+        this.repositoryProvider,
+        this.cache,
+        config.github?.polling ?? true,
+      ),
     };
     this.views = new ManageViewsUseCase(this.authorizer, projectRepository, viewRepository);
     this.comments = new ManageCommentsUseCase(
