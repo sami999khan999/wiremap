@@ -39,7 +39,7 @@ export type {
 // ── @loadbearing/contracts ───────────────────────────────────────────────────
 // The branded ids a route casts to. The shapes a component renders arrive through
 // `@loadbearing/query`.
-export { Identifiers } from "@loadbearing/contracts";
+export { Identifiers, type ProjectDto } from "@loadbearing/contracts";
 
 // ── @loadbearing/feature ─────────────────────────────────────────────────────
 export {
@@ -91,6 +91,10 @@ export {
   PlatformNav,
   PlatformStatusPanel,
   ProfileForm,
+  ProjectCreateForm,
+  ProjectList,
+  ProjectSettings,
+  type ProjectSettingsTab,
   ReplicaSwitchPanel,
   ResetPasswordForm,
   RoleList,
@@ -139,6 +143,7 @@ export {
   NotificationQueries,
   OrganizationMutations,
   PlatformQueries,
+  ProjectQueries,
   RealtimeProvider,
   RoleQueries,
   useApiClient,

@@ -27,7 +27,7 @@ import { refreshSession } from "~/route/-session.js";
 
 // The product's own sections sit in the top bar. The administrative ones are in the
 // settings sidebar (`settings.tsx`), which renders every other module.
-const TOP_BAR_MODULES = ["doc", "platform"] as const;
+const TOP_BAR_MODULES = ["project", "doc", "platform"] as const;
 
 // `nav` for the top bar, and `notification` for the bell's name and its peek list.
 const MESSAGES = ["nav", "notification"] as const satisfies readonly ClientNamespace[];

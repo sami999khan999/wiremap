@@ -14,6 +14,9 @@ export {
   type QueueJob,
 } from "@loadbearing/composition";
 
+// ── @loadbearing/errors ──────────────────────────────────────────────────────
+export { NotFoundError } from "@loadbearing/errors";
+
 // ── @orpc/server ─────────────────────────────────────────────────────────────
 // Never `EventPublisher` from here. It is oRPC's own in-process fan-out, and reaching
 // for it would put a second, replica-local realtime path beside the Redis one.

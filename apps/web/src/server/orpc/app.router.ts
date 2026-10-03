@@ -5,11 +5,13 @@ import { DocGrantRouter } from "./doc-grant.router.js";
 import { DocPageRouter } from "./doc-page.router.js";
 import { DocSpaceRouter } from "./doc-space.router.js";
 import { DocumentRouter } from "./document.router.js";
+import { GithubRouter } from "./github.router.js";
 import { MemberRouter } from "./member.router.js";
 import { NotificationRouter } from "./notification.router.js";
 import { OrganizationRouter } from "./organization.router.js";
 import { OverrideRouter } from "./override.router.js";
 import { PlatformRouter } from "./platform.router.js";
+import { ProjectRouter } from "./project.router.js";
 import { RoleRouter } from "./role.router.js";
 import { TeamRouter } from "./team.router.js";
 
@@ -30,4 +32,6 @@ export const appRouter = {
   organization: OrganizationRouter.all,
   team: TeamRouter.all,
   activity: ActivityRouter.all,
+  project: ProjectRouter.all,
+  github: GithubRouter.all,
 };

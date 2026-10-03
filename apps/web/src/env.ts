@@ -89,6 +89,12 @@ const Schema = z
     // `${AUTH_URL}/api/auth/callback/github`; both or neither, as Google.
     GITHUB_CLIENT_ID: z.string().min(1).optional(),
     GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
+    // The App itself, which reads repositories. All four or none: absent leaves projects
+    // on uploads. See docs/infra/github-app.md.
+    GITHUB_APP_ID: z.string().min(1).optional(),
+    GITHUB_APP_SLUG: z.string().min(1).optional(),
+    GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
+    GITHUB_WEBHOOK_SECRET: z.string().min(16).optional(),
 
     // One URL rather than five fields, and required: with verification on by default, a
     // process that cannot send is one whose sign-ups never complete.
@@ -299,6 +305,16 @@ export class Env {
             ? { clientId: e.GITHUB_CLIENT_ID, clientSecret: e.GITHUB_CLIENT_SECRET }
             : undefined,
       },
+      github:
+        e.GITHUB_APP_ID && e.GITHUB_APP_SLUG && e.GITHUB_APP_PRIVATE_KEY && e.GITHUB_WEBHOOK_SECRET
+          ? {
+              appId: e.GITHUB_APP_ID,
+              slug: e.GITHUB_APP_SLUG,
+              privateKey: e.GITHUB_APP_PRIVATE_KEY,
+              webhookSecret: e.GITHUB_WEBHOOK_SECRET,
+              stateSecret: e.AUTH_SECRET,
+            }
+          : undefined,
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
       embedding: {
         provider: e.EMBEDDING_PROVIDER,
