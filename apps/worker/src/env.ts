@@ -51,6 +51,11 @@ const Schema = z
     GITHUB_APP_SLUG: z.string().min(1).optional(),
     GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
     SCAN_RUNNER: z.enum(["none", "local"]).default("none"),
+    // Scan a tracked branch when its head moves, for installations no webhook reaches.
+    GITHUB_POLLING: z
+      .enum(["true", "false"])
+      .default("true")
+      .transform((v) => v === "true"),
     // What a runner's callback is verified with in the web app: the two must hold the same.
     WIREMAP_RUNNER_SECRET: z.string().min(32).optional(),
     WIREMAP_CLI_PATH: z.string().min(1).default("../cli/dist/index.js"),
@@ -277,6 +282,7 @@ export class Env {
               privateKey: e.GITHUB_APP_PRIVATE_KEY,
               webhookSecret: randomUUID(),
               stateSecret: randomUUID(),
+              polling: e.GITHUB_POLLING,
             }
           : undefined,
       scan:
