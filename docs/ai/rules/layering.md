@@ -8,7 +8,7 @@ description: The one-way dependency graph, the server-only boundary, and where a
 Dependencies point one way. A package may import from anything to its left, never to its right.
 
 ```
-errors → core → permissions · observability → contracts → asset · content
+errors → core → permissions · observability → contracts → asset · content · graph
                                                              ↓
                                      application → infrastructure → auth → composition → api-server
                                                                                                ↓
@@ -29,11 +29,16 @@ errors → core → permissions · observability → contracts → asset · cont
   imports `content` for the two mailers, so the old ordering said the DI root may not name what it
   is built out of. Both are isomorphic and reach the client bundle, which is why both carry the
   server-only ban.
+- **`graph` is wiremap's isomorphic algorithms package** (`GraphIndex`, `GraphDiff`). It imports
+  types from `contracts` and nothing at runtime, so the browser, the server and the CLI run the
+  same traversal. It carries the server-only ban, like `content`.
+- **`analyzer` is node-only, and the CLI app is its only host.** It may name `typescript`
+  and `web-tree-sitter`; nothing left of `apps/` imports it, so it never reaches the web bundle.
 - **`apps/*` are thin, deletable, framework-shaped.** Business logic never lands there.
 
 ### Server-only boundary
 
-These are a Biome error inside `packages/{ui,feature,query,errors,content,asset}` and `apps/*/src`:
+These are a Biome error inside `packages/{ui,feature,query,errors,content,asset,graph}` and `apps/*/src`:
 `@loadbearing/{infrastructure,auth,composition,application,api-server}`, `drizzle-orm`, `pg`, `ioredis`,
 `bullmq`, `better-auth`.
 

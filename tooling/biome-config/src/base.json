@@ -78,6 +78,7 @@
         "packages/errors/**",
         "packages/content/**",
         "packages/asset/**",
+        "packages/graph/**",
         "apps/web/src/**"
       ],
       "linter": {
