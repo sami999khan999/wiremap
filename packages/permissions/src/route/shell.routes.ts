@@ -19,4 +19,6 @@ export const shellRoutes = {
   // Needs no session: the person holding the link may have no account yet. The mailer
   // builds the link from this entry, so the two agree by construction.
   invitation: "/invitation",
+  // What wiremap keeps and does not, readable before an account exists.
+  privacy: "/privacy",
 } as const satisfies Record<string, RoutePath>;
