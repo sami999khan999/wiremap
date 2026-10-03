@@ -60,3 +60,27 @@ describe("ThemeToggle", () => {
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Dark");
   });
 });
+
+describe("ThemeToggle with a system segment", () => {
+  it("shows the stored preference as chosen and reports system as a preference", () => {
+    const onPreferenceChange = vi.fn();
+    const onModeChange = vi.fn();
+    render(
+      <ThemeToggle
+        label="Mode"
+        mode="dark"
+        onModeChange={onModeChange}
+        lightLabel="light"
+        darkLabel="dark"
+        variant="labels"
+        system={{ label: "system", preference: "system", onPreferenceChange }}
+      />,
+    );
+
+    expect(screen.getByRole("radio", { name: "system" }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByText("light")).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "light" }));
+    expect(onPreferenceChange).toHaveBeenCalledWith("light");
+    expect(onModeChange).not.toHaveBeenCalled();
+  });
+});

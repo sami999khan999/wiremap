@@ -24,7 +24,7 @@ once for dark. It names no component and it declares nothing structural. That is
 | `--ring` | the focus ring |
 
 **Every theme declares all twelve.** The set is the contract, not a starting point: a theme that
-omits one does not fall back to a sensible default, it inherits whatever `slate`'s `:root` seed left
+omits one does not fall back to a sensible default, it inherits whatever the default theme's `:root` seed left (`wiremap`'s, in this repository)
 behind — a colour from a different theme, in the right slot, silently. `check-contrast.mjs` fails on
 a missing name for exactly that reason.
 
@@ -84,6 +84,12 @@ before authoring a theme:
   3.5:1 and 2.6:1. They are fills, and `StatusBadge` tints them into `--surface` rather than
   filling with them, which puts `--fg` on a near-surface background instead. Only `--danger` clears
   AA as text, which is why the field error is the one place a status colour is a foreground.
+
+## Wiremap's theme
+
+`wiremap` is the default: near-black neutrals carrying a trace of hue 285, and a violet primary
+(hue 292), lighter in dark mode and darker in light mode so the primary clears AA on both. It holds
+the `:root` seed. The kit's six stay selectable.
 
 ## Adding a theme
 

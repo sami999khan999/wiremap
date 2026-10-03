@@ -4,11 +4,14 @@
 // ── @base-ui/react ───────────────────────────────────────────────────────────
 // Behaviour only: focus, keyboard, dismissal and ARIA. Every part is styled here.
 export { AlertDialog as BaseAlertDialog } from "@base-ui/react/alert-dialog";
+export { Avatar as BaseAvatar } from "@base-ui/react/avatar";
 export { Dialog as BaseDialog } from "@base-ui/react/dialog";
+export { Menu as BaseMenu } from "@base-ui/react/menu";
 export { Popover as BasePopover } from "@base-ui/react/popover";
 export { Radio as BaseRadio } from "@base-ui/react/radio";
 export { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 export { Select as BaseSelect } from "@base-ui/react/select";
+export { Tabs as BaseTabs } from "@base-ui/react/tabs";
 export { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 // ── @loadbearing/asset ───────────────────────────────────────────────────────
 export { type IconName, IconRegistry } from "@loadbearing/asset";
@@ -25,9 +28,11 @@ export { GlassScroll, GlassScrollArea, type PartialTheme as GlassScrollTheme } f
 // ── react ────────────────────────────────────────────────────────────────────
 export type {
   ButtonHTMLAttributes,
+  CSSProperties,
   InputHTMLAttributes,
   KeyboardEvent,
   MouseEvent,
+  PointerEvent,
   ReactElement,
   ReactNode,
   Ref,

@@ -11,6 +11,7 @@
 @import "./color/plum.css";
 @import "./color/midnight.css";
 @import "./color/graphite.css";
+@import "./color/wiremap.css";
 @import "./tailwind.css";
 
 /* Rules for elements no component renders: the page itself, and the HTML the Markdown

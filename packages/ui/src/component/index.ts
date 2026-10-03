@@ -1,3 +1,5 @@
+export { ActionMenu, type ActionMenuEntry, type ActionMenuProps } from "./action-menu/index.js";
+export { Avatar, type AvatarProps } from "./avatar/index.js";
 export { Button, type ButtonProps, type ButtonVariant, buttonClassName } from "./button/index.js";
 export { Callout, type CalloutProps, type CalloutTone } from "./callout/index.js";
 export { Can, type CanProps } from "./can/index.js";
@@ -42,11 +44,18 @@ export { Popover, type PopoverAlign, type PopoverProps } from "./popover/index.j
 export { Prose, type ProseProps } from "./prose/index.js";
 export { QrCode, type QrCodeProps } from "./qr-code/index.js";
 export { ReaderLayout, type ReaderLayoutProps, readerClassName } from "./reader-layout/index.js";
+export { ResizablePanels, type ResizablePanelsProps } from "./resizable-panels/index.js";
+export { RoleDot, type RoleDotProps, type RoleTone } from "./role-dot/index.js";
 export { ScrollArea, type ScrollAreaProps } from "./scroll-area/index.js";
 export { Select, type SelectOption, type SelectProps, type SelectVariant } from "./select/index.js";
 export { Sidebar, type SidebarProps } from "./sidebar/index.js";
 export { type BadgeTone, StatusBadge, type StatusBadgeProps } from "./status-badge/index.js";
+export { type TabItem, Tabs, type TabsProps } from "./tabs/index.js";
 export { Textarea, type TextareaProps } from "./textarea/index.js";
-export { ThemeToggle, type ThemeToggleProps } from "./theme-toggle/index.js";
+export {
+  ThemeToggle,
+  type ThemeToggleProps,
+  type ThemeToggleSystem,
+} from "./theme-toggle/index.js";
 export { Toc, type TocItem, type TocProps } from "./toc/index.js";
 export { Tooltip, type TooltipProps } from "./tooltip/index.js";

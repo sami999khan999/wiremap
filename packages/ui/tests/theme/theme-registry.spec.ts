@@ -11,11 +11,12 @@ describe("ThemeRegistry", () => {
       "plum",
       "midnight",
       "graphite",
+      "wiremap",
     ]);
   });
 
   it("defaults to the palette that also seeds :root", () => {
-    expect(ThemeRegistry.DEFAULT).toBe("slate");
+    expect(ThemeRegistry.DEFAULT).toBe("wiremap");
   });
 
   it("sets the theme attribute and nothing else", () => {

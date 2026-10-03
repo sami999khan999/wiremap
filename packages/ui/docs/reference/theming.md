@@ -62,11 +62,12 @@ approximation — all twelve names resolve to nothing and the page renders as un
 white. Every path that can produce a `(theme, mode)` pair goes through `resolveMode` first: the
 cookie read on the server, and the picker in the browser.
 
-The same defect has a second cause, and `color/slate.css` closes it:
+The same defect has a second cause, and the default theme's file closes it. In wiremap that is
+`color/wiremap.css`:
 
 ```css
 :root,
-[data-theme="slate"][data-mode="light"] { … }
+[data-theme="wiremap"][data-mode="light"] { … }
 ```
 
 A document with no attributes at all — the pre-hydration state of any page rendered without the

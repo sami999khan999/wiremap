@@ -245,3 +245,9 @@ This is the first package in the repository that needs a DOM. `vitest.config.ts`
 `globals: false`.** `@testing-library/react` registers that hook itself only when vitest runs with
 globals; without it a second `render` in the same file leaves the first mounted, and the symptom is
 `getByText` failing with "found multiple elements" in a test that reads correctly.
+
+## Shell primitives
+
+`ActionMenu`, `Avatar`, `Tabs`, `ResizablePanels`, `RoleDot` and the three-way `ThemeToggle` are
+what wiremap's top bar and graph explorer are built from. See
+[Shell primitives](reference/shell-primitives.md).

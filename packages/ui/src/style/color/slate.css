@@ -1,11 +1,6 @@
-/* Slate -- the default, and the ladder every other theme is a hue rotation of.
+/* Slate -- the kit's default, and the ladder every other theme is a hue rotation of.
+   Wiremap's default is wiremap.css, which now carries the :root seed. */
 
-   Its light block also claims :root, so a document carrying no attributes at all still
-   resolves all twelve names. That is the pre-hydration state of any page rendered
-   without the cookie, and without this line every colour there is undefined. :root is
-   specificity (0,1,0) against a theme block's (0,2,0), so it never interferes. */
-
-:root,
 [data-theme="slate"][data-mode="light"] {
   --bg: oklch(0.985 0.002 260); /* page */
   --surface: oklch(1 0 none); /* cards, popovers, modals */

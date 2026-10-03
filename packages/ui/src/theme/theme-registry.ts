@@ -14,6 +14,7 @@ const THEMES = {
   plum: { label: "Plum", modes: ["light", "dark"] },
   midnight: { label: "Midnight", modes: ["dark"] },
   graphite: { label: "Graphite", modes: ["light", "dark"] },
+  wiremap: { label: "Wiremap", modes: ["light", "dark"] },
 } as const satisfies Record<string, ThemeMeta>;
 
 export type ThemeKey = keyof typeof THEMES;
@@ -21,7 +22,8 @@ export type ThemeKey = keyof typeof THEMES;
 export class ThemeRegistry {
   private constructor() {}
 
-  public static readonly DEFAULT: ThemeKey = "slate";
+  // Wiremap's own palette. The kit's six stay selectable.
+  public static readonly DEFAULT: ThemeKey = "wiremap";
 
   public static all(): readonly ThemeKey[] {
     return Object.keys(THEMES) as ThemeKey[];
