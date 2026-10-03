@@ -709,28 +709,33 @@ the same layout.
 
 ### Phase 11 — Integrations
 
-- [ ] `WM11.1` **Public API.**
+- [x] `WM11.1` **Public API.**
   - Mount oRPC's `OpenAPIHandler` at `/api/v1`, with API-key bearer auth, over a read-only subset:
     projects, scans, graph (presigned URL), routes, insights and impact.
   - The spec is served at `/api/v1/openapi.json`, with a docs page.
   - Rate limited per key.
-- [ ] `WM11.2` **CLI, publish-ready.** `wiremap login` (stores an API key in the user config dir),
+  - done: 2026-10-03. `OpenAPIHandler` over the read-only subset of the same routers, so the permission map applies unchanged. Three new reads (`graph.routes`, `graph.insights`, `graph.impact`) answered on the server by `QueryGraphUseCase`. GET only; cookies are dropped, so only a key authenticates. 120 a minute per key. Every `@orpc/*` moved to 1.15.4 together.
+- [x] `WM11.2` **CLI, publish-ready.** `wiremap login` (stores an API key in the user config dir),
   `analyze`, `upload`, `scan` and `mcp`. README, plus an npm `files` allowlist. Publishing is owed
   to the owner.
-- [ ] `WM11.3` **GitHub Action** `apps/action/action.yml`, a composite action. It runs `npx wiremap
+  - done: 2026-10-03. `login` reads the key from stdin and checks it before saving (`0600`); `logout`, `whoami`. The npm package is assembled by `pack:npm` into `apps/cli/dist/npm/` under the name `wiremap`: the workspace root holds that name. Licence `UNLICENSED` until the owner picks one.
+- [x] `WM11.3` **GitHub Action** `apps/action/action.yml`, a composite action. It runs `npx wiremap
   scan` with `api-key` and `project` inputs. An example workflow goes in the docs.
-- [ ] `WM11.4` **MCP server** `wiremap mcp` (`@modelcontextprotocol/sdk`, stdio).
+  - done: 2026-10-03. Inputs reach the shell through `env` only, and globbing is off so `--ignore` patterns pass through as written.
+- [x] `WM11.4` **MCP server** `wiremap mcp` (`@modelcontextprotocol/sdk`, stdio).
   - Tools: `overview`, `find_files`, `dependents`, `dependencies`, `impact`, `routes`,
     `route_for_path` and `cycles`.
   - The source is a local `graph.json` or the remote API. Setup snippets for Claude Code and
     Cursor.
-- [ ] `WM11.5` **VS Code extension** `apps/vscode`.
+  - done: 2026-10-03. **Not the SDK**: JSON-RPC over stdio is written by hand (`initialize`, `ping`, `tools/list`, `tools/call`), because the SDK brings an HTTP server and a second zod to every `npx`. Every tool runs on one document through `@loadbearing/graph`, from a file or the API.
+- [x] `WM11.5` **VS Code extension** `apps/vscode`.
   - A "Wiremap" view: for the active file it shows role, imports, dependents and routes.
   - "Show impact" and "Open in wiremap" commands.
   - It reads a local `graph.json` or the API with a key in SecretStorage.
   - Built with esbuild and packaged with `vsce package`. Marketplace publishing is owed to the
     owner.
-- [ ] `WM11.6` **Outgoing webhooks and Slack.**
+  - done: 2026-10-03. Built with tsup (CJS), staged by `pack.ts` for `vsce`, which cannot read `catalog:` ranges. `engines.vscode` and `@types/vscode` are 1.95. Activation verified against a fake host; the `.vsix` installs into an isolated profile.
+- [x] `WM11.6` **Outgoing webhooks and Slack.**
   - `webhooks` (org, project nullable, kind `generic|slack`, URL, encrypted secret, events[],
     `disabled_at`, `failure_count`).
   - Delivery is a `QueueName.WEBHOOK` job with an HMAC header (`X-Wiremap-Signature`), 8
@@ -738,7 +743,9 @@ the same layout.
   - Slack messages use Block Kit formatting for `scan.succeeded`, `scan.failed` and
     `finding.created`.
   - Page `/settings/webhooks`, with "Send test".
-- [ ] `WM11.7` Specs and docs: `docs/integrations/index.md`, one page each.
+  - done: 2026-10-03. Both the URL and the secret are `SecretCipher` ciphertext, since a Slack URL is a credential. The sender refuses http and any host resolving to a non-public address, follows no redirect, and stops at ten seconds. A DNS-rebinding gap remains (fetch resolves again) and is carried to `WM12.1`.
+- [x] `WM11.7` Specs and docs: `docs/integrations/index.md`, one page each.
+  - done: 2026-10-03. `docs/integrations/`, one page per integration.
 
 ### Phase 12 — Security, privacy and wrap-up
 

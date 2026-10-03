@@ -5,7 +5,7 @@ description: The four documentation trees and what each is for — the rules an 
 
 # Documentation
 
-Four trees, and the split is by **what you need**, not by who is reading.
+Five trees, and the split is by **what you need**, not by who is reading.
 
 | Tree | Is | Read it |
 |---|---|---|
@@ -13,6 +13,7 @@ Four trees, and the split is by **what you need**, not by who is reading.
 | [`opinions/`](opinions/index.md) | The argument behind each rule — the failure it prevents, the worked example | When a rule needs settling or challenging |
 | [`setup/`](setup/index.md) | The build order, from an empty directory to a running app | Once, in order |
 | [`infra/`](infra/index.md) | The running stack and the log pipeline | When something is wrong with it |
+| [`integrations/`](integrations/index.md) | The API, CLI, Action, MCP server, editor extension and webhooks | When connecting something to wiremap |
 
 Beyond these, `packages/<name>/docs/` explains why each package's exports are shaped as they are —
 one reference set per package, next to the code it describes. [`infra/docs/`](../infra/docs/index.md)

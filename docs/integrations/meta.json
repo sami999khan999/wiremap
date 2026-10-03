@@ -1,0 +1,5 @@
+{
+  "title": "integrations",
+  "description": "The REST API, the CLI, the GitHub Action, the MCP server, the VS Code extension and outgoing webhooks",
+  "pages": ["index", "api", "cli", "action", "mcp", "vscode", "webhooks"]
+}
