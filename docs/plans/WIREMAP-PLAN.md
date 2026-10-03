@@ -418,7 +418,7 @@ horizontal scroll at 375 px.
 
 ### Phase 5 — Graph format and analyzer
 
-- [ ] `WM5.1` **`GraphDocument` v1** (`contracts/src/graph/`) holds:
+- [x] `WM5.1` **`GraphDocument` v1** (`contracts/src/graph/`) holds:
   - `meta`: repos, commits, branches, analyzer version and timings;
   - `languages`, `frameworks` and `files` (path, repo, language, role, loc, exports);
   - `edges` (from, to, kind, `certain`, and the specifier for unresolved ones);
@@ -428,7 +428,7 @@ horizontal scroll at 375 px.
   - `insights`.
 
   Docs: `packages/contracts/docs/reference/graph.md`.
-- [ ] `WM5.2` **`@loadbearing/graph`.** It is isomorphic, sits between `contracts` and
+- [x] `WM5.2` **`@loadbearing/graph`.** It is isomorphic, sits between `contracts` and
   `application` in the layering diagram, and has no dependencies besides `contracts`. `GraphIndex`
   provides:
   - adjacency both ways;
@@ -441,21 +441,25 @@ horizontal scroll at 375 px.
 
   It is linear in nodes plus edges, with specs and a 20,000-file benchmark. Update
   `layering.md`, `docs/opinions/folders.md` and the Biome server-only list.
-- [ ] `WM5.3` **`@loadbearing/analyzer` core.**
+  - done: 2026-10-03. `cycles()` is iterative Tarjan; the 20,000-file benchmark runs in about
+    300 ms against a 3 s budget.
+- [x] `WM5.3` **`@loadbearing/analyzer` core.**
   - `Analyzer.run(root, options)`, with a `LanguageParser` seam and a `FrameworkPlugin` seam.
   - Detection from `package.json`, `composer.json` and file extensions.
   - Ignore globs plus `.gitignore`.
   - Workspaces: pnpm, npm and yarn workspaces, and composer path repos.
   - The output passes `GraphDocument.parse`.
-- [ ] `WM5.4` **TypeScript and JavaScript parser** (ts-morph).
+- [x] `WM5.4` **TypeScript and JavaScript parser** (ts-morph).
   - Imports, re-exports, dynamic `import()` with a literal, and `require`.
   - Resolution through the tsconfig (`paths`, `baseUrl`, project references, the
     `settings.tsconfigPath` override) and workspace package names.
   - Exports per file. Coverage counts.
-- [ ] `WM5.5` **PHP parser** (`web-tree-sitter` + `tree-sitter-php` WASM).
+  - done: 2026-10-03. **Deviation:** the TypeScript compiler API directly (`createSourceFile`,
+    `resolveModuleName`), not ts-morph, which wraps the same calls and needs no program here.
+- [x] `WM5.5` **PHP parser** (`web-tree-sitter` + `tree-sitter-php` WASM).
   - `use` and `require`/`include` statements, resolved through the PSR-4 map in `composer.json`.
   - Classes and their methods as exports.
-- [ ] `WM5.6` **Role classification.** Path and name rules, plus plugin signals such as decorators
+- [x] `WM5.6` **Role classification.** Path and name rules, plus plugin signals such as decorators
   and base classes. The roles are:
   - controller, resolver, gateway, service, repository, entity, dto, module;
   - guard, interceptor, pipe, filter, middleware, model;
@@ -464,7 +468,7 @@ horizontal scroll at 375 px.
   - utility, test, types, config, source.
 
   The role list shown is per framework, as in the screenshot.
-- [ ] `WM5.7` **Plugins.**
+- [x] `WM5.7` **Plugins.**
   - **Next.js:** `app/**/page|route`, `pages/**` and `pages/api/**`, with methods from route
     exports, and `middleware.ts`.
   - **TanStack Start:** `createFileRoute` paths and `server.handlers`, and `createServerFn`.
@@ -475,26 +479,30 @@ horizontal scroll at 375 px.
     `resource`), plus controller links.
   - **Ground truth:** an `openapi.{json,yaml}` found in the repo replaces the static routes it
     covers. With `--artisan`, `php artisan route:list --json` does the same.
-- [ ] `WM5.8` **Frontend → backend matching.**
+  - done: 2026-10-03. Nest also reads `consumer.apply(X).forRoutes(...)` as guards, which is how
+    nestjs-realworld authenticates. OpenAPI routes in a repository with no framework are `other`.
+- [x] `WM5.8` **Frontend → backend matching.**
   - Calls: `fetch`, `axios`, `ky` and `ofetch`, with literal or template URLs normalised to
     `/a/:param`.
   - Each call is matched against every route in the project, across repos.
   - An exact match is `certain`, and a template or prefix-only match is not.
-- [ ] `WM5.9` **Insights at scan time:**
+- [x] `WM5.9` **Insights at scan time:**
   - most depended-on;
   - cycles;
   - unused files and exports (entry points come from plugins and `package.json`);
   - routes without a guard or auth middleware (per framework: Nest guards, Laravel `auth*`
     middleware, Next middleware matchers).
-- [ ] `WM5.10` **Fixtures and specs.**
+- [x] `WM5.10` **Fixtures and specs.**
   - `packages/analyzer/tests/fixture/` holds a small NestJS app (shaped like nestjs-realworld), a
     Next.js app, a TanStack Start app, a Laravel app and a pnpm monorepo.
   - Golden `GraphDocument` snapshots.
   - Each plugin's routes, with file and line, are asserted.
-- [ ] `WM5.11` **`apps/cli`** (`wiremap`, bin), with commander-free argument parsing.
+- [x] `WM5.11` **`apps/cli`** (`wiremap`, bin), with commander-free argument parsing.
   - `wiremap analyze [dir] --out graph.json` works with no account.
   - Bundled with tsup into one ESM file. The WASM grammars are copied next to it.
 
+  - done: 2026-10-03. The workspace package is `@loadbearing/cli` with the bin `wiremap`: the
+    root already holds the name. The npm name is chosen at publish (`WM11.2`).
 **Exit.** `wiremap analyze` on a clone of `lujakob/nestjs-realworld-example-app` reports 21 routes
 and a coverage line like the screenshot's, and every fixture snapshot passes.
 
