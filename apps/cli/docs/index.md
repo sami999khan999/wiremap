@@ -6,8 +6,9 @@ description: Analyze a repository into a graph on your own machine — the comma
 # wiremap CLI
 
 `apps/cli` is the analyzer's only host. Its workspace package is `@loadbearing/cli`, and its bin
-is `wiremap`. The npm name is chosen when it is published (`WM11.2`): the repository root already
-holds the name `wiremap`.
+is `wiremap`. It is published to npm as `wiremap`: the repository root already holds that name
+inside the workspace, so `pnpm --filter @loadbearing/cli pack:npm` writes the npm package to
+`dist/npm/` with the name, the catalog's ranges and the README filled in.
 
 ```bash
 pnpm --filter @loadbearing/cli build
@@ -71,3 +72,28 @@ the analyzer finds the grammar in its own dependencies instead.
 
 Arguments are parsed by hand in `src/cli/arguments.ts`, without commander. Five flags do not
 justify a dependency that is most of a small bundle.
+
+## Signing in
+
+`wiremap login --server <url>` reads an API key from stdin. The key is typed or piped, so it
+never lands in shell history. The CLI checks the key against `/api/v1/projects` before saving
+it. It saves the server and the key to `$XDG_CONFIG_HOME/wiremap/credentials.json` (or
+`~/.config`, or `%APPDATA%`) with mode `0600`. `logout` deletes the file. `whoami` prints the
+server and the projects the key reads.
+
+`upload`, `scan` and `mcp` take the server and the key in this order:
+1. `--server` and `--api-key`;
+2. `WIREMAP_SERVER` and `WIREMAP_API_KEY`;
+3. the saved login.
+
+A CI job sets the environment and never logs in.
+
+## Publishing
+
+```bash
+pnpm --filter @loadbearing/cli pack:npm
+cd apps/cli/dist/npm && npm publish
+```
+
+The package's licence is `UNLICENSED` until the owner chooses one. Publishing is the owner's
+step, from their npm account.

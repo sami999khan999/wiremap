@@ -1,3 +1,4 @@
+import type { CliEnv } from "../env.js";
 import {
   Analyzer,
   existsSync,
@@ -13,6 +14,8 @@ import {
 } from "../import.js";
 import { Arguments, type ParsedArguments } from "./arguments.js";
 import { Git } from "./git.js";
+import { Profile } from "./profile.js";
+import { PublicClient } from "./public-client.js";
 import { type Checkout, ScanClient } from "./scan-client.js";
 
 export interface CliIo {
@@ -20,6 +23,14 @@ export interface CliIo {
   readonly err: (text: string) => void;
   readonly cwd: string;
   readonly fetch?: typeof fetch;
+  readonly env?: CliEnv;
+  // One line from stdin, for a key typed rather than left in the shell's history.
+  readonly readLine?: () => Promise<string | null>;
+}
+
+interface Credentials {
+  readonly server: string;
+  readonly apiKey: string;
 }
 
 const VERSION = "0.1.0";
@@ -31,6 +42,9 @@ Usage:
   wiremap analyze [dir] [options]   Read a repository and write its graph
   wiremap upload <graph> [options]  Send a graph you built to a project
   wiremap scan [dir] [options]      analyze, then upload
+  wiremap login --server <url>      Save a server and an API key for the commands below
+  wiremap logout                    Forget them
+  wiremap whoami                    Which server, and what the key can read
   wiremap runner [options]          What a scan workflow runs (see docs/infra/scan-runner.md)
 
 Options:
@@ -40,15 +54,16 @@ Options:
   --tsconfig <path>       Resolve every file with this tsconfig, relative to dir
   --artisan               Read Laravel routes from 'php artisan route:list' (needs PHP and vendor/)
   --pretty                Indent the JSON
-  --server <url>          The wiremap server (upload, scan, runner)
-  --api-key <key>         An API key holding project.scan.run (upload, scan)
+  --server <url>          The wiremap server. Default: WIREMAP_SERVER, then the saved login
+  --api-key <key>         An API key. Default: WIREMAP_API_KEY, then the saved login
   --project <slug>        The project's URL name (upload, scan)
   --branch <name>         The branch the graph was built from (upload, scan)
   --commit <sha>          The commit the graph was built from (upload, scan)
   -h, --help              This text
   -v, --version           The version
 
-Nothing leaves your machine: analyze reads the code and writes a file.
+Nothing leaves your machine: analyze reads the code and writes a file. Only upload and
+scan send anything, and what they send is the graph, never the source.
 `;
 
 // The command line. `run` returns the exit code rather than exiting, so a spec drives it.
@@ -81,6 +96,12 @@ export class Cli {
           return await Cli.scan(parsed, io);
         case "runner":
           return await Cli.runner(parsed, io);
+        case "login":
+          return await Cli.login(parsed, io);
+        case "logout":
+          return await Cli.logout(io);
+        case "whoami":
+          return await Cli.whoami(parsed, io);
         default:
           io.err(`Unknown command: ${parsed.command}\n\n${HELP}`);
           return 2;
@@ -150,7 +171,8 @@ export class Cli {
     io: CliIo,
     bytes: Uint8Array,
   ): Promise<number> {
-    const [server, apiKey, project] = Cli.required(parsed, ["server", "api-key", "project"]);
+    const [project] = Cli.required(parsed, ["project"]);
+    const { server, apiKey } = await Cli.credentials(parsed, io);
     const client = new ScanClient(server, io.fetch);
     const upload = await client.createUpload(apiKey, {
       project,
@@ -161,6 +183,58 @@ export class Cli {
     const { state } = await client.complete(upload.completeUrl, upload.token);
     io.err(`Uploaded to ${project}: scan ${state}.\n`);
     return state === "succeeded" ? 0 : 1;
+  }
+
+  // The key is checked against the server before it is saved, so a typo fails here and
+  // not on the first upload.
+  private static async login(parsed: ParsedArguments, io: CliIo): Promise<number> {
+    const configHome = io.env?.configHome ?? null;
+    if (!configHome) throw new Error("No config folder: set XDG_CONFIG_HOME or HOME.");
+    const saved = await Profile.read(configHome);
+    const server = Arguments.one(parsed, "server") ?? io.env?.server ?? saved?.server ?? null;
+    if (!server) throw new Error("login needs --server <url>, the wiremap you sign in to.");
+    let apiKey = Arguments.one(parsed, "api-key");
+    if (!apiKey) {
+      io.err("API key (create one under Settings, API keys): ");
+      apiKey = (await io.readLine?.())?.trim() || null;
+    }
+    if (!apiKey) throw new Error("No API key given.");
+    const page = await new PublicClient(server, apiKey, io.fetch).get<{ total: number }>(
+      "/projects",
+      { limit: "1" },
+    );
+    const file = await Profile.save(configHome, { server, apiKey });
+    io.err(`Signed in to ${server}. The key reads ${page.total} projects.\nSaved to ${file}\n`);
+    return 0;
+  }
+
+  private static async logout(io: CliIo): Promise<number> {
+    const configHome = io.env?.configHome ?? null;
+    const cleared = configHome ? await Profile.clear(configHome) : false;
+    io.err(cleared ? "Signed out.\n" : "Not signed in.\n");
+    return 0;
+  }
+
+  private static async whoami(parsed: ParsedArguments, io: CliIo): Promise<number> {
+    const { server, apiKey } = await Cli.credentials(parsed, io);
+    const page = await new PublicClient(server, apiKey, io.fetch).get<{
+      items: readonly { slug: string }[];
+      total: number;
+    }>("/projects", { limit: "100" });
+    io.out(`${server}\n${page.total} projects: ${page.items.map((p) => p.slug).join(", ")}\n`);
+    return 0;
+  }
+
+  // A flag, then the environment, then the saved login: the order a CI job expects.
+  public static async credentials(parsed: ParsedArguments, io: CliIo): Promise<Credentials> {
+    const saved = await Profile.read(io.env?.configHome ?? null);
+    const server = Arguments.one(parsed, "server") ?? io.env?.server ?? saved?.server ?? null;
+    const apiKey = Arguments.one(parsed, "api-key") ?? io.env?.apiKey ?? saved?.apiKey ?? null;
+    if (!server || !apiKey)
+      throw new Error(
+        "Not signed in: run `wiremap login --server <url>`, or pass --server and --api-key.",
+      );
+    return { server, apiKey };
   }
 
   // One value per name, in order, typed as a tuple of the same length.

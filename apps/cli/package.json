@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "tsx src/main.ts",
     "build": "tsup",
+    "pack:npm": "tsup && tsx pack.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rimraf dist"
