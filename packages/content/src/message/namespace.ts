@@ -12,6 +12,7 @@ import type { nav } from "./en/nav.js";
 import type { notification } from "./en/notification.js";
 import type { organization } from "./en/organization.js";
 import type { platform } from "./en/platform.js";
+import type { project } from "./en/project.js";
 import type { role } from "./en/role.js";
 import type { team } from "./en/team.js";
 
@@ -32,6 +33,7 @@ interface NamespaceShape {
   readonly doc: typeof doc;
   readonly team: typeof team;
   readonly activity: typeof activity;
+  readonly project: typeof project;
   readonly error: typeof error;
   readonly email: typeof email;
 }
@@ -53,7 +55,8 @@ export type ClientNamespace =
   | "platform"
   | "doc"
   | "team"
-  | "activity";
+  | "activity"
+  | "project";
 // Never reachable from a client catalog — only `SERVER_CATALOG` carries a loader for it.
 export type ServerNamespace = "email";
 export type Namespace = ClientNamespace | ServerNamespace;
@@ -93,4 +96,5 @@ export const CLIENT_NAMESPACES: readonly ClientNamespace[] = [
   "doc",
   "team",
   "activity",
+  "project",
 ];

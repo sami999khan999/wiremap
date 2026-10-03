@@ -38,6 +38,7 @@ export const nav = {
   "nav.members": "Members",
   "nav.apiKeys": "API keys",
   "nav.teams": "Teams",
+  "nav.projects": "Projects",
   "nav.audit": "Audit log",
   "nav.documents": "Documents",
   "nav.notifications": "Notifications",

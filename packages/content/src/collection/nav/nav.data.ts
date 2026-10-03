@@ -12,6 +12,7 @@ interface NavRecord {
 }
 
 const ITEMS = [
+  { module: "project", labelKey: "nav.projects", icon: "folder", order: 1 },
   { module: "rbac", labelKey: "nav.roles", icon: "check", order: 10 },
   { module: "member", labelKey: "nav.members", icon: "user", order: 20 },
   { module: "team", labelKey: "nav.teams", icon: "team", order: 25 },
