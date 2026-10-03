@@ -3,11 +3,17 @@ import { Identifiers, Keyset } from "../primitive/index.js";
 
 // A closed enum, and it is a wire shape rather than an implementation detail: the client
 // renders copy from `kind`, so adding one without copy is a compile error there.
-const kind = z.enum(["member.joined", "member.role.changed"]);
+const kind = z.enum([
+  "member.joined",
+  "member.role.changed",
+  "scan.failed",
+  "finding.created",
+  "comment.created",
+]);
 
 // What a preference is set against. Coarser than `kind` on purpose — a person choosing
 // how they are contacted is not choosing per message type, they are choosing per topic.
-const category = z.enum(["membership"]);
+const category = z.enum(["membership", "scans", "comments"]);
 
 const channel = z.enum(["in_app", "email"]);
 

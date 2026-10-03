@@ -4,6 +4,7 @@ export {
   ActivityEntity,
   type ActivityListQuery,
   ActivityProcedures,
+  type ProjectActivityQuery,
 } from "./activity/index.js";
 export {
   ApiKeyContract,
@@ -23,6 +24,18 @@ export {
   type AskQuestionInput,
   type UpdateAiSettingsInput,
 } from "./ask/index.js";
+export {
+  COMMENT_TARGETS,
+  CommentContract,
+  type CommentDto,
+  type CommentListInput,
+  CommentProcedures,
+  type CommentRefInput,
+  type CommentTarget,
+  type CreateCommentInput,
+  type ToggleCommentInput,
+  type UpdateCommentInput,
+} from "./comment/index.js";
 export {
   type CreateDocPageInput,
   type CreateDocSpaceInput,
@@ -207,6 +220,7 @@ export {
 } from "./platform/index.js";
 export {
   type ApiKeyId,
+  type CommentId,
   type DocPageId,
   type DocSpaceId,
   type DomainId,

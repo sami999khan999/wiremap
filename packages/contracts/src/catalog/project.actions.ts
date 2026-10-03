@@ -8,6 +8,8 @@ export const projectActions = {
   "project.access.granted": { label: "Project access granted" },
   "project.access.revoked": { label: "Project access revoked" },
   "ai.settings.updated": { label: "AI settings changed" },
+  "comment.created": { label: "Comment added" },
+  "comment.removed": { label: "Comment deleted" },
   "scan.requested": { label: "Scan started" },
   "scan.uploaded": { label: "Graph uploaded" },
   "github.installation.bound": { label: "GitHub connected" },

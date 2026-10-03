@@ -1,6 +1,7 @@
 export { Envelope } from "./envelope.js";
 export {
   type ApiKeyId,
+  type CommentId,
   type DocPageId,
   type DocSpaceId,
   type DomainId,

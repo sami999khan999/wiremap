@@ -29,4 +29,10 @@ export const projectProcedurePermissions = {
   "ask.testKey": "organization.ai.manage",
   "ask.available": "member.read",
   "ask.question": "project.ask.use",
+  "comment.list": "project.graph.read",
+  "comment.create": "project.comment.write",
+  "comment.update": "project.comment.write",
+  "comment.remove": "project.comment.write",
+  "comment.resolve": "project.comment.write",
+  "comment.pin": "project.comment.write",
 } as const satisfies Record<string, PermissionKey>;

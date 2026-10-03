@@ -23,7 +23,13 @@ export class ActivityContract {
     from: z.date().optional(),
     to: z.date().optional(),
   });
+
+  // One project's feed. No other filter: it is a timeline, not a search.
+  public static readonly projectQuery = Keyset.query.extend({
+    projectId: Identifiers.projectId,
+  });
 }
 
 export type ActivityDto = z.infer<typeof ActivityContract.entity>;
 export type ActivityListQuery = z.infer<typeof ActivityContract.listQuery>;
+export type ProjectActivityQuery = z.infer<typeof ActivityContract.projectQuery>;

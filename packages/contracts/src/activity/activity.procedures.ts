@@ -10,7 +10,13 @@ export class ActivityProcedures {
     .input(ActivityContract.listQuery)
     .output(Keyset.page(ActivityContract.entity));
 
+  public static readonly project = oc
+    .route({ method: "GET", path: "/projects/{projectId}/activity" })
+    .input(ActivityContract.projectQuery)
+    .output(Keyset.page(ActivityContract.entity));
+
   public static readonly all = {
     list: ActivityProcedures.list,
+    project: ActivityProcedures.project,
   } as const;
 }
