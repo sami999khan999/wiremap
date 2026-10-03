@@ -5,6 +5,7 @@ import { CommentProcedures } from "../comment/index.js";
 import { DocGrantProcedures, DocPageProcedures, DocSpaceProcedures } from "../doc/index.js";
 import { DocumentProcedures } from "../document/index.js";
 import { GithubProcedures } from "../github/index.js";
+import { GraphProcedures } from "../graph/index.js";
 import type { AnyContractRouter } from "../import.js";
 import { MemberProcedures } from "../member/index.js";
 import { NotificationProcedures } from "../notification/index.js";
@@ -40,6 +41,7 @@ export const contract = {
   view: ViewProcedures.all,
   ask: AskProcedures.all,
   comment: CommentProcedures.all,
+  graph: GraphProcedures.all,
   github: GithubProcedures.all,
 } as const satisfies AnyContractRouter;
 

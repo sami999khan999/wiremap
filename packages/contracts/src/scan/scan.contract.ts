@@ -64,8 +64,8 @@ export class ScanContract {
 
   public static readonly graphQuery = z.object({
     projectId: Identifiers.projectId,
-    // Absent: the latest scan that succeeded.
-    scanId: Identifiers.scanId.nullable(),
+    // Null or absent: the latest that succeeded. A GET in the public API cannot send `null`.
+    scanId: Identifiers.scanId.nullable().default(null),
   });
 
   // A short-lived signed URL to the gzipped `GraphDocument`; immutable, so cached by scan id.
