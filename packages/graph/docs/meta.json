@@ -1,0 +1,5 @@
+{
+  "title": "graph",
+  "description": "GraphIndex and GraphDiff — the traversal, cycle, aggregation and diff algorithms the explorer, the server and the CLI share",
+  "pages": ["index", "reference"]
+}
