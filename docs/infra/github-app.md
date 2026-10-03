@@ -113,6 +113,46 @@ retry, so a 5xx would only fill its delivery log.
 | `repository` | `renamed` / `transferred` | every project tracking it follows the new name |
 | `push` | | ignored until scans exist (`WM6.5`), then a scan on a tracked branch |
 
+## On your own machine (the single container)
+
+The container runs at `http://localhost:43000`, and GitHub accepts `localhost` for an App's
+URLs. Register a separate App for it, because an App has one set of URLs:
+
+| Field | Value |
+|---|---|
+| Homepage URL | `http://localhost:43000` |
+| Callback URLs | first `http://localhost:43000/api/github/setup`, then `http://localhost:43000/api/auth/callback/github` |
+| Request user authorization (OAuth) during installation | ticked |
+| Webhook | **Active unticked**, unless you run the tunnel below |
+
+The permissions are the same as above. Put the App's keys in the env file the container starts
+with: `GITHUB_APP_ID`, `GITHUB_APP_SLUG`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`,
+`GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`.
+
+Everything except webhooks works this way:
+- Connecting happens in your browser, which reaches `localhost`.
+- Reading repositories and minting tokens are calls the container makes outward.
+- Scans run inside the container (`SCAN_RUNNER=local`).
+
+GitHub cannot deliver a push to a machine it cannot reach, so the container polls instead.
+
+**Polling, on by default.** Each hourly tick reads the head of every tracked branch and scans the
+ones that moved, so a push is scanned within the hour. That costs two API calls per tracked
+branch per hour, well inside an installation's 5,000. An installation that has delivered a
+webhook in the last day is skipped, since webhooks already cover it. `GITHUB_POLLING=false`
+turns polling off.
+
+**A Cloudflare Tunnel, for scans within seconds.** In the Cloudflare dashboard, go to **Zero
+Trust → Networks → Tunnels → Create a tunnel** (free). Route a hostname you own, such as
+`wiremap.example.com`, to `http://localhost:43000`. Then:
+1. Start the container with `CLOUDFLARE_TUNNEL_TOKEN=<the tunnel's token>` and
+   `WIREMAP_PUBLIC_URL=https://wiremap.example.com`.
+2. In the App, change every `localhost` URL above to that hostname. Tick **Active** for the
+   webhook, with URL `https://wiremap.example.com/api/github/webhook`.
+
+The tunnel uses no cron trigger and no open port: `cloudflared` dials out. From then on, use
+the public hostname in your browser too, because sign-in cookies are set for it.
+
 ## Costs
 
 None. GitHub Apps are free. A scan's Actions minutes are counted in [free tier](free-tier.md).

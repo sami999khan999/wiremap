@@ -220,17 +220,18 @@ one port and one public hostname.
 
 ### Phase 4 — GitHub from a private machine
 
-- [ ] `SH4.1` **The GitHub App for localhost.** `docs/infra/github-app.md` gets a self-hosted
+- [x] `SH4.1` **The GitHub App for localhost.** `docs/infra/github-app.md` gets a self-hosted
   section:
   - Homepage `http://localhost:43000`.
   - Callback URLs `http://localhost:43000/api/github/setup` first, then
     `http://localhost:43000/api/auth/callback/github`.
   - "Request user authorization during installation" ticked.
   - Webhook inactive unless the tunnel is used.
+  - done: 2026-10-04. `docs/infra/github-app.md`, "On your own machine". Registering it against localhost is owed by hand (`TESTS.md`).
 
   The App's keys go in the env file. GitHub accepts `localhost` callbacks, and the owner checks
   this when registering (`TESTS.md`).
-- [ ] `SH4.2` **Branch polling, the default without a tunnel.**
+- [x] `SH4.2` **Branch polling, the default without a tunnel.**
   - The hourly `scan-schedule` job (`MaintenanceConsumer.scanSchedule`, which claims due
     projects and calls `TriggerScanUseCase`) gains a step. It moves into a use-case of its own,
     `PollTrackedBranchesUseCase`, so it can be specced. For each tracked repository whose
@@ -242,15 +243,18 @@ one port and one public hostname.
   - Specs: a moved head queues one scan and an unchanged head queues none. A recent webhook
     delivery stops polling. One installation's failure does not stop the others.
   - Docs: `packages/application/docs/reference/scan.md`.
-- [ ] `SH4.3` **Cloudflare Tunnel, optional.**
+  - done: 2026-10-04. `PollTrackedBranchesUseCase` on the hourly `scan-schedule` tick. Heads are kept in the cache a week; a head seen for the first time is recorded, not scanned. A verified webhook marks its installation for a day and polling skips it. Specs: application (4), the GitHub call, and the cross-tenant read against Postgres.
+- [x] `SH4.3` **Cloudflare Tunnel, optional.**
   - With `CLOUDFLARE_TUNNEL_TOKEN` (a tunnel made in the Cloudflare dashboard, routing a
     hostname to `http://localhost:43000`), `cloudflared` runs.
   - `APP_BASE_URL`, `AUTH_URL` and `AUTH_TRUSTED_ORIGINS` take the public hostname.
   - The App's webhook URL becomes `https://<hostname>/api/github/webhook`.
   - The doc covers the dashboard steps and what changes in the App's settings.
+  - done: 2026-10-04. `CLOUDFLARE_TUNNEL_TOKEN` starts `cloudflared`, and `WIREMAP_PUBLIC_URL` moves every URL to the tunnel's hostname. Running a real tunnel is owed by hand.
 - [ ] `SH4.4` **Scans in the container, verified.** The local runner runs on a real
   repository: checkout, a one-commit clone, analyze, a stored graph, and the clone deleted.
   The log shows counts only, with no paths from the repository.
+  - Owed by hand: it needs a registered GitHub App. The container side is ready (`SCAN_RUNNER=local`, `git` and the CLI in the image, the worker now starting runners).
 
 ### Phase 5 — Running it day to day
 
