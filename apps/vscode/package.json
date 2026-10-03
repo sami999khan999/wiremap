@@ -1,0 +1,106 @@
+{
+  "name": "wiremap-vscode",
+  "displayName": "wiremap",
+  "description": "See how the file you are editing is wired: its role, its imports, what depends on it, and the routes it serves.",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "publisher": "wiremap",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sami999khan999/wiremap.git"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/main.cjs",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "wiremap.file",
+          "name": "wiremap"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "wiremap.showImpact",
+        "title": "Show impact of this file",
+        "category": "wiremap"
+      },
+      {
+        "command": "wiremap.openInWiremap",
+        "title": "Open this file in wiremap",
+        "category": "wiremap"
+      },
+      {
+        "command": "wiremap.setApiKey",
+        "title": "Set API key",
+        "category": "wiremap"
+      },
+      {
+        "command": "wiremap.reload",
+        "title": "Reload the graph",
+        "category": "wiremap",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "wiremap.reload",
+          "when": "view == wiremap.file",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "wiremap",
+      "properties": {
+        "wiremap.graphFile": {
+          "type": "string",
+          "default": "graph.json",
+          "description": "A graph written by `wiremap analyze`, relative to the workspace folder. Used before the server when it exists."
+        },
+        "wiremap.server": {
+          "type": "string",
+          "default": "",
+          "description": "The wiremap server, such as https://wiremap.example."
+        },
+        "wiremap.project": {
+          "type": "string",
+          "default": "",
+          "description": "The project's URL name in wiremap."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "tsup && tsx pack.ts && cd dist/extension && vsce package --no-dependencies --skip-license --out ../wiremap.vsix",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@loadbearing/contracts": "workspace:*",
+    "@loadbearing/graph": "workspace:*",
+    "@loadbearing/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/vscode": "catalog:",
+    "@vscode/vsce": "catalog:",
+    "rimraf": "catalog:",
+    "tsup": "catalog:",
+    "tsx": "catalog:",
+    "vitest": "catalog:"
+  }
+}
