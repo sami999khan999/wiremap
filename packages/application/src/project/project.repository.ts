@@ -93,6 +93,16 @@ export interface TrackingProject {
   readonly branches: readonly string[];
 }
 
+// A connected repository and the branches it is scanned on, for the polling tick.
+export interface PolledRepository {
+  readonly organizationId: OrganizationId;
+  readonly projectId: ProjectId;
+  readonly repositoryId: RepositoryId;
+  readonly installationId: number;
+  readonly fullName: string;
+  readonly branches: readonly string[];
+}
+
 export abstract class ProjectRepository {
   // Every live project of the tenant, repositories included. The use-case filters it to
   // what the viewer may read; there are tens per tenant, not thousands.
@@ -187,4 +197,8 @@ export abstract class ProjectRepository {
     provider: "github",
     externalId: string,
   ): Promise<readonly TrackingProject[]>;
+
+  // Every connected GitHub repository of a live project, across tenants, with its branches
+  // (the default branch when none were picked). Read by the hourly tick, never a request.
+  public abstract polledRepositories(): Promise<readonly PolledRepository[]>;
 }

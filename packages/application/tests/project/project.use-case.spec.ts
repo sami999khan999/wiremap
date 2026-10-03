@@ -53,6 +53,9 @@ import {
 } from "../support/wiremap-fakes.js";
 
 class MemoryProjects extends ProjectRepository {
+  public polledRepositories() {
+    return Promise.resolve([]);
+  }
   public readonly rows: ProjectRecord[] = [];
   public readonly grantRows: (ProjectGrantRecord & { projectId: ProjectId })[] = [];
   public readonly deleted = new Set<string>();
@@ -191,6 +194,9 @@ class FakeProvider extends RepositoryProvider {
   }
   public installation(installationId: number): Promise<ProviderInstallation | null> {
     return Promise.resolve({ installationId, accountLogin: "acme" });
+  }
+  public branchHead() {
+    return Promise.resolve(null);
   }
   // The person behind code "mine" can see installation 9 and nothing else.
   public installationsOfUser(code: string) {

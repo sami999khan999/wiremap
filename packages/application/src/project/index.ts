@@ -20,6 +20,7 @@ export {
 } from "./manage-project-repository.use-case.js";
 export {
   type NewRepository,
+  type PolledRepository,
   type ProjectFields,
   type ProjectGrantRecord,
   type ProjectRecord,

@@ -35,6 +35,13 @@ export abstract class RepositoryProvider {
 
   public abstract branches(installationId: number, fullName: string): Promise<readonly string[]>;
 
+  // The commit a branch points at now, or null when the branch is gone.
+  public abstract branchHead(
+    installationId: number,
+    fullName: string,
+    branch: string,
+  ): Promise<string | null>;
+
   // A read-only token for one repository, minted per use and never stored.
   public abstract readToken(
     installationId: number,

@@ -7,6 +7,7 @@ export { FindingRules } from "./finding-rules.js";
 export { GetGraphUseCase, type GraphLink } from "./get-graph.use-case.js";
 export { type ArchiveRead, GraphArchive } from "./graph-archive.js";
 export { ListScansUseCase } from "./list-scans.use-case.js";
+export { type PollTarget, PollTrackedBranchesUseCase } from "./poll-tracked-branches.use-case.js";
 export { QueryGraphUseCase } from "./query-graph.use-case.js";
 export { type QueueScanInput, QueueScanUseCase } from "./queue-scan.use-case.js";
 export { RunScanUseCase } from "./run-scan.use-case.js";
