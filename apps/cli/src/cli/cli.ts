@@ -4,24 +4,34 @@ import {
   fileURLToPath,
   type GraphDocument,
   gzipSync,
+  mkdtemp,
   nodePath,
+  readFile,
+  rm,
+  tmpdir,
   writeFile,
 } from "../import.js";
 import { Arguments, type ParsedArguments } from "./arguments.js";
+import { Git } from "./git.js";
+import { type Checkout, ScanClient } from "./scan-client.js";
 
 export interface CliIo {
   readonly out: (text: string) => void;
   readonly err: (text: string) => void;
   readonly cwd: string;
+  readonly fetch?: typeof fetch;
 }
 
 const VERSION = "0.1.0";
-const BOOLEANS = new Set(["help", "version", "artisan", "pretty"]);
+const BOOLEANS = new Set(["help", "version", "artisan", "pretty", "mask"]);
 
 const HELP = `wiremap ${VERSION}
 
 Usage:
   wiremap analyze [dir] [options]   Read a repository and write its graph
+  wiremap upload <graph> [options]  Send a graph you built to a project
+  wiremap scan [dir] [options]      analyze, then upload
+  wiremap runner [options]          What a scan workflow runs (see docs/infra/scan-runner.md)
 
 Options:
   -o, --out <file>        Write the graph here (.json, or .json.gz to compress). Default: stdout
@@ -30,6 +40,11 @@ Options:
   --tsconfig <path>       Resolve every file with this tsconfig, relative to dir
   --artisan               Read Laravel routes from 'php artisan route:list' (needs PHP and vendor/)
   --pretty                Indent the JSON
+  --server <url>          The wiremap server (upload, scan, runner)
+  --api-key <key>         An API key holding project.scan.run (upload, scan)
+  --project <slug>        The project's URL name (upload, scan)
+  --branch <name>         The branch the graph was built from (upload, scan)
+  --commit <sha>          The commit the graph was built from (upload, scan)
   -h, --help              This text
   -v, --version           The version
 
@@ -56,11 +71,119 @@ export class Cli {
       io.out(HELP);
       return parsed.command === null && !parsed.switches.has("help") ? 2 : 0;
     }
-    if (parsed.command !== "analyze") {
-      io.err(`Unknown command: ${parsed.command}\n\n${HELP}`);
-      return 2;
+    try {
+      switch (parsed.command) {
+        case "analyze":
+          return await Cli.analyze(parsed, io);
+        case "upload":
+          return await Cli.upload(parsed, io);
+        case "scan":
+          return await Cli.scan(parsed, io);
+        case "runner":
+          return await Cli.runner(parsed, io);
+        default:
+          io.err(`Unknown command: ${parsed.command}\n\n${HELP}`);
+          return 2;
+      }
+    } catch (error) {
+      io.err(`${(error as Error).message}\n`);
+      return 1;
     }
-    return Cli.analyze(parsed, io);
+  }
+
+  // The scan workflow's one step. Only counts are printed: the target repository's paths
+  // never reach a run log, which may be public.
+  private static async runner(parsed: ParsedArguments, io: CliIo): Promise<number> {
+    const [server, ref, token] = Cli.required(parsed, ["server", "scan", "token"]);
+    const client = new ScanClient(server, io.fetch);
+    const workdir = await mkdtemp(nodePath.join(tmpdir(), "wiremap-scan-"));
+    try {
+      const checkout = await client.step<Checkout>(ref, token, "checkout");
+      if (parsed.switches.has("mask"))
+        for (const each of checkout.repositories) io.out(`::add-mask::${each.token}\n`);
+      const repositories = [];
+      for (const each of checkout.repositories) {
+        const root = nodePath.join(workdir, each.name);
+        const commit = await Git.clone(each.fullName, each.ref, each.token, root);
+        repositories.push({ name: each.fullName, root, commit, branch: each.ref });
+      }
+      if (repositories.length === 0) throw new Error("The project has no repositories to scan.");
+      const doc = await Analyzer.run({
+        repositories,
+        ignore: checkout.ignore,
+        tsconfigPath: checkout.tsconfigPath,
+        version: VERSION,
+        ...Cli.grammar(),
+      });
+      const { url } = await client.step<{ url: string }>(ref, token, "upload");
+      await client.put(url, gzipSync(JSON.stringify(doc)));
+      const { state } = await client.step<{ state: string }>(ref, token, "complete");
+      io.err(`${Cli.summary(doc)}\nScan ${state}.\n`);
+      return state === "succeeded" ? 0 : 1;
+    } catch (error) {
+      const message = (error as Error).message;
+      await client.step(ref, token, "fail", { error: message }).catch(() => undefined);
+      throw error;
+    } finally {
+      await rm(workdir, { recursive: true, force: true });
+    }
+  }
+
+  private static async upload(parsed: ParsedArguments, io: CliIo): Promise<number> {
+    const file = parsed.positionals[0];
+    if (!file)
+      throw new Error("upload needs a graph file: wiremap upload graph.json --project <slug>");
+    const raw = await readFile(nodePath.resolve(io.cwd, file));
+    const bytes = file.endsWith(".gz") ? raw : gzipSync(raw);
+    return Cli.send(parsed, io, bytes);
+  }
+
+  private static async scan(parsed: ParsedArguments, io: CliIo): Promise<number> {
+    const root = nodePath.resolve(io.cwd, parsed.positionals[0] ?? ".");
+    const doc = await Cli.build(parsed, root);
+    io.err(`${Cli.summary(doc)}\n`);
+    return Cli.send(parsed, io, gzipSync(JSON.stringify(doc)));
+  }
+
+  private static async send(
+    parsed: ParsedArguments,
+    io: CliIo,
+    bytes: Uint8Array,
+  ): Promise<number> {
+    const [server, apiKey, project] = Cli.required(parsed, ["server", "api-key", "project"]);
+    const client = new ScanClient(server, io.fetch);
+    const upload = await client.createUpload(apiKey, {
+      project,
+      branch: Arguments.one(parsed, "branch"),
+      commitSha: Arguments.one(parsed, "commit"),
+    });
+    await client.put(upload.uploadUrl, bytes);
+    const { state } = await client.complete(upload.completeUrl, upload.token);
+    io.err(`Uploaded to ${project}: scan ${state}.\n`);
+    return state === "succeeded" ? 0 : 1;
+  }
+
+  // One value per name, in order, typed as a tuple of the same length.
+  private static required<const N extends readonly string[]>(
+    parsed: ParsedArguments,
+    names: N,
+  ): { [K in keyof N]: string } {
+    return names.map((name) => {
+      const value = Arguments.one(parsed, name);
+      if (!value) throw new Error(`--${name} is required`);
+      return value;
+    }) as { [K in keyof N]: string };
+  }
+
+  private static build(parsed: ParsedArguments, root: string): Promise<GraphDocument> {
+    return Analyzer.run({
+      repositories: [{ name: Arguments.one(parsed, "name") ?? nodePath.basename(root), root }],
+      ignore: parsed.flags.get("ignore") ?? [],
+      tsconfigPath: Arguments.one(parsed, "tsconfig"),
+      artisan: parsed.switches.has("artisan"),
+      version: VERSION,
+      ...Cli.grammar(),
+    });
   }
 
   private static async analyze(parsed: ParsedArguments, io: CliIo): Promise<number> {
@@ -69,14 +192,7 @@ export class Cli {
       io.err(`No such folder: ${root}\n`);
       return 1;
     }
-    const doc = await Analyzer.run({
-      repositories: [{ name: Arguments.one(parsed, "name") ?? nodePath.basename(root), root }],
-      ignore: parsed.flags.get("ignore") ?? [],
-      tsconfigPath: Arguments.one(parsed, "tsconfig"),
-      artisan: parsed.switches.has("artisan"),
-      version: VERSION,
-      ...Cli.grammar(),
-    });
+    const doc = await Cli.build(parsed, root);
     const json = JSON.stringify(doc, null, parsed.switches.has("pretty") ? 2 : undefined);
     const out = Arguments.one(parsed, "out");
     if (out) {

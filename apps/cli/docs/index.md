@@ -33,8 +33,32 @@ That output is `lujakob/nestjs-realworld-example-app`. The four imports that did
 | `--artisan` | Read Laravel's routes from `php artisan route:list --json`. This needs PHP and an installed `vendor/` |
 | `--pretty` | Indent the JSON |
 
-**Nothing leaves the machine.** `analyze` reads code and writes a file. Uploading is a separate
-command (`WM6.6`).
+**`analyze` sends nothing anywhere:** it reads code and writes a file.
+
+## Uploading
+
+```bash
+wiremap scan . --project shop-api --server https://wiremap.example.com --api-key wm_...
+wiremap upload graph.json.gz --project shop-api --server ... --api-key ... --branch main --commit abc123
+```
+
+- `scan` runs `analyze`, then `upload`. Use it where the GitHub App cannot reach the code:
+  a self-hosted git server, or a laptop.
+- The API key needs `project.scan.run`.
+- **Only the graph leaves the machine, never source.** It goes straight to storage through a
+  presigned PUT. The server then reads it back, checks it, and records the scan.
+
+## `runner`
+
+`wiremap runner --server <url> --scan <ref> --token <token> [--mask]` is what
+`.github/workflows/scan.yml` and the local runner run. It:
+1. checks out each repository with its one-repository token;
+2. analyzes;
+3. uploads;
+4. completes.
+
+On any failure it calls `fail` with a message that names no path. See
+[scan runner](../../../docs/infra/scan-runner.md).
 
 ## Build
 

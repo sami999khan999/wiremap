@@ -63,7 +63,7 @@ describe("Cli", () => {
     expect(await Cli.run(["--help"], help.io)).toBe(0);
     expect(help.out.join("")).toContain("wiremap analyze");
     expect(await Cli.run([], capture().io)).toBe(2);
-    expect(await Cli.run(["scan"], capture().io)).toBe(2);
+    expect(await Cli.run(["frobnicate"], capture().io)).toBe(2);
     expect(await Cli.run(["analyze", "/no/such/folder"], capture().io)).toBe(1);
   });
 });
