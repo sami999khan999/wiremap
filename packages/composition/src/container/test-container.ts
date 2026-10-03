@@ -26,6 +26,7 @@ import {
   StubEmbeddingProvider,
   StubMailRenderer,
   StubMarkdownRenderer,
+  StubRepositoryProvider,
   StubSessionResolver,
 } from "../fake/index.js";
 import {
@@ -52,6 +53,7 @@ import {
   type RealtimePublisher,
   type RealtimeSubscriber,
   type RelayedActivityStore,
+  type RepositoryProvider,
   SERVER_CATALOG,
   type SessionGateway,
   type SessionResolver,
@@ -90,6 +92,7 @@ export interface TestPorts {
   readonly realtime: RealtimePublisher;
   readonly realtimeSubscriber: RealtimeSubscriber;
   readonly queue: QueuePublisher;
+  readonly repositories: RepositoryProvider;
   readonly sessions: SessionResolver;
   readonly signOuts: SessionGateway;
   readonly shardResolver: ShardResolver;
@@ -157,6 +160,7 @@ export class TestContainer {
       realtimeSubscriber:
         overrides.realtimeSubscriber ?? new InMemoryRealtimeSubscriber(new InMemoryRealtimeHub()),
       queue: overrides.queue ?? new RecordingQueuePublisher(),
+      repositories: overrides.repositories ?? new StubRepositoryProvider(),
       sessions: overrides.sessions ?? new StubSessionResolver(),
       signOuts: overrides.signOuts ?? new RecordingSessionGateway(),
       shardResolver: overrides.shardResolver ?? new InMemoryShardResolver(),

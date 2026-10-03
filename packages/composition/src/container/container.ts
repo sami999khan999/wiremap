@@ -11,6 +11,7 @@ import {
   Authorizer,
   BetterAuthSessionGateway,
   BetterAuthSessionResolver,
+  BindGithubInstallationUseCase,
   BullMqQueuePublisher,
   type CacheStore,
   CapabilityCache,
@@ -27,6 +28,7 @@ import {
   CreateDocPageUseCase,
   CreateDocSpaceUseCase,
   CreateInvitationLinkUseCase,
+  CreateProjectUseCase,
   CreateRoleUseCase,
   CreateTeamUseCase,
   type Database,
@@ -60,11 +62,16 @@ import {
   GetDocRevisionUseCase,
   GetDocSpaceUseCase,
   GetEntitlementUseCase,
+  GetGithubStatusUseCase,
   GetNotificationPreferencesUseCase,
   GetOrganizationEntitlementUseCase,
   GetOrganizationUseCase,
+  GetProjectUseCase,
+  GithubAppProvider,
+  type GithubInstallationRepository,
   GrantPermissionOverrideUseCase,
   GrantPermissionUseCase,
+  HandleGithubWebhookUseCase,
   IndexDocumentUseCase,
   InspectEffectivePermissionsUseCase,
   InspectPlatformStatusUseCase,
@@ -74,6 +81,7 @@ import {
   JsonLogger,
   ListActivityUseCase,
   ListApiKeysUseCase,
+  ListAvailableRepositoriesUseCase,
   ListDocAccessOptionsUseCase,
   ListDocGrantsUseCase,
   ListDocPagesUseCase,
@@ -89,6 +97,7 @@ import {
   ListPermissionOverridesUseCase,
   ListPlansUseCase,
   ListPlatformDocSpacesUseCase,
+  ListProjectsUseCase,
   ListRolesUseCase,
   ListTeamMembersUseCase,
   ListTeamsUseCase,
@@ -97,6 +106,8 @@ import {
   type MailPublisher,
   type MailRenderer,
   type MaintenanceGateway,
+  ManageProjectAccessUseCase,
+  ManageProjectRepositoryUseCase,
   MarkAllNotificationsReadUseCase,
   type MarkdownRenderer,
   MarkNotificationReadUseCase,
@@ -107,6 +118,7 @@ import {
   MoveDocPageUseCase,
   NotificationSubscriber,
   NullMembershipEnroller,
+  NullRepositoryProvider,
   OpenAiEmbeddingProvider,
   OpenDocImageUseCase,
   type OrganizationFounder,
@@ -125,6 +137,7 @@ import {
   PgDocSpaceRepository,
   PgEntitlementRepository,
   PgFlagRepository,
+  PgGithubInstallationRepository,
   PgInvitationClaimer,
   PgInvitationLinkClaimer,
   PgInvitationLinkRepository,
@@ -147,6 +160,7 @@ import {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
+  PgProjectRepository,
   PgRoleRepository,
   PgShardMapReader,
   PgShardResolver,
@@ -160,8 +174,10 @@ import {
   PreviewDocPageUseCase,
   Principal,
   PrincipalBuilder,
+  type ProjectRepository,
   PublishDocPageUseCase,
   PurgeOrganizationUseCase,
+  PurgeProjectUseCase,
   QueueDocumentIndexUseCase,
   type QueuePublisher,
   type RateLimitStore,
@@ -182,9 +198,11 @@ import {
   RemoveMemberDomainUseCase,
   RemoveMemberUseCase,
   RemoveOrganizationUseCase,
+  RemoveProjectUseCase,
   RemoveTeamMemberUseCase,
   RemoveTeamUseCase,
   type ReplicaHealth,
+  type RepositoryProvider,
   ResendInvitationUseCase,
   RestoreDocRevisionUseCase,
   RevokeApiKeyUseCase,
@@ -230,6 +248,7 @@ import {
   UpdateFlagUseCase,
   UpdateNotificationPreferenceUseCase,
   UpdateOrganizationUseCase,
+  UpdateProjectUseCase,
   UpdateRoleUseCase,
   UpdateTeamUseCase,
   UploadDocImageUseCase,
@@ -438,6 +457,28 @@ export class Container {
     readonly removeMember: RemoveTeamMemberUseCase;
   };
   public readonly activityLog: { readonly list: ListActivityUseCase };
+  // The code host. `NullRepositoryProvider` when no App is configured.
+  public readonly repositoryProvider: RepositoryProvider;
+  public readonly projects: {
+    readonly list: ListProjectsUseCase;
+    readonly get: GetProjectUseCase;
+    readonly create: CreateProjectUseCase;
+    readonly update: UpdateProjectUseCase;
+    readonly remove: RemoveProjectUseCase;
+    readonly purge: PurgeProjectUseCase;
+    readonly available: ListAvailableRepositoriesUseCase;
+    readonly repository: ManageProjectRepositoryUseCase;
+    readonly access: ManageProjectAccessUseCase;
+    // Read by the push webhook and the schedule tick, across tenants.
+    readonly tracking: ProjectRepository;
+  };
+  public readonly github: {
+    readonly status: GetGithubStatusUseCase;
+    readonly bind: BindGithubInstallationUseCase;
+    readonly webhook: HandleGithubWebhookUseCase;
+    // Read and written by the webhook route, which names an installation and no tenant.
+    readonly installations: GithubInstallationRepository;
+  };
   public readonly organizationFounder: OrganizationFounder;
 
   // ── use-cases, one field each, constructed eagerly ────────
@@ -1349,6 +1390,81 @@ export class Container {
         new PgActivityReader(this.cluster, this.transactions, this.shards),
         new PgUserReader(this.cluster, this.transactions, this.shards),
       ),
+    };
+
+    this.repositoryProvider = config.github
+      ? new GithubAppProvider(config.github)
+      : new NullRepositoryProvider();
+    const projectRepository = new PgProjectRepository(this.cluster, this.transactions, this.shards);
+    const installations = new PgGithubInstallationRepository(
+      this.cluster,
+      this.transactions,
+      this.shards,
+    );
+    this.projects = {
+      list: new ListProjectsUseCase(this.authorizer, projectRepository),
+      get: new GetProjectUseCase(projectRepository),
+      create: new CreateProjectUseCase(
+        this.authorizer,
+        projectRepository,
+        installations,
+        this.repositoryProvider,
+        this.capabilities,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      update: new UpdateProjectUseCase(
+        this.authorizer,
+        projectRepository,
+        this.capabilities,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      remove: new RemoveProjectUseCase(
+        this.authorizer,
+        projectRepository,
+        this.capabilities,
+        this.activity,
+        this.queuePublisher,
+        this.catalogUnitOfWork,
+        this.clock,
+      ),
+      purge: new PurgeProjectUseCase(projectRepository, this.storage),
+      available: new ListAvailableRepositoriesUseCase(
+        this.authorizer,
+        installations,
+        this.repositoryProvider,
+      ),
+      repository: new ManageProjectRepositoryUseCase(
+        this.authorizer,
+        projectRepository,
+        installations,
+        this.repositoryProvider,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      access: new ManageProjectAccessUseCase(
+        this.authorizer,
+        projectRepository,
+        members,
+        teamRepository,
+        this.capabilities,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      tracking: projectRepository,
+    };
+    this.github = {
+      status: new GetGithubStatusUseCase(this.authorizer, installations, this.repositoryProvider),
+      bind: new BindGithubInstallationUseCase(
+        this.authorizer,
+        installations,
+        this.repositoryProvider,
+        this.activity,
+        this.catalogUnitOfWork,
+      ),
+      webhook: new HandleGithubWebhookUseCase(installations, projectRepository, this.clock),
+      installations,
     };
 
     this.rbac = {

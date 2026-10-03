@@ -54,6 +54,7 @@ export {
   StubEmbeddingProvider,
   StubMailRenderer,
   StubMarkdownRenderer,
+  StubRepositoryProvider,
   StubSessionResolver,
 } from "./fake/index.js";
 // `FixedClock` is `TestHarness.clock`'s type. `JobSignatureHasher` lets `/api/internal/job`

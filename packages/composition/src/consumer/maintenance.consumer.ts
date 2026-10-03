@@ -3,6 +3,7 @@ import {
   PartitionedTable,
   type PartitionedTableEntry,
   type PartitionedTableName,
+  type ProjectId,
   QueueName,
   RetentionRules,
   type TenantRunway,
@@ -23,6 +24,11 @@ interface ExportJob {
 // is the system's, and the audit row for a delete has to name who asked for it.
 interface RerenderJob {
   readonly organizationId: OrganizationId;
+}
+
+interface ProjectDeleteJob {
+  readonly organizationId: OrganizationId;
+  readonly projectId: ProjectId;
 }
 
 interface PurgeJob {
@@ -75,6 +81,8 @@ export class MaintenanceConsumer extends QueueConsumer {
         return this.purge(job.data as PurgeJob);
       case "doc-rerender":
         return this.rerender(job.data as RerenderJob);
+      case "project-delete":
+        return this.projectDelete(job.data as ProjectDeleteJob);
       default:
         throw new Error(`Unknown maintenance job: ${job.name}`);
     }
@@ -116,6 +124,16 @@ export class MaintenanceConsumer extends QueueConsumer {
       archived: purged.archived,
       partitions: purged.partitions,
       outboxRows: purged.outboxRows,
+    });
+  }
+
+  // Queued by `project.remove` after the soft delete; replaying it removes nothing more.
+  private async projectDelete(data: ProjectDeleteJob): Promise<void> {
+    const purged = await this.container.projects.purge.execute(data);
+    this.container.logger.emit("project.purge.completed", {
+      organizationId: data.organizationId,
+      projectId: data.projectId,
+      objects: purged.objects,
     });
   }
 

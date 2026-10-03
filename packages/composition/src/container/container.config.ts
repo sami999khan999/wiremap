@@ -73,6 +73,15 @@ export interface ContainerConfig {
     // bounds the rate; this bounds the total.
     readonly maxOwnedOrganizations: number;
   };
+  // The GitHub App that reads repositories. Absent leaves projects on uploads only; the
+  // install `state` is signed with `stateSecret`. See docs/infra/github-app.md.
+  readonly github?: {
+    readonly appId: string;
+    readonly slug: string;
+    readonly privateKey: string;
+    readonly webhookSecret: string;
+    readonly stateSecret: string;
+  };
   // Not optional: with `requireEmailVerification` on, a container that cannot send is
   // one whose sign-ups never complete. SMTP, so swapping vendors is this URL.
   readonly email: {
