@@ -140,6 +140,7 @@ export {
   TenantExportPanel,
 } from "./platform/index.js";
 export {
+  ProjectAccessMatrix,
   ProjectAccessPanel,
   ProjectCreateForm,
   type ProjectCreateFormProps,

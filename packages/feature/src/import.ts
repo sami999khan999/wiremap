@@ -61,6 +61,7 @@ export {
   Password,
   type PlanDto,
   PROJECT_ROLES,
+  type ProjectAccessOverviewDto,
   type ProjectDto,
   type ProjectGrantDto,
   type ProjectRole,

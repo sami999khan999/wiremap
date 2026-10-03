@@ -1,3 +1,4 @@
+export { ProjectAccessMatrix } from "./project-access.matrix.js";
 export { ProjectAccessPanel } from "./project-access.panel.js";
 export { ProjectCreateForm, type ProjectCreateFormProps } from "./project-create.form.js";
 export { ProjectList, type ProjectListProps } from "./project-list.js";
