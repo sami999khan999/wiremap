@@ -16,8 +16,11 @@ invocation. The round trip, the signature scheme and what changes from BullMQ ar
 | `fetch` | `GET /health` | Answers `ok` |
 | `queue` | a batch on `wiremap-jobs` | Posts each message to the web app. 2xx acks; otherwise it retries from 5 s doubling to an hour, and after the job's `maxAttempts` sends it to `wiremap-jobs-dead` |
 | `scheduled` | `13 * * * *` | Outbox drain backstop, spare tenants |
-| `scheduled` | `0 3 * * *` | Partitions, cleanup, orphans, retention |
-| `scheduled` | `0 7 * * *` | The daily digest fan-out |
+| `scheduled` | the 03 UTC tick of `13 * * * *` | Partitions, cleanup, orphans, retention |
+| `scheduled` | the 07 UTC tick of `13 * * * *` | The daily digest fan-out |
+
+One Cron Trigger rather than three: the Workers Free plan allows five per **account**, and
+the hour of the tick decides what else it enqueues.
 
 No cron is more frequent than hourly, so Neon's compute can suspend between ticks.
 

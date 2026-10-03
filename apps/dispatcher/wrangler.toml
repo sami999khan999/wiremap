@@ -24,5 +24,5 @@ max_batch_timeout = 1
 max_retries = 20
 
 [triggers]
-# The same three expressions as src/schedule/cron.schedule.ts; a spec checks they agree.
-crons = ["13 * * * *", "0 3 * * *", "0 7 * * *"]
+# One trigger; the hour decides the rest (src/schedule/cron.schedule.ts). A spec checks they agree.
+crons = ["13 * * * *"]
