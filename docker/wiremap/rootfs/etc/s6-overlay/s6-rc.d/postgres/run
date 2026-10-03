@@ -1,5 +1,6 @@
 #!/bin/bash
 set -a; . /run/wiremap/env; set +a
+if [ "${WIREMAP_EXTERNAL_STORES}" = "1" ]; then exec sleep infinity; fi
 mkdir -p /run/postgresql && chown postgres:postgres /run/postgresql
 exec s6-setuidgid postgres /usr/lib/postgresql/17/bin/postgres -D /data/postgres \
   -c listen_addresses=127.0.0.1 -c unix_socket_directories=/run/postgresql \

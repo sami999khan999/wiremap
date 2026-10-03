@@ -1,0 +1,14 @@
+#!/bin/bash
+# A backup every day at 04:00 UTC (WIREMAP_BACKUP_HOUR to move it, "off" to stop it).
+set -a; . /run/wiremap/env; set +a
+hour="${WIREMAP_BACKUP_HOUR:-4}"
+# Compose keeps the stores in their own volumes, which are backed up as volumes.
+if [ "$hour" = "off" ] || [ "${WIREMAP_EXTERNAL_STORES}" = "1" ]; then exec sleep infinity; fi
+exec > >(sed -u 's/^/[backup] /') 2>&1
+while true; do
+  now=$(date -u +%s)
+  next=$(date -u -d "today ${hour}:00" +%s)
+  [ "$next" -le "$now" ] && next=$(date -u -d "tomorrow ${hour}:00" +%s)
+  sleep $((next - now))
+  /usr/local/bin/wiremap-admin backup || echo "backup failed"
+done

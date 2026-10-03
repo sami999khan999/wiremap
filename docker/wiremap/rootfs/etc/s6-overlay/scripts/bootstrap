@@ -3,18 +3,26 @@
 set -euo pipefail
 set -a; . /run/wiremap/env; set +a
 wait_for() { local what="$1"; shift; for _ in $(seq 1 120); do if "$@" >/dev/null 2>&1; then return 0; fi; sleep 1; done; echo "wiremap: $what did not come up" >&2; exit 1; }
-wait_for postgres s6-setuidgid postgres /usr/lib/postgresql/17/bin/pg_isready -h /run/postgresql -q
-wait_for redis redis-cli -h 127.0.0.1 ping
-wait_for minio curl -fs http://127.0.0.1:9000/minio/health/live
+if [ "${WIREMAP_EXTERNAL_STORES}" = "1" ]; then
+  wait_for postgres /usr/lib/postgresql/17/bin/pg_isready -d "${DATABASE_DIRECT_URL}" -q
+  wait_for redis redis-cli -u "${REDIS_QUEUE_URL}" ping
+  wait_for storage curl -fs "${S3_ENDPOINT}/minio/health/live"
+  # The compose database user owns its database and is a superuser, so it makes the extensions.
+  psql "${DATABASE_DIRECT_URL}" -q -v ON_ERROR_STOP=1 -f /app/postgres.init.sql >/dev/null
+else
+  wait_for postgres s6-setuidgid postgres /usr/lib/postgresql/17/bin/pg_isready -h /run/postgresql -q
+  wait_for redis redis-cli -h 127.0.0.1 ping
+  wait_for minio curl -fs http://127.0.0.1:9000/minio/health/live
 
-psql_super() { s6-setuidgid postgres psql -h /run/postgresql -v ON_ERROR_STOP=1 -q "$@"; }
-if [ "$(psql_super -tAc "select 1 from pg_roles where rolname = 'wiremap'")" != "1" ]; then
-  psql_super -c "create role wiremap login password '${POSTGRES_PASSWORD}'"
-  psql_super -c "create database wiremap owner wiremap"
+  psql_super() { s6-setuidgid postgres psql -h /run/postgresql -v ON_ERROR_STOP=1 -q "$@"; }
+  if [ "$(psql_super -tAc "select 1 from pg_roles where rolname = 'wiremap'")" != "1" ]; then
+    psql_super -c "create role wiremap login password '${POSTGRES_PASSWORD}'"
+    psql_super -c "create database wiremap owner wiremap"
 fi
 # Kept in step with the generated secret, so a password rotated in /data/secrets.env applies.
 psql_super -c "alter role wiremap password '${POSTGRES_PASSWORD}'" >/dev/null
 psql_super -d wiremap -f /app/postgres.init.sql >/dev/null
+fi
 
 cd /app/infra
 s6-setuidgid wiremap node ensure-bucket.mjs

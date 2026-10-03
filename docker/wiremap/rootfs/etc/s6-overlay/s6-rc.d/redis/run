@@ -1,5 +1,6 @@
 #!/bin/bash
 set -a; . /run/wiremap/env; set +a
+if [ "${WIREMAP_EXTERNAL_STORES}" = "1" ]; then exec sleep infinity; fi
 # The queue lives here: AOF so a restart keeps it, and no eviction, as the data rules require.
 # The service itself is the supervised process; only its output goes through sed.
 exec > >(sed -u 's/^/[redis] /') 2>&1

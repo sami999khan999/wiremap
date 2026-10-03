@@ -1,5 +1,6 @@
 #!/bin/bash
 set -a; . /run/wiremap/env; set +a
+if [ "${WIREMAP_EXTERNAL_STORES}" = "1" ]; then exec sleep infinity; fi
 export MINIO_ROOT_USER=wiremap MINIO_ROOT_PASSWORD="${MINIO_PASSWORD}" MINIO_BROWSER=off
 # The service itself is the supervised process; only its output goes through sed.
 exec > >(sed -u 's/^/[minio] /') 2>&1

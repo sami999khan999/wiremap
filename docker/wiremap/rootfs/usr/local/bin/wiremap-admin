@@ -1,11 +1,71 @@
 #!/bin/bash
-# Admin tasks inside the running container: `docker exec wiremap wiremap-admin <command>`.
+# Admin tasks inside the running container: `docker exec <container> wiremap-admin <command>`.
 set -euo pipefail
 set -a; . /run/wiremap/env; set +a
+BACKUPS=/data/backups
+KEEP="${WIREMAP_BACKUPS_KEPT:-7}"
+
+usage() {
+  cat >&2 <<'USAGE'
+usage: wiremap-admin grant <email>       make an account a platform admin
+       wiremap-admin backup              write a backup into /data/backups now
+       wiremap-admin backups             list the backups
+       wiremap-admin restore <name>      restore one, then restart the container
+USAGE
+  exit 2
+}
+
+backup() {
+  if [ "${WIREMAP_EXTERNAL_STORES}" = "1" ]; then
+    echo "wiremap: the stores run in their own containers; back up their volumes instead" >&2
+    exit 1
+  fi
+  local name dir
+  name="wiremap-$(date -u +%Y%m%dT%H%M%SZ)"
+  dir="${BACKUPS}/${name}.partial"
+  mkdir -p "$dir"
+  # The database, consistent at one instant, in pg_dump's compressed format.
+  # Written by root from pg_dump's stdout: the backup folder is not the postgres user's.
+  s6-setuidgid postgres pg_dump -h /run/postgresql -d wiremap -Fc > "${dir}/database.dump"
+  # Objects are written once and never changed, so a live copy of the store is consistent.
+  tar -C /data -czf "${dir}/objects.tar.gz" minio
+  # Without these, the restored database's stored keys and webhook secrets cannot be read.
+  cp /data/secrets.env "${dir}/secrets.env"
+  chmod 600 "${dir}/secrets.env"
+  mv "$dir" "${BACKUPS}/${name}"
+  chown -R wiremap:wiremap "${BACKUPS}/${name}"
+  echo "wiremap: backup ${name} ($(du -sh "${BACKUPS}/${name}" | cut -f1))"
+  # Keep the newest few; a partial one left by a crash is removed too.
+  ls -1d "${BACKUPS}"/wiremap-* 2>/dev/null | grep -v '\.partial$' | sort -r | tail -n +"$((KEEP + 1))" | xargs -r rm -rf
+  find "${BACKUPS}" -maxdepth 1 -name '*.partial' -mmin +60 -exec rm -rf {} +
+}
+
+restore() {
+  local dir="${BACKUPS}/${1:?usage: wiremap-admin restore <name>}"
+  [ -f "${dir}/database.dump" ] && [ -f "${dir}/objects.tar.gz" ] || { echo "no backup at ${dir}" >&2; exit 1; }
+  echo "wiremap: stopping the app"
+  s6-rc -d change web worker cloudflared
+  echo "wiremap: restoring the database"
+  # Into an empty database: extensions made by the superuser first, then everything else
+  # as wiremap, so the app owns what it reads. Any error stops the restore.
+  s6-setuidgid postgres dropdb -h /run/postgresql --force --if-exists wiremap
+  s6-setuidgid postgres createdb -h /run/postgresql -O wiremap wiremap
+  s6-setuidgid postgres psql -h /run/postgresql -d wiremap -q -v ON_ERROR_STOP=1 -f /app/postgres.init.sql
+  s6-setuidgid postgres pg_restore -h /run/postgresql -d wiremap --no-owner --role=wiremap \
+    --no-comments --exit-on-error < "${dir}/database.dump"
+  echo "wiremap: restoring the objects"
+  s6-rc -d change minio
+  rm -rf /data/minio && tar -C /data -xzf "${dir}/objects.tar.gz" && chown -R wiremap:wiremap /data/minio
+  cp "${dir}/secrets.env" /data/secrets.env && chmod 600 /data/secrets.env
+  echo "wiremap: restored ${1}. Restart the container now: docker restart <container>"
+}
+
 case "${1:-}" in
   grant)
-    [ -n "${2:-}" ] || { echo "usage: wiremap-admin grant <email>" >&2; exit 2; }
+    [ -n "${2:-}" ] || usage
     cd /app/infra && exec s6-setuidgid wiremap node platform-grant.mjs "$2" ;;
-  *)
-    echo "usage: wiremap-admin grant <email>" >&2; exit 2 ;;
+  backup) backup ;;
+  backups) ls -1 "${BACKUPS}" | grep -v '\.partial$' || true ;;
+  restore) restore "${2:-}" ;;
+  *) usage ;;
 esac

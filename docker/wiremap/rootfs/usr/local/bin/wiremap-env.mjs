@@ -51,6 +51,8 @@ if (changed) {
 
 const given = (key) => (process.env[key] && process.env[key] !== "" ? process.env[key] : undefined);
 const secret = (key) => given(key) ?? generated[key];
+// Compose runs the stores as their own containers and hands their URLs in.
+const external = given("WIREMAP_EXTERNAL_STORES") === "1";
 const publicUrl = (given("WIREMAP_PUBLIC_URL") ?? "http://localhost:43000").replace(/\/+$/, "");
 const smtpGiven = given("SMTP_URL");
 
@@ -62,18 +64,23 @@ const env = {
   HOST: "0.0.0.0",
   WEB_PROCESSES: given("WEB_PROCESSES") ?? "2",
 
-  DATABASE_URL: `postgres://wiremap:${secret("POSTGRES_PASSWORD")}@127.0.0.1:5432/wiremap`,
-  DATABASE_DIRECT_URL: `postgres://wiremap:${secret("POSTGRES_PASSWORD")}@127.0.0.1:5432/wiremap`,
+  WIREMAP_EXTERNAL_STORES: external ? "1" : "0",
+  DATABASE_URL:
+    (external && given("DATABASE_URL")) ||
+    `postgres://wiremap:${secret("POSTGRES_PASSWORD")}@127.0.0.1:5432/wiremap`,
+  DATABASE_DIRECT_URL:
+    (external && (given("DATABASE_DIRECT_URL") ?? given("DATABASE_URL"))) ||
+    `postgres://wiremap:${secret("POSTGRES_PASSWORD")}@127.0.0.1:5432/wiremap`,
   DATABASE_POOL_MAX: given("DATABASE_POOL_MAX") ?? "10",
   POSTGRES_PASSWORD: secret("POSTGRES_PASSWORD"),
-  REDIS_CACHE_URL: "redis://127.0.0.1:6379",
-  REDIS_QUEUE_URL: "redis://127.0.0.1:6379",
+  REDIS_CACHE_URL: (external && given("REDIS_CACHE_URL")) || "redis://127.0.0.1:6379",
+  REDIS_QUEUE_URL: (external && given("REDIS_QUEUE_URL")) || "redis://127.0.0.1:6379",
 
-  S3_ENDPOINT: "http://127.0.0.1:9000",
-  S3_REGION: "us-east-1",
-  S3_BUCKET: "wiremap",
-  S3_ACCESS_KEY: "wiremap",
-  S3_SECRET_KEY: secret("MINIO_PASSWORD"),
+  S3_ENDPOINT: (external && given("S3_ENDPOINT")) || "http://127.0.0.1:9000",
+  S3_REGION: (external && given("S3_REGION")) || "us-east-1",
+  S3_BUCKET: (external && given("S3_BUCKET")) || "wiremap",
+  S3_ACCESS_KEY: (external && given("S3_ACCESS_KEY")) || "wiremap",
+  S3_SECRET_KEY: (external && given("S3_SECRET_KEY")) || secret("MINIO_PASSWORD"),
   MINIO_PASSWORD: secret("MINIO_PASSWORD"),
   S3_FORCE_PATH_STYLE: "true",
   S3_CHECKSUMS: "full",
@@ -83,7 +90,7 @@ const env = {
 
   SMTP_URL: smtpGiven ?? "smtp://127.0.0.1:1025",
   EMAIL_FROM: given("EMAIL_FROM") ?? "wiremap <no-reply@localhost>",
-  WIREMAP_MAILPIT: smtpGiven ? "0" : "1",
+  WIREMAP_MAILPIT: smtpGiven || external ? "0" : "1",
 
   APP_BASE_URL: publicUrl,
   AUTH_URL: publicUrl,

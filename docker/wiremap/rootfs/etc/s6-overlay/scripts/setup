@@ -3,6 +3,11 @@
 set -euo pipefail
 node /usr/local/bin/wiremap-env.mjs
 set -a; . /run/wiremap/env; set +a
+if [ "${WIREMAP_EXTERNAL_STORES}" = "1" ]; then
+  # Compose runs the stores; only the generated secrets live on this volume.
+  echo "wiremap: using the stores at the URLs given (WIREMAP_EXTERNAL_STORES=1)"
+  exit 0
+fi
 mkdir -p /data/postgres /data/redis /data/minio /data/mailpit /data/backups
 chown -R postgres:postgres /data/postgres
 chown -R redis:redis /data/redis
