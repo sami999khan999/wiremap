@@ -470,6 +470,7 @@ export {
   type GraphLink,
   ListScansUseCase,
   type NewScan,
+  QueryGraphUseCase,
   type QueueScanInput,
   QueueScanUseCase,
   RunScanUseCase,

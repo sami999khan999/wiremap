@@ -52,6 +52,7 @@ export {
   type GoalId,
   type GraphDocument,
   type GraphFile,
+  type GraphRoute,
   type GraphViewId,
   Identifiers,
   type InvitationId,

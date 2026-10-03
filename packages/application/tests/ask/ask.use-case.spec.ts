@@ -1,9 +1,4 @@
-import {
-  GRAPH_VERSION,
-  type GraphDocument,
-  type ProjectId,
-  type ScanId,
-} from "@loadbearing/contracts";
+import type { ProjectId, ScanId } from "@loadbearing/contracts";
 import { ValidationError } from "@loadbearing/errors";
 import { CapabilitySet } from "@loadbearing/permissions";
 import { describe, expect, it } from "vitest";
@@ -17,6 +12,7 @@ import { ChatProvider, type ChatRequest } from "../../src/ask/chat-provider.js";
 import { ManageAiSettingsUseCase } from "../../src/ask/manage-ai-settings.use-case.js";
 import { Authorizer } from "../../src/primitive/authorizer.js";
 import { Principal } from "../../src/primitive/principal.js";
+import { GRAPH_DOC } from "../support/graph-document.js";
 import {
   ACTOR,
   DirectUnitOfWork,
@@ -27,66 +23,6 @@ import {
 
 const PROJECT = "018f8c00-0000-7000-8000-0000000000c1" as ProjectId;
 const SCAN = "018f8c00-0000-7000-8000-0000000000e1" as ScanId;
-
-const file = (
-  path: string,
-  role: GraphDocument["files"][number]["role"],
-  exports: string[] = [],
-) => ({
-  path,
-  repository: "acme/api",
-  language: "typescript" as const,
-  role,
-  loc: 20,
-  exports,
-});
-
-const DOC: GraphDocument = {
-  version: GRAPH_VERSION,
-  meta: {
-    analyzer: "t",
-    generatedAt: "2026-10-03T00:00:00.000Z",
-    repositories: [{ name: "acme/api", commit: "abc123", branch: "main" }],
-    timings: { totalMs: 1 },
-  },
-  languages: [],
-  frameworks: [{ id: "nestjs", repository: "acme/api" }],
-  files: [
-    file("src/user/user.service.ts", "service", ["UserService"]),
-    file("src/user/user.controller.ts", "controller", ["UserController"]),
-    file("src/shared/db.ts", "utility", ["db"]),
-  ],
-  edges: [
-    {
-      from: "src/user/user.controller.ts",
-      to: "src/user/user.service.ts",
-      kind: "import",
-      certain: true,
-    },
-  ],
-  unresolved: [],
-  coverage: { resolved: 1, total: 1 },
-  routes: [
-    {
-      id: "GET /user",
-      method: "GET",
-      path: "/user",
-      file: "src/user/user.controller.ts",
-      line: 9,
-      framework: "nestjs",
-      guards: [],
-      source: "static",
-    },
-  ],
-  calls: [],
-  insights: {
-    mostDepended: [{ path: "src/user/user.service.ts", dependents: 1 }],
-    cycles: [],
-    unusedFiles: [],
-    unusedExports: [],
-    unguardedRoutes: ["GET /user"],
-  },
-};
 
 class Settings extends AiSettingsRepository {
   public record: AiSettingsRecord | null = null;
@@ -162,7 +98,7 @@ const setup = (enabled = true) => {
       summary: () => Promise.resolve(null),
       saveSummary: () => Promise.resolve(),
     } as never,
-    { read: () => Promise.resolve({ document: DOC, bytes: 1 }) } as never,
+    { read: () => Promise.resolve({ document: GRAPH_DOC, bytes: 1 }) } as never,
     settings,
     cipher as never,
     chat,
@@ -186,11 +122,11 @@ const collect = async (iterable: AsyncIterable<unknown>) => {
 
 describe("AskContext", () => {
   it("grounds a question on the files it names, with their neighbours and the routes", () => {
-    const grounding = AskContext.ground(DOC, "What does the UserService do?", null);
+    const grounding = AskContext.ground(GRAPH_DOC, "What does the UserService do?", null);
     expect(grounding.files[0]).toBe("src/user/user.service.ts");
     expect(grounding.overview).toContain("GET /user → src/user/user.controller.ts:9 [no guard]");
     expect(grounding.overview).toContain("imported by: src/user/user.controller.ts");
-    expect(AskContext.ground(DOC, "Summarise", "onboarding").files).toContain(
+    expect(AskContext.ground(GRAPH_DOC, "Summarise", "onboarding").files).toContain(
       "src/user/user.service.ts",
     );
     expect(AskContext.numbered("a.ts", "x\ny", 10)).toBe("--- a.ts ---\n1| x\n2| y");
