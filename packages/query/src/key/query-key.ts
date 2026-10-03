@@ -140,6 +140,16 @@ export class QueryKeys {
     list: (projectId: string) => ["view", "list", projectId] as const,
   };
 
+  // One list per project: every node's thread, the counts and the notes read the same one.
+  public static readonly projectActivity = {
+    list: (projectId: string) => ["activity", "project", projectId] as const,
+  };
+
+  public static readonly comment = {
+    all: () => ["comment"] as const,
+    list: (projectId: string) => ["comment", "list", projectId] as const,
+  };
+
   public static readonly github = {
     all: () => ["github"] as const,
     status: () => ["github", "status"] as const,

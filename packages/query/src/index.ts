@@ -4,6 +4,7 @@ export { AccountMutations, AccountQueries } from "./account/index.js";
 export { ActivityQueries } from "./activity/index.js";
 export { ApiKeyMutations, ApiKeyQueries } from "./apikey/index.js";
 export { AskMutations, AskQueries } from "./ask/index.js";
+export { CommentMutations, CommentQueries } from "./comment/index.js";
 export { DocMutations, DocQueries } from "./doc/index.js";
 export { DocumentMutations } from "./document/index.js";
 export { GithubQueries } from "./github/index.js";
