@@ -567,50 +567,56 @@ minutes. A broken tsconfig produces a failed scan with its error shown.
 
 ### Phase 7 — Graph explorer
 
-- [ ] `WM7.1` **Libraries.** `@xyflow/react` and `elkjs` go in the catalog, React tier, in
+- [x] `WM7.1` **Libraries.** `@xyflow/react` and `elkjs` go in the catalog, React tier, in
   `feature` only. ELK runs in a web worker (`elk-worker`). Docs: `docs/opinions/dependencies.md`
   row.
-- [ ] `WM7.2` **Page `/p/$project`** as three panes:
+  - done: 2026-10-03. ELK runs in a classic worker the app creates (`elk-worker.min.js?url`);
+    `feature` takes a `GraphLayouter` and shows a grid until it answers.
+- [x] `WM7.2` **Page `/p/$project`** as three panes:
   - the role sidebar;
   - the canvas;
   - a tabbed right panel (Overview | Ask).
 
   The whole page fills the viewport under the shell, and the panes are resizable.
-- [ ] `WM7.3` **Canvas.**
+- [x] `WM7.3` **Canvas.**
   - Folder group nodes at depth 2 by default, showing `name`, `n files · in x · out y` and a
     badge.
   - Expanding one shows its files with role dots and in/out counts, as in the screenshot.
   - Edges are aggregated between folders and drawn per file when expanded.
   - `inject` and `api` edges are styled apart. An uncertain edge is dashed.
   - Zoom, pan and fit, with a minimap.
-- [ ] `WM7.4` **Role sidebar.**
+- [x] `WM7.4` **Role sidebar.**
   - "<Framework> files by role" with dots and counts.
   - Clicking a role dims everything else. Clicking it again clears. The hint text sits at the
     foot.
   - Filters by folder and by framework sit in the same panel.
-- [ ] `WM7.5` **Partial-graph banner**: "Graph is partial: X of Y imports into this repository
+- [x] `WM7.5` **Partial-graph banner**: "Graph is partial: X of Y imports into this repository
   resolved (P%)". Expanding it lists the unresolved specifiers.
-- [ ] `WM7.6` **Node detail.** Clicking a file or folder opens it in the right panel: role,
+- [x] `WM7.6` **Node detail.** Clicking a file or folder opens it in the right panel: role,
   imports, dependents, routes defined, comments count and "Show impact".
-- [ ] `WM7.7` **Overview tab:**
+- [x] `WM7.7` **Overview tab:**
   - repo name, framework, files, imports (and how many are between files here), routes;
   - a routes table (method, path, `file:line`) with "Show all N";
   - "Most depended on", by files importing it.
-- [ ] `WM7.8` **Search.** Ctrl/Cmd-K (`CommandDialog`) over files, exported classes and routes.
+- [x] `WM7.8` **Search.** Ctrl/Cmd-K (`CommandDialog`) over files, exported classes and routes.
   Following a result centres and selects the node.
-- [ ] `WM7.9` **Saved views and links.**
+- [x] `WM7.9` **Saved views and links.**
   - View state (filters, expanded folders, selection, viewport) lives in the URL search params,
     so any URL is shareable.
   - `graph_views` (org, project, name, state, `created_by`) with `view.list`, `view.save` and
     `view.remove`.
   - A branch picker and a scan picker.
-- [ ] `WM7.10` **Performance.**
+  - done: 2026-10-03. The viewport is not in the URL: the selection is, and it is centred on
+    load. The scan picker labels each scan with its branch, which covers the branch picker.
+- [x] `WM7.10` **Performance.**
   - Aggregation runs in the worker.
   - Only visible nodes are rendered (React Flow `onlyRenderVisibleElements`).
   - Budget: a 5,000-file graph is interactive in under 2 s, and pan stays at 60 fps on the dev
     machine.
   - A generated fixture backs the benchmark spec.
-- [ ] `WM7.11` Specs (aggregation, dimming, URL state round trip) and docs:
+  - done: 2026-10-03. **Deviation:** the view model runs on the main thread. It builds a
+    5,000-file view in tens of milliseconds (`explorer.spec.ts` allows one second), so only ELK earns the worker.
+- [x] `WM7.11` Specs (aggregation, dimming, URL state round trip) and docs:
   `packages/feature/docs/reference/graph.md`.
 
 **Exit.** The explorer next to the screenshot, on the nestjs-realworld scan in `wiremap` dark, is

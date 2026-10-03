@@ -106,6 +106,8 @@ Each entry names a framework. Each is quarantined to the one layer allowed to na
 | `@tauri-apps/api` | `apps/desktop` | Desktop shell only, and not installed — the app does not exist ([30](../setup/30-desktop-app.md)). |
 | `@tanstack/react-query`, `@orpc/tanstack-query` | `packages/{query,ui,feature}` | React-scoped, which is inside the target set — all three front-end targets are React. |
 | `@base-ui/react` | `packages/ui` | React-scoped headless primitives: focus traps, dismissal, roving focus and ARIA. Only `ui` names it, through its `import.ts`, so a swap is one package. |
+| `@xyflow/react` | `packages/feature` | The graph explorer's canvas: pan, zoom, minimap and nested nodes. Only `feature/src/graph` names it. Its base stylesheet is structural; colour comes from the twelve tokens. |
+| `elkjs` | `packages/feature` (types), `apps/web` | The explorer's layout. It runs in a classic web worker the app creates (`-graph-layout.ts`), so a large graph never blocks the page. `feature` takes a `GraphLayouter` and falls back to a grid without one. |
 | `better-auth` | `packages/auth` | Multi-framework by export map: `./node` covers Node, Express, Fastify, Nest; `./next-js` and `./tanstack-start` cover two front-ends; the core web handler covers Hono. |
 
 `check-architecture.mjs` asserts the quarantine ([26](../setup/26-hygiene-and-ci.md)).
