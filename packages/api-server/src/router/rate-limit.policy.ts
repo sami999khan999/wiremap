@@ -25,6 +25,13 @@ const LIMITS: Readonly<Record<string, RateLimit>> = Object.freeze({
   // per day as well.
   "ask.question": { limit: 20, windowSeconds: 3_600 },
   "ask.testKey": { limit: 10, windowSeconds: 3_600 },
+  // Each upload is a signed URL into storage, and each scan is GitHub Actions minutes.
+  "scan.createUpload": { limit: 60, windowSeconds: 3_600 },
+  "scan.run": { limit: 30, windowSeconds: 3_600 },
+  // A request from our network to an address someone typed, and its status read back.
+  "webhook.test": { limit: 20, windowSeconds: 3_600 },
+  // A mention is a mail; a burst of comments naming everyone is a burst of mail.
+  "comment.create": { limit: 120, windowSeconds: 3_600 },
 });
 
 export class RateLimitPolicy {
