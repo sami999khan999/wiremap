@@ -149,6 +149,8 @@ export {
   QueueName,
   QueuePublisher,
   RateLimitStore,
+  type ReachMember,
+  type ReachSource,
   type RealtimeChannel,
   RealtimeChannels,
   type RealtimePublisher,

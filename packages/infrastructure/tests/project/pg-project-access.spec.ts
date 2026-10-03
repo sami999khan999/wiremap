@@ -213,3 +213,36 @@ describe("PgProjectRepository", () => {
     expect(await projectsRepo().trackingRepository("github", `ext-${id}`)).toHaveLength(1);
   });
 });
+
+describe("PgProjectRepository.reach", () => {
+  it("names every source of access, and which roles already read every project", async () => {
+    const id = await project("restricted");
+    const person = await join("member");
+    const teams = new PgTeamRepository(cluster, new TransactionScope(), shards);
+    const team = Uuid.v7() as TeamId;
+    await teams.save(acme, { id: team, name: `Core ${team.slice(-4)}`, description: null });
+    await teams.addMember(acme, team, person);
+    await projectsRepo().saveGrant(acme, id, {
+      userId: null,
+      teamId: team,
+      role: "project_editor",
+    });
+
+    counter.count = 0;
+    const reach = await projectsRepo().reach(acme);
+
+    expect(counter.count).toBe(2);
+    expect(reach.sources.filter((row) => row.projectId === id)).toEqual([
+      {
+        projectId: id,
+        userId: person,
+        role: "project_editor",
+        via: "team",
+        teamName: `Core ${team.slice(-4)}`,
+      },
+    ]);
+    const roles = new Map(reach.members.map((row) => [row.roleKey, row.orgWide]));
+    expect(roles.get("owner")).toBe(true);
+    expect(roles.get("member")).toBe(false);
+  });
+});

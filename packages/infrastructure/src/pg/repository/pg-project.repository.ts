@@ -16,6 +16,8 @@ import {
   type ProjectRecord,
   type ProjectRepository,
   type ProjectRole,
+  type ReachMember,
+  type ReachSource,
   type RepositoryId,
   type RepositoryRecord,
   sql,
@@ -266,6 +268,74 @@ export class PgProjectRepository extends BaseRepository implements ProjectReposi
           eq(projectGrants.id, grantId),
         ),
       );
+  }
+
+  // Two statements: the active members with whether their role reads every project, then
+  // every source of project access. The use-case folds them; nothing here picks a winner.
+  public async reach(organizationId: OrganizationId): Promise<{
+    readonly members: readonly ReachMember[];
+    readonly sources: readonly ReachSource[];
+  }> {
+    const members = await this.db.execute<{
+      user_id: UserId;
+      name: string;
+      email: string;
+      role_key: string;
+      org_wide: boolean;
+    }>(sql`
+      select m.user_id, u.name, u.email, r.key as role_key,
+        exists (
+          select 1 from role_permissions rp
+          where rp.role_id = m.role_id and rp.permission = 'project.graph.read'
+        ) as org_wide
+      from memberships m
+      join users u on u.id = m.user_id
+      join roles r on r.id = m.role_id
+      where m.organization_id = ${organizationId} and m.deactivated_at is null
+      order by u.name
+    `);
+    const sources = await this.db.execute<{
+      project_id: ProjectId;
+      user_id: UserId;
+      role: ProjectRole;
+      via: "default" | "direct" | "team";
+      team_name: string | null;
+    }>(sql`
+      select p.id as project_id, m.user_id, p.default_role as role, 'default' as via,
+        null as team_name
+      from projects p
+      join memberships m on m.organization_id = p.organization_id and m.deactivated_at is null
+      where p.organization_id = ${organizationId} and p.visibility = 'org'
+        and p.deleted_at is null
+      union all
+      select g.project_id, g.user_id, g.role, 'direct', null
+      from project_grants g
+      join projects p on p.id = g.project_id and p.deleted_at is null
+      where g.organization_id = ${organizationId} and g.user_id is not null
+      union all
+      select g.project_id, t.user_id, g.role, 'team', tm.name
+      from project_grants g
+      join projects p on p.id = g.project_id and p.deleted_at is null
+      join teams tm on tm.id = g.team_id
+      join team_members t on t.organization_id = g.organization_id and t.team_id = g.team_id
+      where g.organization_id = ${organizationId}
+    `);
+    return {
+      members: members.rows.map((row) => ({
+        userId: row.user_id,
+        name: row.name,
+        email: row.email,
+        roleKey: row.role_key,
+        orgWide: row.org_wide,
+      })),
+      sources: sources.rows.map((row) => ({
+        projectId: row.project_id,
+        userId: row.user_id,
+        role: row.role,
+        via: row.via,
+        teamName: row.team_name,
+      })),
+    };
   }
 
   // Across tenants, on `project_repositories_external_idx`: a push names a repository and
