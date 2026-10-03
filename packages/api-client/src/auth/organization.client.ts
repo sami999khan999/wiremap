@@ -30,8 +30,12 @@ export class OrganizationClient {
     return this.post("/invitation/accept", { token });
   }
 
+  public acceptInvitationLink(token: string): Promise<OrganizationSwitch> {
+    return this.post("/invitation-link/accept", { token });
+  }
+
   // `$fetch` rather than a generated method: the plugin has no client half, on
-  // purpose — three thin posts do not earn a second plugin to keep in step.
+  // purpose — four thin posts do not earn a second plugin to keep in step.
   private async post(path: string, body: Record<string, string>): Promise<OrganizationSwitch> {
     const response = await this.client.$fetch(path, { method: "POST", body });
     if (response.error) throw BetterAuthErrorNormalizer.normalize(response.error);

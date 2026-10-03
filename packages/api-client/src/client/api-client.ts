@@ -124,6 +124,18 @@ export class ApiClient {
     return this.rpc.docGrant;
   }
 
+  public get organization(): AppClient["organization"] {
+    return this.rpc.organization;
+  }
+
+  public get team(): AppClient["team"] {
+    return this.rpc.team;
+  }
+
+  public get activity(): AppClient["activity"] {
+    return this.rpc.activity;
+  }
+
   // The escape hatch for a namespace with no accessor yet.
   public get raw(): AppClient {
     return this.rpc;
