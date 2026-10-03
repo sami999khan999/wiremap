@@ -2,6 +2,7 @@ import { RealtimeRouter } from "../import.js";
 import { ActivityRouter } from "./activity.router.js";
 import { ApiKeyRouter } from "./api-key.router.js";
 import { AskRouter } from "./ask.router.js";
+import { CommentRouter } from "./comment.router.js";
 import { DocGrantRouter } from "./doc-grant.router.js";
 import { DocPageRouter } from "./doc-page.router.js";
 import { DocSpaceRouter } from "./doc-space.router.js";
@@ -39,5 +40,6 @@ export const appRouter = {
   github: GithubRouter.all,
   scan: ScanRouter.all,
   view: ViewRouter.all,
+  comment: CommentRouter.all,
   ask: AskRouter.all,
 };

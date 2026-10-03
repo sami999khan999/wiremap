@@ -3,12 +3,19 @@ import {
   AskPanel,
   AskQueries,
   type ClientNamespace,
+  type CommentDto,
+  CommentQueries,
+  CommentText,
+  CommentThread,
   EmptyState,
   type ExplorerState,
   ExplorerUrl,
   GraphExplorer,
   type GraphLinkDto,
   Icon,
+  type MemberDto,
+  MemberQueries,
+  NoteList,
   type ProjectDto,
   ProjectQueries,
   type ScanDto,
@@ -16,6 +23,7 @@ import {
   Select,
   useApiClient,
   useAppQuery,
+  useCapabilities,
   useMemo,
   useMessages,
   useSession,
@@ -71,6 +79,23 @@ function Explorer({ project }: { readonly project: ProjectDto }) {
   });
   const scans = useAppQuery(ScanQueries.list(client, project.id, { limit: 50, offset: 0 }));
   const ask = useAppQuery(AskQueries.available(client));
+  const capabilities = useCapabilities();
+  const commentList = useAppQuery(CommentQueries.list(client, project.id));
+  const comments: readonly CommentDto[] = commentList.data ?? [];
+  // The first hundred members, for the `@` picker; the server checks each mention anyway.
+  const memberList = useAppQuery(MemberQueries.list(client, { limit: 100, offset: 0 }));
+  const members: readonly MemberDto[] = memberList.data?.items ?? [];
+  const people = useMemo(
+    () =>
+      new Map<string, string>([
+        ...comments.map((comment) => [comment.authorId, comment.authorName] as const),
+        ...members
+          .filter((member) => !member.deactivated)
+          .map((member) => [member.userId, member.name] as const),
+      ]),
+    [comments, members],
+  );
+  const marks = useMemo(() => CommentText.marks(comments), [comments]);
   const succeeded: readonly ScanDto[] = (scans.data?.items ?? []).filter(
     (scan) => scan.state === "succeeded",
   );
@@ -102,6 +127,21 @@ function Explorer({ project }: { readonly project: ProjectDto }) {
         void navigate({ search: toSearch({ ...state, ...change }, search.scan), replace: true })
       }
       layout={elkLayout}
+      comments={{
+        marks,
+        thread: (target) => (
+          <CommentThread
+            projectId={project.id}
+            target={target}
+            comments={comments}
+            people={people}
+            currentUserId={user?.id ?? null}
+            canWrite={capabilities.can("project.comment.write", project.id)}
+            canModerate={capabilities.can("project.settings.manage", project.id)}
+          />
+        ),
+        notes: (select) => <NoteList comments={comments} people={people} onSelect={select} />,
+      }}
       {...(ask.data?.available
         ? {
             renderAsk: (selected: string | null, select: (path: string) => void) => (

@@ -43,6 +43,9 @@ export function ProjectTabs({
       <Link to="/p/$project/scans" params={{ project: slug }} className={linkClass}>
         {scan.t("scan.title")}
       </Link>
+      <Link to="/p/$project/activity" params={{ project: slug }} className={linkClass}>
+        {t("project.activity")}
+      </Link>
       {manages ? (
         <Link to="/p/$project/settings" params={{ project: slug }} className={linkClass}>
           {t("project.settings")}

@@ -26,6 +26,7 @@ export {
   StaticContentSource,
 } from "@loadbearing/content";
 export type {
+  CommentDto,
   DocNavNodeDto,
   DocPageDraftDto,
   DocPageId,
@@ -33,6 +34,7 @@ export type {
   DocSearchHitDto,
   DocSpaceDto,
   DocSpaceId,
+  MemberDto,
   OrganizationId,
   UserId,
 } from "@loadbearing/contracts";
@@ -58,6 +60,8 @@ export {
   AskPanel,
   ChangeEmailForm,
   ChangePasswordForm,
+  CommentText,
+  CommentThread,
   CompareView,
   CreateApiKeyForm,
   CreateOrganizationForm,
@@ -96,6 +100,7 @@ export {
   MessageProvider,
   ModuleNav,
   ModuleSwitchPanel,
+  NoteList,
   NotificationBell,
   NotificationList,
   NotificationPreferenceForm,
@@ -108,6 +113,7 @@ export {
   PlatformStatusPanel,
   ProfileForm,
   ProjectAccessMatrix,
+  ProjectActivityList,
   ProjectCreateForm,
   ProjectList,
   ProjectSettings,
@@ -157,6 +163,7 @@ export {
   ApiClientProvider,
   ApiKeyQueries,
   AskQueries,
+  CommentQueries,
   createQueryClient,
   DocQueries,
   MemberQueries,
