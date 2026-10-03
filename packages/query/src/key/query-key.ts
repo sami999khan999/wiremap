@@ -119,6 +119,14 @@ export class QueryKeys {
     accessOverview: () => ["project", "accessOverview"] as const,
   };
 
+  // A graph never changes once written, so `graph` is keyed by scan and kept for good.
+  public static readonly scan = {
+    all: () => ["scan"] as const,
+    list: (projectId: string, params: unknown) => ["scan", "list", projectId, params] as const,
+    graph: (projectId: string, scanId: string | null) =>
+      ["scan", "graph", projectId, scanId] as const,
+  };
+
   public static readonly github = {
     all: () => ["github"] as const,
     status: () => ["github", "status"] as const,

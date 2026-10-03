@@ -42,5 +42,6 @@ export {
   useAppMutation,
   useAppQuery,
 } from "./runtime/index.js";
+export { ScanMutations, ScanQueries } from "./scan/index.js";
 export { SessionMutations } from "./session/index.js";
 export { TeamMutations, TeamQueries } from "./team/index.js";
