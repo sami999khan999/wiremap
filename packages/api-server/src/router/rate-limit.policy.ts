@@ -21,6 +21,10 @@ const LIMITS: Readonly<Record<string, RateLimit>> = Object.freeze({
   "docPage.publish": { limit: 30, windowSeconds: 60 },
   // Each one is a signed URL for five megabytes of somebody's storage bill.
   "docPage.upload": { limit: 60, windowSeconds: 3_600 },
+  // A model call paid with the organization's own key; the use-case caps the organization
+  // per day as well.
+  "ask.question": { limit: 20, windowSeconds: 3_600 },
+  "ask.testKey": { limit: 10, windowSeconds: 3_600 },
 });
 
 export class RateLimitPolicy {
