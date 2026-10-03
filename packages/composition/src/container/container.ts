@@ -108,6 +108,7 @@ import {
   ListPermissionOverridesUseCase,
   ListPlansUseCase,
   ListPlatformDocSpacesUseCase,
+  ListProjectActivityUseCase,
   ListProjectsUseCase,
   ListRolesUseCase,
   ListScansUseCase,
@@ -120,6 +121,7 @@ import {
   type MailRenderer,
   type MaintenanceGateway,
   ManageAiSettingsUseCase,
+  ManageCommentsUseCase,
   ManageProjectAccessUseCase,
   ManageProjectRepositoryUseCase,
   ManageViewsUseCase,
@@ -150,6 +152,7 @@ import {
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
+  PgCommentRepository,
   PgDocGrantRepository,
   PgDocPageRepository,
   PgDocSpaceRepository,
@@ -290,6 +293,7 @@ import {
 import { OutboxDrainPublisher } from "../outbox/index.js";
 import { NoopRealtimePublisher } from "../realtime/index.js";
 import { OrganizationShardingStrategy } from "../shard/index.js";
+import { CapabilityNotificationAccess } from "./capability-notification-access.js";
 import type { ContainerConfig } from "./container.config.js";
 import { ContainerHealthReader } from "./container-health.reader.js";
 import { DisabledSecretCipher } from "./disabled-secret.cipher.js";
@@ -483,7 +487,10 @@ export class Container {
     readonly addMember: AddTeamMemberUseCase;
     readonly removeMember: RemoveTeamMemberUseCase;
   };
-  public readonly activityLog: { readonly list: ListActivityUseCase };
+  public readonly activityLog: {
+    readonly list: ListActivityUseCase;
+    readonly project: ListProjectActivityUseCase;
+  };
   // The code host. `NullRepositoryProvider` when no App is configured.
   public readonly repositoryProvider: RepositoryProvider;
   public readonly projects: {
@@ -514,6 +521,7 @@ export class Container {
     readonly sweep: SweepScansUseCase;
   };
   public readonly views: ManageViewsUseCase;
+  public readonly comments: ManageCommentsUseCase;
   public readonly ask: {
     readonly settings: ManageAiSettingsUseCase;
     readonly question: AskProjectUseCase;
@@ -905,6 +913,7 @@ export class Container {
         this.realtime,
         this.cache,
         this.routedUnitOfWork,
+        new CapabilityNotificationAccess(this.capabilities),
       ),
       sendDigest: new SendNotificationDigestUseCase(
         notifications,
@@ -1430,11 +1439,15 @@ export class Container {
         this.catalogUnitOfWork,
       ),
     };
+    const activityReader = new PgActivityReader(this.cluster, this.transactions, this.shards);
+    const userReader = new PgUserReader(this.cluster, this.transactions, this.shards);
     this.activityLog = {
-      list: new ListActivityUseCase(
+      list: new ListActivityUseCase(this.authorizer, activityReader, userReader),
+      project: new ListProjectActivityUseCase(
         this.authorizer,
-        new PgActivityReader(this.cluster, this.transactions, this.shards),
-        new PgUserReader(this.cluster, this.transactions, this.shards),
+        new PgProjectRepository(this.cluster, this.transactions, this.shards),
+        activityReader,
+        userReader,
       ),
     };
 
@@ -1444,6 +1457,7 @@ export class Container {
     const projectRepository = new PgProjectRepository(this.cluster, this.transactions, this.shards);
     const scanRepository = new PgScanRepository(this.cluster, this.transactions, this.shards);
     const viewRepository = new PgGraphViewRepository(this.cluster, this.transactions, this.shards);
+    const commentRepository = new PgCommentRepository(this.cluster, this.transactions, this.shards);
     const installations = new PgGithubInstallationRepository(
       this.cluster,
       this.transactions,
@@ -1480,6 +1494,7 @@ export class Container {
       purge: new PurgeProjectUseCase(projectRepository, this.storage, [
         scanRepository,
         viewRepository,
+        commentRepository,
       ]),
       available: new ListAvailableRepositoriesUseCase(
         this.authorizer,
@@ -1571,6 +1586,16 @@ export class Container {
       sweep: new SweepScansUseCase(scanRepository, this.eventPublisher, this.clock),
     };
     this.views = new ManageViewsUseCase(this.authorizer, projectRepository, viewRepository);
+    this.comments = new ManageCommentsUseCase(
+      this.authorizer,
+      projectRepository,
+      commentRepository,
+      new PgUserReader(this.cluster, this.transactions, this.shards),
+      this.eventPublisher,
+      this.activity,
+      this.routedUnitOfWork,
+      this.clock,
+    );
     const cipher = config.secrets
       ? new NodeAesGcmSecretCipher(config.secrets.current, config.secrets.keys)
       : new DisabledSecretCipher();
