@@ -27,6 +27,9 @@ const step = (name, ok, detail = "") => {
   if (!ok) process.exit(1);
 };
 const sleep = (/** @type {number} */ ms) => new Promise((done) => setTimeout(done, ms));
+// A response's JSON, loosely typed: this script checks shapes by asserting on them.
+const jsonOf = async (/** @type {Response} */ r) =>
+  /** @type {Record<string, any>} */ (await r.json());
 
 const healthy = async () => {
   for (let i = 0; i < 120; i++) {
@@ -60,10 +63,10 @@ let link = null;
 for (let i = 0; i < 30 && !link; i++) {
   await sleep(1000);
   const query = encodeURIComponent(`to:${account.email}`);
-  const list = await (await fetch(`${inbox}/api/v1/search?query=${query}`)).json();
+  const list = await jsonOf(await fetch(`${inbox}/api/v1/search?query=${query}`));
   const id = list.messages?.[0]?.ID;
   if (id) {
-    const message = await (await fetch(`${inbox}/api/v1/message/${id}`)).json();
+    const message = await jsonOf(await fetch(`${inbox}/api/v1/message/${id}`));
     link = String(message.Text ?? "").match(/https?:\/\/\S+verify-email\S*/)?.[0] ?? null;
   }
 }
@@ -95,7 +98,7 @@ const rpc = async (path, body) => {
     headers: { ...headers, cookie: session.cookie },
     body: JSON.stringify({ json: body }),
   });
-  return { status: r.status, json: (await r.json()).json };
+  return { status: r.status, json: (await jsonOf(r)).json };
 };
 
 const slug = `smoke-${Date.now().toString(36)}`;
@@ -136,15 +139,11 @@ step("the CLI analyzes and uploads through /api/storage", true);
 
 const auth = { authorization: `Bearer ${key.json.token}` };
 const readBack = async () => {
-  const routes = await (
-    await fetch(`${base}/api/v1/projects/${project.json.id}/routes`, { headers: auth })
-  ).json();
-  const graph = await (
-    await fetch(`${base}/api/v1/projects/${project.json.id}/graph`, { headers: auth })
-  ).json();
-  const document = JSON.parse(
-    gunzipSync(Buffer.from(await (await fetch(graph.url)).arrayBuffer())).toString("utf8"),
-  );
+  const projectUrl = `${base}/api/v1/projects/${project.json.id}`;
+  const routes = await jsonOf(await fetch(`${projectUrl}/routes`, { headers: auth }));
+  const graph = await jsonOf(await fetch(`${projectUrl}/graph`, { headers: auth }));
+  const gzipped = Buffer.from(await (await fetch(graph.url)).arrayBuffer());
+  const document = JSON.parse(gunzipSync(gzipped).toString("utf8"));
   return {
     routes: routes.routes?.length ?? 0,
     url: String(graph.url),
