@@ -71,6 +71,11 @@ function Home() {
           </li>
         ))}
       </ul>
+      <footer className="border-t border-border pt-6 text-sm">
+        <Link to="/privacy" className="text-fg-muted no-underline hover:text-fg">
+          {t("nav.privacy.link")}
+        </Link>
+      </footer>
     </main>
   );
 }
