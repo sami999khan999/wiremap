@@ -13,6 +13,7 @@ cannot give: a real account, a real deploy.
 | Item | What was run | Still owed | Status |
 |---|---|---|---|
 | `WM0` repository | Full standard pass, 2026-10-03: typecheck, every suite, 31 of 31 | — | [x] |
+| `WM2` brand and shell | Full pass, 2026-10-03: ui 134, feature 185. Headless Chrome, signed in: the top bar at 1356 and 375 px with no horizontal scroll; the organization menu opens and lists the membership, its role and the settings and new entries; the landing page and the phone-width sign-in | **By hand in your own Chrome:** the organization menu froze the tab twice in a profile with Grammarly and ColorZilla installed, while the account menu worked and the same menus opened and closed cleanly in a clean headless Chrome over repeated cycles. Open both menus several times with extensions on, then off, and note which state freezes | [ ] |
 | `WM1` free-tier platform | Full pass, 2026-10-03: every package green (composition 108, dispatcher 14). By hand with `QUEUE_DRIVER=cloudflare` and `wrangler dev`: a sign-up's verification mail reached Mailpit through the dispatcher, and the hourly and nightly crons ran their six jobs in the web app | The first real deploy, following `docs/infra/deployment.md` in order: Neon, Upstash, B2 (checksums `required`, SSE-B2, the `export/` rule, CORS), SMTP, Vercel, the Worker. Then its section 8 checks | [ ] |
 
 ## Inherited from the kit

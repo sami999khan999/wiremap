@@ -15,8 +15,9 @@ and every open item. This page holds the state of the tree and the traps that co
 | `ea3e7c4` | The lite kit, as cloned (the `kit` remote) |
 | `c02ec77` | `WM0.1`–`WM0.4`: the plan, identity, `4xxxx` ports, English only |
 | after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
+| after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
 
-**Next, in order:** Phase 2 from `WM2.1`.
+**Next, in order:** Phase 3 from `WM3.1`.
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.
@@ -39,6 +40,10 @@ On Linux (Node 24, pnpm 11, Docker), against a fresh `infra:up`, `db:migrate` an
 
 - **Local `.env` runs `QUEUE_DRIVER=cloudflare`** with `pnpm dev:web` and `pnpm dev:dispatcher`
   side by side. `QUEUE_DRIVER=bullmq` with `pnpm dev:worker` works too.
+
+- **Seeing the app headless:** `scratchpad`-style CDP scripts drove `google-chrome-stable
+  --headless=new` to sign in and screenshot. Worth turning into `tooling/scripts/` if it keeps
+  being needed.
 
 ## Picking it up
 

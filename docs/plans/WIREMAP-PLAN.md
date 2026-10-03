@@ -270,22 +270,26 @@ green.
 
 ### Phase 2 — Brand and shell
 
-- [ ] `WM2.1` **`wiremap` theme** in `ui/src/style/color/wiremap.css`, light and dark, set as the
+- [x] `WM2.1` **`wiremap` theme** in `ui/src/style/color/wiremap.css`, light and dark, set as the
+  done: 2026-10-03. It also holds the `:root` seed, moved from `slate.css`. `check:contrast`: 182 pairings.
   default in `ThemeRegistry`. `check:contrast` passes. Docs: `packages/ui/docs/reference/palette.md`.
-- [ ] `WM2.2` **UI primitives.**
+- [x] `WM2.2` **UI primitives.**
+  done: 2026-10-03. **As built:** `ActionMenu` (actions, beside the kit's value-choosing `Menu`) carries the user menu; `UserMenu` and `OrganizationMenu` live in `feature`. Docs: `packages/ui/docs/reference/shell-primitives.md`.
   - `Tabs` (Base UI Tabs), `Avatar`, and `UserMenu` (avatar → account, security, sign out).
   - `ThemeToggle` gets a `system` segment.
   - `ResizablePanels` is a CSS-grid splitter with keyboard support.
   - `RoleDot`, with six tones derived from the twelve.
   - Each one goes in the kitchen sink and `packages/ui/docs`.
-- [ ] `WM2.3` **App shell.**
+- [x] `WM2.3` **App shell.**
+  done: 2026-10-03. **As built:** the top bar holds the product's modules (`doc`, `platform`; `project` from Phase 4) and `settings.tsx` holds the administrative ones, through a `modules` filter on `ModuleNav`. The layout now loads `notification` copy, which the bell's name lacked.
   - `_authenticated.tsx` becomes a top bar with:
     - the `wiremap /` wordmark;
     - the org switcher as a logo, name and chevron `Menu` (switch, new org, settings);
     - the theme toggle and the avatar menu.
   - Settings pages get a left `Sidebar` layout (`settings.tsx`).
   - The module nav moves into the org menu and the settings sidebar.
-- [ ] `WM2.4` **Landing and sign-in copy** for wiremap. Icons added to `asset`: `folder`, `graph`,
+- [x] `WM2.4` **Landing and sign-in copy** for wiremap. Icons added to `asset`: `folder`, `graph`,
+  done: 2026-10-03. Also `settings`, `logout`, `plus`, `monitor`, `shield`, `activity`, `layers`. Signed-out pages share `AuthFrame`; the product name is `common` `brand.name`.
   `route`, `github`, `branch`, `play`, `sparkle`, `comment`, `pin`, `team`, `webhook`.
 
 **Exit.** Signed in, the shell matches the screenshot's top bar in `wiremap` dark, with no
