@@ -42,6 +42,7 @@ export {
   PgApiKeyRepository,
   PgBootstrapMembershipEnroller,
   PgCapabilityRepository,
+  PgCommentRepository,
   PgDocGrantRepository,
   PgDocPageRepository,
   PgDocSpaceRepository,

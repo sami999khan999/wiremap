@@ -78,6 +78,13 @@
       "when": 1791001724266,
       "tag": "0010_wiremap_ask",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791011030040,
+      "tag": "0011_wiremap_comments",
+      "breakpoints": true
     }
   ]
 }

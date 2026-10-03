@@ -3,6 +3,7 @@ import {
   jsonb,
   pgTable,
   primaryKey,
+  sql,
   text,
   timestamp,
   type UserId,
@@ -28,6 +29,12 @@ export const activityLog = pgTable(
     // two levels. `Uuid.v7()` is time-ordered, so the key still increases with the month.
     primaryKey({ columns: [t.id, t.organizationId, t.occurredAt] }),
     index("activity_log_org_time_idx").on(t.organizationId, t.occurredAt.desc()),
+    // A project's activity feed reads the trail by the project its payload names.
+    index("activity_log_project_idx").on(
+      t.organizationId,
+      sql`(${t.payload}->>'projectId')`,
+      t.occurredAt.desc(),
+    ),
     // The projection's keyset, read per tenant since `16.6`: the tenant level prunes to
     // one list partition and this index walks the months inside it.
     index("activity_log_replay_idx").on(t.occurredAt, t.id),

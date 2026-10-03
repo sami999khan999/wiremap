@@ -45,6 +45,7 @@ const PROJECT_ADMIN: readonly PermissionKey[] = Object.freeze([
   "project.graph.read",
   "project.scan.run",
   "project.ask.use",
+  "project.comment.write",
   "project.settings.manage",
   "project.access.manage",
   "project.delete",
@@ -100,7 +101,12 @@ const ROLES: readonly SystemRole[] = Object.freeze([
     key: "project_editor",
     name: "Project editor",
     scope: "goal",
-    permissions: ["project.graph.read", "project.scan.run", "project.ask.use"],
+    permissions: [
+      "project.graph.read",
+      "project.scan.run",
+      "project.ask.use",
+      "project.comment.write",
+    ],
   },
   {
     key: "project_viewer",

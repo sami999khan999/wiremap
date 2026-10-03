@@ -8,6 +8,7 @@ export { PgAiSettingsRepository } from "./pg-ai-settings.repository.js";
 export { PgApiKeyRepository } from "./pg-api-key.repository.js";
 export { PgBootstrapMembershipEnroller } from "./pg-bootstrap-membership.enroller.js";
 export { PgCapabilityRepository } from "./pg-capability.repository.js";
+export { PgCommentRepository } from "./pg-comment.repository.js";
 export { PgDocGrantRepository } from "./pg-doc-grant.repository.js";
 export { PgDocPageRepository } from "./pg-doc-page.repository.js";
 export { PgDocSpaceRepository } from "./pg-doc-space.repository.js";

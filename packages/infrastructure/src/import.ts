@@ -67,6 +67,8 @@ export {
   CapabilityResolution,
   ChatProvider,
   type ChatRequest,
+  type CommentRecord,
+  type CommentRepository,
   type DeletedTenantSweep,
   type DocDraftFields,
   type DocGrantee,
@@ -231,6 +233,8 @@ export type { Locale } from "@loadbearing/content";
 export {
   type ActivityAction,
   type ApiKeyId,
+  type CommentId,
+  type CommentTarget,
   type DocAccessRuleDto,
   type DocGrantKind,
   type DocNavNodeDto,

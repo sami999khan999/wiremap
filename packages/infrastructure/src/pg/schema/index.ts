@@ -3,6 +3,7 @@ export { organizationAi } from "./ai.schema.js";
 export * from "./api-key.schema.js";
 export * from "./archive.schema.js";
 export * from "./auth.schema.js";
+export { comments } from "./comment.schema.js";
 export * from "./doc.schema.js";
 export * from "./doc-grant.schema.js";
 export * from "./entitlement.schema.js";
