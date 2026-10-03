@@ -49,6 +49,11 @@ export interface ContainerConfig {
     // B2: `required` checksums and no lifecycle calls. See docs/infra/deployment.md.
     readonly checksums?: "full" | "required";
     readonly lifecycle?: boolean;
+    // `proxied`: links point at the web app's `/api/storage/`, signed with `secret`, and the
+    // bucket is never published. The single-container install runs this way.
+    readonly access?:
+      | { readonly mode: "presigned" }
+      | { readonly mode: "proxied"; readonly baseUrl: string; readonly secret: string };
   };
   // Optional, because `apps/worker` never issues or validates a session and must not
   // carry an AUTH_SECRET it has no use for (25.2). Absent means no `AuthFactory`.

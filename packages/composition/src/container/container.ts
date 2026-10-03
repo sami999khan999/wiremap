@@ -202,6 +202,7 @@ import {
   Principal,
   PrincipalBuilder,
   type ProjectRepository,
+  ProxiedStorageGateway,
   PublishDocPageUseCase,
   PurgeOrganizationUseCase,
   PurgeProjectUseCase,
@@ -418,6 +419,8 @@ export class Container {
   // limit, which costs nobody anything (`CR.6`).
   public readonly rateLimits: RateLimitStore;
   public readonly storage: StorageGateway;
+  // Set only when links go through the web app: what `/api/storage/` verifies them with.
+  public readonly storageProxy: ProxiedStorageGateway | null;
   public readonly queue: QueuePublisher;
   public readonly vectors: VectorStore;
   // How the corpus is embedded and searched, from `EMBEDDING_PROVIDER`. Built once, so no
@@ -768,7 +771,13 @@ export class Container {
 
     this.cache = new RedisCacheStore(this.redis.client(), this.logger);
     this.rateLimits = new RedisRateLimitStore(this.redis.client());
-    this.storage = new S3StorageGateway(config.storage);
+    const bucket = new S3StorageGateway(config.storage);
+    const access = config.storage.access;
+    this.storageProxy =
+      access?.mode === "proxied"
+        ? new ProxiedStorageGateway(bucket, access.baseUrl, access.secret)
+        : null;
+    this.storage = this.storageProxy ?? bucket;
     this.storagePolicy = new S3StoragePolicyGateway(config.storage);
 
     // The *direct* pool, not the shared one: a month-sized detach and stream needs a

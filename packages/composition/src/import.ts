@@ -378,6 +378,7 @@ export {
   PgUserReader,
   PgVectorStore,
   PgWebhookRepository,
+  ProxiedStorageGateway,
   RedisCacheStore,
   RedisConnection,
   RedisRateLimitStore,
