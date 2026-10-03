@@ -23,6 +23,13 @@ export const projectPermissions = {
     module: "project",
     label: "View a project's graph",
   },
+  // Editor and up: starting a scan spends the organization's runner minutes.
+  "project.scan.run": {
+    scope: "goal",
+    module: "project",
+    label: "Scan a project",
+    requires: ["project.graph.read"],
+  },
   "project.settings.manage": {
     scope: "goal",
     module: "project",
