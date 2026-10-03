@@ -1,0 +1,40 @@
+{
+  "name": "@loadbearing/analyzer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@loadbearing/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "rimraf": "catalog:",
+    "tsup": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@loadbearing/contracts": "workspace:*",
+    "@loadbearing/graph": "workspace:*",
+    "tree-sitter-php": "catalog:",
+    "typescript": "catalog:",
+    "web-tree-sitter": "catalog:",
+    "yaml": "catalog:"
+  }
+}

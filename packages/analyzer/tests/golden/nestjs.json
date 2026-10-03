@@ -1,0 +1,519 @@
+{
+  "version": 1,
+  "meta": {
+    "analyzer": "test",
+    "generatedAt": "2026-10-03T00:00:00.000Z",
+    "repositories": [
+      {
+        "name": "acme/nestjs",
+        "commit": "abc123",
+        "branch": "main"
+      }
+    ],
+    "timings": {
+      "totalMs": 0
+    }
+  },
+  "languages": [
+    {
+      "id": "typescript",
+      "files": 14
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "nestjs",
+      "repository": "acme/nestjs"
+    }
+  ],
+  "files": [
+    {
+      "path": "src/app.module.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "module",
+      "loc": 7,
+      "exports": [
+        "AppModule"
+      ]
+    },
+    {
+      "path": "src/article/article.controller.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "controller",
+      "loc": 30,
+      "exports": [
+        "ArticleController"
+      ]
+    },
+    {
+      "path": "src/article/article.module.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "module",
+      "loc": 13,
+      "exports": [
+        "ArticleModule"
+      ]
+    },
+    {
+      "path": "src/article/article.service.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "service",
+      "loc": 13,
+      "exports": [
+        "ArticleService"
+      ]
+    },
+    {
+      "path": "src/legacy/old.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "source",
+      "loc": 2,
+      "exports": [
+        "old"
+      ]
+    },
+    {
+      "path": "src/main.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "source",
+      "loc": 10,
+      "exports": []
+    },
+    {
+      "path": "src/shared/slug.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "utility",
+      "loc": 10,
+      "exports": [
+        "slugify",
+        "unslug"
+      ]
+    },
+    {
+      "path": "src/shared/text.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "utility",
+      "loc": 6,
+      "exports": [
+        "clean"
+      ]
+    },
+    {
+      "path": "src/user/auth.guard.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "guard",
+      "loc": 9,
+      "exports": [
+        "AuthGuard"
+      ]
+    },
+    {
+      "path": "src/user/auth.middleware.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "middleware",
+      "loc": 9,
+      "exports": [
+        "AuthMiddleware"
+      ]
+    },
+    {
+      "path": "src/user/user.controller.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "controller",
+      "loc": 31,
+      "exports": [
+        "UserController"
+      ]
+    },
+    {
+      "path": "src/user/user.entity.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "entity",
+      "loc": 7,
+      "exports": [
+        "UserEntity"
+      ]
+    },
+    {
+      "path": "src/user/user.module.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "module",
+      "loc": 7,
+      "exports": [
+        "UserModule"
+      ]
+    },
+    {
+      "path": "src/user/user.service.ts",
+      "repository": "acme/nestjs",
+      "language": "typescript",
+      "role": "service",
+      "loc": 18,
+      "exports": [
+        "UserService"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/app.module.ts",
+      "to": "src/article/article.module.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "ArticleModule"
+      ]
+    },
+    {
+      "from": "src/app.module.ts",
+      "to": "src/user/user.module.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserModule"
+      ]
+    },
+    {
+      "from": "src/article/article.controller.ts",
+      "to": "src/user/auth.guard.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "AuthGuard"
+      ]
+    },
+    {
+      "from": "src/article/article.controller.ts",
+      "to": "src/article/article.service.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "ArticleService"
+      ]
+    },
+    {
+      "from": "src/article/article.controller.ts",
+      "to": "src/article/article.service.ts",
+      "kind": "inject",
+      "certain": true
+    },
+    {
+      "from": "src/article/article.module.ts",
+      "to": "src/user/auth.middleware.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "AuthMiddleware"
+      ]
+    },
+    {
+      "from": "src/article/article.module.ts",
+      "to": "src/user/user.module.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserModule"
+      ]
+    },
+    {
+      "from": "src/article/article.module.ts",
+      "to": "src/article/article.controller.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "ArticleController"
+      ]
+    },
+    {
+      "from": "src/article/article.module.ts",
+      "to": "src/article/article.service.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "ArticleService"
+      ]
+    },
+    {
+      "from": "src/article/article.service.ts",
+      "to": "src/user/user.service.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserService"
+      ]
+    },
+    {
+      "from": "src/article/article.service.ts",
+      "to": "src/shared/slug.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "slugify"
+      ]
+    },
+    {
+      "from": "src/article/article.service.ts",
+      "to": "src/user/user.service.ts",
+      "kind": "inject",
+      "certain": true
+    },
+    {
+      "from": "src/main.ts",
+      "to": "src/app.module.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "AppModule"
+      ]
+    },
+    {
+      "from": "src/shared/slug.ts",
+      "to": "src/shared/text.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "clean"
+      ]
+    },
+    {
+      "from": "src/shared/text.ts",
+      "to": "src/shared/slug.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "slugify"
+      ]
+    },
+    {
+      "from": "src/user/user.controller.ts",
+      "to": "src/user/auth.guard.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "AuthGuard"
+      ]
+    },
+    {
+      "from": "src/user/user.controller.ts",
+      "to": "src/user/user.service.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserService"
+      ]
+    },
+    {
+      "from": "src/user/user.controller.ts",
+      "to": "src/user/user.service.ts",
+      "kind": "inject",
+      "certain": true
+    },
+    {
+      "from": "src/user/user.module.ts",
+      "to": "src/user/user.controller.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserController"
+      ]
+    },
+    {
+      "from": "src/user/user.module.ts",
+      "to": "src/user/user.service.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserService"
+      ]
+    },
+    {
+      "from": "src/user/user.service.ts",
+      "to": "src/user/user.entity.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserEntity"
+      ]
+    },
+    {
+      "from": "src/user/user.service.ts",
+      "to": "src/user/user.entity.ts",
+      "kind": "inject",
+      "certain": true
+    }
+  ],
+  "unresolved": [],
+  "coverage": {
+    "resolved": 18,
+    "total": 18
+  },
+  "routes": [
+    {
+      "id": "GET /api/articles",
+      "method": "GET",
+      "path": "/api/articles",
+      "file": "src/article/article.controller.ts",
+      "line": 9,
+      "framework": "nestjs",
+      "guards": [],
+      "source": "static"
+    },
+    {
+      "id": "GET /api/articles/:slug",
+      "method": "GET",
+      "path": "/api/articles/:slug",
+      "file": "src/article/article.controller.ts",
+      "line": 14,
+      "framework": "nestjs",
+      "guards": [],
+      "source": "static"
+    },
+    {
+      "id": "POST /api/articles",
+      "method": "POST",
+      "path": "/api/articles",
+      "file": "src/article/article.controller.ts",
+      "line": 20,
+      "framework": "nestjs",
+      "guards": [
+        "AuthGuard"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "DELETE /api/articles/:slug",
+      "method": "DELETE",
+      "path": "/api/articles/:slug",
+      "file": "src/article/article.controller.ts",
+      "line": 25,
+      "framework": "nestjs",
+      "guards": [
+        "AuthMiddleware"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "GET /api/user",
+      "method": "GET",
+      "path": "/api/user",
+      "file": "src/user/user.controller.ts",
+      "line": 9,
+      "framework": "nestjs",
+      "guards": [
+        "AuthGuard"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "PUT /api/user",
+      "method": "PUT",
+      "path": "/api/user",
+      "file": "src/user/user.controller.ts",
+      "line": 15,
+      "framework": "nestjs",
+      "guards": [
+        "AuthGuard"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "POST /api/users",
+      "method": "POST",
+      "path": "/api/users",
+      "file": "src/user/user.controller.ts",
+      "line": 21,
+      "framework": "nestjs",
+      "guards": [],
+      "source": "static"
+    },
+    {
+      "id": "POST /api/users/login",
+      "method": "POST",
+      "path": "/api/users/login",
+      "file": "src/user/user.controller.ts",
+      "line": 26,
+      "framework": "nestjs",
+      "guards": [],
+      "source": "static"
+    }
+  ],
+  "calls": [],
+  "insights": {
+    "mostDepended": [
+      {
+        "path": "src/user/user.service.ts",
+        "dependents": 3
+      },
+      {
+        "path": "src/article/article.service.ts",
+        "dependents": 2
+      },
+      {
+        "path": "src/shared/slug.ts",
+        "dependents": 2
+      },
+      {
+        "path": "src/user/auth.guard.ts",
+        "dependents": 2
+      },
+      {
+        "path": "src/user/user.module.ts",
+        "dependents": 2
+      },
+      {
+        "path": "src/app.module.ts",
+        "dependents": 1
+      },
+      {
+        "path": "src/article/article.controller.ts",
+        "dependents": 1
+      },
+      {
+        "path": "src/article/article.module.ts",
+        "dependents": 1
+      },
+      {
+        "path": "src/shared/text.ts",
+        "dependents": 1
+      },
+      {
+        "path": "src/user/auth.middleware.ts",
+        "dependents": 1
+      }
+    ],
+    "cycles": [
+      [
+        "src/shared/slug.ts",
+        "src/shared/text.ts"
+      ]
+    ],
+    "unusedFiles": [
+      "src/legacy/old.ts"
+    ],
+    "unusedExports": [
+      {
+        "path": "src/shared/slug.ts",
+        "name": "unslug"
+      }
+    ],
+    "unguardedRoutes": [
+      "GET /api/articles",
+      "GET /api/articles/:slug",
+      "POST /api/users",
+      "POST /api/users/login"
+    ]
+  }
+}

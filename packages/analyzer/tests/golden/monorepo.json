@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "meta": {
+    "analyzer": "test",
+    "generatedAt": "2026-10-03T00:00:00.000Z",
+    "repositories": [
+      {
+        "name": "acme/monorepo",
+        "commit": "abc123",
+        "branch": "main"
+      }
+    ],
+    "timings": {
+      "totalMs": 0
+    }
+  },
+  "languages": [
+    {
+      "id": "typescript",
+      "files": 3
+    }
+  ],
+  "frameworks": [],
+  "files": [
+    {
+      "path": "apps/web/src/index.ts",
+      "repository": "acme/monorepo",
+      "language": "typescript",
+      "role": "source",
+      "loc": 7,
+      "exports": [
+        "label"
+      ]
+    },
+    {
+      "path": "packages/shared/src/format.ts",
+      "repository": "acme/monorepo",
+      "language": "typescript",
+      "role": "utility",
+      "loc": 4,
+      "exports": [
+        "format"
+      ]
+    },
+    {
+      "path": "packages/shared/src/index.ts",
+      "repository": "acme/monorepo",
+      "language": "typescript",
+      "role": "utility",
+      "loc": 3,
+      "exports": [
+        "format",
+        "VERSION"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "apps/web/src/index.ts",
+      "to": "packages/shared/src/index.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "VERSION"
+      ]
+    },
+    {
+      "from": "apps/web/src/index.ts",
+      "to": "packages/shared/src/format.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "format"
+      ]
+    },
+    {
+      "from": "packages/shared/src/index.ts",
+      "to": "packages/shared/src/format.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "format"
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "from": "apps/web/src/index.ts",
+      "specifier": "./missing"
+    }
+  ],
+  "coverage": {
+    "resolved": 3,
+    "total": 4
+  },
+  "routes": [],
+  "calls": [],
+  "insights": {
+    "mostDepended": [
+      {
+        "path": "packages/shared/src/format.ts",
+        "dependents": 2
+      },
+      {
+        "path": "packages/shared/src/index.ts",
+        "dependents": 1
+      }
+    ],
+    "cycles": [],
+    "unusedFiles": [],
+    "unusedExports": [],
+    "unguardedRoutes": []
+  }
+}

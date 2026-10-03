@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "meta": {
+    "analyzer": "test",
+    "generatedAt": "2026-10-03T00:00:00.000Z",
+    "repositories": [
+      {
+        "name": "acme/nextjs",
+        "commit": "abc123",
+        "branch": "main"
+      }
+    ],
+    "timings": {
+      "totalMs": 0
+    }
+  },
+  "languages": [
+    {
+      "id": "typescript",
+      "files": 9
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "nextjs",
+      "repository": "acme/nextjs"
+    },
+    {
+      "id": "react",
+      "repository": "acme/nextjs"
+    }
+  ],
+  "files": [
+    {
+      "path": "app/(marketing)/about/page.tsx",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "page",
+      "loc": 4,
+      "exports": [
+        "default"
+      ]
+    },
+    {
+      "path": "app/api/users/[id]/route.ts",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "api",
+      "loc": 8,
+      "exports": [
+        "GET",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "app/api/users/route.ts",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "api",
+      "loc": 10,
+      "exports": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "app/layout.tsx",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "layout",
+      "loc": 4,
+      "exports": [
+        "default"
+      ]
+    },
+    {
+      "path": "app/page.tsx",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "page",
+      "loc": 6,
+      "exports": [
+        "default"
+      ]
+    },
+    {
+      "path": "components/UserList.tsx",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "component",
+      "loc": 10,
+      "exports": [
+        "UserList"
+      ]
+    },
+    {
+      "path": "lib/api.ts",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "utility",
+      "loc": 4,
+      "exports": [
+        "api"
+      ]
+    },
+    {
+      "path": "lib/users.ts",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "utility",
+      "loc": 4,
+      "exports": [
+        "listUsers"
+      ]
+    },
+    {
+      "path": "middleware.ts",
+      "repository": "acme/nextjs",
+      "language": "typescript",
+      "role": "middleware",
+      "loc": 9,
+      "exports": [
+        "middleware",
+        "config"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "app/api/users/route.ts",
+      "to": "lib/users.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "listUsers"
+      ]
+    },
+    {
+      "from": "app/page.tsx",
+      "to": "components/UserList.tsx",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserList"
+      ]
+    },
+    {
+      "from": "components/UserList.tsx",
+      "to": "lib/api.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "api"
+      ]
+    },
+    {
+      "from": "components/UserList.tsx",
+      "to": "app/api/users/route.ts",
+      "kind": "api",
+      "certain": true
+    },
+    {
+      "from": "components/UserList.tsx",
+      "to": "app/api/users/[id]/route.ts",
+      "kind": "api",
+      "certain": false
+    }
+  ],
+  "unresolved": [],
+  "coverage": {
+    "resolved": 3,
+    "total": 3
+  },
+  "routes": [
+    {
+      "id": "GET /api/users/:id",
+      "method": "GET",
+      "path": "/api/users/:id",
+      "file": "app/api/users/[id]/route.ts",
+      "line": 1,
+      "framework": "nextjs",
+      "guards": [
+        "middleware"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "DELETE /api/users/:id",
+      "method": "DELETE",
+      "path": "/api/users/:id",
+      "file": "app/api/users/[id]/route.ts",
+      "line": 5,
+      "framework": "nextjs",
+      "guards": [
+        "middleware"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "GET /api/users",
+      "method": "GET",
+      "path": "/api/users",
+      "file": "app/api/users/route.ts",
+      "line": 3,
+      "framework": "nextjs",
+      "guards": [
+        "middleware"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "POST /api/users",
+      "method": "POST",
+      "path": "/api/users",
+      "file": "app/api/users/route.ts",
+      "line": 7,
+      "framework": "nextjs",
+      "guards": [
+        "middleware"
+      ],
+      "source": "static"
+    }
+  ],
+  "calls": [
+    {
+      "file": "components/UserList.tsx",
+      "line": 5,
+      "method": "GET",
+      "url": "/api/users",
+      "route": "GET /api/users",
+      "certain": true
+    },
+    {
+      "file": "components/UserList.tsx",
+      "line": 6,
+      "method": "DELETE",
+      "url": "/api/users/:param",
+      "route": "DELETE /api/users/:id",
+      "certain": false
+    },
+    {
+      "file": "components/UserList.tsx",
+      "line": 7,
+      "method": "GET",
+      "url": "/health",
+      "route": null,
+      "certain": false
+    }
+  ],
+  "insights": {
+    "mostDepended": [
+      {
+        "path": "components/UserList.tsx",
+        "dependents": 1
+      },
+      {
+        "path": "lib/api.ts",
+        "dependents": 1
+      },
+      {
+        "path": "lib/users.ts",
+        "dependents": 1
+      }
+    ],
+    "cycles": [],
+    "unusedFiles": [],
+    "unusedExports": [],
+    "unguardedRoutes": []
+  }
+}

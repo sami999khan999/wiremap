@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "meta": {
+    "analyzer": "test",
+    "generatedAt": "2026-10-03T00:00:00.000Z",
+    "repositories": [
+      {
+        "name": "acme/tanstack",
+        "commit": "abc123",
+        "branch": "main"
+      }
+    ],
+    "timings": {
+      "totalMs": 0
+    }
+  },
+  "languages": [
+    {
+      "id": "typescript",
+      "files": 7
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "tanstack-start",
+      "repository": "acme/tanstack"
+    },
+    {
+      "id": "react",
+      "repository": "acme/tanstack"
+    }
+  ],
+  "files": [
+    {
+      "path": "src/auth.ts",
+      "repository": "acme/tanstack",
+      "language": "typescript",
+      "role": "source",
+      "loc": 2,
+      "exports": [
+        "authMiddleware"
+      ]
+    },
+    {
+      "path": "src/router.tsx",
+      "repository": "acme/tanstack",
+      "language": "typescript",
+      "role": "component",
+      "loc": 7,
+      "exports": [
+        "getRouter"
+      ]
+    },
+    {
+      "path": "src/routes/__root.tsx",
+      "repository": "acme/tanstack",
+      "language": "typescript",
+      "role": "route",
+      "loc": 4,
+      "exports": [
+        "Route"
+      ]
+    },
+    {
+      "path": "src/routes/api/users.ts",
+      "repository": "acme/tanstack",
+      "language": "typescript",
+      "role": "route",
+      "loc": 13,
+      "exports": [
+        "Route"
+      ]
+    },
+    {
+      "path": "src/routes/index.tsx",
+      "repository": "acme/tanstack",
+      "language": "typescript",
+      "role": "route",
+      "loc": 7,
+      "exports": [
+        "Route"
+      ]
+    },
+    {
+      "path": "src/routes/posts/$postId.tsx",
+      "repository": "acme/tanstack",
+      "language": "typescript",
+      "role": "route",
+      "loc": 6,
+      "exports": [
+        "Route"
+      ]
+    },
+    {
+      "path": "src/routeTree.gen.ts",
+      "repository": "acme/tanstack",
+      "language": "typescript",
+      "role": "source",
+      "loc": 7,
+      "exports": [
+        "routeTree"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/router.tsx",
+      "to": "src/routeTree.gen.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "routeTree"
+      ]
+    },
+    {
+      "from": "src/routes/api/users.ts",
+      "to": "src/auth.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "authMiddleware"
+      ]
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "to": "src/routes/__root.tsx",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Route"
+      ]
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "to": "src/routes/index.tsx",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Route"
+      ]
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "to": "src/routes/posts/$postId.tsx",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Route"
+      ]
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "to": "src/routes/api/users.ts",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Route"
+      ]
+    },
+    {
+      "from": "src/routes/index.tsx",
+      "to": "src/routes/api/users.ts",
+      "kind": "api",
+      "certain": true
+    }
+  ],
+  "unresolved": [],
+  "coverage": {
+    "resolved": 6,
+    "total": 6
+  },
+  "routes": [
+    {
+      "id": "GET /api/users",
+      "method": "GET",
+      "path": "/api/users",
+      "file": "src/routes/api/users.ts",
+      "line": 8,
+      "framework": "tanstack-start",
+      "guards": [
+        "authMiddleware"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "POST /api/users",
+      "method": "POST",
+      "path": "/api/users",
+      "file": "src/routes/api/users.ts",
+      "line": 9,
+      "framework": "tanstack-start",
+      "guards": [
+        "authMiddleware"
+      ],
+      "source": "static"
+    }
+  ],
+  "calls": [
+    {
+      "file": "src/routes/index.tsx",
+      "line": 5,
+      "method": "GET",
+      "url": "/api/users",
+      "route": "GET /api/users",
+      "certain": true
+    }
+  ],
+  "insights": {
+    "mostDepended": [
+      {
+        "path": "src/auth.ts",
+        "dependents": 1
+      },
+      {
+        "path": "src/routes/__root.tsx",
+        "dependents": 1
+      },
+      {
+        "path": "src/routes/api/users.ts",
+        "dependents": 1
+      },
+      {
+        "path": "src/routes/index.tsx",
+        "dependents": 1
+      },
+      {
+        "path": "src/routes/posts/$postId.tsx",
+        "dependents": 1
+      },
+      {
+        "path": "src/routeTree.gen.ts",
+        "dependents": 1
+      }
+    ],
+    "cycles": [],
+    "unusedFiles": [],
+    "unusedExports": [],
+    "unguardedRoutes": []
+  }
+}

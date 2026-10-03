@@ -1,0 +1,1 @@
+{ "name": "@acme/shared", "main": "./dist/index.js", "exports": { ".": "./dist/index.js", "./format": "./dist/format.js" } }

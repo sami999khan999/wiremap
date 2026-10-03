@@ -1,0 +1,5 @@
+{
+  "title": "Reference",
+  "description": "How each stage works and where it is wrong",
+  "pages": ["pipeline", "plugins"]
+}

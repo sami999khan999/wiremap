@@ -1,0 +1,294 @@
+{
+  "version": 1,
+  "meta": {
+    "analyzer": "test",
+    "generatedAt": "2026-10-03T00:00:00.000Z",
+    "repositories": [
+      {
+        "name": "acme/laravel",
+        "commit": "abc123",
+        "branch": "main"
+      }
+    ],
+    "timings": {
+      "totalMs": 0
+    }
+  },
+  "languages": [
+    {
+      "id": "php",
+      "files": 8
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "laravel",
+      "repository": "acme/laravel"
+    }
+  ],
+  "files": [
+    {
+      "path": "app/Http/Controllers/Controller.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "controller",
+      "loc": 8,
+      "exports": [
+        "Controller"
+      ]
+    },
+    {
+      "path": "app/Http/Controllers/PostController.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "controller",
+      "loc": 24,
+      "exports": [
+        "PostController"
+      ]
+    },
+    {
+      "path": "app/Http/Controllers/UserController.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "controller",
+      "loc": 24,
+      "exports": [
+        "UserController"
+      ]
+    },
+    {
+      "path": "app/Http/Middleware/Unused.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "middleware",
+      "loc": 8,
+      "exports": [
+        "Unused"
+      ]
+    },
+    {
+      "path": "app/Models/Post.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "model",
+      "loc": 8,
+      "exports": [
+        "Post"
+      ]
+    },
+    {
+      "path": "app/Models/User.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "model",
+      "loc": 12,
+      "exports": [
+        "User"
+      ]
+    },
+    {
+      "path": "routes/api.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "route",
+      "loc": 17,
+      "exports": []
+    },
+    {
+      "path": "routes/web.php",
+      "repository": "acme/laravel",
+      "language": "php",
+      "role": "route",
+      "loc": 8,
+      "exports": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "app/Http/Controllers/PostController.php",
+      "to": "app/Models/Post.php",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Post"
+      ]
+    },
+    {
+      "from": "app/Http/Controllers/PostController.php",
+      "to": "app/Http/Controllers/Controller.php",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Controller"
+      ]
+    },
+    {
+      "from": "app/Http/Controllers/UserController.php",
+      "to": "app/Models/User.php",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "User"
+      ]
+    },
+    {
+      "from": "app/Http/Controllers/UserController.php",
+      "to": "app/Http/Controllers/Controller.php",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Controller"
+      ]
+    },
+    {
+      "from": "app/Models/User.php",
+      "to": "app/Models/Post.php",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "Post"
+      ]
+    },
+    {
+      "from": "routes/api.php",
+      "to": "app/Http/Controllers/PostController.php",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "PostController"
+      ]
+    },
+    {
+      "from": "routes/api.php",
+      "to": "app/Http/Controllers/UserController.php",
+      "kind": "import",
+      "certain": true,
+      "names": [
+        "UserController"
+      ]
+    }
+  ],
+  "unresolved": [],
+  "coverage": {
+    "resolved": 4,
+    "total": 4
+  },
+  "routes": [
+    {
+      "id": "GET /api/users",
+      "method": "GET",
+      "path": "/api/users",
+      "file": "app/Http/Controllers/UserController.php",
+      "line": 9,
+      "framework": "laravel",
+      "guards": [],
+      "source": "static"
+    },
+    {
+      "id": "POST /api/users",
+      "method": "POST",
+      "path": "/api/users",
+      "file": "app/Http/Controllers/UserController.php",
+      "line": 14,
+      "framework": "laravel",
+      "guards": [
+        "auth:sanctum"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "GET /api/posts",
+      "method": "GET",
+      "path": "/api/posts",
+      "file": "app/Http/Controllers/PostController.php",
+      "line": 9,
+      "framework": "laravel",
+      "guards": [
+        "auth:sanctum"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "POST /api/posts",
+      "method": "POST",
+      "path": "/api/posts",
+      "file": "app/Http/Controllers/PostController.php",
+      "line": 19,
+      "framework": "laravel",
+      "guards": [
+        "auth:sanctum"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "GET /api/posts/:id",
+      "method": "GET",
+      "path": "/api/posts/:id",
+      "file": "app/Http/Controllers/PostController.php",
+      "line": 14,
+      "framework": "laravel",
+      "guards": [
+        "auth:sanctum"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "DELETE /api/admin/users/:user",
+      "method": "DELETE",
+      "path": "/api/admin/users/:user",
+      "file": "app/Http/Controllers/UserController.php",
+      "line": 19,
+      "framework": "laravel",
+      "guards": [
+        "auth",
+        "can:admin"
+      ],
+      "source": "static"
+    },
+    {
+      "id": "GET /",
+      "method": "GET",
+      "path": "/",
+      "file": "routes/web.php",
+      "line": 5,
+      "framework": "laravel",
+      "guards": [],
+      "source": "static"
+    }
+  ],
+  "calls": [],
+  "insights": {
+    "mostDepended": [
+      {
+        "path": "app/Http/Controllers/Controller.php",
+        "dependents": 2
+      },
+      {
+        "path": "app/Models/Post.php",
+        "dependents": 2
+      },
+      {
+        "path": "app/Http/Controllers/PostController.php",
+        "dependents": 1
+      },
+      {
+        "path": "app/Http/Controllers/UserController.php",
+        "dependents": 1
+      },
+      {
+        "path": "app/Models/User.php",
+        "dependents": 1
+      }
+    ],
+    "cycles": [],
+    "unusedFiles": [
+      "app/Http/Middleware/Unused.php"
+    ],
+    "unusedExports": [],
+    "unguardedRoutes": [
+      "GET /api/users",
+      "GET /"
+    ]
+  }
+}

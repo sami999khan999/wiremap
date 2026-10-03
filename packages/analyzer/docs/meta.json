@@ -1,0 +1,5 @@
+{
+  "title": "analyzer",
+  "description": "Reads repositories and produces a GraphDocument — parsers, resolution, framework plugins, route matching and insights",
+  "pages": ["index", "reference"]
+}
