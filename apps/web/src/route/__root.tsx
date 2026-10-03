@@ -37,6 +37,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       capabilities: context.session.dto,
       isPlatformOrganization: context.session.isPlatformOrganization,
       googleEnabled: context.session.googleEnabled,
+      githubEnabled: context.session.githubEnabled,
       flags: context.session.flags,
       appearanceSnapshot: context.appearance.current,
     };

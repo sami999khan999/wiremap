@@ -44,6 +44,50 @@ export class MemberRouter {
     context.container.member.setMemberActive.execute(context.principal, input, true),
   );
 
+  public static readonly remove = authed.member.remove.handler(async ({ input, context }) => {
+    await context.container.member.removeMember.execute(context.principal, input);
+    return { ok: true as const };
+  });
+
+  // The repositories page; the router adds back the window the caller asked for.
+  public static readonly listLinks = authed.member.listLinks.handler(
+    async ({ input, context }) => ({
+      ...(await context.container.member.listInvitationLinks.execute(context.principal, input)),
+      limit: input.limit,
+      offset: input.offset,
+    }),
+  );
+
+  public static readonly createLink = authed.member.createLink.handler(({ input, context }) =>
+    context.container.member.createInvitationLink.execute(context.principal, input),
+  );
+
+  public static readonly revokeLink = authed.member.revokeLink.handler(
+    async ({ input, context }) => {
+      await context.container.member.revokeInvitationLink.execute(context.principal, input);
+      return { ok: true as const };
+    },
+  );
+
+  public static readonly listDomains = authed.member.listDomains.handler(
+    async ({ input, context }) => ({
+      ...(await context.container.member.listMemberDomains.execute(context.principal, input)),
+      limit: input.limit,
+      offset: input.offset,
+    }),
+  );
+
+  public static readonly addDomain = authed.member.addDomain.handler(({ input, context }) =>
+    context.container.member.addMemberDomain.execute(context.principal, input),
+  );
+
+  public static readonly removeDomain = authed.member.removeDomain.handler(
+    async ({ input, context }) => {
+      await context.container.member.removeMemberDomain.execute(context.principal, input);
+      return { ok: true as const };
+    },
+  );
+
   // The object the merge point in `app.router.ts` mounts, mirroring `MemberProcedures.all`.
   public static readonly all = {
     list: MemberRouter.list,
@@ -54,5 +98,12 @@ export class MemberRouter {
     changeRole: MemberRouter.changeRole,
     deactivate: MemberRouter.deactivate,
     reactivate: MemberRouter.reactivate,
+    remove: MemberRouter.remove,
+    listLinks: MemberRouter.listLinks,
+    createLink: MemberRouter.createLink,
+    revokeLink: MemberRouter.revokeLink,
+    listDomains: MemberRouter.listDomains,
+    addDomain: MemberRouter.addDomain,
+    removeDomain: MemberRouter.removeDomain,
   } as const;
 }

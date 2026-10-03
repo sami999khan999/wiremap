@@ -17,3 +17,16 @@ export const fetchInvitation = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<InvitationSnapshot | null> => {
     return container.invitationClaimer.preview(data.token);
   });
+
+// What `/join/$token` shows before anyone signs in, from `InvitationLinkClaimer.preview`.
+export interface InvitationLinkSnapshot {
+  readonly organizationName: string;
+  readonly roleName: string;
+  readonly usable: boolean;
+}
+
+export const fetchInvitationLink = createServerFn({ method: "GET" })
+  .validator(z.object({ token: z.string().min(1).max(128) }))
+  .handler(async ({ data }): Promise<InvitationLinkSnapshot | null> => {
+    return container.invitationLinkClaimer.preview(data.token);
+  });

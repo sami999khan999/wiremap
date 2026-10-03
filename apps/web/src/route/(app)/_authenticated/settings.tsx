@@ -2,7 +2,16 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { CapabilitySet, ModuleNav, useCapabilities, useMessages } from "~/import.js";
 
 // Every module but the two the top bar holds: these are the administrative ones.
-const SETTINGS_MODULES = ["rbac", "member", "apikey", "document", "notification"] as const;
+const SETTINGS_MODULES = [
+  "organization",
+  "member",
+  "team",
+  "rbac",
+  "apikey",
+  "audit",
+  "document",
+  "notification",
+] as const;
 
 const linkClass =
   "block rounded-sm px-2 py-1.5 text-sm text-fg-muted no-underline hover:bg-muted hover:text-fg";

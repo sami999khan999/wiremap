@@ -11,6 +11,7 @@ export interface SessionSnapshot {
   // Not about the user, and it rides here anyway: `Env` is server-only, and this is the
   // one payload the root route already awaits on every request.
   readonly googleEnabled: boolean;
+  readonly githubEnabled: boolean;
   // The on-set of client-gating flags only. A server-only flag's name never rides here,
   // and in lite every flag is server-only. See docs/reference/server-functions.md.
   readonly flags: readonly FlagKey[];
@@ -25,6 +26,7 @@ const ANONYMOUS: SessionSnapshot = {
   // Off until the server says otherwise, so an unresolved store renders no button rather
   // than one that leads nowhere.
   googleEnabled: false,
+  githubEnabled: false,
   flags: [],
 };
 
@@ -76,6 +78,10 @@ export class SessionStore {
 
   public get googleEnabled(): boolean {
     return this.snapshot.googleEnabled;
+  }
+
+  public get githubEnabled(): boolean {
+    return this.snapshot.githubEnabled;
   }
 
   public get flags(): readonly FlagKey[] {

@@ -20,6 +20,7 @@ const OWNER: SessionSnapshot = {
   }).toJSON(),
   isPlatformOrganization: false,
   googleEnabled: false,
+  githubEnabled: false,
   flags: [],
 };
 

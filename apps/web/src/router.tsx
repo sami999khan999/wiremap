@@ -71,6 +71,7 @@ export function getRouter() {
       user: session.user,
       capabilities: session.dto,
       googleEnabled: session.googleEnabled,
+      githubEnabled: session.githubEnabled,
       appearanceSnapshot: appearance.current,
     },
     // After every matched loader has resolved, so the snapshot is the union of the shell

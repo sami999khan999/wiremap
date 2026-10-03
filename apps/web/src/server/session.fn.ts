@@ -12,6 +12,7 @@ const anonymous = (): SessionSnapshot => ({
   capabilities: CapabilitySet.empty().toJSON(),
   isPlatformOrganization: false,
   googleEnabled: Env.googleEnabled,
+  githubEnabled: Env.githubEnabled,
   flags: [],
 });
 
@@ -71,6 +72,7 @@ export const fetchSession = createServerFn({ method: "GET" }).handler(
       capabilities: capabilities.toJSON(),
       isPlatformOrganization: activeOrganizationId === platformOrganizationId,
       googleEnabled: Env.googleEnabled,
+      githubEnabled: Env.githubEnabled,
       // Filtered here, on the server: the browser is never sent a flag it could not use.
       flags: flags.filter((key) => FlagRegistry.instance.isClientGating(key)),
     };

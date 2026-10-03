@@ -85,6 +85,10 @@ const Schema = z
     // authorised redirect URI is `${AUTH_URL}/api/auth/callback/google`.
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    // The GitHub App's OAuth pair, for sign-in. The callback is
+    // `${AUTH_URL}/api/auth/callback/github`; both or neither, as Google.
+    GITHUB_CLIENT_ID: z.string().min(1).optional(),
+    GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
 
     // One URL rather than five fields, and required: with verification on by default, a
     // process that cannot send is one whose sign-ups never complete.
@@ -226,6 +230,10 @@ export class Env {
     return Boolean(Env.parsed.GOOGLE_CLIENT_ID && Env.parsed.GOOGLE_CLIENT_SECRET);
   }
 
+  public static get githubEnabled(): boolean {
+    return Boolean(Env.parsed.GITHUB_CLIENT_ID && Env.parsed.GITHUB_CLIENT_SECRET);
+  }
+
   // Null switches `/api/internal/job` off: with no secret there is nobody it may trust.
   public static get internalJobSecret(): string | null {
     return Env.parsed.INTERNAL_JOB_SECRET ?? null;
@@ -285,6 +293,10 @@ export class Env {
         google:
           e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET
             ? { clientId: e.GOOGLE_CLIENT_ID, clientSecret: e.GOOGLE_CLIENT_SECRET }
+            : undefined,
+        github:
+          e.GITHUB_CLIENT_ID && e.GITHUB_CLIENT_SECRET
+            ? { clientId: e.GITHUB_CLIENT_ID, clientSecret: e.GITHUB_CLIENT_SECRET }
             : undefined,
       },
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },

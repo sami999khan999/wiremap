@@ -22,7 +22,7 @@ export const Route = createFileRoute("/(shell)/sign-up")({
 
 function SignUpPage() {
   const { t } = useMessages("auth");
-  const { googleEnabled } = Route.useRouteContext();
+  const { googleEnabled, githubEnabled } = Route.useRouteContext();
   // The address the notice renders back exists only in the form that is about to be
   // replaced, which is why the state lives here.
   const [registered, setRegistered] = useState<string | null>(null);
@@ -42,6 +42,7 @@ function SignUpPage() {
           <SocialSignIn
             auth={auth}
             enabled={googleEnabled}
+            githubEnabled={githubEnabled}
             callbackUrl="/"
             errorCallbackUrl="/sign-in"
           />

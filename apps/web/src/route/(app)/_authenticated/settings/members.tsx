@@ -2,9 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Can,
   type ClientNamespace,
+  InvitationLinkPanel,
   InvitationList,
   InviteMemberForm,
   MemberAccessPanel,
+  MemberDomainPanel,
   MemberList,
   useCapabilities,
   useMessages,
@@ -39,7 +41,7 @@ function Members() {
     void navigate({ search: userId ? { member: userId } : {} });
 
   return (
-    <main>
+    <section className="flex flex-col gap-4">
       <h1>{t("member.title")}</h1>
       <p>{t("member.subtitle")}</p>
       <MemberList onOpenAccess={open} />
@@ -51,7 +53,13 @@ function Members() {
       <Can permission="member.invite" capabilities={capabilities}>
         <h2>{t("member.invite.title")}</h2>
         <InviteMemberForm />
+
+        <h2>{t("member.links.title")}</h2>
+        <InvitationLinkPanel linkFor={(token) => `${window.location.origin}/join/${token}`} />
       </Can>
-    </main>
+
+      <h2>{t("member.domains.title")}</h2>
+      <MemberDomainPanel editable={capabilities.can("member.domain.manage")} />
+    </section>
   );
 }

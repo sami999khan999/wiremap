@@ -30,6 +30,7 @@ export interface RouterContext {
   // Resolved server-side with the session, because `Env` is server-only and the sign-in
   // page decides before the first painted byte.
   readonly googleEnabled: boolean;
+  readonly githubEnabled: boolean;
   // What `__root.tsx` writes onto <html>. A plain object, not the store: TanStack Router
   // dehydrates a `beforeLoad` return value and rejects anything carrying a method.
   readonly appearanceSnapshot: AppearanceSnapshot;

@@ -33,7 +33,8 @@ function SignInPage() {
   const navigate = useNavigate();
   const router = useRouter();
   const search = Route.useSearch();
-  const { session, googleEnabled, appearance, appearanceSnapshot } = Route.useRouteContext();
+  const { session, googleEnabled, githubEnabled, appearance, appearanceSnapshot } =
+    Route.useRouteContext();
   // Which leg of the flow is on screen. The state lives here because neither form owns
   // the transition between them.
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
@@ -68,6 +69,7 @@ function SignInPage() {
           <SocialSignIn
             auth={auth}
             enabled={googleEnabled}
+            githubEnabled={githubEnabled}
             callbackUrl={RedirectSearch.target(search)}
             errorCallbackUrl="/sign-in"
           />
