@@ -141,3 +141,27 @@ describe("GithubAppProvider.installationsOfUser", () => {
     expect(await provider().installationsOfUser("c0de")).toBeNull();
   });
 });
+
+describe("GithubAppProvider.branchHead", () => {
+  const sha = "a".repeat(40);
+  const responding = (status: number, body: string) =>
+    (async (url: string | URL | Request, init?: RequestInit) => {
+      if (String(url).includes("/access_tokens"))
+        return json({ token: "t", expires_at: new Date(Date.now() + 3_600_000).toISOString() });
+      if (
+        String(url).includes("/installation/repositories") ||
+        (String(url).includes("/repos/acme/api") && !String(url).includes("/commits/"))
+      )
+        return json({ id: 1, full_name: "acme/api", default_branch: "main", private: true });
+      expect(new Headers(init?.headers).get("accept")).toBe("application/vnd.github.sha");
+      return new Response(body, { status });
+    }) as typeof fetch;
+
+  it("reads the head commit as a bare sha", async () => {
+    expect(await provider(responding(200, `${sha}\n`)).branchHead(9, "acme/api", "main")).toBe(sha);
+  });
+
+  it("answers null for a branch that is gone", async () => {
+    expect(await provider(responding(404, "")).branchHead(9, "acme/api", "old")).toBeNull();
+  });
+});

@@ -8,6 +8,7 @@ import {
   type NewRepository,
   type OrganizationId,
   type Placement,
+  type PolledRepository,
   type ProjectFields,
   type ProjectGrantId,
   type ProjectGrantRecord,
@@ -360,6 +361,36 @@ export class PgProjectRepository extends BaseRepository implements ProjectReposi
         ),
       );
     return rows.map((row) => PgProjectRepository.tracking(row));
+  }
+
+  public async polledRepositories(): Promise<readonly PolledRepository[]> {
+    const rows = await this.db
+      .select({
+        organizationId: projectRepositories.organizationId,
+        projectId: projectRepositories.projectId,
+        repositoryId: projectRepositories.id,
+        installationId: projectRepositories.installationId,
+        fullName: projectRepositories.fullName,
+        branches: projectRepositories.branches,
+        defaultBranch: projectRepositories.defaultBranch,
+      })
+      .from(projectRepositories)
+      .innerJoin(projects, eq(projects.id, projectRepositories.projectId))
+      .where(
+        and(
+          eq(projectRepositories.provider, "github"),
+          isNotNull(projectRepositories.installationId),
+          isNull(projects.deletedAt),
+        ),
+      );
+    return rows.map((row) => ({
+      organizationId: row.organizationId,
+      projectId: row.projectId as ProjectId,
+      repositoryId: row.repositoryId as RepositoryId,
+      installationId: row.installationId as number,
+      fullName: row.fullName,
+      branches: row.branches.length > 0 ? row.branches : [row.defaultBranch],
+    }));
   }
 
   public async renameRepository(

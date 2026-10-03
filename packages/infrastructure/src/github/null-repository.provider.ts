@@ -22,6 +22,10 @@ export class NullRepositoryProvider extends RepositoryProvider {
     return Promise.resolve(null);
   }
 
+  public override branchHead(): Promise<string | null> {
+    return Promise.resolve(null);
+  }
+
   public override installationsOfUser(_code: string): Promise<readonly number[] | null> {
     return Promise.resolve(null);
   }

@@ -156,6 +156,22 @@ export class GithubAppProvider extends RepositoryProvider {
     return this.mint(installationId, { repositories: [name], permissions: { contents: "read" } });
   }
 
+  public override async branchHead(
+    installationId: number,
+    fullName: string,
+    branch: string,
+  ): Promise<string | null> {
+    const { token } = await this.readToken(installationId, fullName);
+    const response = await this.http(
+      `${this.api}/repos/${fullName}/commits/${encodeURIComponent(branch)}`,
+      { headers: { ...GithubAppProvider.headers(token), accept: "application/vnd.github.sha" } },
+    );
+    if (response.status === 404 || response.status === 422) return null;
+    if (!response.ok) throw new UnavailableError("github.commits", response.status);
+    const sha = (await response.text()).trim();
+    return /^[0-9a-f]{40}$/.test(sha) ? sha : null;
+  }
+
   public override async fileAt(
     installationId: number,
     fullName: string,

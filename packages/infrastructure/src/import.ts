@@ -165,6 +165,7 @@ export {
   type PlatformPolicyRecord,
   type PlatformPolicyRepository,
   type PlatformReader,
+  type PolledRepository,
   type PreferenceRecord,
   Principal,
   type ProjectFields,
