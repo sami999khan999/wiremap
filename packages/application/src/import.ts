@@ -49,6 +49,7 @@ export {
   type DomainId,
   type GoalId,
   type GraphDocument,
+  type GraphViewId,
   Identifiers,
   type InvitationId,
   type InvitationLinkId,

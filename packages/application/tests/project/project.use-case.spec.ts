@@ -397,7 +397,9 @@ describe("project reads and writes", () => {
       },
     } as unknown as StorageGateway;
 
-    const purged = await new PurgeProjectUseCase(projects, storage).execute({
+    const purged = await new PurgeProjectUseCase(projects, storage, [
+      { removeForProject: () => Promise.resolve() },
+    ]).execute({
       organizationId: ORG,
       projectId: open.id,
     });

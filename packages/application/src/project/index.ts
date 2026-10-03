@@ -31,6 +31,10 @@ export {
 } from "./project.repository.js";
 export { ProjectRules } from "./project.rules.js";
 export { ProjectAccess } from "./project-access.js";
-export { type PurgeProjectInput, PurgeProjectUseCase } from "./purge-project.use-case.js";
+export {
+  type ProjectRowSweep,
+  type PurgeProjectInput,
+  PurgeProjectUseCase,
+} from "./purge-project.use-case.js";
 export { RemoveProjectUseCase } from "./remove-project.use-case.js";
 export { type UpdateProjectInput, UpdateProjectUseCase } from "./update-project.use-case.js";

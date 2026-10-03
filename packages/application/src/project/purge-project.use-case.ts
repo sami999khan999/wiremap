@@ -3,13 +3,17 @@ import type { StorageGateway } from "../port/index.js";
 import type { ProjectRepository } from "./project.repository.js";
 import { ProjectRules } from "./project.rules.js";
 
+export interface ProjectRowSweep {
+  removeForProject(organizationId: OrganizationId, projectId: ProjectId): Promise<void>;
+}
+
 export interface PurgeProjectInput {
   readonly organizationId: OrganizationId;
   readonly projectId: ProjectId;
 }
 
-// The `project-delete` job: a deleted project's objects, then its row and every row that
-// cascades from it. The audit trail is kept. Safe to replay at any point.
+// The `project-delete` job: a deleted project's objects, its tenant rows (scans, views),
+// then its catalog row and what cascades from it. The audit trail is kept; replay is safe.
 export class PurgeProjectUseCase {
   // One listing is at most a thousand keys; this bounds the walk if deletes stop landing.
   private static readonly MAX_PASSES = 1_000;
@@ -17,6 +21,8 @@ export class PurgeProjectUseCase {
   public constructor(
     private readonly projects: ProjectRepository,
     private readonly storage: StorageGateway,
+    // Tenant rows that name the project by id only, swept on the tenant's node.
+    private readonly tenantRows: readonly ProjectRowSweep[],
   ) {}
 
   public async execute(input: PurgeProjectInput): Promise<{ readonly objects: number }> {
@@ -29,6 +35,8 @@ export class PurgeProjectUseCase {
       for (const key of keys) await this.storage.delete(key);
       objects += keys.length;
     }
+    for (const sweep of this.tenantRows)
+      await sweep.removeForProject(input.organizationId, input.projectId);
     await this.projects.purge(input.organizationId, input.projectId);
     return { objects };
   }

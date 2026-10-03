@@ -379,6 +379,7 @@ export {
   type ProjectRecord,
   ProjectRepository,
   type ProjectRepositoryChange,
+  type ProjectRowSweep,
   ProjectRules,
   type PurgeProjectInput,
   PurgeProjectUseCase,
@@ -481,3 +482,4 @@ export {
   type UpdateTeamInput,
   UpdateTeamUseCase,
 } from "./team/index.js";
+export { type GraphViewRecord, GraphViewRepository, ManageViewsUseCase } from "./view/index.js";

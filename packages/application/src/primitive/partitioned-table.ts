@@ -9,6 +9,7 @@ const DOC_REVISION = "doc_revision";
 const DOC_SECTIONS = "doc_sections";
 const SCANS = "scans";
 const SCAN_FINDINGS = "scan_findings";
+const GRAPH_VIEWS = "graph_views";
 
 // The column the table is ranged by. A closed union rather than `string`: it is inlined
 // into DDL and into every predicate that wants a partition pruned.
@@ -112,6 +113,13 @@ const ALL = Object.freeze([
     column: null,
     retentionMonths: null,
   }),
+  // Saved explorer views: a handful per project, so the tenant level alone.
+  Object.freeze({
+    name: GRAPH_VIEWS,
+    tenantKey: "organization_id",
+    column: null,
+    retentionMonths: null,
+  }),
 ] as const) satisfies readonly PartitionedTableEntry[];
 
 // A closed union rather than `string`: Postgres accepts no bind parameters in DDL, so
@@ -153,6 +161,7 @@ export class PartitionedTable {
   public static readonly DOC_SECTIONS = DOC_SECTIONS;
   public static readonly SCANS = SCANS;
   public static readonly SCAN_FINDINGS = SCAN_FINDINGS;
+  public static readonly GRAPH_VIEWS = GRAPH_VIEWS;
 
   public static readonly ALL = ALL;
 

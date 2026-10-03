@@ -103,6 +103,12 @@ export abstract class ScanRepository {
   // On this node, every scan queued or running since before `before`, failed in one go.
   public abstract failStale(before: Date, at: Date, error: string): Promise<readonly SweptScan[]>;
 
+  // A deleted project's scans and findings, swept by the purge job.
+  public abstract removeForProject(
+    organizationId: OrganizationId,
+    projectId: ProjectId,
+  ): Promise<void>;
+
   public abstract openFindings(
     organizationId: OrganizationId,
     projectId: ProjectId,
