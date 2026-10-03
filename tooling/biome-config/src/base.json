@@ -161,6 +161,8 @@
         "packages/infrastructure/shard-env.ts",
         "packages/infrastructure/smoke.ts",
         "apps/web/cluster.mjs",
+        "docker/wiremap/rootfs/usr/local/bin/wiremap-env.mjs",
+        "docker/wiremap/src/ensure-bucket.mjs",
         "tooling/scripts/boot-smoke.mjs",
         "tooling/scripts/check-architecture.mjs"
       ],
