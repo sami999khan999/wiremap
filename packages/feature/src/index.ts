@@ -16,6 +16,7 @@ export {
   TwoFactorSetup,
   type TwoFactorSetupProps,
 } from "./account/index.js";
+export { ActivityList } from "./activity/index.js";
 export {
   ApiKeyList,
   type ApiKeyListProps,
@@ -84,12 +85,16 @@ export {
   useTranslator,
 } from "./i18n/index.js";
 export {
+  InvitationLinkPanel,
+  type InvitationLinkPanelProps,
   InvitationList,
   type InvitationListProps,
   InviteMemberForm,
   MemberAccessPanel,
   type MemberAccessPanelProps,
   MemberCount,
+  MemberDomainPanel,
+  type MemberDomainPanelProps,
   MemberList,
   type MemberListProps,
 } from "./member/index.js";
@@ -108,9 +113,14 @@ export {
   type CreateOrganizationFormProps,
   InvitationAccept,
   type InvitationAcceptProps,
+  InvitationLinkJoin,
+  type InvitationLinkJoinProps,
+  type InvitationLinkPreview,
   type InvitationPreview,
   OrganizationMenu,
   type OrganizationMenuProps,
+  OrganizationSettingsPanel,
+  type OrganizationSettingsPanelProps,
   OrganizationSwitcher,
   type OrganizationSwitcherProps,
 } from "./organization/index.js";
@@ -146,3 +156,9 @@ export {
   type RoleMatrixProps,
   useRoleFailure,
 } from "./rbac/index.js";
+export {
+  TeamList,
+  type TeamListProps,
+  TeamMembersPanel,
+  type TeamMembersPanelProps,
+} from "./team/index.js";

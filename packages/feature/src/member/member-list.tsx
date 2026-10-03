@@ -2,6 +2,7 @@ import { useCapabilities, useSession } from "../auth/index.js";
 import { useErrorMessage } from "../error/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
+  AlertDialog,
   Button,
   Callout,
   Can,
@@ -48,6 +49,9 @@ export function MemberList({ limit = 25, onOpenAccess }: MemberListProps) {
   const deactivate = MemberMutations.useDeactivate(client);
   const reactivate = MemberMutations.useReactivate(client);
   const changeRole = MemberMutations.useChangeRole(client);
+  const remove = MemberMutations.useRemove(client);
+  // The row whose removal is being confirmed. One at a time, like a role change.
+  const [removing, setRemoving] = useState<MemberRow | null>(null);
   const roles = useAssignableRoles();
   // One pending change at a time, confirmed by a second press: a demotion is one click from
   // the list, and the select alone would apply whatever the pointer slipped onto.
@@ -189,16 +193,40 @@ export function MemberList({ limit = 25, onOpenAccess }: MemberListProps) {
                 )
               }
             </Can>
+            <Can permission="member.remove" capabilities={capabilities}>
+              {row.userId === user?.id ? null : (
+                <Button
+                  variant="danger"
+                  disabled={remove.isPending}
+                  onClick={() => setRemoving(row)}
+                >
+                  {t("member.remove")}
+                </Button>
+              )}
+            </Can>
           </>
         ),
       },
     ],
-    [t, capabilities, user, deactivate, reactivate, onOpenAccess, roles, changing, changeRole],
+    [
+      t,
+      capabilities,
+      user,
+      deactivate,
+      reactivate,
+      onOpenAccess,
+      roles,
+      changing,
+      changeRole,
+      remove,
+    ],
   );
 
   // The last-owner and self refusals get their own sentence: the catalog's generic
   // conflict copy says "someone else changed this first", which is wrong about both.
-  const refusal = describe(deactivate.error ?? reactivate.error ?? changeRole.error);
+  const refusal = describe(
+    deactivate.error ?? reactivate.error ?? changeRole.error ?? remove.error,
+  );
   const reason = refusal?.envelope.context.reason;
   const refusalCopy =
     refusal?.envelope.code === "CONFLICT"
@@ -221,6 +249,20 @@ export function MemberList({ limit = 25, onOpenAccess }: MemberListProps) {
     <>
       {refusal ? <Callout tone="danger">{refusalCopy}</Callout> : null}
       <DataTable columns={columns} rows={rows} caption={t("member.title")} />
+      <AlertDialog
+        open={removing !== null}
+        onOpenChange={(open) => {
+          if (!open) setRemoving(null);
+        }}
+        title={t("member.remove")}
+        description={removing ? t("member.remove.confirm", { name: removing.name }) : undefined}
+        confirmLabel={t("member.remove")}
+        cancelLabel={t("member.action.cancel")}
+        onConfirm={() => {
+          if (removing) remove.mutate({ userId: removing.userId });
+          setRemoving(null);
+        }}
+      />
       {inspecting ? (
         <section>
           <h3>{t("member.inspect.title", { name: inspecting.name })}</h3>
