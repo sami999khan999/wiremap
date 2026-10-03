@@ -113,6 +113,11 @@ export interface EventShape {
   };
   // `outboxRows` is here because `24.1` moved that sweep out of the database: a zero
   // when the tenant had events is the shape of the sweep silently not running.
+  readonly "project.purge.completed": {
+    readonly organizationId: string;
+    readonly projectId: string;
+    readonly objects: number;
+  };
   readonly "tenant.purge.completed": {
     readonly organizationId: string;
     readonly archived: number;

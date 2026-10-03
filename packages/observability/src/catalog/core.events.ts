@@ -48,6 +48,7 @@ export const coreEvents = {
   // The delete is a job now (`19.20`), so this is the only line that says it finished.
   // `outboxRows` is on it because `24.1` moved that sweep out of the database.
   "tenant.purge.completed": { level: "info" },
+  "project.purge.completed": { level: "info" },
   // The spare pool refilled after signups drew on it. Silent when it was already full.
   "tenant.spares.replenished": { level: "info" },
   // Pages an older renderer wrote, written again. Silent when there were none.
