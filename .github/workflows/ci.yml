@@ -226,7 +226,12 @@ jobs:
   # The single container: built from this commit, started on a fresh volume, then signed up
   # to, uploaded into, read back and restarted. docs/plans/SELF-HOSTED-PLAN.md, SH6.1.
   container:
-    runs-on: ubuntu-latest
+    # Both architectures natively: arm64 is what an Apple Silicon Mac runs.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
