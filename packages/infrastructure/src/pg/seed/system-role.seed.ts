@@ -39,6 +39,15 @@ const DOC_AUTHOR: readonly PermissionKey[] = Object.freeze([
   "doc.space.manage",
 ]);
 
+// What a project role holds, inside the project it is granted on. The org-level roles that
+// list the same keys hold them in every project at once.
+const PROJECT_ADMIN: readonly PermissionKey[] = Object.freeze([
+  "project.graph.read",
+  "project.settings.manage",
+  "project.access.manage",
+  "project.delete",
+]);
+
 // Frozen at module load rather than left a `static readonly`, which freezes the binding
 // and not the array — the shape `docs/ai/rules/classes.md` bans.
 const ROLES: readonly SystemRole[] = Object.freeze([
@@ -60,6 +69,8 @@ const ROLES: readonly SystemRole[] = Object.freeze([
       "member.domain.manage",
       "organization.profile.update",
       "audit.log.read",
+      "project.create",
+      ...PROJECT_ADMIN,
       ...NOTIFICATION,
       ...DOC_AUTHOR,
     ],
@@ -68,7 +79,8 @@ const ROLES: readonly SystemRole[] = Object.freeze([
     key: "member",
     name: "Member",
     scope: "org",
-    permissions: ["member.read", ...NOTIFICATION, "doc.page.read"],
+    // A member may start a project, and administers the ones they start.
+    permissions: ["member.read", ...NOTIFICATION, "doc.page.read", "project.create"],
   },
   // Wiremap's read-only seat: the same organization-wide keys as `member` today. The two
   // part at projects, where a viewer is capped at reading.
@@ -77,6 +89,20 @@ const ROLES: readonly SystemRole[] = Object.freeze([
     name: "Viewer",
     scope: "org",
     permissions: ["member.read", ...NOTIFICATION, "doc.page.read"],
+  },
+  // The three project roles: `goal`-scoped, named by a project's grants and default role.
+  { key: "project_admin", name: "Project admin", scope: "goal", permissions: PROJECT_ADMIN },
+  {
+    key: "project_editor",
+    name: "Project editor",
+    scope: "goal",
+    permissions: ["project.graph.read"],
+  },
+  {
+    key: "project_viewer",
+    name: "Project viewer",
+    scope: "goal",
+    permissions: ["project.graph.read"],
   },
   // Never `guest`: an inbox is something you hold, and a guest holds no memberships to
   // be notified about.

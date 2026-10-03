@@ -12,6 +12,7 @@ export {
   JobSignatureHasher,
 } from "./cloudflare/index.js";
 export { type GeminiEmbeddingConfig, GeminiEmbeddingProvider } from "./gemini/index.js";
+export { type GithubAppConfig, GithubAppProvider, NullRepositoryProvider } from "./github/index.js";
 export { type OpenAiEmbeddingConfig, OpenAiEmbeddingProvider } from "./openai/index.js";
 export {
   BaseRepository,
@@ -34,6 +35,7 @@ export {
   PgDocSpaceRepository,
   PgEntitlementRepository,
   PgFlagRepository,
+  PgGithubInstallationRepository,
   PgInvitationClaimer,
   PgInvitationLinkClaimer,
   PgInvitationLinkRepository,
@@ -56,6 +58,7 @@ export {
   PgPersonalOrganizationEnroller,
   PgPlatformPolicyRepository,
   PgPlatformReader,
+  PgProjectRepository,
   PgRoleRepository,
   PgShardMapReader,
   PgShardResolver,

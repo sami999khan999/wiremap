@@ -36,6 +36,20 @@
       "when": 1790986683386,
       "tag": "0004_wiremap_access",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790989830160,
+      "tag": "0005_wiremap_projects",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790990991421,
+      "tag": "0006_github_installation_index",
+      "breakpoints": true
     }
   ]
 }

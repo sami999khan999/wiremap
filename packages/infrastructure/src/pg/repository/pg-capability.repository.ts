@@ -13,6 +13,7 @@ import {
   type PermissionKey,
   PermissionRegistry,
   type Placement,
+  ProjectRules,
   sql,
   type UserId,
 } from "../../import.js";
@@ -20,7 +21,6 @@ import { BaseRepository } from "../primitive/index.js";
 import {
   disabledModules,
   entitlementAdjustments,
-  goalMembers,
   memberships,
   organizations,
   permissionOverrides,
@@ -58,11 +58,49 @@ export class PgCapabilityRepository extends BaseRepository implements Capability
         ),
       );
 
-    const goalRows = await this.db
-      .select({ goalId: goalMembers.goalId, permission: rolePermissions.permission })
-      .from(goalMembers)
-      .innerJoin(rolePermissions, eq(rolePermissions.roleId, goalMembers.roleId))
-      .where(and(eq(goalMembers.organizationId, organizationId), eq(goalMembers.userId, userId)));
+    // Goal grants from `goal_members` and from projects (org default, direct, team) in one
+    // statement. Every role adds its keys, which is "highest wins" as roles nest; viewers capped.
+    const goalRows = (
+      await this.db.execute<{ goal_id: string; permission: string }>(sql`
+        with me as (
+          select r.key as org_role
+          from memberships m
+          join roles r on r.id = m.role_id
+          where m.organization_id = ${organizationId} and m.user_id = ${userId}
+            and m.deactivated_at is null
+        ),
+        reach as (
+          select p.id as goal_id, p.default_role as role
+          from projects p
+          where p.organization_id = ${organizationId} and p.visibility = 'org'
+            and p.deleted_at is null
+          union
+          select g.project_id, g.role
+          from project_grants g
+          join projects p on p.id = g.project_id and p.deleted_at is null
+          where g.organization_id = ${organizationId} and g.user_id = ${userId}
+          union
+          select g.project_id, g.role
+          from project_grants g
+          join team_members t
+            on t.organization_id = g.organization_id and t.team_id = g.team_id
+          join projects p on p.id = g.project_id and p.deleted_at is null
+          where g.organization_id = ${organizationId} and t.user_id = ${userId}
+        )
+        select distinct reach.goal_id::text as goal_id, rp.permission
+        from reach
+        cross join me
+        join roles r on r.organization_id = ${organizationId}
+          and r.key = case when me.org_role = ${ProjectRules.READ_ONLY_ORG_ROLE}
+            then 'project_viewer' else reach.role end
+        join role_permissions rp on rp.role_id = r.id
+        union
+        select gm.goal_id::text, rp.permission
+        from goal_members gm
+        join role_permissions rp on rp.role_id = gm.role_id
+        where gm.organization_id = ${organizationId} and gm.user_id = ${userId}
+      `)
+    ).rows.map((row) => ({ goalId: row.goal_id, permission: row.permission }));
 
     // Expired rows are filtered here, which is the real mechanism: a cached set can outlive
     // an expiry by up to the TTL, and the sweep only tidies. A deny never expires.

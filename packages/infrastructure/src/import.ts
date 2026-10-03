@@ -4,7 +4,7 @@
 // ── node ─────────────────────────────────────────────────────────────────────
 export { AsyncLocalStorage } from "node:async_hooks";
 export { Buffer } from "node:buffer";
-export { createHash, createHmac, type Hash, timingSafeEqual } from "node:crypto";
+export { createHash, createHmac, createSign, type Hash, timingSafeEqual } from "node:crypto";
 export { once } from "node:events";
 export { Readable } from "node:stream";
 export { pipeline } from "node:stream/promises";
@@ -84,6 +84,8 @@ export {
   type FlagRecord,
   type FlagRepository,
   type FlagTarget,
+  type GithubInstallationRecord,
+  type GithubInstallationRepository,
   type IndexedSource,
   type InvitationLinkPage,
   type InvitationLinkRecord,
@@ -109,6 +111,7 @@ export {
   type NewInvitation,
   type NewInvitationLink,
   type NewNotification,
+  type NewRepository,
   type NotificationPage,
   type NotificationPreferenceRepository,
   type NotificationRecipientReader,
@@ -135,6 +138,13 @@ export {
   type PlatformReader,
   type PreferenceRecord,
   Principal,
+  type ProjectFields,
+  type ProjectGrantRecord,
+  type ProjectRecord,
+  type ProjectRepository,
+  ProjectRules,
+  type ProviderInstallation,
+  type ProviderRepository,
   type QueuedJob,
   QueueName,
   QueuePublisher,
@@ -148,6 +158,8 @@ export {
   type RelayedActivityStore,
   type RenderedMarkdown,
   type RenderedSection,
+  RepositoryProvider,
+  type RepositoryRecord,
   type RolePage,
   type RoleRecord,
   type RoleRepository,
@@ -173,6 +185,7 @@ export {
   type TenantRecord,
   type TenantRepository,
   type TenantRunway,
+  type TrackingProject,
   UnitOfWork,
   type UnreadQuery,
   type UserReader,
@@ -210,8 +223,12 @@ export {
   type NotificationKind,
   type OrganizationId,
   type PaginationQuery,
+  type ProjectGrantId,
+  type ProjectId,
+  type ProjectRole,
   RealtimeContract,
   type RealtimeMessage,
+  type RepositoryId,
   type RoleId,
   type TeamId,
   type UserId,

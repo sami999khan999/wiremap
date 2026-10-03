@@ -121,6 +121,9 @@ describe("PgPersonalOrganizationEnroller", () => {
       "guest",
       "member",
       "owner",
+      "project_admin",
+      "project_editor",
+      "project_viewer",
       "viewer",
     ]);
   });

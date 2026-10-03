@@ -1,0 +1,1 @@
+CREATE INDEX "github_installations_organization_idx" ON "github_installations" USING btree ("organization_id","account_login");

@@ -12,6 +12,7 @@ export { PgDocPageRepository } from "./pg-doc-page.repository.js";
 export { PgDocSpaceRepository } from "./pg-doc-space.repository.js";
 export { PgEntitlementRepository } from "./pg-entitlement.repository.js";
 export { PgFlagRepository } from "./pg-flag.repository.js";
+export { PgGithubInstallationRepository } from "./pg-github-installation.repository.js";
 export { PgInvitationClaimer } from "./pg-invitation.claimer.js";
 export { PgInvitationRepository } from "./pg-invitation.repository.js";
 export {
@@ -37,6 +38,7 @@ export { PgPermissionOverrideRepository } from "./pg-permission-override.reposit
 export { PgPersonalOrganizationEnroller } from "./pg-personal-organization.enroller.js";
 export { PgPlatformReader } from "./pg-platform.reader.js";
 export { PgPlatformPolicyRepository } from "./pg-platform-policy.repository.js";
+export { PgProjectRepository } from "./pg-project.repository.js";
 export { PgRoleRepository } from "./pg-role.repository.js";
 export { PgShardResolver } from "./pg-shard.resolver.js";
 export { PgShardMapReader } from "./pg-shard-map.reader.js";
