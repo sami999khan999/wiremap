@@ -1,5 +1,5 @@
-import type { ApiClient, PaginationQuery, ProjectId, ScanId } from "../import.js";
-import { queryOptions } from "../import.js";
+import type { ApiClient, GraphDocument, PaginationQuery, ProjectId, ScanId } from "../import.js";
+import { GRAPH_VERSION, queryOptions } from "../import.js";
 import { QueryKeys } from "../key/index.js";
 
 export class ScanQueries {
@@ -26,6 +26,27 @@ export class ScanQueries {
       queryFn: () => client.scan.graph({ projectId, scanId }),
       staleTime: 3 * 60_000,
       retry: false,
+    });
+  }
+
+  // The gzipped graph from its signed URL, kept for good: a scan's graph never changes. A
+  // version this build cannot read is an error the page names, not a crash.
+  public static document(link: { readonly scanId: ScanId; readonly url: string }) {
+    return queryOptions({
+      queryKey: QueryKeys.scan.document(link.scanId),
+      queryFn: async (): Promise<GraphDocument> => {
+        const response = await fetch(link.url);
+        if (!response.ok || !response.body) throw new Error(`graph ${response.status}`);
+        const text = await new Response(
+          response.body.pipeThrough(new DecompressionStream("gzip")),
+        ).text();
+        const document = JSON.parse(text) as GraphDocument;
+        if (document.version !== GRAPH_VERSION) throw new Error("graph-version");
+        return document;
+      },
+      staleTime: Number.POSITIVE_INFINITY,
+      gcTime: 30 * 60_000,
+      retry: 1,
     });
   }
 }

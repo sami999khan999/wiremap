@@ -125,6 +125,13 @@ export class QueryKeys {
     list: (projectId: string, params: unknown) => ["scan", "list", projectId, params] as const,
     graph: (projectId: string, scanId: string | null) =>
       ["scan", "graph", projectId, scanId] as const,
+    // The file itself, by scan alone: the URL changes every five minutes, the bytes never.
+    document: (scanId: string) => ["scan", "document", scanId] as const,
+  };
+
+  public static readonly view = {
+    all: () => ["view"] as const,
+    list: (projectId: string) => ["view", "list", projectId] as const,
   };
 
   public static readonly github = {

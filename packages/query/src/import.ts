@@ -64,6 +64,8 @@ export type {
   FlagTargetToggleInput,
   FlagToggleInput,
   GrantOverrideInput,
+  GraphDocument,
+  GraphViewDto,
   IndexDocumentContractInput,
   InvitationDto,
   InviteMemberInput,
@@ -93,6 +95,7 @@ export type {
   RemoveMemberInput,
   RemoveOrganizationInput,
   RemoveRepositoryInput,
+  RemoveViewInput,
   RenderedDocDto,
   ReplicaToggleInput,
   ResendInvitationInput,
@@ -107,6 +110,7 @@ export type {
   SaveDocGrantInput,
   SaveDocPageInput,
   SaveProjectGrantInput,
+  SaveViewInput,
   ScanDto,
   ScanId,
   SearchDocumentsContractInput,
@@ -125,6 +129,7 @@ export type {
   UpdateRoleInput,
   UpdateTeamInput,
 } from "@loadbearing/contracts";
+export { GRAPH_VERSION } from "@loadbearing/contracts";
 
 // ── @loadbearing/errors ──────────────────────────────────────────────────────
 // Retryability is a fact about the code, declared once in the catalog and read here.
