@@ -30,7 +30,11 @@ export class GithubEndpoint {
     if (!principal) return new Response(null, { status: 302, headers: { location: "/sign-in" } });
 
     try {
-      await container.github.bind.execute(principal, { installationId, state });
+      await container.github.bind.execute(principal, {
+        installationId,
+        state,
+        code: url.searchParams.get("code"),
+      });
       return back("connected");
     } catch {
       return back("failed");
@@ -52,6 +56,16 @@ export class GithubEndpoint {
       payload = JSON.parse(body) as DeliveryPayload;
     } catch {
       return new Response(null, { status: 400 });
+    }
+
+    // A signed delivery stays valid forever, so a captured one could be replayed to queue
+    // scans. GitHub's delivery id is unique: the second sighting in a day does nothing.
+    const delivery = request.headers.get("x-github-delivery");
+    if (delivery) {
+      const fresh = await container.cache
+        .setIfAbsent(`github:delivery:${delivery}`, 1, 86_400)
+        .catch(() => true);
+      if (!fresh) return new Response(null, { status: 202 });
     }
 
     const installationId = payload.installation?.id;

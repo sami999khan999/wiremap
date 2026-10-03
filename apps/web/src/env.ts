@@ -336,6 +336,9 @@ export class Env {
               privateKey: e.GITHUB_APP_PRIVATE_KEY,
               webhookSecret: e.GITHUB_WEBHOOK_SECRET,
               stateSecret: e.AUTH_SECRET,
+              ...(e.GITHUB_CLIENT_ID && e.GITHUB_CLIENT_SECRET
+                ? { oauth: { clientId: e.GITHUB_CLIENT_ID, clientSecret: e.GITHUB_CLIENT_SECRET } }
+                : {}),
             }
           : undefined,
       scan: {
