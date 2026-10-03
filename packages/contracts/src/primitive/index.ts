@@ -14,6 +14,7 @@ export {
   type ProjectId,
   type RepositoryId,
   type RoleId,
+  type ScanId,
   type TaskId,
   type TeamId,
   type UserId,

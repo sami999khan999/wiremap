@@ -217,6 +217,7 @@ export {
   type ProjectId,
   type RepositoryId,
   type RoleId,
+  type ScanId,
   type TaskId,
   type TeamId,
   type UserId,
@@ -275,6 +276,22 @@ export {
   RoleProcedures,
   type UpdateRoleInput,
 } from "./role/index.js";
+export {
+  type CreateScanUploadInput,
+  type GraphLinkDto,
+  type GraphQueryInput,
+  type RunScanInput,
+  SCAN_STATES,
+  SCAN_TRIGGERS,
+  ScanContract,
+  type ScanCounts,
+  type ScanDto,
+  type ScanListQuery,
+  ScanProcedures,
+  type ScanState,
+  type ScanTrigger,
+  type ScanUploadDto,
+} from "./scan/index.js";
 export {
   type CreateTeamInput,
   TeamContract,

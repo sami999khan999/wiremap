@@ -12,6 +12,7 @@ import { PlatformProcedures } from "../platform/index.js";
 import { ProjectProcedures } from "../project/index.js";
 import { RealtimeProcedures } from "../realtime/index.js";
 import { RoleProcedures } from "../role/index.js";
+import { ScanProcedures } from "../scan/index.js";
 import { TeamProcedures } from "../team/index.js";
 
 // The merge point for every slice's procedures, and registering one here binds three
@@ -32,6 +33,7 @@ export const contract = {
   team: TeamProcedures.all,
   activity: ActivityProcedures.all,
   project: ProjectProcedures.all,
+  scan: ScanProcedures.all,
   github: GithubProcedures.all,
 } as const satisfies AnyContractRouter;
 
