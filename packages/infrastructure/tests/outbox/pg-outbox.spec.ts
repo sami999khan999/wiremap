@@ -87,7 +87,9 @@ describe("PgOutboxGateway.drain", () => {
   it("marks a batch published only after the relay resolves", async () => {
     await publish();
 
-    expect(await gateway.drain(10, () => Promise.resolve())).toBe(1);
+    // At least ours: the drain is global, and a spec running beside this one may have
+    // pending rows of its own. `pendingCount` is this tenant's, which is the claim.
+    expect(await gateway.drain(10, () => Promise.resolve())).toBeGreaterThanOrEqual(1);
     expect(await pendingCount()).toBe(0);
   });
 
@@ -100,7 +102,8 @@ describe("PgOutboxGateway.drain", () => {
       "queue down",
     );
     expect(await pendingCount()).toBe(1);
-    expect(await gateway.drain(10, () => Promise.resolve())).toBe(1);
+    expect(await gateway.drain(10, () => Promise.resolve())).toBeGreaterThanOrEqual(1);
+    expect(await pendingCount()).toBe(0);
   });
 
   // `CR.27`: the relay is Redis round trips, and holding the claim's transaction open

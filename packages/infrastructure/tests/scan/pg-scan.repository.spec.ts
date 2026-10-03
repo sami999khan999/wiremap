@@ -5,12 +5,11 @@ import {
   type ScanId,
   type UserId,
 } from "@loadbearing/contracts";
-import { SystemClock, Uuid } from "@loadbearing/core";
+import { Uuid } from "@loadbearing/core";
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "../../src/pg/primitive/index.js";
 import { DatabaseCluster } from "../../src/pg/primitive/index.js";
-import { PgActivityLogger } from "../../src/pg/repository/pg-activity.logger.js";
 import { PgOrganizationFounder } from "../../src/pg/repository/pg-organization.founder.js";
 import { PgScanRepository } from "../../src/pg/repository/pg-scan.repository.js";
 import { organizations, users } from "../../src/pg/schema/index.js";
@@ -61,7 +60,8 @@ beforeAll(async () => {
     .values({ id: owner, name: "Owner", email: `${owner}@example.test`, emailVerified: true });
   created.push(owner);
   const scope = new TransactionScope();
-  const activity = new PgActivityLogger(cluster, scope, shards, new SystemClock());
+  // No audit rows: they would reach the outbox, and `pg-outbox.spec.ts` drains it whole.
+  const activity = { record: () => Promise.resolve() } as never;
   acme = await new PgOrganizationFounder(
     cluster,
     scope,

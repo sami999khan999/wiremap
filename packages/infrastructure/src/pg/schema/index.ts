@@ -7,6 +7,7 @@ export * from "./doc-grant.schema.js";
 export * from "./entitlement.schema.js";
 export * from "./flag.schema.js";
 export * from "./github.schema.js";
+export { graphViews } from "./graph-view.schema.js";
 export * from "./invitation.schema.js";
 export * from "./invitation-link.schema.js";
 export * from "./notification.schema.js";

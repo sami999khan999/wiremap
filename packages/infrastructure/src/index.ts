@@ -43,6 +43,7 @@ export {
   PgEntitlementRepository,
   PgFlagRepository,
   PgGithubInstallationRepository,
+  PgGraphViewRepository,
   PgInvitationClaimer,
   PgInvitationLinkClaimer,
   PgInvitationLinkRepository,

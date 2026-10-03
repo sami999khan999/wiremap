@@ -157,6 +157,20 @@ export class PgScanRepository extends BaseRepository implements ScanRepository {
     return rows;
   }
 
+  public async removeForProject(
+    organizationId: OrganizationId,
+    projectId: ProjectId,
+  ): Promise<void> {
+    await this.db
+      .delete(scanFindings)
+      .where(
+        and(eq(scanFindings.organizationId, organizationId), eq(scanFindings.projectId, projectId)),
+      );
+    await this.db
+      .delete(scans)
+      .where(and(eq(scans.organizationId, organizationId), eq(scans.projectId, projectId)));
+  }
+
   public async openFindings(
     organizationId: OrganizationId,
     projectId: ProjectId,

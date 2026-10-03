@@ -64,6 +64,13 @@
       "when": 1790996133946,
       "tag": "0008_wiremap_scans",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790999029566,
+      "tag": "0009_graph_views",
+      "breakpoints": true
     }
   ]
 }

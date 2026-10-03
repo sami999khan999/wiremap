@@ -6,12 +6,11 @@ import {
   type TeamId,
   type UserId,
 } from "@loadbearing/contracts";
-import { SystemClock, Uuid } from "@loadbearing/core";
+import { Uuid } from "@loadbearing/core";
 import { eq, inArray, type Logger } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "../../src/pg/primitive/index.js";
 import { DatabaseCluster } from "../../src/pg/primitive/index.js";
-import { PgActivityLogger } from "../../src/pg/repository/pg-activity.logger.js";
 import { PgCapabilityRepository } from "../../src/pg/repository/pg-capability.repository.js";
 import { PgOrganizationFounder } from "../../src/pg/repository/pg-organization.founder.js";
 import { PgProjectRepository } from "../../src/pg/repository/pg-project.repository.js";
@@ -80,7 +79,8 @@ beforeAll(async () => {
   cluster = DatabaseCluster.single(database);
   const owner = await makeUser("Owner");
   const scope = new TransactionScope();
-  const activity = new PgActivityLogger(cluster, scope, shards, new SystemClock());
+  // No audit rows: they would reach the outbox, and `pg-outbox.spec.ts` drains it whole.
+  const activity = { record: () => Promise.resolve() } as never;
   acme = await new PgOrganizationFounder(
     cluster,
     scope,

@@ -13,6 +13,7 @@ export { PgDocSpaceRepository } from "./pg-doc-space.repository.js";
 export { PgEntitlementRepository } from "./pg-entitlement.repository.js";
 export { PgFlagRepository } from "./pg-flag.repository.js";
 export { PgGithubInstallationRepository } from "./pg-github-installation.repository.js";
+export { PgGraphViewRepository } from "./pg-graph-view.repository.js";
 export { PgInvitationClaimer } from "./pg-invitation.claimer.js";
 export { PgInvitationRepository } from "./pg-invitation.repository.js";
 export {
