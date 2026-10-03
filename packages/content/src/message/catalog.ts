@@ -31,5 +31,6 @@ export const CLIENT_CATALOG: Readonly<
     scan: async () => (await import("./en/scan.js")).scan,
     graph: async () => (await import("./en/graph.js")).graph,
     ask: async () => (await import("./en/ask.js")).ask,
+    webhook: async () => (await import("./en/webhook.js")).webhook,
   },
 };

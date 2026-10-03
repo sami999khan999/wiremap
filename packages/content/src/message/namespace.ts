@@ -18,6 +18,7 @@ import type { project } from "./en/project.js";
 import type { role } from "./en/role.js";
 import type { scan } from "./en/scan.js";
 import type { team } from "./en/team.js";
+import type { webhook } from "./en/webhook.js";
 
 // Type-only. `verbatimModuleSyntax` erases the imports above, so the key union stays
 // complete while the runtime data splits into one chunk per locale × namespace.
@@ -40,6 +41,7 @@ interface NamespaceShape {
   readonly scan: typeof scan;
   readonly graph: typeof graph;
   readonly ask: typeof ask;
+  readonly webhook: typeof webhook;
   readonly error: typeof error;
   readonly email: typeof email;
 }
@@ -65,7 +67,8 @@ export type ClientNamespace =
   | "project"
   | "scan"
   | "graph"
-  | "ask";
+  | "ask"
+  | "webhook";
 // Never reachable from a client catalog — only `SERVER_CATALOG` carries a loader for it.
 export type ServerNamespace = "email";
 export type Namespace = ClientNamespace | ServerNamespace;
@@ -109,4 +112,5 @@ export const CLIENT_NAMESPACES: readonly ClientNamespace[] = [
   "scan",
   "graph",
   "ask",
+  "webhook",
 ];

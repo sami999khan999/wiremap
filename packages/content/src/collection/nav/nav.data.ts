@@ -18,6 +18,7 @@ const ITEMS = [
   { module: "team", labelKey: "nav.teams", icon: "team", order: 25 },
   { module: "access", labelKey: "nav.access", icon: "folder", order: 27 },
   { module: "ai", labelKey: "nav.ai", icon: "sparkle", order: 8 },
+  { module: "webhook", labelKey: "nav.webhooks", icon: "webhook", order: 9 },
   { module: "apikey", labelKey: "nav.apiKeys", icon: "key", order: 30 },
   { module: "document", labelKey: "nav.documents", icon: "check", order: 40 },
   { module: "notification", labelKey: "nav.notifications", icon: "bell", order: 50 },

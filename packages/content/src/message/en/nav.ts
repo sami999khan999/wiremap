@@ -41,6 +41,7 @@ export const nav = {
   "nav.projects": "Projects",
   "nav.access": "Project access",
   "nav.ai": "AI",
+  "nav.webhooks": "Webhooks",
   "nav.audit": "Audit log",
   "nav.documents": "Documents",
   "nav.notifications": "Notifications",
