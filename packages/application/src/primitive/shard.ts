@@ -44,6 +44,11 @@ const CATALOG = Object.freeze([
   "organization_domains",
   "teams",
   "team_members",
+  // Projects are access metadata, resolved with capabilities; their scans and graphs are not.
+  "projects",
+  "project_repositories",
+  "project_grants",
+  "github_installations",
 ] as const);
 
 // Present on every physical database and written in whichever transaction is open.

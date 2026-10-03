@@ -104,6 +104,17 @@ export {
   UploadDocImageUseCase,
 } from "./doc/index.js";
 export { FlagCache, type FlagRecord, FlagRepository, type FlagTarget } from "./flag/index.js";
+export {
+  type BindGithubInstallationInput,
+  BindGithubInstallationUseCase,
+  GetGithubStatusUseCase,
+  type GithubInstallationRecord,
+  GithubInstallationRepository,
+  type GithubStatus,
+  type GithubWebhookEvent,
+  type GithubWebhookOutcome,
+  HandleGithubWebhookUseCase,
+} from "./github/index.js";
 export { type SendMailInput, SendMailUseCase } from "./mail/index.js";
 export {
   type AddMemberDomainInput,
@@ -295,6 +306,8 @@ export {
   OutboxGateway,
   PartitionArchiveGateway,
   type PartitionEstimate,
+  type ProviderInstallation,
+  type ProviderRepository,
   type QueuedJob,
   QueuePublisher,
   RateLimitStore,
@@ -305,6 +318,7 @@ export {
   type RenderedMail,
   type RenderedMarkdown,
   type RenderedSection,
+  RepositoryProvider,
   type RequestHeaders,
   type ResolvedSession,
   type SearchHit,
@@ -343,6 +357,33 @@ export {
   type ShardKey,
   TablePlacement,
 } from "./primitive/index.js";
+export {
+  type AvailableRepository,
+  type CreateProjectInput,
+  CreateProjectUseCase,
+  GetProjectUseCase,
+  ListAvailableRepositoriesUseCase,
+  ListProjectsUseCase,
+  ManageProjectAccessUseCase,
+  ManageProjectRepositoryUseCase,
+  type NewRepository,
+  ProjectAccess,
+  type ProjectAccessChange,
+  type ProjectFields,
+  type ProjectGrantRecord,
+  type ProjectPage,
+  type ProjectRecord,
+  ProjectRepository,
+  type ProjectRepositoryChange,
+  ProjectRules,
+  type PurgeProjectInput,
+  PurgeProjectUseCase,
+  RemoveProjectUseCase,
+  type RepositoryRecord,
+  type TrackingProject,
+  type UpdateProjectInput,
+  UpdateProjectUseCase,
+} from "./project/index.js";
 export {
   type CapabilityExplanation,
   CapabilityRepository,

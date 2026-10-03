@@ -1,5 +1,13 @@
 {
   "title": "Reference",
   "description": "One page per export with reasoning that outgrew a two-line comment",
-  "pages": ["authorizer", "ports", "platform", "notification-policy", "doc", "organization-access"]
+  "pages": [
+    "authorizer",
+    "ports",
+    "platform",
+    "notification-policy",
+    "doc",
+    "organization-access",
+    "project"
+  ]
 }
