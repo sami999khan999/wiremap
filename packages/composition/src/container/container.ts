@@ -119,6 +119,7 @@ import {
   type MaintenanceGateway,
   ManageProjectAccessUseCase,
   ManageProjectRepositoryUseCase,
+  ManageViewsUseCase,
   MarkAllNotificationsReadUseCase,
   type MarkdownRenderer,
   MarkNotificationReadUseCase,
@@ -150,6 +151,7 @@ import {
   PgEntitlementRepository,
   PgFlagRepository,
   PgGithubInstallationRepository,
+  PgGraphViewRepository,
   PgInvitationClaimer,
   PgInvitationLinkClaimer,
   PgInvitationLinkRepository,
@@ -505,6 +507,7 @@ export class Container {
     readonly trigger: TriggerScanUseCase;
     readonly sweep: SweepScansUseCase;
   };
+  public readonly views: ManageViewsUseCase;
   public readonly github: {
     readonly status: GetGithubStatusUseCase;
     readonly bind: BindGithubInstallationUseCase;
@@ -1429,6 +1432,8 @@ export class Container {
       ? new GithubAppProvider(config.github)
       : new NullRepositoryProvider();
     const projectRepository = new PgProjectRepository(this.cluster, this.transactions, this.shards);
+    const scanRepository = new PgScanRepository(this.cluster, this.transactions, this.shards);
+    const viewRepository = new PgGraphViewRepository(this.cluster, this.transactions, this.shards);
     const installations = new PgGithubInstallationRepository(
       this.cluster,
       this.transactions,
@@ -1462,7 +1467,10 @@ export class Container {
         this.catalogUnitOfWork,
         this.clock,
       ),
-      purge: new PurgeProjectUseCase(projectRepository, this.storage),
+      purge: new PurgeProjectUseCase(projectRepository, this.storage, [
+        scanRepository,
+        viewRepository,
+      ]),
       available: new ListAvailableRepositoriesUseCase(
         this.authorizer,
         installations,
@@ -1488,7 +1496,6 @@ export class Container {
       accessOverview: new GetProjectAccessOverviewUseCase(this.authorizer, projectRepository),
       tracking: projectRepository,
     };
-    const scanRepository = new PgScanRepository(this.cluster, this.transactions, this.shards);
     const scanConfig = config.scan ?? {
       secret: config.auth?.secret ?? "unconfigured",
       serverUrl: config.email.baseUrl,
@@ -1553,6 +1560,7 @@ export class Container {
       trigger: new TriggerScanUseCase(projectRepository, queueScan),
       sweep: new SweepScansUseCase(scanRepository, this.eventPublisher, this.clock),
     };
+    this.views = new ManageViewsUseCase(this.authorizer, projectRepository, viewRepository);
     this.github = {
       status: new GetGithubStatusUseCase(this.authorizer, installations, this.repositoryProvider),
       bind: new BindGithubInstallationUseCase(

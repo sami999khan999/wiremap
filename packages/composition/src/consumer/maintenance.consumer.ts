@@ -133,7 +133,10 @@ export class MaintenanceConsumer extends QueueConsumer {
 
   // Queued by `project.remove` after the soft delete; replaying it removes nothing more.
   private async projectDelete(data: ProjectDeleteJob): Promise<void> {
-    const purged = await this.container.projects.purge.execute(data);
+    // Placed: the scans and views it sweeps are tenant rows on the tenant's node.
+    const purged = await this.placed(data.organizationId, () =>
+      this.container.projects.purge.execute(data),
+    );
     this.container.logger.emit("project.purge.completed", {
       organizationId: data.organizationId,
       projectId: data.projectId,
