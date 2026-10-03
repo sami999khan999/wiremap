@@ -187,3 +187,5 @@ Lite declares no flags, so nothing calls it yet. The big kit's widget flags are 
   limits.
 - [Comments](reference/comment.md) — one level of threads, text bodies, mentions that respect
   project access, notes, and the project feed.
+- [Webhooks](reference/webhook.md) — encrypted URLs and secrets, one job per webhook, the
+  signature, retries and switch-off, and the address guard.
