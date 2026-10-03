@@ -148,6 +148,10 @@ export class ApiClient {
     return this.rpc.scan;
   }
 
+  public get view(): AppClient["view"] {
+    return this.rpc.view;
+  }
+
   // The escape hatch for a namespace with no accessor yet.
   public get raw(): AppClient {
     return this.rpc;
