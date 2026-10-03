@@ -9,6 +9,7 @@
     "doc",
     "organization-access",
     "project",
-    "scan"
+    "scan",
+    "ask"
   ]
 }

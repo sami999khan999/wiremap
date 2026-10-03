@@ -37,6 +37,7 @@ export {
   type ProviderRepository,
   RepositoryProvider,
 } from "./repository.provider.js";
+export { SecretCipher } from "./secret-cipher.js";
 export { SessionGateway } from "./session.gateway.js";
 export {
   type RequestHeaders,

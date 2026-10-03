@@ -109,6 +109,12 @@ class MemoryScans extends ScanRepository {
     }
     return Promise.resolve(swept);
   }
+  public summary() {
+    return Promise.resolve(null);
+  }
+  public saveSummary() {
+    return Promise.resolve();
+  }
   public removeForProject() {
     return Promise.resolve();
   }

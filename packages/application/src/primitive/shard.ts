@@ -49,6 +49,8 @@ const CATALOG = Object.freeze([
   "project_repositories",
   "project_grants",
   "github_installations",
+  // Configuration, read beside the organization.
+  "organization_ai",
 ] as const);
 
 // Present on every physical database and written in whichever transaction is open.

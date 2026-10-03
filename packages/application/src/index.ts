@@ -39,6 +39,22 @@ export {
   RevokeApiKeyUseCase,
 } from "./apikey/index.js";
 export {
+  type AiSettingsRecord,
+  AiSettingsRepository,
+  type AiSettingsView,
+  type AskChunkRecord,
+  AskContext,
+  type AskGrounding,
+  type AskInput,
+  type AskPreset,
+  AskProjectUseCase,
+  type CancelSignal,
+  ChatProvider,
+  type ChatRequest,
+  type ChatTurn,
+  ManageAiSettingsUseCase,
+} from "./ask/index.js";
+export {
   CreateDocPageUseCase,
   CreateDocSpaceUseCase,
   DeleteDocPageUseCase,
@@ -323,6 +339,7 @@ export {
   type RequestHeaders,
   type ResolvedSession,
   type SearchHit,
+  SecretCipher,
   SessionGateway,
   SessionResolver,
   ShardingStrategy,

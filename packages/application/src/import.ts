@@ -49,6 +49,7 @@ export {
   type DomainId,
   type GoalId,
   type GraphDocument,
+  type GraphFile,
   type GraphViewId,
   Identifiers,
   type InvitationId,
@@ -100,17 +101,19 @@ export {
 
 // ── @loadbearing/core ────────────────────────────────────────────────────────
 export { type Clock, ServerOnly, Token, Uuid } from "@loadbearing/core";
-
 // ── @loadbearing/errors ──────────────────────────────────────────────────────
 export {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  RateLimitedError,
   type SchemaIssue,
   UnauthorizedError,
   UnavailableError,
   ValidationError,
 } from "@loadbearing/errors";
+// ── @loadbearing/graph ───────────────────────────────────────────────────────
+export { GraphIndex } from "@loadbearing/graph";
 // A value, not a type: a subscriber builds an empty set to make a system principal
 // that asserts nothing.
 // ── @loadbearing/permissions ─────────────────────────────────────────────────
