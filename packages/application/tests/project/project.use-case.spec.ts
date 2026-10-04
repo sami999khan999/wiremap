@@ -182,15 +182,17 @@ class MemoryInstallations extends GithubInstallationRepository {
 }
 
 class FakeProvider extends RepositoryProvider {
-  public override readonly configured = true;
   public constructor(private readonly available: readonly ProviderRepository[] = []) {
     super();
   }
+  public isConfigured() {
+    return Promise.resolve(true);
+  }
   public installUrl() {
-    return "https://github.com/apps/test/installations/new";
+    return Promise.resolve("https://github.com/apps/test/installations/new");
   }
   public organizationFromState(state: string) {
-    return state === "good" ? ORG : null;
+    return Promise.resolve(state === "good" ? ORG : null);
   }
   public installation(installationId: number): Promise<ProviderInstallation | null> {
     return Promise.resolve({ installationId, accountLogin: "acme" });
@@ -215,7 +217,7 @@ class FakeProvider extends RepositoryProvider {
     return Promise.resolve(null);
   }
   public verifyWebhook() {
-    return true;
+    return Promise.resolve(true);
   }
 }
 

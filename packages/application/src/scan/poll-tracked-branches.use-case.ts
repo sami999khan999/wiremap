@@ -39,7 +39,7 @@ export class PollTrackedBranchesUseCase {
   // What to scan, one entry per project and branch. A head seen for the first time is only
   // recorded: the first tick after a start must not scan every project at once.
   public async due(): Promise<readonly PollTarget[]> {
-    if (!this.enabled || !this.provider.configured) return [];
+    if (!this.enabled || !(await this.provider.isConfigured())) return [];
     const targets = new Map<string, PollTarget>();
     // Per installation: true when no webhook has arrived lately, so polling is its only signal.
     const polls = new Map<number, boolean>();

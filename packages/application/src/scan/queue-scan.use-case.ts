@@ -33,7 +33,7 @@ export class QueueScanUseCase {
   public async execute(organizationId: OrganizationId, input: QueueScanInput): Promise<ScanRecord> {
     const active = await this.scans.active(organizationId, input.project.id);
     if (active) return active;
-    if (!this.runner.configured || !this.provider.configured) {
+    if (!this.runner.configured || !(await this.provider.isConfigured())) {
       throw new ValidationError([{ field: "project", rule: "noRunner" }]);
     }
     if (!input.project.repositories.some((repository) => repository.provider === "github")) {

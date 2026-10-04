@@ -168,7 +168,7 @@ class Events {
 
 const provider = (configured = true) =>
   ({
-    configured,
+    isConfigured: () => Promise.resolve(configured),
     readToken: () => Promise.resolve({ token: "ghs_x", expiresAt: new Date() }),
   }) as unknown as RepositoryProvider;
 

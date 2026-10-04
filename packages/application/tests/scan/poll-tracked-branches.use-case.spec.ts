@@ -34,7 +34,7 @@ const setup = (
   const cache = new MemoryCache();
   const calls: string[] = [];
   const provider = {
-    configured: options.configured ?? true,
+    isConfigured: () => Promise.resolve(options.configured ?? true),
     branchHead: (_installation: number, fullName: string, branch: string) => {
       calls.push(`${fullName}@${branch}`);
       const head = heads[`${fullName}@${branch}`];

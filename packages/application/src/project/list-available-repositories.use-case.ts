@@ -31,7 +31,7 @@ export class ListAvailableRepositoriesUseCase {
     provider: RepositoryProvider,
     organizationId: OrganizationId,
   ): Promise<readonly AvailableRepository[]> {
-    if (!provider.configured) return [];
+    if (!(await provider.isConfigured())) return [];
     const bound = (await installations.list(organizationId)).filter(
       (installation) => !installation.suspended,
     );

@@ -49,6 +49,8 @@ const CATALOG = Object.freeze([
   "project_repositories",
   "project_grants",
   "github_installations",
+  // The deployment's one App, read by every process before it knows a tenant.
+  "github_apps",
   // Configuration, read beside the organization.
   "organization_ai",
 ] as const);

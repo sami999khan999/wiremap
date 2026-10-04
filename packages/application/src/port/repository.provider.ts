@@ -13,17 +13,17 @@ export interface ProviderInstallation {
 }
 
 // The code host, behind a port: GitHub through its App today, GitLab or Bitbucket later as
-// a second adapter. Read-only by construction; no method writes to a repository.
+// a second adapter. Read-only, and async throughout: the App can be made while running.
 export abstract class RepositoryProvider {
   // False when this deployment has no App configured: projects can still take uploads.
-  public abstract readonly configured: boolean;
+  public abstract isConfigured(): Promise<boolean>;
 
   // Where to send someone to install the App for an organization. The organization rides in
   // a signed `state`, so the callback cannot be pointed at another tenant.
-  public abstract installUrl(organizationId: OrganizationId): string | null;
+  public abstract installUrl(organizationId: OrganizationId): Promise<string | null>;
 
   // The organization a callback's `state` was signed for, or null when it was tampered with.
-  public abstract organizationFromState(state: string): OrganizationId | null;
+  public abstract organizationFromState(state: string): Promise<OrganizationId | null>;
 
   public abstract installation(installationId: number): Promise<ProviderInstallation | null>;
 
@@ -56,5 +56,5 @@ export abstract class RepositoryProvider {
     path: string,
   ): Promise<string | null>;
 
-  public abstract verifyWebhook(body: string, signature: string | null): boolean;
+  public abstract verifyWebhook(body: string, signature: string | null): Promise<boolean>;
 }

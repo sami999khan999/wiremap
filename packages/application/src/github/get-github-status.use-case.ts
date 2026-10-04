@@ -20,7 +20,7 @@ export class GetGithubStatusUseCase {
   public async execute(actor: Principal): Promise<GithubStatus> {
     this.authorizer.assert(actor, "project.create");
     return {
-      installUrl: this.provider.installUrl(actor.organizationId),
+      installUrl: await this.provider.installUrl(actor.organizationId),
       installations: await this.installations.list(actor.organizationId),
     };
   }

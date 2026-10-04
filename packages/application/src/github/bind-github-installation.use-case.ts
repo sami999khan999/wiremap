@@ -26,7 +26,7 @@ export class BindGithubInstallationUseCase {
     this.authorizer.assert(actor, "project.create");
 
     // A state signed for another tenant is someone else's install link replayed.
-    if (this.provider.organizationFromState(input.state) !== actor.organizationId) {
+    if ((await this.provider.organizationFromState(input.state)) !== actor.organizationId) {
       throw new ForbiddenError("project.create");
     }
 
