@@ -64,6 +64,13 @@ export const platformPermissions = {
     label: "Suspend an account, and deny one person a permission",
     requires: ["platform.account.read"],
   },
+  // The deployment's one GitHub App, made from the platform screen. Its private key reads
+  // every repository connected through it, so this is never a tenant power.
+  "platform.github.manage": {
+    scope: "platform",
+    module: "platform",
+    label: "Create and remove the deployment's GitHub App",
+  },
   // Who outside the platform may read a `granted` doc space. Writing the docs themselves
   // is the tenant `doc.*` keys, held in the platform organization like any other.
   "platform.doc.grant": {
