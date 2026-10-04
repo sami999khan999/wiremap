@@ -88,6 +88,12 @@ COPY --from=mailpit /mailpit /usr/local/bin/mailpit
 COPY --from=cloudflared /usr/local/bin/cloudflared /usr/local/bin/cloudflared
 COPY --from=build /out /app
 COPY docker/wiremap/rootfs/ /
+COPY LICENSE /app/LICENSE
+
+LABEL org.opencontainers.image.title="wiremap" \
+      org.opencontainers.image.description="See how a codebase is wired. Postgres, Redis, storage, mail and the app in one container." \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.source="https://github.com/sami999khan999/wiremap"
 
 ENV PATH=/command:/usr/local/bin:/usr/bin:/bin \
     WIREMAP_DATA=/data \

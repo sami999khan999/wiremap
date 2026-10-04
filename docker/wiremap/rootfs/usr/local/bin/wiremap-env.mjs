@@ -55,6 +55,14 @@ const secret = (key) => given(key) ?? generated[key];
 const external = given("WIREMAP_EXTERNAL_STORES") === "1";
 const publicUrl = (given("WIREMAP_PUBLIC_URL") ?? "http://localhost:43000").replace(/\/+$/, "");
 const smtpGiven = given("SMTP_URL");
+// `localhost` and `127.0.0.1` are one machine but two origins to a browser, and people type
+// either. Sign-in is accepted from both; mail links still name the public URL.
+const loopbackOrigins = (url) => {
+  const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.exec(url);
+  if (!local) return url;
+  const port = local[2] ?? "";
+  return `http://localhost${port},http://127.0.0.1${port}`;
+};
 
 const env = {
   NODE_ENV: "production",
@@ -94,7 +102,7 @@ const env = {
 
   APP_BASE_URL: publicUrl,
   AUTH_URL: publicUrl,
-  AUTH_TRUSTED_ORIGINS: given("AUTH_TRUSTED_ORIGINS") ?? publicUrl,
+  AUTH_TRUSTED_ORIGINS: given("AUTH_TRUSTED_ORIGINS") ?? loopbackOrigins(publicUrl),
   AUTH_SECRET: secret("AUTH_SECRET"),
   AUTH_ENROLMENT_MODE: given("AUTH_ENROLMENT_MODE") ?? "personal",
   AUTH_REQUIRE_EMAIL_VERIFICATION: given("AUTH_REQUIRE_EMAIL_VERIFICATION") ?? "true",
