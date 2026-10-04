@@ -1,0 +1,451 @@
+/* One page rhythm for the whole app: the same width, gutters, heading scale and panel look on
+   every screen, so a page cannot be styled differently by whoever wrote it. */
+
+.ui-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 72rem;
+  min-width: 0;
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-4) var(--space-16);
+}
+
+@media (min-width: 40rem) {
+  .ui-page {
+    padding-inline: var(--space-6);
+  }
+}
+
+/* A form or a settings column reads better short. */
+.ui-page--narrow {
+  max-width: 46rem;
+}
+
+/* Inside a layout that already sets the width and the gutters, such as the settings column. */
+.ui-page--embedded {
+  max-width: none;
+  padding: 0;
+}
+
+.ui-page h1,
+.ui-page h2,
+.ui-page h3 {
+  margin: 0;
+  color: var(--fg);
+  line-height: var(--leading-tight);
+}
+
+.ui-page h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.015em;
+}
+
+.ui-page h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+.ui-page h3 {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-page p {
+  margin: 0;
+}
+
+/* The line under a title is its subtitle, set close to it. */
+.ui-page > h1 + p {
+  margin-top: calc(-1 * var(--space-3));
+  max-width: 62ch;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+/* A section on a page is a panel, and so is any bare form, box, list or table placed straight
+   on it. A box with a class (a callout, an empty state, the tab bar) keeps its own look. */
+.ui-page > section,
+.ui-page > form,
+.ui-page > fieldset,
+.ui-page > div:not([class]),
+.ui-page > ul:not([class]),
+.ui-page > ol:not([class]),
+.ui-page > dl,
+.ui-page > table {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-page > section > *,
+.ui-page > form > *,
+.ui-page > div:not([class]) > * {
+  max-width: 100%;
+}
+
+/* A panel inside a panel is a group, set off by a rule rather than a second box. */
+.ui-page section section,
+.ui-page section fieldset:not(.ui-setting) {
+  width: 100%;
+  padding: var(--space-4) 0 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-page fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.ui-page legend {
+  padding: 0;
+  color: var(--fg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-page > table {
+  display: block;
+  overflow-x: auto;
+  padding: var(--space-2);
+}
+
+.ui-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.ui-page th {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--border);
+  color: var(--fg-muted);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+}
+
+.ui-page td {
+  padding: var(--space-3);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.ui-page tr:last-child td {
+  border-bottom: 0;
+}
+
+.ui-page a:not([class]) {
+  color: var(--primary);
+  text-underline-offset: 0.2em;
+}
+
+.ui-page > .ui-callout,
+.ui-page > .ui-empty-state {
+  width: 100%;
+}
+
+/* Forms stack their fields and keep a field to a readable length, whatever panel holds them. */
+.ui-page form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.ui-page form .ui-field {
+  width: 100%;
+  max-width: 40rem;
+}
+
+.ui-page form .ui-callout {
+  width: 100%;
+  max-width: 40rem;
+}
+
+.ui-page .ui-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-page .ui-list > li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+/* The dashboard's sections: one tile per module, icon over name. */
+.ui-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.ui-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.ui-tile:hover {
+  border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
+  background: color-mix(in oklch, var(--primary) 6%, var(--bg));
+}
+
+.ui-tile svg {
+  flex: none;
+  color: var(--primary);
+}
+
+/* A row of choices of which exactly one is set, as one joined control. */
+.ui-segmented {
+  display: inline-flex;
+  padding: 2px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+}
+
+.ui-segmented button {
+  height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.ui-segmented button:hover {
+  color: var(--fg);
+}
+
+.ui-segmented button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-page fieldset.ui-setting,
+.ui-setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding-block: var(--space-3);
+  border-top: var(--border-width) solid var(--border);
+}
+
+.ui-page fieldset.ui-setting {
+  margin: 0;
+  padding: var(--space-3) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--border);
+  border-radius: 0;
+}
+
+.ui-page fieldset.ui-setting:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* Plain lists are divided rows, not bullets. */
+.ui-page :is(ul, ol):not([class]) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-page :is(ul, ol):not([class]) > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: var(--border-width) solid var(--border);
+}
+
+.ui-page :is(ul, ol):not([class]) > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.ui-page :is(ul, ol):not([class]) > li:last-child {
+  padding-bottom: 0;
+}
+
+/* A bare row that holds buttons lays them out side by side. */
+.ui-page :is(div, li, p, span, td):not([class]):has(> .ui-button) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ui-page td:not([class]):has(> .ui-button) {
+  display: table-cell;
+}
+
+.ui-page label:has(> input[type="checkbox"], > input[type="radio"]) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.ui-page input[type="checkbox"],
+.ui-page input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.ui-page dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.ui-page dt {
+  color: var(--fg-muted);
+}
+
+.ui-page dd {
+  margin: 0;
+}
+
+.ui-page small {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.ui-page code {
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.ui-page hr {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--border);
+}
+
+.ui-page details {
+  width: 100%;
+}
+
+.ui-page summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-page img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ui-page pre {
+  width: 100%;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* The signed-out frame: the same form rules as a page, in one narrow card. */
+.ui-auth-frame {
+  box-shadow: var(--shadow-md);
+}
+
+.ui-auth-frame h1,
+.ui-auth-frame h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+}
+
+.ui-auth-frame p {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.ui-auth-frame form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ui-auth-frame form .ui-button {
+  width: 100%;
+}
+
+.ui-auth-frame a {
+  color: var(--primary);
+  text-underline-offset: 0.2em;
+}

@@ -8,7 +8,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 // The placeholder is --fg-muted on --muted, the pairing that fixed --fg-muted at 0.535.
 // Invalid is read from the enclosing `Field`, so the control never needs to be told.
 const CONTROL =
-  "w-full rounded-md border border-border bg-muted text-fg text-sm [font-family:inherit] transition-colors duration-(--duration-fast) placeholder:text-fg-muted placeholder:opacity-100 enabled:hover:border-[color-mix(in_oklch,var(--border)_70%,var(--fg))] disabled:cursor-not-allowed disabled:opacity-50 in-data-[invalid=true]:border-danger in-data-[invalid=true]:focus-visible:shadow-[0_0_0_2px_var(--bg),0_0_0_4px_var(--danger)]";
+  "w-full rounded-md border border-[color-mix(in_oklch,var(--border)_78%,var(--fg))] bg-surface text-fg text-sm shadow-sm [font-family:inherit] transition-colors duration-(--duration-fast) placeholder:text-fg-muted placeholder:opacity-100 enabled:hover:border-[color-mix(in_oklch,var(--border)_50%,var(--fg))] disabled:cursor-not-allowed disabled:opacity-50 in-data-[invalid=true]:border-danger in-data-[invalid=true]:focus-visible:shadow-[0_0_0_2px_var(--bg),0_0_0_4px_var(--danger)]";
 
 // For a control that is not an `Input` but must look like one: a native `<select>`.
 export function inputClassName(className?: string): string {
@@ -17,7 +17,7 @@ export function inputClassName(className?: string): string {
 
 // The same values as `Input` but the height, which a textarea sets in rows.
 export function textareaClassName(className?: string): string {
-  return cn("ui-textarea resize-y px-3 py-2 leading-normal", CONTROL, className);
+  return cn("ui-textarea min-h-24 resize-y px-3 py-2.5 leading-normal", CONTROL, className);
 }
 
 // Spreads everything through, which is the point: `autoComplete`, `required`, `pattern`

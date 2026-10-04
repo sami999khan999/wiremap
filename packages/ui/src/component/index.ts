@@ -1,4 +1,5 @@
 export { ActionMenu, type ActionMenuEntry, type ActionMenuProps } from "./action-menu/index.js";
+export { AppShell, type AppShellProps } from "./app-shell/index.js";
 export { Avatar, type AvatarProps } from "./avatar/index.js";
 export { Button, type ButtonProps, type ButtonVariant, buttonClassName } from "./button/index.js";
 export { Callout, type CalloutProps, type CalloutTone } from "./callout/index.js";
@@ -39,7 +40,9 @@ export {
   type NavTreeProps,
   type RenderNavLink,
 } from "./nav-tree/index.js";
+export { Page, type PageProps, type PageWidth } from "./page/index.js";
 export { PageScrollbar, type PageScrollbarProps } from "./page-scrollbar/index.js";
+export { PasswordInput, type PasswordInputProps } from "./password-input/index.js";
 export { Popover, type PopoverAlign, type PopoverProps } from "./popover/index.js";
 export { Prose, type ProseProps } from "./prose/index.js";
 export { QrCode, type QrCodeProps } from "./qr-code/index.js";

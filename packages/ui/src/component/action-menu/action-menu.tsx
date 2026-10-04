@@ -26,6 +26,8 @@ export interface ActionMenuProps {
   readonly trigger: ReactNode;
   readonly entries: readonly ActionMenuEntry[];
   readonly align?: "start" | "end";
+  // `top` for a trigger at the foot of a sidebar, so the panel opens into the page.
+  readonly side?: "bottom" | "top";
   // Shown above the entries and not focusable: who is signed in.
   readonly header?: ReactNode;
   readonly className?: string;
@@ -38,6 +40,7 @@ export function ActionMenu({
   trigger,
   entries,
   align = "end",
+  side = "bottom",
   header,
   className,
 }: ActionMenuProps) {
@@ -55,7 +58,7 @@ export function ActionMenu({
         {trigger}
       </BaseMenu.Trigger>
       <BaseMenu.Portal container={container}>
-        <BaseMenu.Positioner side="bottom" align={align} sideOffset={4} className="z-20">
+        <BaseMenu.Positioner side={side} align={align} sideOffset={4} className="z-20">
           <BaseMenu.Popup className="ui-action-menu__panel min-w-56 max-w-[min(20rem,calc(100vw-1rem))] rounded-md border border-border bg-surface p-1 text-fg shadow-md outline-none">
             {header ? (
               <div className="ui-action-menu__header border-b border-border px-2 pb-2 pt-1 text-sm">

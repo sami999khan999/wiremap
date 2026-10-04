@@ -56,7 +56,7 @@ export function Field({ label, htmlFor, hint, error, children }: FieldProps) {
   const describedBy = [hintId, errorId].filter(Boolean).join(" ");
 
   return (
-    <div className="ui-field flex flex-col gap-2" data-invalid={error ? "true" : undefined}>
+    <div className="ui-field flex flex-col gap-1.5" data-invalid={error ? "true" : undefined}>
       <label className={fieldClassName.label} htmlFor={htmlFor}>
         {label}
       </label>

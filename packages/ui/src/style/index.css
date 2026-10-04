@@ -17,6 +17,7 @@
 /* Rules for elements no component renders: the page itself, and the HTML the Markdown
    renderer writes into stored docs. In the components layer, so a utility beats them. */
 @import "./base.css" layer(components);
+@import "./page.css" layer(components);
 @import "./markdown/callout.css" layer(components);
 @import "./markdown/card.css" layer(components);
 @import "./markdown/code-block.css" layer(components);
