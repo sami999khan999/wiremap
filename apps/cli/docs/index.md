@@ -95,7 +95,7 @@ pnpm --filter @loadbearing/cli pack:npm
 cd apps/cli/dist/npm && npm publish
 ```
 
-The package's licence is `UNLICENSED` until the owner chooses one. Publishing is the owner's
+The package is `AGPL-3.0-only` and ships the repository's `LICENSE`. Publishing is the owner's
 step, from their npm account.
 
 ## The MCP server

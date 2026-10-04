@@ -31,6 +31,7 @@ for (const file of ["index.js", "tree-sitter-php.wasm"]) {
   await copyFile(join(here, "dist", file), join(out, file));
 }
 await copyFile(join(here, "README.md"), join(out, "README.md"));
+await copyFile(join(here, "..", "..", "LICENSE"), join(out, "LICENSE"));
 await writeFile(
   join(out, "package.json"),
   `${JSON.stringify(
@@ -40,10 +41,9 @@ await writeFile(
       description: manifest.description,
       type: "module",
       bin: { wiremap: "./index.js" },
-      files: ["index.js", "tree-sitter-php.wasm", "README.md"],
+      files: ["index.js", "tree-sitter-php.wasm", "README.md", "LICENSE"],
       engines: { node: ">=22" },
-      // Proprietary until the owner chooses a licence; see docs/plans/TESTS.md.
-      license: "UNLICENSED",
+      license: "AGPL-3.0-only",
       repository: { type: "git", url: "git+https://github.com/sami999khan999/wiremap.git" },
       keywords: ["dependency-graph", "architecture", "nestjs", "nextjs", "laravel", "mcp"],
       dependencies,
