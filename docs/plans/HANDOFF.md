@@ -5,30 +5,81 @@ description: Where the wiremap build stopped, what is verified, and exactly how 
 
 # Handoff
 
-**Read this page first, then [`WIREMAP-PLAN.md`](WIREMAP-PLAN.md).** The plan holds every decision
-and every open item. This page holds the state of the tree and the traps that cost time.
+**Read this page first, then [`SELF-HOSTED-PLAN.md`](SELF-HOSTED-PLAN.md) and
+[`WIREMAP-PLAN.md`](WIREMAP-PLAN.md).** The plans hold every decision and every open item. This
+page holds where the work stopped, the state of the tree, and the traps that cost time.
 
-## Where it stands
+## Where we left off (2026-10-04)
 
-| Commit | What |
+**Both plans are built.** [`WIREMAP-PLAN.md`](WIREMAP-PLAN.md) is done through `WM12`, and
+[`SELF-HOSTED-PLAN.md`](SELF-HOSTED-PLAN.md) through `SH6`, except the two items below. The last
+CI run on `main` passed every job: `verify`, `compose`, `audit`, and `container` on both amd64 and
+arm64.
+
+**How it is meant to run now: one Docker container on the owner's machine.** The free-tier cloud
+deploy stopped because the Cloudflare account had used all five free cron triggers on other
+Workers. The owner chose to self-host instead.
+
+```bash
+docker build -f docker/wiremap/Dockerfile -t wiremap .
+docker run -d --name wiremap -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 -v wiremap-data:/data wiremap
+```
+
+Everything about it is in [`docs/infra/self-hosted.md`](../infra/self-hosted.md).
+
+**Open, in this order:**
+
+1. **`SH4.4`, owed by hand: a real scan inside the container.** It needs a GitHub App registered
+   for `localhost` ([`github-app.md`](../infra/github-app.md), "On your own machine"), whose keys
+   go in the container's env file. Then connect a repository, scan it, push, and watch the hourly
+   poll scan the push. Nothing has yet been scanned from a real GitHub repository. The other
+   by-hand checks are in [`TESTS.md`](TESTS.md), row `SH`: a Cloudflare Tunnel with live webhooks,
+   and an Apple Silicon Mac.
+2. **`SH6.4`, the owner's decision: the cloud resources from the free-tier attempt.** They are
+   live and cost nothing as they are. Keep them for a cloud deploy later, or delete them:
+
+   | Where | What |
+   |---|---|
+   | Neon, organization `org-damp-sun-96614563` | project `cool-truth-78829166` (`aws-us-east-1`), migrated and seeded |
+   | Vercel | project `wiremap`, linked from `apps/web/.vercel/`, never deployed |
+   | Cloudflare | Worker `wiremap-dispatcher` (`wiremap-dispatcher.prodigycorp.workers.dev`) with its two secrets, queues `wiremap-jobs` and `wiremap-jobs-dead`, and no cron trigger |
+
+   Their credentials and the generated production secrets are in `.env.production` at the repository
+   root (gitignored, `0600`). The Upstash, B2 and SMTP lines in it are still `FILL`.
+3. **Publishing**, once the owner picks a licence: the CLI to npm (`pnpm --filter @loadbearing/cli
+   pack:npm`, then `npm publish` from `apps/cli/dist/npm`) and the VS Code extension
+   (`pnpm --filter wiremap-vscode package`). Both say `UNLICENSED` until then.
+
+**State of this machine** (it does not travel with the repository):
+- The dev stack (`pnpm infra:up`, compose project `wiremap`) is running.
+- The image `wiremap:latest` (976 MB) is built. No wiremap container is running; the test
+  container and its volume were removed.
+- The agent's scratch files (screenshots, the local test account, an API key) were wiped
+  between sessions. A new local account is made by signing up and reading the mail in Mailpit.
+
+**Commit `19b6729`** (`feat(webhooks)`) was made outside the agent session from staged work.
+Its scope is not in the commitlint list. It is left as it is.
+
+## How it got here
+
+| After | What |
 |---|---|
 | `ea3e7c4` | The lite kit, as cloned (the `kit` remote) |
 | `c02ec77` | `WM0.1`–`WM0.4`: the plan, identity, `4xxxx` ports, English only |
-| after `c02ec77` | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
-| after Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
-| after Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
-| after Phase 12 | Self-hosted: wiremap in one Docker container (`docker/wiremap/`), storage through the web app, branch polling, backups, a compose file, CI on amd64 and arm64 |
-| after Phase 11 | Phase 12: the security review and its fixes, deletion that leaves nothing, the privacy page, the full gate |
-| after Phase 10 | Phase 11: the public REST API, CLI login and npm package, the GitHub Action, the MCP server, the VS Code extension, outgoing webhooks and Slack |
-| after Phase 9 | Phase 10: comments, mentions, notes, the project feed, scan and finding notifications |
-| after Phase 8 | Phase 9: Ask (grounding, streaming, citations), AI settings, the encrypted-secret port |
-| after Phase 7 | Phase 8: insights, change impact, compare |
-| after Phase 6 | Phase 7: the graph explorer (view model, ELK in a worker, URL state, search, node detail, overview, saved views) |
-| after Phase 5 | Phase 6: scans, the runner protocol and workflow, push and schedule triggers, CLI upload, the scans page |
-| after Phase 4 | Phase 5: the graph document, `@loadbearing/graph`, `@loadbearing/analyzer` with four framework plugins, and the `wiremap` CLI |
-| after Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
-
-**Next, in order:** what [`TESTS.md`](TESTS.md) owes by hand, first a GitHub App registered for localhost and a scan run inside the container. Then the decision in `SH6.4`: keep or delete the Neon, Vercel and Cloudflare resources from the free-tier attempt. Commit `19b6729` (`feat(webhooks)`) was made outside the agent session from staged work; its scope is not in the commitlint list.
+| Phase 0 | Phase 1: consumers shared by both hosts, the Cloudflare queue and dispatcher, polling, B2 options, deployment docs |
+| Phase 1 | Phase 2: the `wiremap` theme, shell primitives, the top bar, settings layout, landing page |
+| Phase 2 | Phase 3: viewer role, removal, invite links, domains, teams, ownership transfer, owner delete, GitHub sign-in, audit log |
+| Phase 3 | Phase 4: projects and repositories, per-project access through the goal scope, the GitHub App provider, installations, webhook and setup routes, project delete |
+| Phase 4 | Phase 5: the graph document, `@loadbearing/graph`, `@loadbearing/analyzer` with four framework plugins, and the `wiremap` CLI |
+| Phase 5 | Phase 6: scans, the runner protocol and workflow, push and schedule triggers, CLI upload, the scans page |
+| Phase 6 | Phase 7: the graph explorer (view model, ELK in a worker, URL state, search, node detail, overview, saved views) |
+| Phase 7 | Phase 8: insights, change impact, compare |
+| Phase 8 | Phase 9: Ask (grounding, streaming, citations), AI settings, the encrypted-secret port |
+| Phase 9 | Phase 10: comments, mentions, notes, the project feed, scan and finding notifications |
+| Phase 10 | Phase 11: the public REST API, CLI login and npm package, the GitHub Action, the MCP server, the VS Code extension, outgoing webhooks and Slack |
+| Phase 11 | Phase 12: the security review and its fixes, deletion that leaves nothing, the privacy page, the full gate |
+| Phase 12 | The free-tier deploy attempt (Neon, Vercel, Cloudflare), stopped on the cron limit |
+| that | Self-hosted, `SH0`–`SH6`: storage through the web app, the worker reading the App, scan and encryption settings, the single image under s6, branch polling, backups and restore, a compose file, CI on amd64 and arm64 |
 
 **Remotes.** `origin` is `github.com/sami999khan999/wiremap`. `kit` is
 `github.com/ParentPlaceholderOrg/loadbearing_mini`, kept so kit fixes can be fetched and ported.
@@ -96,3 +147,22 @@ pnpm -r --no-bail run test                # not `pnpm test`: that stops at the f
   readonly ProjectDto[] = ...`). Unannotated, a branded id arrives as `any` through `query`'s
   `.d.ts`, `tsc` stays quiet and only ESLint's unsafe-assignment rule notices.
 - **`.claude/scheduled_tasks.lock`** is agent scratch. Never commit it.
+- **`pnpm deploy --legacy` is not self-contained.** It links workspace packages back to their
+  source folders. Never prune its output with `find -L … -exec rm`, which follows those links
+  into the real sources. The image bundles the worker and the database scripts with esbuild
+  instead.
+- **`process.env` exemptions live in two lists** that must agree: Biome's `noProcessEnv`
+  override in `tooling/biome-config/src/base.json`, and `ENV_EXEMPT` in `check-architecture.mjs`.
+  The pre-push hook runs the lint, so a script outside them blocks the push.
+- **The worker builds its own container from its own `env.ts`.** A setting only the web app reads
+  (the GitHub App, `SCAN_RUNNER`, the encryption key) silently does nothing on the BullMQ path.
+  That is how self-hosted scans and webhook deliveries were broken until `SH2`.
+- **Reaching Neon from Node on this machine** needs `NODE_OPTIONS="--dns-result-order=ipv4first
+  --no-network-family-autoselection"`. IPv6 is unreachable, and the dual-stack race times out
+  the IPv4 attempt.
+- **In the Vite dev server only,** a request right after a refused oversized upload (413) can
+  get a 500 page, because Vite has just cut that connection. A second later it answers normally.
+- **`mise` reads `XDG_CONFIG_HOME`,** so overriding it for a CLI test breaks the `node` and
+  `npx` shims. Run `node` by its real path (`node -e 'console.log(process.execPath)'`).
+- **Docker builds report their own exit status only when asked.** `docker build …; echo exit $?`
+  prints `$?` of the build, but a trailing `echo` in a background job's command always exits 0.
