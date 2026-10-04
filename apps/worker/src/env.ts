@@ -274,17 +274,20 @@ export class Env {
       email: { url: e.SMTP_URL, from: e.EMAIL_FROM, baseUrl: e.APP_BASE_URL },
       // Reads repositories and mints read tokens only. It never issues an install link or
       // checks a webhook, so neither secret is needed and neither is ever compared.
-      github:
-        e.GITHUB_APP_ID && e.GITHUB_APP_SLUG && e.GITHUB_APP_PRIVATE_KEY
+      github: {
+        stateSecret: randomUUID(),
+        polling: e.GITHUB_POLLING,
+        ...(e.GITHUB_APP_ID && e.GITHUB_APP_SLUG && e.GITHUB_APP_PRIVATE_KEY
           ? {
-              appId: e.GITHUB_APP_ID,
-              slug: e.GITHUB_APP_SLUG,
-              privateKey: e.GITHUB_APP_PRIVATE_KEY,
-              webhookSecret: randomUUID(),
-              stateSecret: randomUUID(),
-              polling: e.GITHUB_POLLING,
+              app: {
+                appId: e.GITHUB_APP_ID,
+                slug: e.GITHUB_APP_SLUG,
+                privateKey: e.GITHUB_APP_PRIVATE_KEY,
+                webhookSecret: randomUUID(),
+              },
             }
-          : undefined,
+          : {}),
+      },
       scan:
         e.SCAN_RUNNER === "local" && e.WIREMAP_RUNNER_SECRET
           ? {
