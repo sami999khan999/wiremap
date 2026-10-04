@@ -35,7 +35,8 @@ export function routePath(points: readonly Point[]): string {
 }
 
 export function RouteEdge(props: EdgeProps) {
-  const points = (props.data as RouteEdgeData | undefined)?.points;
+  const data: RouteEdgeData | undefined = props.data;
+  const points = data?.points;
   const path =
     points && points.length >= 2
       ? routePath(points)
