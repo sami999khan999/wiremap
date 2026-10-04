@@ -22,11 +22,11 @@ function ForgotPasswordPage() {
   const auth = useMemo(() => new AuthClient({ baseUrl: Endpoint.auth }), []);
 
   return (
-    <AuthFrame>
-      {
-        // Where Better Auth redirects once it has spent the emailed token, carrying a
-        // fresh one on the query string.
-      }
+    <AuthFrame
+      title={t("auth.resetRequest")}
+      subtitle="Enter your email to receive a password reset link"
+      badge="RESET"
+    >
       <ForgotPasswordForm auth={auth} resetUrl="/reset-password" />
       <Link to="/sign-in">{t("auth.signIn")}</Link>
     </AuthFrame>

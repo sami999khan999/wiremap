@@ -32,15 +32,26 @@ export function UserMenu({
       <ActionMenu
         label={t("nav.userMenu")}
         {...(placement === "sidebar"
-          ? { side: "top" as const, align: "start" as const, className: "w-full px-2 py-1.5" }
+          ? {
+              side: "top" as const,
+              align: "start" as const,
+              className:
+                "w-full rounded-lg border border-border bg-surface/80 px-2.5 py-1.5 shadow-xs hover:bg-muted/70 transition-colors",
+            }
           : {})}
         trigger={
           placement === "sidebar" ? (
             <>
-              <Avatar name={user.name || user.email} size="sm" />
+              <Avatar
+                name={user.name || user.email}
+                size="sm"
+                className="rounded-full ring-1 ring-border shrink-0"
+              />
               <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
-                <span className="truncate text-sm font-medium">{user.name || user.email}</span>
-                <span className="truncate text-xs text-fg-muted">{user.email}</span>
+                <span className="truncate text-xs font-medium text-fg">
+                  {user.name || user.email}
+                </span>
+                <span className="truncate text-[10px] font-mono text-fg-muted">{user.email}</span>
               </span>
               <Icon name="chevron-up-down" size={14} className="shrink-0 text-fg-muted" />
             </>

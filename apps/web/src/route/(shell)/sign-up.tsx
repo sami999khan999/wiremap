@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Endpoint } from "~/endpoint.js";
 import {
   AuthClient,
@@ -7,8 +7,6 @@ import {
   SocialSignIn,
   useMemo,
   useMessages,
-  useState,
-  VerifyEmailNotice,
 } from "~/import.js";
 import { AuthFrame } from "~/route/-auth-frame.js";
 
@@ -22,34 +20,35 @@ export const Route = createFileRoute("/(shell)/sign-up")({
 
 function SignUpPage() {
   const { t } = useMessages("auth");
+  const navigate = useNavigate();
   const { googleEnabled, githubEnabled } = Route.useRouteContext();
-  // The address the notice renders back exists only in the form that is about to be
-  // replaced, which is why the state lives here.
-  const [registered, setRegistered] = useState<string | null>(null);
+  // Email verification notice commented out for immediate sign-in:
+  // const [registered, setRegistered] = useState<string | null>(null);
 
   // Memoised: a bare `new` in the body builds a fresh client on every keystroke.
   const auth = useMemo(() => new AuthClient({ baseUrl: Endpoint.auth }), []);
 
   return (
-    <AuthFrame>
-      {registered ? (
-        <VerifyEmailNotice auth={auth} email={registered} verifyCallbackUrl="/verify-email" />
-      ) : (
-        <>
-          {
-            // Google first: one click against a form with four fields.
-          }
-          <SocialSignIn
-            auth={auth}
-            enabled={googleEnabled}
-            githubEnabled={githubEnabled}
-            callbackUrl="/"
-            errorCallbackUrl="/sign-in"
-          />
-          <SignUpForm auth={auth} verifyCallbackUrl="/verify-email" onSuccess={setRegistered} />
-          <Link to="/sign-in">{t("auth.haveAccount")}</Link>
-        </>
-      )}
+    <AuthFrame
+      title={t("auth.signUp")}
+      subtitle="Join Wiremap to map, analyze, and inspect your codebases"
+      badge="GET STARTED"
+    >
+      <SocialSignIn
+        auth={auth}
+        enabled={googleEnabled}
+        githubEnabled={githubEnabled}
+        callbackUrl="/"
+        errorCallbackUrl="/sign-in"
+      />
+      <SignUpForm
+        auth={auth}
+        verifyCallbackUrl="/verify-email"
+        onSuccess={() => void navigate({ to: "/sign-in" })}
+      />
+      <nav>
+        <Link to="/sign-in">{t("auth.haveAccount")}</Link>
+      </nav>
     </AuthFrame>
   );
 }

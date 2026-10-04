@@ -52,11 +52,11 @@ function SignInPage() {
     );
 
   return (
-    <AuthFrame>
-      {
-        // The one signed-out page that needs it: a reader who cannot read this form is
-        // not going to find a switcher behind it.
-      }
+    <AuthFrame
+      title={t("auth.signIn")}
+      subtitle="Sign in to explore repository architecture and import flows"
+      badge="SIGN IN"
+    >
       <LocaleSwitcher appearance={appearance} current={appearanceSnapshot.locale} />
       {needsTwoFactor ? (
         <TwoFactorForm auth={auth} onSuccess={complete} />

@@ -36,8 +36,11 @@ function ResetPasswordPage() {
   const complete = () => void navigate({ to: "/sign-in" });
 
   return (
-    <AuthFrame>
-      <h1>{t("auth.resetTitle")}</h1>
+    <AuthFrame
+      title={t("auth.resetTitle")}
+      subtitle="Choose a new secure password for your account"
+      badge="RESET"
+    >
       {token ? (
         <ResetPasswordForm auth={auth} token={token} onSuccess={complete} />
       ) : (

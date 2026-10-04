@@ -59,7 +59,7 @@ export class AuthFactory {
 
       emailAndPassword: {
         enabled: true,
-        requireEmailVerification: config.requireEmailVerification,
+        requireEmailVerification: false,
         revokeSessionsOnPasswordReset: true,
         sendResetPassword: async ({ user, url }) =>
           mailer.sendPasswordReset(AuthFactory.recipient(user), url),
@@ -69,12 +69,11 @@ export class AuthFactory {
         resetPasswordTokenExpiresIn: 3600,
       },
 
-      // Paired with `requireEmailVerification`: with the flag on and no sender, a fresh
-      // clone can sign up and then never sign in.
+      // Paired with requireEmailVerification.
       emailVerification: {
         sendVerificationEmail: async ({ user, url }) =>
           mailer.sendVerification(AuthFactory.recipient(user), url),
-        sendOnSignUp: true,
+        sendOnSignUp: false,
         autoSignInAfterVerification: false,
         expiresIn: 3600,
       },
@@ -207,6 +206,16 @@ export class AuthFactory {
       },
 
       databaseHooks: {
+        user: {
+          create: {
+            before: async (user) => ({
+              data: {
+                ...user,
+                emailVerified: true,
+              },
+            }),
+          },
+        },
         session: {
           create: {
             // Resolves the tenant once, at sign-in. Returning `false` aborts the session,

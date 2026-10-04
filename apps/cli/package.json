@@ -11,7 +11,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsx src/main.ts",
+    "cli": "tsx src/main.ts",
     "build": "tsup",
     "pack:npm": "tsup && tsx pack.ts",
     "typecheck": "tsc --noEmit",

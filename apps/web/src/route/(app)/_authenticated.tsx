@@ -8,8 +8,11 @@ import {
 } from "@tanstack/react-router";
 import { Endpoint } from "~/endpoint.js";
 import {
+  ActionMenu,
+  type ActionMenuEntry,
   AppShell,
   AuthClient,
+  Avatar,
   Can,
   CapabilitySet,
   type ClientNamespace,
@@ -18,21 +21,23 @@ import {
   NotificationBell,
   NotificationQueries,
   OrganizationClient,
-  OrganizationMenu,
+  OrganizationMutations,
   type ReactNode,
   RealtimeProvider,
   ROUTES,
-  UserMenu,
+  SessionMutations,
   useApiClient,
   useCapabilities,
   useMemo,
   useMessages,
+  useSession,
 } from "~/import.js";
 import { ModeSwitcher } from "~/route/-appearance.js";
 import { Pending } from "~/route/-boundary.js";
 import { RouteGuard } from "~/route/-guard.js";
 import { LocaleSwitcher } from "~/route/-locale.js";
 import { refreshSession } from "~/route/-session.js";
+import type { AppearanceSnapshot, AppearanceStore } from "~/store/appearance.store.js";
 
 // The sidebar's groups: the product's own sections, then the organization's administration,
 // then the tier above it. A module hidden here still answers FORBIDDEN to a typed path.
@@ -102,6 +107,153 @@ export const Route = createFileRoute("/(app)/_authenticated")({
   pendingComponent: Pending,
 });
 
+interface UnifiedMenuProps {
+  readonly auth: AuthClient;
+  readonly organization: OrganizationClient;
+  readonly appearance: AppearanceStore;
+  readonly appearanceSnapshot: AppearanceSnapshot;
+  readonly onSignedOut: () => void;
+  readonly onSwitched: () => void;
+  readonly onAccount: () => void;
+  readonly onSecurity: () => void;
+  readonly onNewOrg: () => void;
+  readonly onOrgSettings: () => void;
+  readonly placement?: "bar" | "sidebar";
+}
+
+// Unified menu combining workspace switching, account settings, and theme/locale controls.
+function UnifiedMenu({
+  auth,
+  organization,
+  appearance,
+  appearanceSnapshot,
+  onSignedOut,
+  onSwitched,
+  onAccount,
+  onSecurity,
+  onNewOrg,
+  onOrgSettings,
+  placement = "sidebar",
+}: UnifiedMenuProps) {
+  const { t } = useMessages("nav");
+  const { user } = useSession();
+  const switchTo = OrganizationMutations.useSwitch(organization, onSwitched);
+  const signOut = SessionMutations.useSignOut(auth, onSignedOut);
+
+  if (!user) return null;
+  const activeOrg = user.organizations.find((o) => o.id === user.activeOrganizationId);
+
+  const entries: ActionMenuEntry[] = [
+    { kind: "heading", key: "heading-workspaces", label: t("nav.organizations") },
+    ...user.organizations.map(
+      (org): ActionMenuEntry => ({
+        kind: "item",
+        key: org.id,
+        label: org.name,
+        detail: org.roleName,
+        checked: org.id === user.activeOrganizationId,
+        disabled: switchTo.isPending,
+        onSelect: () => {
+          if (org.id !== user.activeOrganizationId) {
+            switchTo.mutate({ organizationId: org.id });
+          }
+        },
+      }),
+    ),
+    {
+      kind: "item",
+      key: "new-org",
+      label: t("nav.organizationNew"),
+      icon: "plus",
+      onSelect: onNewOrg,
+    },
+    {
+      kind: "item",
+      key: "settings-org",
+      label: t("nav.organizationSettings"),
+      icon: "settings",
+      onSelect: onOrgSettings,
+    },
+    { kind: "separator", key: "sep-1" },
+    { kind: "heading", key: "heading-account", label: t("nav.settingsYou") },
+    { kind: "item", key: "account", label: t("nav.account"), icon: "user", onSelect: onAccount },
+    {
+      kind: "item",
+      key: "security",
+      label: t("nav.security"),
+      icon: "shield",
+      onSelect: onSecurity,
+    },
+    { kind: "separator", key: "sep-2" },
+    {
+      kind: "item",
+      key: "sign-out",
+      label: t("nav.signOut"),
+      icon: "logout",
+      tone: "danger",
+      disabled: signOut.isPending,
+      onSelect: () => signOut.mutate(),
+    },
+  ];
+
+  return (
+    <ActionMenu
+      label={t("nav.userMenu")}
+      side={placement === "sidebar" ? "top" : "bottom"}
+      align="start"
+      className={
+        placement === "sidebar"
+          ? "w-full rounded-lg border border-border bg-surface px-2.5 py-2 shadow-xs hover:bg-muted/70 transition-colors"
+          : undefined
+      }
+      header={
+        <div className="flex flex-col gap-2.5 pb-1">
+          <div className="flex items-center gap-2">
+            <Avatar
+              name={user.name || user.email}
+              size="sm"
+              className="rounded-full ring-1 ring-border shrink-0"
+            />
+            <div className="flex min-w-0 flex-1 flex-col text-left leading-tight">
+              <span className="truncate text-xs font-semibold text-fg">
+                {user.name || user.email}
+              </span>
+              <span className="truncate text-[10px] font-mono text-fg-muted">{user.email}</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+            <ModeSwitcher appearance={appearance} snapshot={appearanceSnapshot} />
+            <LocaleSwitcher appearance={appearance} current={appearanceSnapshot.locale} />
+          </div>
+        </div>
+      }
+      trigger={
+        placement === "sidebar" ? (
+          <div className="flex w-full items-center gap-2.5">
+            <Avatar
+              name={user.name || user.email}
+              size="sm"
+              className="rounded-full ring-1 ring-border shrink-0"
+            />
+            <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
+              <span className="truncate text-xs font-semibold text-fg">
+                {user.name || user.email}
+              </span>
+              <span className="truncate text-[10px] font-mono text-fg-muted">
+                {activeOrg?.name ?? "Personal"} · {activeOrg?.roleName ?? "Owner"}
+              </span>
+            </span>
+            <Icon name="chevron-up-down" size={14} className="shrink-0 text-fg-muted" />
+          </div>
+        ) : (
+          <Avatar name={user.name || user.email} />
+        )
+      }
+      entries={entries}
+    />
+  );
+}
+
 function AuthenticatedLayout() {
   const { t } = useMessages("nav");
   const { nav } = Route.useLoaderData();
@@ -110,8 +262,6 @@ function AuthenticatedLayout() {
   const router = useRouter();
   const { session, queryClient, appearance, appearanceSnapshot } = Route.useRouteContext();
 
-  // Here rather than in `__root`, because a stream opened before there is a session is
-  // a request that 401s and then retries forever.
   const api = useApiClient();
   const auth = useMemo(() => new AuthClient({ baseUrl: Endpoint.auth }), []);
   const organization = useMemo(() => new OrganizationClient(auth), [auth]);
@@ -124,13 +274,10 @@ function AuthenticatedLayout() {
       go: () => void navigate({ to }),
     });
 
-  // After a switch every cached row belongs to the tenant just left, and the snapshot
-  // names the old one — the same reason a sign-out clears.
   const signedOut = refresh("/sign-in");
   const switched = refresh("/");
 
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  // Inside a project the graph needs the whole width: no sidebar, a slim bar instead.
   const inProject = pathname.startsWith("/p/");
   const canReadInbox = capabilities.can("notification.inbox.read");
 
@@ -167,13 +314,19 @@ function AuthenticatedLayout() {
     />
   );
 
-  const userMenu = (placement: "bar" | "sidebar") => (
-    <UserMenu
+  const renderUnifiedMenu = (placement: "bar" | "sidebar") => (
+    <UnifiedMenu
       placement={placement}
       auth={auth}
+      organization={organization}
+      appearance={appearance}
+      appearanceSnapshot={appearanceSnapshot}
       onSignedOut={signedOut}
+      onSwitched={switched}
       onAccount={() => void navigate({ to: "/settings/account" })}
       onSecurity={() => void navigate({ to: "/settings/security" })}
+      onNewOrg={() => void navigate({ to: "/organization/new" })}
+      onOrgSettings={() => void navigate({ to: "/settings/organization" })}
     />
   );
 
@@ -204,19 +357,8 @@ function AuthenticatedLayout() {
         <Group label={t("nav.settingsOrganization")}>{modules(ORGANIZATION_MODULES)}</Group>
         <Group>{modules(PLATFORM_MODULES)}</Group>
       </nav>
-      <div className="flex shrink-0 flex-col gap-1 border-border border-t p-3">
-        <div className="flex items-center justify-between gap-2 px-1 pb-1">
-          <ModeSwitcher appearance={appearance} snapshot={appearanceSnapshot} />
-          <LocaleSwitcher appearance={appearance} current={appearanceSnapshot.locale} />
-        </div>
-        <OrganizationMenu
-          placement="sidebar"
-          organization={organization}
-          onSwitched={switched}
-          onCreate={() => void navigate({ to: "/organization/new" })}
-          onSettings={() => void navigate({ to: "/settings" })}
-        />
-        {userMenu("sidebar")}
+      <div className="flex shrink-0 flex-col border-border border-t p-3 bg-surface/30">
+        {renderUnifiedMenu("sidebar")}
       </div>
     </>
   );
@@ -250,7 +392,7 @@ function AuthenticatedLayout() {
               <Can permission="notification.inbox.read" capabilities={capabilities}>
                 <NotificationBell href={ROUTES.notification.inbox} />
               </Can>
-              {userMenu("bar")}
+              {renderUnifiedMenu("bar")}
             </div>
           </header>
           <main id="main" tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">

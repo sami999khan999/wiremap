@@ -23,16 +23,12 @@ function VerifyEmailPage() {
   // The token is already spent by the time this renders, which is why the page holds no
   // client and makes no request.
   return (
-    <AuthFrame>
+    <AuthFrame title={t("auth.verifyEmail")} subtitle="Email verification status" badge="VERIFY">
       {error ? (
         <Callout tone="danger">{t("auth.verifyEmailFailed")}</Callout>
       ) : (
         <Callout tone="success">{t("auth.verifyEmailDone")}</Callout>
       )}
-      {
-        // `autoSignInAfterVerification` is off, so verification issues no session and
-        // this link is the whole next step.
-      }
       <Link to="/sign-in">{t("auth.signIn")}</Link>
     </AuthFrame>
   );

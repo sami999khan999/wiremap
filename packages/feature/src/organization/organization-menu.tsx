@@ -69,15 +69,28 @@ export function OrganizationMenu({
       entries={entries}
       header={<span className="text-xs text-fg-muted">{t("nav.organizations")}</span>}
       {...(placement === "sidebar"
-        ? { side: "top" as const, align: "start" as const, className: "w-full px-2 py-1.5" }
+        ? {
+            side: "bottom" as const,
+            align: "start" as const,
+            className:
+              "w-full rounded-lg border border-border bg-surface/80 px-2.5 py-1.5 shadow-xs hover:bg-muted/70 transition-colors",
+          }
         : {})}
       trigger={
         placement === "sidebar" ? (
           <>
-            <Avatar name={active?.name ?? "?"} size="sm" className="rounded-md" />
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/80 text-primary font-mono text-xs font-semibold">
+              {active?.name ? (
+                active.name.slice(0, 2).toUpperCase()
+              ) : (
+                <Icon name="team" size={14} />
+              )}
+            </span>
             <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
-              <span className="truncate text-sm font-semibold">{active?.name}</span>
-              <span className="truncate text-xs text-fg-muted">{active?.roleName}</span>
+              <span className="truncate text-xs font-semibold text-fg">{active?.name}</span>
+              <span className="truncate text-[10px] font-mono text-fg-muted">
+                {active?.roleName ?? "Workspace"}
+              </span>
             </span>
             <Icon name="chevron-up-down" size={14} className="shrink-0 text-fg-muted" />
           </>

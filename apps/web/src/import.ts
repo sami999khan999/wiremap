@@ -176,6 +176,7 @@ export {
   RealtimeProvider,
   RoleQueries,
   ScanQueries,
+  SessionMutations,
   useApiClient,
   useAppQuery,
   WebhookQueries,
@@ -184,6 +185,7 @@ export {
 // ── @loadbearing/ui ──────────────────────────────────────────────────────────
 export {
   ActionMenu,
+  type ActionMenuEntry,
   AlertDialog,
   AppShell,
   Avatar,

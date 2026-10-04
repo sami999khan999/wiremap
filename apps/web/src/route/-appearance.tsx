@@ -29,7 +29,7 @@ export function ModeSwitcher({ appearance, snapshot }: ModeSwitcherProps) {
   return (
     <ThemeToggle
       label={t("nav.mode")}
-      variant="labels"
+      variant="icons"
       mode={current.mode}
       onModeChange={choose}
       lightLabel={t("nav.modeLight")}

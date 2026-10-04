@@ -67,7 +67,7 @@ On any failure it calls `fail` with a message that names no path. See
 inlined. `typescript`, `web-tree-sitter` and `yaml` stay external npm dependencies.
 
 `tree-sitter-php.wasm` is copied beside the bundle, so an installed CLI needs no native build and
-no `tree-sitter-php` package. Run from source (`pnpm --filter @loadbearing/cli dev analyze .`),
+no `tree-sitter-php` package. Run from source (`pnpm --filter @loadbearing/cli cli analyze .`),
 the analyzer finds the grammar in its own dependencies instead.
 
 Arguments are parsed by hand in `src/cli/arguments.ts`, without commander. Five flags do not
