@@ -9,6 +9,8 @@ export const common = {
   "brand.name": "wiremap",
   "state.loading": "Loading…",
   "state.empty": "Nothing here yet",
+  "password.show": "Show password",
+  "password.hide": "Hide password",
   "state.error": "Something went wrong",
   "state.allowed": "Allowed",
   "state.denied": "Denied",

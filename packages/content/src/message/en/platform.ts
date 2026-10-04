@@ -5,6 +5,7 @@ export const platform = {
   "platform.nav.accounts": "Accounts",
   "platform.nav.entitlements": "Plans and entitlements",
   "platform.nav.flags": "Feature flags",
+  "platform.nav.github": "GitHub",
   "platform.nav.team": "Team",
   "platform.nav.roles": "Roles",
   "platform.nav.docs": "Docs",
@@ -68,6 +69,34 @@ export const platform = {
     "Queued as {jobId}. Every month is archived before a partition is dropped.",
 
   "platform.flags.title": "Feature flags",
+  "platform.github.title": "GitHub App",
+  "platform.github.intro":
+    "Wiremap reads repositories through one GitHub App that belongs to this deployment. Create it from here and GitHub fills in every setting for you.",
+  "platform.github.none":
+    "There is no GitHub App yet, so no organization can connect repositories.",
+  "platform.github.environment":
+    "The App {slug} is set in this deployment's environment. Change it there.",
+  "platform.github.stored": "Repositories are read through {slug}, owned by {owner} on GitHub.",
+  "platform.github.open": "Open it on GitHub",
+  "platform.github.address": "The App is made for {url}. Open wiremap at this address.",
+  "platform.github.webhooks": "Pushes arrive by webhook and are scanned within seconds.",
+  "platform.github.polling":
+    "GitHub cannot reach this address, so each tracked branch is checked every hour and scanned when it moves.",
+  "platform.github.organization": "GitHub organization",
+  "platform.github.organization.hint":
+    "Optional. Leave it empty to create the App on your own GitHub account.",
+  "platform.github.anyAccount": "Other GitHub accounts may install it",
+  "platform.github.anyAccount.hint":
+    "Leave this off unless repositories you want to connect belong to a different GitHub account.",
+  "platform.github.create": "Create GitHub App",
+  "platform.github.noEncryption":
+    "This deployment has no SECRET_ENCRYPTION_KEY, so the App's private key cannot be stored. Set one and restart.",
+  "platform.github.created": "GitHub App created. Organizations can connect repositories now.",
+  "platform.github.failed":
+    "The App could not be saved. GitHub's link lasts an hour; start again from here.",
+  "platform.github.remove": "Remove the App",
+  "platform.github.remove.detail":
+    "Wiremap forgets the App, and repositories connected through it stop scanning. It stays on GitHub until you delete it there.",
   // What the screen is, in one sentence: owner and expiry come from code, the switch from here.
   "platform.flags.description":
     "Each flag is declared in code with an owner and an expiry date, and switched here — for everyone, or only for the organizations listed under it.",

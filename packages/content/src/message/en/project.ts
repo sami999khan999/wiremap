@@ -25,7 +25,8 @@ export const project = {
   "project.github.connected": "GitHub connected.",
   "project.github.failed": "GitHub could not be connected. Try again from this page.",
   "project.github.unconfigured":
-    "This deployment has no GitHub App configured, so repositories cannot be connected yet.",
+    "This deployment has no GitHub App yet, so repositories cannot be connected. A platform admin creates one in Platform, under GitHub.",
+  "project.github.setUp": "Set up GitHub",
   "project.github.none": "Connect GitHub to choose repositories.",
   "project.github.suspended": "suspended",
   "project.repositories": "Repositories",

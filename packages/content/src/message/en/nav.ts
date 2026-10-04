@@ -29,6 +29,13 @@ export const nav = {
   "nav.notificationSettings": "Notification settings",
   // The first thing in the tab order, visible only while focused. Without it a keyboard
   // reader walks the whole header before reaching the page on every navigation.
+  "nav.sidebar": "Main navigation",
+  "nav.workspace": "Workspace",
+  "nav.dashboard": "Home",
+  "nav.openMenu": "Open navigation",
+  "nav.closeMenu": "Close navigation",
+  "nav.resizeSidebar": "Resize the sidebar",
+  "nav.backToProjects": "Projects",
   "nav.skip": "Skip to main content",
   // Names the second landmark. Two unlabelled `<nav>`s are announced as "navigation"
   // twice, which is worse than one.
