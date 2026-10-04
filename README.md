@@ -18,12 +18,14 @@ kit fix ports across as a file copy. [`UPSTREAM.md`](UPSTREAM.md) records the ki
 One container holds everything (Postgres, Redis, storage, mail, the app and the worker):
 
 ```bash
-docker build -f docker/wiremap/Dockerfile -t wiremap .
-docker run -d --name wiremap -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 -v wiremap-data:/data wiremap
+docker run -d --name wiremap -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 -v wiremap-data:/data prodigycorp/wiremap
 ```
 
-Then open `http://localhost:43000`. Connecting GitHub, backups, upgrades and the compose
-alternative are in [`docs/infra/self-hosted.md`](docs/infra/self-hosted.md).
+Then open `http://localhost:43000`, sign up, and create the GitHub App from **Platform → GitHub**.
+The first steps, backups, upgrades and the compose alternative are in
+[`docs/infra/self-hosted.md`](docs/infra/self-hosted.md). How the image is released is
+[`docs/infra/publishing.md`](docs/infra/publishing.md). Wiremap is licensed under the
+[AGPL-3.0](LICENSE).
 
 ## Running it locally
 
