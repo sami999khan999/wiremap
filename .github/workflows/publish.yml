@@ -1,0 +1,104 @@
+name: publish
+# The public image, prodigycorp/wiremap on Docker Hub, for amd64 and arm64.
+# A version tag (v1.2.3) pushes 1.2.3, 1.2 and latest; running it by hand pushes edge.
+# Needs two repository secrets: DOCKERHUB_USERNAME and DOCKERHUB_TOKEN. See docs/infra/publishing.md.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: prodigycorp/wiremap
+
+jobs:
+  # The same smoke CI runs on every push to main, on this exact commit: nothing reaches
+  # Docker Hub that has not signed up, scanned, restarted and read its data back.
+  smoke:
+    strategy:
+      fail-fast: true
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@loadbearing/cli..." run build
+
+      - name: Build the image
+        run: docker build -f docker/wiremap/Dockerfile -t wiremap:publish .
+
+      - name: Start it
+        run: >-
+          docker run -d --name wiremap-publish
+          -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025
+          -v wiremap-publish-data:/data wiremap:publish
+
+      - name: Smoke
+        run: node tooling/scripts/container-smoke.mjs wiremap-publish
+
+      - name: Container logs
+        if: failure()
+        run: docker logs --tail 200 wiremap-publish
+
+  push:
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # The build stage runs on the runner's own platform for both targets (`BUILDPLATFORM`
+      # in the Dockerfile), so QEMU only runs the arm64 runtime stage's apt steps.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=edge,enable=${{ github.event_name == 'workflow_dispatch' }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/wiremap/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The Docker Hub page is docker/wiremap/README.md, kept in step on every release.
+      - uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.IMAGE }}
+          short-description: "See how a codebase is wired: Postgres, Redis, storage and the app in one container."
+          readme-filepath: docker/wiremap/README.md
