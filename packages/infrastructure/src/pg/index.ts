@@ -26,6 +26,7 @@ export {
   PgDocSpaceRepository,
   PgEntitlementRepository,
   PgFlagRepository,
+  PgGithubAppRepository,
   PgGithubInstallationRepository,
   PgGraphViewRepository,
   PgInvitationClaimer,

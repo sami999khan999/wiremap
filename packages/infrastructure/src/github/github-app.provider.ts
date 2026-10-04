@@ -35,8 +35,6 @@ interface RepositoryPayload {
 // GitHub through its App over plain `fetch`: no Octokit. Every token is minted per use,
 // read-only and never stored. See docs/infra/github-app.md.
 export class GithubAppProvider extends RepositoryProvider {
-  public override readonly configured = true;
-
   private static readonly PAGE = 100;
   // GitHub refuses a JWT living longer than ten minutes; one minute of skew is allowed.
   private static readonly JWT_TTL_SECONDS = 540;
@@ -53,19 +51,29 @@ export class GithubAppProvider extends RepositoryProvider {
     this.key = config.privateKey.replaceAll("\\n", "\n");
   }
 
-  public override installUrl(organizationId: OrganizationId): string {
-    const state = encodeURIComponent(this.signState(organizationId, Date.now()));
-    return `https://github.com/apps/${this.config.slug}/installations/new?state=${state}`;
+  public override isConfigured(): Promise<boolean> {
+    return Promise.resolve(true);
   }
 
-  public override organizationFromState(state: string): OrganizationId | null {
+  public override installUrl(organizationId: OrganizationId): Promise<string> {
+    const state = encodeURIComponent(this.signState(organizationId, Date.now()));
+    return Promise.resolve(
+      `https://github.com/apps/${this.config.slug}/installations/new?state=${state}`,
+    );
+  }
+
+  public override organizationFromState(state: string): Promise<OrganizationId | null> {
     const [organizationId, issued, mac] = state.split(".");
-    if (!organizationId || !issued || !mac) return null;
+    if (!organizationId || !issued || !mac) return Promise.resolve(null);
     const at = Number(issued);
-    if (!Number.isSafeInteger(at) || Date.now() - at > GithubAppProvider.STATE_TTL_MS) return null;
-    return GithubAppProvider.same(this.signState(organizationId as OrganizationId, at), state)
-      ? (organizationId as OrganizationId)
-      : null;
+    if (!Number.isSafeInteger(at) || Date.now() - at > GithubAppProvider.STATE_TTL_MS) {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve(
+      GithubAppProvider.same(this.signState(organizationId as OrganizationId, at), state)
+        ? (organizationId as OrganizationId)
+        : null,
+    );
   }
 
   public override async installation(installationId: number): Promise<ProviderInstallation | null> {
@@ -200,10 +208,10 @@ export class GithubAppProvider extends RepositoryProvider {
   }
 
   // `X-Hub-Signature-256`, compared in constant time over the raw body.
-  public override verifyWebhook(body: string, signature: string | null): boolean {
-    if (!signature) return false;
+  public override verifyWebhook(body: string, signature: string | null): Promise<boolean> {
+    if (!signature) return Promise.resolve(false);
     const expected = `sha256=${createHmac("sha256", this.config.webhookSecret).update(body).digest("hex")}`;
-    return GithubAppProvider.same(expected, signature);
+    return Promise.resolve(GithubAppProvider.same(expected, signature));
   }
 
   // Exposed for the spec: an RS256 JWT signed with the App's key.

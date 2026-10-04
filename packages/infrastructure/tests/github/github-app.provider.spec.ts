@@ -35,24 +35,26 @@ describe("GithubAppProvider", () => {
     expect(claims.exp - Math.floor(now / 1000)).toBeLessThanOrEqual(600);
   });
 
-  it("round-trips the install state, and refuses one that was edited", () => {
-    const url = new URL(provider().installUrl(ORG));
+  it("round-trips the install state, and refuses one that was edited", async () => {
+    const url = new URL(await provider().installUrl(ORG));
     const state = url.searchParams.get("state") ?? "";
 
     expect(url.pathname).toBe("/apps/wiremap-test/installations/new");
-    expect(provider().organizationFromState(state)).toBe(ORG);
-    expect(provider().organizationFromState(state.replace(ORG, ORG.replace(/1$/, "2")))).toBeNull();
-    expect(provider().organizationFromState("garbage")).toBeNull();
+    expect(await provider().organizationFromState(state)).toBe(ORG);
+    expect(
+      await provider().organizationFromState(state.replace(ORG, ORG.replace(/1$/, "2"))),
+    ).toBeNull();
+    expect(await provider().organizationFromState("garbage")).toBeNull();
   });
 
-  it("verifies a webhook signature over the raw body, and nothing else", () => {
+  it("verifies a webhook signature over the raw body, and nothing else", async () => {
     const body = JSON.stringify({ ref: "refs/heads/main" });
     const good = `sha256=${createHmac("sha256", "hook-secret").update(body).digest("hex")}`;
 
-    expect(provider().verifyWebhook(body, good)).toBe(true);
-    expect(provider().verifyWebhook(`${body} `, good)).toBe(false);
-    expect(provider().verifyWebhook(body, null)).toBe(false);
-    expect(provider().verifyWebhook(body, "sha256=00")).toBe(false);
+    expect(await provider().verifyWebhook(body, good)).toBe(true);
+    expect(await provider().verifyWebhook(`${body} `, good)).toBe(false);
+    expect(await provider().verifyWebhook(body, null)).toBe(false);
+    expect(await provider().verifyWebhook(body, "sha256=00")).toBe(false);
   });
 
   it("narrows a read token to one repository, and pages repositories", async () => {

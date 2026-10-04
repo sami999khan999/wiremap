@@ -22,7 +22,11 @@ export {
   GithubActionsScanRunner,
   type GithubAppConfig,
   GithubAppProvider,
+  HttpsGithubAppGateway,
+  type HttpsGithubAppGatewayConfig,
   NullRepositoryProvider,
+  type StoredGithubAppOptions,
+  StoredGithubAppProvider,
 } from "./github/index.js";
 export { HttpsWebhookSender } from "./http/index.js";
 export { type OpenAiEmbeddingConfig, OpenAiEmbeddingProvider } from "./openai/index.js";
@@ -49,6 +53,7 @@ export {
   PgDocSpaceRepository,
   PgEntitlementRepository,
   PgFlagRepository,
+  PgGithubAppRepository,
   PgGithubInstallationRepository,
   PgGraphViewRepository,
   PgInvitationClaimer,

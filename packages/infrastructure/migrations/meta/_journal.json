@@ -92,6 +92,13 @@
       "when": 1791027310108,
       "tag": "0012_wiremap_webhooks",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791090542561,
+      "tag": "0013_wiremap_github_app",
+      "breakpoints": true
     }
   ]
 }

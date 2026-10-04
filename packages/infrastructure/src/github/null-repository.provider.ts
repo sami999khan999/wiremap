@@ -8,14 +8,16 @@ import {
 
 // No App configured: projects still take uploads, and nothing pretends to reach GitHub.
 export class NullRepositoryProvider extends RepositoryProvider {
-  public override readonly configured = false;
-
-  public override installUrl(_organizationId: OrganizationId): null {
-    return null;
+  public override isConfigured(): Promise<boolean> {
+    return Promise.resolve(false);
   }
 
-  public override organizationFromState(_state: string): null {
-    return null;
+  public override installUrl(_organizationId: OrganizationId): Promise<string | null> {
+    return Promise.resolve(null);
+  }
+
+  public override organizationFromState(_state: string): Promise<OrganizationId | null> {
+    return Promise.resolve(null);
   }
 
   public override installation(_installationId: number): Promise<ProviderInstallation | null> {
@@ -46,7 +48,7 @@ export class NullRepositoryProvider extends RepositoryProvider {
     return Promise.resolve(null);
   }
 
-  public override verifyWebhook(_body: string, _signature: string | null): boolean {
-    return false;
+  public override verifyWebhook(_body: string, _signature: string | null): Promise<boolean> {
+    return Promise.resolve(false);
   }
 }
