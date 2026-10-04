@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   type ClientNamespace,
   OrganizationEntitlementPanel,
+  Page,
   PLATFORM_ROUTE_PERMISSION,
   PlanList,
   PlatformQueries,
@@ -28,11 +29,11 @@ function PlatformEntitlements() {
   const { t } = useMessages("platform");
 
   return (
-    <main>
+    <Page>
       <h1>{t("platform.entitlements.title")}</h1>
       <p>{t("platform.entitlements.description")}</p>
       <PlanList />
       <OrganizationEntitlementPanel />
-    </main>
+    </Page>
   );
 }

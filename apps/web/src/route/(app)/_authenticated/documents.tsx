@@ -4,6 +4,7 @@ import {
   type ClientNamespace,
   DocumentSearch,
   IndexDocumentForm,
+  Page,
   useCapabilities,
   useMessages,
 } from "~/import.js";
@@ -27,13 +28,13 @@ function Documents() {
   const capabilities = useCapabilities();
 
   return (
-    <main>
+    <Page>
       <h1>{t("document.title")}</h1>
       <p>{t("document.subtitle")}</p>
       <Can permission="ai.embedding.write" capabilities={capabilities}>
         <IndexDocumentForm />
       </Can>
       <DocumentSearch />
-    </main>
+    </Page>
   );
 }

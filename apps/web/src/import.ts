@@ -82,6 +82,7 @@ export {
   ExplorerUrl,
   FlagList,
   ForgotPasswordForm,
+  GithubAppPanel,
   GraphExplorer,
   type GraphLayouter,
   ImpactExplorer,
@@ -184,6 +185,7 @@ export {
 export {
   ActionMenu,
   AlertDialog,
+  AppShell,
   Avatar,
   type BadgeTone,
   Button,
@@ -210,6 +212,7 @@ export {
   type ModeKey,
   type ModePreference,
   ModeRegistry,
+  Page,
   PageScrollbar,
   Popover,
   Prose,

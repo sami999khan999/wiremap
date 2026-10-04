@@ -3,6 +3,7 @@ import {
   type ClientNamespace,
   NotificationList,
   NotificationQueries,
+  Page,
   useMessages,
 } from "~/import.js";
 import { RouteGuard } from "~/route/-guard.js";
@@ -34,9 +35,9 @@ function Notifications() {
   const { t } = useMessages("notification");
 
   return (
-    <main>
+    <Page>
       <h1>{t("notification.inbox.title")}</h1>
       <NotificationList limit={PAGE.limit} />
-    </main>
+    </Page>
   );
 }

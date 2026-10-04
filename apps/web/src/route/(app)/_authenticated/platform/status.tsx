@@ -3,6 +3,7 @@ import {
   Can,
   type ClientNamespace,
   ModuleSwitchPanel,
+  Page,
   PLATFORM_ROUTE_PERMISSION,
   PlatformQueries,
   PlatformStatusPanel,
@@ -32,7 +33,7 @@ function PlatformStatus() {
   const capabilities = useCapabilities();
 
   return (
-    <main>
+    <Page>
       <h1>{t("platform.title")}</h1>
       <p>{t("platform.subtitle")}</p>
       <PlatformStatusPanel />
@@ -42,6 +43,6 @@ function PlatformStatus() {
       <Can permission="platform.module.manage" capabilities={capabilities}>
         <ModuleSwitchPanel />
       </Can>
-    </main>
+    </Page>
   );
 }

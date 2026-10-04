@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { type ClientNamespace, ProjectCreateForm, useMessages, z } from "~/import.js";
+import { type ClientNamespace, Page, ProjectCreateForm, useMessages, z } from "~/import.js";
 import { RouteGuard } from "~/route/-guard.js";
 
 const MESSAGES = ["project"] as const satisfies readonly ClientNamespace[];
@@ -20,12 +20,12 @@ function NewProject() {
   const navigate = useNavigate();
   const { github } = Route.useSearch();
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+    <Page width="narrow">
       <h1 className="m-0 text-2xl font-semibold">{t("project.new")}</h1>
       <ProjectCreateForm
         {...(github ? { githubResult: github } : {})}
         onCreated={(slug) => void navigate({ to: "/p/$project", params: { project: slug } })}
       />
-    </section>
+    </Page>
   );
 }

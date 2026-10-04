@@ -4,6 +4,7 @@ import {
   Can,
   type ClientNamespace,
   DeleteTenantPanel,
+  Page,
   PLATFORM_ROUTE_PERMISSION,
   TenantExportPanel,
   useCapabilities,
@@ -27,7 +28,7 @@ function PlatformAccounts() {
   const capabilities = useCapabilities();
 
   return (
-    <main>
+    <Page>
       <h1>{t("platform.accounts.title")}</h1>
       <p>{t("platform.accounts.description")}</p>
       <AccountPanel />
@@ -39,6 +40,6 @@ function PlatformAccounts() {
           <DeleteTenantPanel />
         </Can>
       }
-    </main>
+    </Page>
   );
 }

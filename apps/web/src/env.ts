@@ -344,19 +344,28 @@ export class Env {
             ? { clientId: e.GITHUB_CLIENT_ID, clientSecret: e.GITHUB_CLIENT_SECRET }
             : undefined,
       },
-      github:
-        e.GITHUB_APP_ID && e.GITHUB_APP_SLUG && e.GITHUB_APP_PRIVATE_KEY && e.GITHUB_WEBHOOK_SECRET
+      // Without the four App keys, the App made on the platform screen is used, if any.
+      github: {
+        stateSecret: e.AUTH_SECRET,
+        ...(e.GITHUB_APP_ID &&
+        e.GITHUB_APP_SLUG &&
+        e.GITHUB_APP_PRIVATE_KEY &&
+        e.GITHUB_WEBHOOK_SECRET
           ? {
-              appId: e.GITHUB_APP_ID,
-              slug: e.GITHUB_APP_SLUG,
-              privateKey: e.GITHUB_APP_PRIVATE_KEY,
-              webhookSecret: e.GITHUB_WEBHOOK_SECRET,
-              stateSecret: e.AUTH_SECRET,
-              ...(e.GITHUB_CLIENT_ID && e.GITHUB_CLIENT_SECRET
-                ? { oauth: { clientId: e.GITHUB_CLIENT_ID, clientSecret: e.GITHUB_CLIENT_SECRET } }
-                : {}),
+              app: {
+                appId: e.GITHUB_APP_ID,
+                slug: e.GITHUB_APP_SLUG,
+                privateKey: e.GITHUB_APP_PRIVATE_KEY,
+                webhookSecret: e.GITHUB_WEBHOOK_SECRET,
+                ...(e.GITHUB_CLIENT_ID && e.GITHUB_CLIENT_SECRET
+                  ? {
+                      oauth: { clientId: e.GITHUB_CLIENT_ID, clientSecret: e.GITHUB_CLIENT_SECRET },
+                    }
+                  : {}),
+              },
             }
-          : undefined,
+          : {}),
+      },
       scan: {
         // Without its own secret the runner workflow cannot derive tokens, so only the local
         // runner and CLI uploads work; the auth secret then signs them.

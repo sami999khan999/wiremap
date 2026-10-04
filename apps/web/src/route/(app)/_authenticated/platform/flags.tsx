@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   type ClientNamespace,
   FlagList,
+  Page,
   PLATFORM_ROUTE_PERMISSION,
   PlatformQueries,
   useMessages,
@@ -27,9 +28,9 @@ function PlatformFlags() {
   const { t } = useMessages("platform");
 
   return (
-    <main>
+    <Page>
       <h1>{t("platform.flags.title")}</h1>
       <FlagList />
-    </main>
+    </Page>
   );
 }

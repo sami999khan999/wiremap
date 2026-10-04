@@ -5,6 +5,7 @@ import {
   Can,
   type ClientNamespace,
   CreateApiKeyForm,
+  Page,
   useCapabilities,
   useMessages,
 } from "~/import.js";
@@ -36,7 +37,7 @@ function ApiKeys() {
   const capabilities = useCapabilities();
 
   return (
-    <main>
+    <Page width="embedded">
       <h1>{t("apikey.title")}</h1>
       <p>{t("apikey.subtitle")}</p>
       <ApiKeyList />
@@ -47,6 +48,6 @@ function ApiKeys() {
       <Can permission="apikey.manage" capabilities={capabilities}>
         <CreateApiKeyForm />
       </Can>
-    </main>
+    </Page>
   );
 }

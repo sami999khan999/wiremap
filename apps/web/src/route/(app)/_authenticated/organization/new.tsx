@@ -5,6 +5,7 @@ import {
   type ClientNamespace,
   CreateOrganizationForm,
   OrganizationClient,
+  Page,
   useMemo,
   useMessages,
 } from "~/import.js";
@@ -40,9 +41,9 @@ function NewOrganizationPage() {
     });
 
   return (
-    <main>
+    <Page width="narrow">
       <h1>{t("organization.create.title")}</h1>
       <CreateOrganizationForm organization={organization} onCreated={created} />
-    </main>
+    </Page>
   );
 }

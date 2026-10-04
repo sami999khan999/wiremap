@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   type ClientNamespace,
   EmptyState,
+  Page,
   type ProjectDto,
   ProjectQueries,
   ProjectSettings,
@@ -44,14 +45,14 @@ function ProjectSettingsPage() {
   if (project.isPending) return null;
   if (!data) {
     return (
-      <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      <Page>
         <EmptyState icon="folder" title={t("project.notFound")} />
-      </section>
+      </Page>
     );
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+    <Page>
       <div>
         <Link
           to="/p/$project"
@@ -69,6 +70,6 @@ function ProjectSettingsPage() {
         onTab={(next) => void navigate({ search: { tab: next } })}
         onDeleted={() => void navigate({ to: "/projects" })}
       />
-    </section>
+    </Page>
   );
 }

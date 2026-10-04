@@ -34,6 +34,21 @@ export class PlatformRouter {
     return { items: flags.map((flag) => ({ ...flag, targets: [...flag.targets] })) };
   });
 
+  public static readonly githubApp = authed.platform.githubApp.handler(({ context }) =>
+    context.container.github.app.get(context.principal),
+  );
+
+  public static readonly startGithubApp = authed.platform.startGithubApp.handler(
+    ({ input, context }) => context.container.github.app.start(context.principal, input),
+  );
+
+  public static readonly removeGithubApp = authed.platform.removeGithubApp.handler(
+    async ({ context }) => {
+      await context.container.github.app.remove(context.principal);
+      return { ok: true } as const;
+    },
+  );
+
   public static readonly updateFlag = authed.platform.updateFlag.handler(
     async ({ input, context }) => {
       await context.container.platformAdmin.updateFlag.execute(context.principal, input);
@@ -157,6 +172,9 @@ export class PlatformRouter {
     exportTenant: PlatformRouter.exportTenant,
     listExports: PlatformRouter.listExports,
     listFlags: PlatformRouter.listFlags,
+    githubApp: PlatformRouter.githubApp,
+    startGithubApp: PlatformRouter.startGithubApp,
+    removeGithubApp: PlatformRouter.removeGithubApp,
     updateFlag: PlatformRouter.updateFlag,
     updateFlagTarget: PlatformRouter.updateFlagTarget,
     listPlans: PlatformRouter.listPlans,

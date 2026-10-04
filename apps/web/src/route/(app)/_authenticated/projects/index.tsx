@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { type ClientNamespace, ProjectList, ProjectQueries, useMessages } from "~/import.js";
+import { type ClientNamespace, Page, ProjectList, ProjectQueries, useMessages } from "~/import.js";
 import { RouteGuard } from "~/route/-guard.js";
 import { ProjectLink } from "~/route/-project-link.js";
 
@@ -21,12 +21,12 @@ export const Route = createFileRoute("/(app)/_authenticated/projects/")({
 function Projects() {
   const { t } = useMessages("project");
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+    <Page>
       <div>
         <h1 className="m-0 text-2xl font-semibold">{t("project.title")}</h1>
         <p className="m-0 mt-1 text-sm text-fg-muted">{t("project.intro")}</p>
       </div>
       <ProjectList renderLink={ProjectLink.render} newHref="/projects/new" />
-    </section>
+    </Page>
   );
 }

@@ -2,12 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Can,
   CapabilitySet,
-  Card,
-  CardGrid,
   type ClientNamespace,
   MemberCount,
   MemberQueries,
   ModuleNav,
+  Page,
   useCapabilities,
   useMessages,
   useSession,
@@ -50,28 +49,29 @@ function Dashboard() {
   const active = user?.organizations.find((entry) => entry.id === user.activeOrganizationId);
 
   return (
-    <>
+    <Page>
       <h1>{t("nav.home.title", { organization: active?.name ?? shell.t("state.empty") })}</h1>
       {active ? <p>{t("nav.home.role", { role: active.roleName })}</p> : null}
-      <CardGrid>
-        <Card title={t("nav.sections")}>
-          <ModuleNav
-            items={nav}
-            capabilities={capabilities}
-            renderLink={(route, label, icon) => (
-              <Link key={route} to={route}>
-                {icon}
-                {label}
-              </Link>
-            )}
-          />
-        </Card>
-        <Can permission="member.read" capabilities={capabilities}>
-          <Card title={t("nav.members")}>
-            <MemberCount />
-          </Card>
-        </Can>
-      </CardGrid>
-    </>
+      <section>
+        <h2>{t("nav.sections")}</h2>
+        <ModuleNav
+          items={nav}
+          capabilities={capabilities}
+          className="ui-tiles"
+          renderLink={(route, label, icon) => (
+            <Link key={route} to={route} className="ui-tile">
+              {icon}
+              {label}
+            </Link>
+          )}
+        />
+      </section>
+      <Can permission="member.read" capabilities={capabilities}>
+        <section>
+          <h2>{t("nav.members")}</h2>
+          <MemberCount />
+        </section>
+      </Can>
+    </Page>
   );
 }

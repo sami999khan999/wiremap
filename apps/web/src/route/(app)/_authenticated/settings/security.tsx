@@ -5,6 +5,7 @@ import {
   AuthClient,
   type ClientNamespace,
   LinkedAccountList,
+  Page,
   TwoFactorPanel,
   TwoFactorSetup,
   useMemo,
@@ -38,7 +39,7 @@ function SecurityPage() {
   const [enrolled, setEnrolled] = useState(session.user?.twoFactorEnabled === true);
 
   return (
-    <main>
+    <Page width="embedded">
       <h1>{nav("nav.security")}</h1>
 
       <section>
@@ -59,6 +60,6 @@ function SecurityPage() {
           linkCallbackUrl="/settings/security"
         />
       </section>
-    </main>
+    </Page>
   );
 }

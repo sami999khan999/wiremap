@@ -16,6 +16,7 @@ import {
   type MemberDto,
   MemberQueries,
   NoteList,
+  Page,
   type ProjectDto,
   ProjectQueries,
   type ScanDto,
@@ -209,22 +210,22 @@ function ProjectPage() {
   if (project.isPending) return null;
   if (!data) {
     return (
-      <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      <Page>
         <EmptyState icon="folder" title={t("project.notFound")} />
-      </section>
+      </Page>
     );
   }
 
   return (
-    <section className="flex flex-col">
-      <div className="flex flex-col gap-3 px-4 pt-4">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <h1 className="m-0 text-xl font-semibold">{data.name}</h1>
-          <ul className="m-0 flex list-none flex-wrap gap-3 p-0">
+    <section className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-col gap-4 px-6 pt-6">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="m-0 font-semibold text-2xl tracking-tight">{data.name}</h1>
+          <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
             {data.repositories.map((repository) => (
               <li
                 key={repository.id}
-                className="flex items-center gap-1.5 font-mono text-xs text-fg-muted"
+                className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 font-mono text-fg-muted text-xs"
               >
                 <Icon name="github" size={14} />
                 {repository.fullName}

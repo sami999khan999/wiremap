@@ -4,6 +4,7 @@ import {
   type ClientNamespace,
   CreateRoleForm,
   EffectivePermissionsInspector,
+  Page,
   RoleList,
   RoleMatrix,
   RoleQueries,
@@ -41,7 +42,7 @@ function Roles() {
   const capabilities = useCapabilities();
 
   return (
-    <main>
+    <Page width="embedded">
       <h1>{t("role.title")}</h1>
       {
         // Names and lifecycle first: the matrix below is twenty rows tall, and a create
@@ -61,6 +62,6 @@ function Roles() {
         // `CapabilitySet`. No query, no round trip.
       }
       <EffectivePermissionsInspector />
-    </main>
+    </Page>
   );
 }

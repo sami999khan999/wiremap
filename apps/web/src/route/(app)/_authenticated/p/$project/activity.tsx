@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   type ClientNamespace,
   EmptyState,
+  Page,
   ProjectActivityList,
   type ProjectDto,
   ProjectQueries,
@@ -34,16 +35,16 @@ function ProjectActivity() {
   if (project.isPending) return null;
   if (!data) {
     return (
-      <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      <Page>
         <EmptyState icon="folder" title={t("project.notFound")} />
-      </section>
+      </Page>
     );
   }
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+    <Page>
       <h1 className="m-0 text-2xl font-semibold">{data.name}</h1>
       <ProjectTabs slug={slug} projectId={data.id} />
       <ProjectActivityList projectId={data.id} />
-    </section>
+    </Page>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { type ClientNamespace, NotificationPreferenceForm, useMessages } from "~/import.js";
+import { type ClientNamespace, NotificationPreferenceForm, Page, useMessages } from "~/import.js";
 import { RouteGuard } from "~/route/-guard.js";
 
 const MESSAGES = ["notification"] as const satisfies readonly ClientNamespace[];
@@ -17,9 +17,9 @@ function NotificationSettings() {
   const { t } = useMessages("notification");
 
   return (
-    <main>
+    <Page width="embedded">
       <h1>{t("notification.preference.title")}</h1>
       <NotificationPreferenceForm />
-    </main>
+    </Page>
   );
 }

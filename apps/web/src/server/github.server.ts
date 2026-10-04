@@ -41,12 +41,37 @@ export class GithubEndpoint {
     }
   }
 
+  // The manifest flow's redirect: GitHub has just created the App and hands back a code
+  // worth its keys for an hour. Only the platform admin whose `state` it carries may spend it.
+  public static async manifest(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    const back = (result: "created" | "failed") =>
+      new Response(null, { status: 302, headers: { location: `/platform/github?app=${result}` } });
+
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    if (!code || !state) return back("failed");
+
+    const principal = await container.principals.fromHeaders(request.headers);
+    if (!principal) return new Response(null, { status: 302, headers: { location: "/sign-in" } });
+
+    try {
+      await container.github.app.complete(principal, { code, state });
+      return back("created");
+    } catch {
+      return back("failed");
+    }
+  }
+
   // 401 for a bad signature, 202 for anything verified, applied or not: GitHub retries
   // nothing, so a 5xx only fills its delivery log.
   public static async webhook(request: Request): Promise<Response> {
     const body = await request.text();
     if (
-      !container.repositoryProvider.verifyWebhook(body, request.headers.get("x-hub-signature-256"))
+      !(await container.repositoryProvider.verifyWebhook(
+        body,
+        request.headers.get("x-hub-signature-256"),
+      ))
     ) {
       return new Response(null, { status: 401 });
     }

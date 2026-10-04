@@ -1,6 +1,14 @@
-import { createFileRoute, Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useNavigate,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router";
 import { Endpoint } from "~/endpoint.js";
 import {
+  AppShell,
   AuthClient,
   Can,
   CapabilitySet,
@@ -11,6 +19,7 @@ import {
   NotificationQueries,
   OrganizationClient,
   OrganizationMenu,
+  type ReactNode,
   RealtimeProvider,
   ROUTES,
   UserMenu,
@@ -25,9 +34,40 @@ import { RouteGuard } from "~/route/-guard.js";
 import { LocaleSwitcher } from "~/route/-locale.js";
 import { refreshSession } from "~/route/-session.js";
 
-// The product's own sections sit in the top bar. The administrative ones are in the
-// settings sidebar (`settings.tsx`), which renders every other module.
-const TOP_BAR_MODULES = ["project", "doc", "platform"] as const;
+// The sidebar's groups: the product's own sections, then the organization's administration,
+// then the tier above it. A module hidden here still answers FORBIDDEN to a typed path.
+const WORKSPACE_MODULES = ["project", "doc"] as const;
+const ORGANIZATION_MODULES = [
+  "organization",
+  "member",
+  "team",
+  "access",
+  "ai",
+  "webhook",
+  "rbac",
+  "apikey",
+  "audit",
+  "document",
+  "notification",
+] as const;
+const PLATFORM_MODULES = ["platform"] as const;
+
+const LINK =
+  "flex h-9 items-center gap-3 rounded-md px-3 text-sm font-medium text-fg-muted no-underline transition-colors duration-(--duration-fast) hover:bg-muted hover:text-fg [&_svg]:shrink-0";
+const ACTIVE = "bg-muted text-fg [&_svg]:text-primary";
+
+function Group({ label, children }: { readonly label?: string; readonly children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      {label ? (
+        <p className="m-0 px-3 pt-5 pb-1.5 font-semibold text-[11px] text-fg-muted uppercase tracking-wider">
+          {label}
+        </p>
+      ) : null}
+      {children}
+    </div>
+  );
+}
 
 // `nav` for the top bar, and `notification` for the bell's name and its peek list.
 const MESSAGES = ["nav", "notification"] as const satisfies readonly ClientNamespace[];
@@ -89,6 +129,98 @@ function AuthenticatedLayout() {
   const signedOut = refresh("/sign-in");
   const switched = refresh("/");
 
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  // Inside a project the graph needs the whole width: no sidebar, a slim bar instead.
+  const inProject = pathname.startsWith("/p/");
+  const canReadInbox = capabilities.can("notification.inbox.read");
+
+  const brand = (
+    <Link
+      to="/"
+      className="flex items-center gap-2 font-mono font-semibold text-fg text-sm no-underline"
+    >
+      <Icon name="graph" size={18} className="text-primary" />
+      {t("nav.product")}
+    </Link>
+  );
+
+  const link = (to: string, label: string, icon: ReactNode, exact = false) => (
+    <Link
+      key={to}
+      to={to}
+      className={LINK}
+      activeProps={{ className: ACTIVE }}
+      activeOptions={{ exact }}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+
+  const modules = (list: readonly (typeof ORGANIZATION_MODULES)[number][] | readonly string[]) => (
+    <ModuleNav
+      items={nav}
+      capabilities={capabilities}
+      modules={list as Parameters<typeof ModuleNav>[0]["modules"]}
+      className="flex flex-col gap-0.5"
+      renderLink={(route, label, icon) => link(route, label, icon)}
+    />
+  );
+
+  const userMenu = (placement: "bar" | "sidebar") => (
+    <UserMenu
+      placement={placement}
+      auth={auth}
+      onSignedOut={signedOut}
+      onAccount={() => void navigate({ to: "/settings/account" })}
+      onSecurity={() => void navigate({ to: "/settings/security" })}
+    />
+  );
+
+  const sidebar = (
+    <>
+      <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-border border-b px-4">
+        {brand}
+        <Can permission="notification.inbox.read" capabilities={capabilities}>
+          <NotificationBell href={ROUTES.notification.inbox} />
+        </Can>
+      </div>
+      <nav aria-label={t("nav.sidebar")} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+        <Group>
+          {link(ROUTES.shell.dashboard, t("nav.dashboard"), <Icon name="layers" size={16} />, true)}
+          {modules(WORKSPACE_MODULES)}
+        </Group>
+        <Group label={t("nav.settingsYou")}>
+          {link("/settings/account", t("nav.account"), <Icon name="user" size={16} />)}
+          {link("/settings/security", t("nav.security"), <Icon name="shield" size={16} />)}
+          {canReadInbox
+            ? link(
+                "/settings/notifications",
+                t("nav.notificationSettings"),
+                <Icon name="bell" size={16} />,
+              )
+            : null}
+        </Group>
+        <Group label={t("nav.settingsOrganization")}>{modules(ORGANIZATION_MODULES)}</Group>
+        <Group>{modules(PLATFORM_MODULES)}</Group>
+      </nav>
+      <div className="flex shrink-0 flex-col gap-1 border-border border-t p-3">
+        <div className="flex items-center justify-between gap-2 px-1 pb-1">
+          <ModeSwitcher appearance={appearance} snapshot={appearanceSnapshot} />
+          <LocaleSwitcher appearance={appearance} current={appearanceSnapshot.locale} />
+        </div>
+        <OrganizationMenu
+          placement="sidebar"
+          organization={organization}
+          onSwitched={switched}
+          onCreate={() => void navigate({ to: "/organization/new" })}
+          onSettings={() => void navigate({ to: "/settings" })}
+        />
+        {userMenu("sidebar")}
+      </div>
+    </>
+  );
+
   return (
     <RealtimeProvider
       client={api}
@@ -97,74 +229,53 @@ function AuthenticatedLayout() {
     >
       {
         // First in the tab order and visible only while focused: without it a keyboard
-        // reader walks the whole header again on every navigation.
+        // reader walks the whole sidebar again on every navigation.
       }
       <a className="ui-skip-link" href="#main">
         {t("nav.skip")}
       </a>
-      <header className="ui-top-bar sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-border bg-bg px-3 sm:gap-3 sm:px-4">
-        <Link
-          to="/"
-          className="flex items-center gap-2 font-mono text-sm font-semibold text-fg no-underline"
-        >
-          <Icon name="graph" size={18} className="text-primary" />
-          <span className="hidden sm:inline">{t("nav.product")}</span>
-        </Link>
-        <span aria-hidden="true" className="hidden text-fg-muted sm:inline">
-          /
-        </span>
-        <OrganizationMenu
-          organization={organization}
-          onSwitched={switched}
-          onCreate={() => void navigate({ to: "/organization/new" })}
-          onSettings={() => void navigate({ to: "/settings" })}
-        />
-        {
-          // The gated half, from `ContentSource.nav()` joined to `MODULE_GATES`. A link
-          // hidden here still answers FORBIDDEN if the path is typed by hand.
-        }
-        <ModuleNav
-          items={nav}
-          capabilities={capabilities}
-          modules={TOP_BAR_MODULES}
-          className="hidden items-center gap-1 md:flex"
-          renderLink={(route, label) => (
+      {inProject ? (
+        <div className="flex min-h-dvh flex-col">
+          <header className="ui-top-bar sticky top-0 z-10 flex h-12 shrink-0 items-center gap-3 border-border border-b bg-surface px-4">
             <Link
-              key={route}
-              to={route}
-              className="rounded-sm px-2 py-1 text-sm text-fg-muted no-underline hover:bg-muted hover:text-fg"
-              activeProps={{ className: "text-fg" }}
+              to="/projects"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-fg-muted text-sm no-underline hover:bg-muted hover:text-fg"
             >
-              {label}
+              <Icon name="chevron-right" size={14} className="rotate-180" />
+              {t("nav.backToProjects")}
             </Link>
-          )}
-        />
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          {
-            // An affordance, so `<Can>`: the inbox route and its procedures are the gate.
-            <Can permission="notification.inbox.read" capabilities={capabilities}>
-              <NotificationBell href={ROUTES.notification.inbox} />
-            </Can>
-          }
-          <span className="hidden sm:inline-flex">
-            <ModeSwitcher appearance={appearance} snapshot={appearanceSnapshot} />
-          </span>
-          <LocaleSwitcher appearance={appearance} current={appearanceSnapshot.locale} />
-          <UserMenu
-            auth={auth}
-            onSignedOut={signedOut}
-            onAccount={() => void navigate({ to: "/settings/account" })}
-            onSecurity={() => void navigate({ to: "/settings/security" })}
-          />
+            <span aria-hidden="true" className="h-5 w-px bg-border" />
+            {brand}
+            <div className="ml-auto flex items-center gap-2">
+              <Can permission="notification.inbox.read" capabilities={capabilities}>
+                <NotificationBell href={ROUTES.notification.inbox} />
+              </Can>
+              {userMenu("bar")}
+            </div>
+          </header>
+          <main id="main" tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">
+            <Outlet />
+          </main>
         </div>
-      </header>
-      {
-        // The landmark the skip link targets, and the one a screen reader jumps to.
-        // `tabIndex={-1}` so the anchor moves focus rather than only scrolling.
-      }
-      <main id="main" tabIndex={-1} className="min-h-[calc(100dvh-3rem)] outline-none">
-        <Outlet />
-      </main>
+      ) : (
+        <AppShell
+          sidebar={sidebar}
+          brand={brand}
+          sidebarLabel={t("nav.sidebar")}
+          openLabel={t("nav.openMenu")}
+          closeLabel={t("nav.closeMenu")}
+          resizeLabel={t("nav.resizeSidebar")}
+          storageKey="wiremap.sidebar.width"
+          navigationKey={pathname}
+        >
+          {
+            // The landmark the skip link targets. `tabIndex={-1}` so the anchor moves focus.
+          }
+          <main id="main" tabIndex={-1} className="min-w-0 flex-1 outline-none">
+            <Outlet />
+          </main>
+        </AppShell>
+      )}
     </RealtimeProvider>
   );
 }

@@ -7,6 +7,7 @@ import {
   ChangeEmailForm,
   ChangePasswordForm,
   type ClientNamespace,
+  Page,
   ProfileForm,
   useMemo,
   useMessages,
@@ -36,7 +37,7 @@ function AccountPage() {
   if (!user) return null;
 
   return (
-    <main>
+    <Page width="embedded">
       <h1>{nav("nav.account")}</h1>
 
       <section>
@@ -62,6 +63,6 @@ function AccountPage() {
         <h2>{t("account.sessions")}</h2>
         <ActiveSessionList account={account} />
       </section>
-    </main>
+    </Page>
   );
 }

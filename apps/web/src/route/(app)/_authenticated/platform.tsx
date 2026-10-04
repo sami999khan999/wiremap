@@ -38,13 +38,22 @@ function PlatformLayout() {
   );
 
   return (
-    <>
-      <PlatformNav
-        renderLink={(href, label) => <Link to={href}>{label}</Link>}
-        onOpenPlatform={(organizationId) => switchTo.mutate({ organizationId })}
-        opening={switchTo.isPending}
-      />
+    <div className="flex flex-col">
+      <div className="mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6">
+        <PlatformNav
+          renderLink={(href, label) => (
+            <Link
+              to={href}
+              className="-mb-px block border-transparent border-b-2 px-1 pb-3 font-medium text-fg-muted text-sm no-underline hover:text-fg data-[status=active]:border-primary data-[status=active]:text-fg"
+            >
+              {label}
+            </Link>
+          )}
+          onOpenPlatform={(organizationId) => switchTo.mutate({ organizationId })}
+          opening={switchTo.isPending}
+        />
+      </div>
       <Outlet />
-    </>
+    </div>
   );
 }
