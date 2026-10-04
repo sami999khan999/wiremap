@@ -31,18 +31,25 @@ It misses a prefix set from a variable, and versioned routes.
 
 | Reads | As |
 |---|---|
+| `app/**/page.tsx` | `PAGE` routes. `[id]` becomes `:id` and `[...slug]` becomes `:slug*` |
 | `app/**/route.ts` exports named `GET`, `POST` and the rest | Routes. Route groups and slots are dropped, and a `_private` folder is not routable |
+| `pages/**` | `PAGE` routes, except `_app`, `_document`, `_error`, `404` and `500` |
 | `pages/api/**` | `ANY` routes |
-| `page`, `layout`, `template`, `loading`, `error` | Roles and entry points |
+| `page` and `not-found`; `layout` and `template`; `loading`, `error` and `default` | `page`, `layout` and `component` roles, and entry points |
+| A file starting `"use server"` | The `api` role: its exports are server actions |
+| Any other file under `app/` or `pages/` | Its role from its own name only. A folder there is a URL segment, so `lab/tests/` holds pages, not tests |
 | `middleware.ts` that mentions authentication | A guard on the paths its `matcher` names, or on every path when it has none |
 
 A middleware that does not authenticate guards nothing, which is right more often than wrong.
+A `PAGE` route is never matched to a frontend call, and is never reported as an unguarded API
+route.
 
 ## TanStack Start
 
 | Reads | As |
 |---|---|
 | `createFileRoute("/path")` | A route file. `$id` becomes `:id`; `_layout` and `(group)` segments vanish |
+| A route with a `component`, or with no `server` | A `PAGE` route |
 | `server.handlers` (and `createServerFileRoute().methods`, `createAPIFileRoute()`) | Routes, at each handler's line |
 | `middleware: [...]` or `.middleware([...])` | Guards |
 

@@ -33,7 +33,16 @@ export class TanstackStartPlugin implements FrameworkPlugin {
     const found = TanstackStartPlugin.declaration(file);
     if (!found || found.path === null) return [];
     const path = TanstackStartPlugin.urlOf(found.path);
-    return found.methods.map(({ method, line }) => ({ method, path, line, guards: found.guards }));
+    const handlers = found.methods.map(({ method, line }) => ({
+      method,
+      path,
+      line,
+      guards: found.guards,
+    }));
+    // A route with a component is a page someone visits, beside any server handlers it has.
+    return found.page
+      ? [{ method: "PAGE" as const, path, line: 1, guards: found.guards }, ...handlers]
+      : handlers;
   }
 
   // `/_auth/posts/$postId/` → `/posts/:postId`: pathless layouts and groups do not appear.
@@ -49,6 +58,8 @@ export class TanstackStartPlugin implements FrameworkPlugin {
     if (!source || !/create(Server|API)?FileRoute|createRoot/.test(file.text)) return null;
     let path: string | null = null;
     let page = false;
+    // The options object decides; the bare `createFileRoute("/x")` inside it must not undo that.
+    let decided = false;
     const methods: { method: HttpMethod; line: number }[] = [];
     const guards: string[] = [];
     const collect = (object: ts.ObjectLiteralExpression) => {
@@ -68,7 +79,7 @@ export class TanstackStartPlugin implements FrameworkPlugin {
       const name = TsSyntax.calleeName(node.expression);
       if (name && CREATORS.has(name)) {
         path = TsSyntax.stringOf(node.arguments[0]) ?? (name.startsWith("createRoot") ? "/" : path);
-        if (name === "createFileRoute") page = true;
+        if (name === "createFileRoute" && !decided) page = true;
       }
       if (name === "middleware") guards.push(...TsSyntax.identifiers(node.arguments));
       if (name === "methods" || name === "createHandlers") {
@@ -90,6 +101,7 @@ export class TanstackStartPlugin implements FrameworkPlugin {
           const component = TsSyntax.property(options, "component");
           const server = TsSyntax.property(options, "server");
           page = component !== undefined || server === undefined;
+          decided = true;
           if (server && ts.isObjectLiteralExpression(server)) {
             const handlers = TsSyntax.property(server, "handlers");
             if (handlers && ts.isObjectLiteralExpression(handlers)) collect(handlers);

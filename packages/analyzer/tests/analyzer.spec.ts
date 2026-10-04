@@ -55,11 +55,19 @@ describe("Analyzer on Next.js", () => {
     const doc = await analyze("nextjs");
 
     expect(routesOf(doc)).toEqual([
+      "PAGE /about app/(marketing)/about/page.tsx:1 []",
       "GET /api/users/:id app/api/users/[id]/route.ts:1 [middleware]",
       "DELETE /api/users/:id app/api/users/[id]/route.ts:5 [middleware]",
       "GET /api/users app/api/users/route.ts:3 [middleware]",
       "POST /api/users app/api/users/route.ts:7 [middleware]",
+      "PAGE /lab/tests app/lab/tests/page.tsx:1 []",
+      "PAGE / app/page.tsx:1 []",
     ]);
+    // A folder in the route tree is a URL segment: `lab/tests/` holds a page, not a test.
+    expect(doc.files.find((file) => file.path === "app/lab/tests/tests-table.tsx")?.role).toBe(
+      "component",
+    );
+    expect(doc.insights.unguardedRoutes).toEqual([]);
     expect(doc.calls.map((call) => [call.url, call.route, call.certain])).toEqual([
       ["/api/users", "GET /api/users", true],
       ["/api/users/:param", "DELETE /api/users/:id", false],
@@ -85,7 +93,10 @@ describe("Analyzer on TanStack Start", () => {
     expect(routesOf(doc)).toEqual([
       "GET /api/users src/routes/api/users.ts:8 [authMiddleware]",
       "POST /api/users src/routes/api/users.ts:9 [authMiddleware]",
+      "PAGE / src/routes/index.tsx:1 []",
+      "PAGE /posts/:postId src/routes/posts/$postId.tsx:1 []",
     ]);
+    expect(doc.files.find((file) => file.path === "src/routes/api/users.ts")?.role).toBe("api");
     expect(doc.frameworks.map((framework) => framework.id)).toEqual(["tanstack-start", "react"]);
     await expect(JSON.stringify(doc, null, 2)).toMatchFileSnapshot("./golden/tanstack.json");
   });

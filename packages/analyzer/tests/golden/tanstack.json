@@ -65,7 +65,7 @@
       "path": "src/routes/api/users.ts",
       "repository": "acme/tanstack",
       "language": "typescript",
-      "role": "route",
+      "role": "api",
       "loc": 13,
       "exports": [
         "Route"
@@ -192,6 +192,26 @@
       "guards": [
         "authMiddleware"
       ],
+      "source": "static"
+    },
+    {
+      "id": "PAGE /",
+      "method": "PAGE",
+      "path": "/",
+      "file": "src/routes/index.tsx",
+      "line": 1,
+      "framework": "tanstack-start",
+      "guards": [],
+      "source": "static"
+    },
+    {
+      "id": "PAGE /posts/:postId",
+      "method": "PAGE",
+      "path": "/posts/:postId",
+      "file": "src/routes/posts/$postId.tsx",
+      "line": 1,
+      "framework": "tanstack-start",
+      "guards": [],
       "source": "static"
     }
   ],

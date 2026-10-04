@@ -52,7 +52,10 @@ export class InsightBuilder {
       unguardedRoutes: routes
         .filter(
           (route) =>
-            route.guards.length === 0 && route.method !== "OPTIONS" && route.method !== "HEAD",
+            route.guards.length === 0 &&
+            route.method !== "OPTIONS" &&
+            route.method !== "HEAD" &&
+            route.method !== "PAGE",
         )
         .map((route) => route.id),
     };
