@@ -15,7 +15,7 @@ export function PartialBanner({ document }: { readonly document: GraphDocument }
   const rows = [...bySpecifier].toSorted((a, b) => b[1] - a[1]).slice(0, 50);
 
   return (
-    <Callout tone="warning" className="m-0 rounded-none border-x-0 border-t-0">
+    <Callout tone="warning" className="m-0 rounded-none border-x-0 border-t-0 px-6">
       <div className="flex flex-wrap items-center gap-3">
         <span>{t("graph.partial", { resolved, total, percent })}</span>
         <Button variant="ghost" onClick={() => setOpen(!open)}>

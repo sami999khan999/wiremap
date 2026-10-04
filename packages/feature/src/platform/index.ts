@@ -1,6 +1,7 @@
 export { AccountPanel } from "./account.panel.js";
 export { DeleteTenantPanel } from "./delete-tenant.panel.js";
 export { FlagList } from "./flag.list.js";
+export { GithubAppPanel, type GithubAppPanelProps } from "./github-app.panel.js";
 export { ModuleSwitchPanel } from "./module-switch.panel.js";
 export { OrganizationEntitlementPanel } from "./organization-entitlement.panel.js";
 export { PlanForm, type PlanFormProps } from "./plan.form.js";

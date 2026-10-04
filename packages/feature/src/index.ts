@@ -159,6 +159,8 @@ export {
   AccountPanel,
   DeleteTenantPanel,
   FlagList,
+  GithubAppPanel,
+  type GithubAppPanelProps,
   ModuleSwitchPanel,
   OrganizationEntitlementPanel,
   PlanForm,

@@ -21,6 +21,7 @@ type Label =
   | "platform.nav.accounts"
   | "platform.nav.entitlements"
   | "platform.nav.flags"
+  | "platform.nav.github"
   | "platform.nav.team"
   | "platform.nav.roles"
   | "platform.nav.docs";
@@ -53,6 +54,11 @@ const PAGES: readonly Item[] = Object.freeze([
     permission: PLATFORM_ROUTE_PERMISSION.flags,
     label: "platform.nav.flags",
   },
+  {
+    href: ROUTES.platform.github,
+    permission: PLATFORM_ROUTE_PERMISSION.github,
+    label: "platform.nav.github",
+  },
 ]);
 
 // The platform organization run like any other: its team, its roles, its docs. These pages act
@@ -76,7 +82,7 @@ export function PlatformNav({ renderLink, onOpenPlatform, opening = false }: Pla
   return (
     <nav
       aria-label={t("platform.nav.label")}
-      className="ui-platform-nav flex flex-wrap items-center gap-3"
+      className="ui-platform-nav flex flex-wrap items-end gap-x-6 gap-y-2 border-border border-b"
     >
       {visible(PAGES).map((item) => (
         <span key={item.href}>{renderLink(item.href, t(item.label))}</span>

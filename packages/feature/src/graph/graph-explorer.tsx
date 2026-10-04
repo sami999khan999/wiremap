@@ -13,7 +13,7 @@ import {
   useMemo,
   useState,
 } from "../import.js";
-import { ExplorerLayout, type GraphLayouter, type Placed } from "./explorer-layout.js";
+import { ExplorerLayout, type GraphLayouter, type Placed, type Point } from "./explorer-layout.js";
 import { ExplorerModel, type ExplorerState } from "./explorer-model.js";
 import { GraphCanvas } from "./graph-canvas.js";
 import { GraphSearch } from "./graph-search.js";
@@ -58,6 +58,8 @@ export function GraphExplorer({
   const [positions, setPositions] = useState<ReadonlyMap<string, Placed>>(() =>
     ExplorerLayout.grid(view),
   );
+  // ELK's edge routes; empty while the grid stands in, when edges fall back to curves.
+  const [routes, setRoutes] = useState<ReadonlyMap<string, readonly Point[]>>(() => new Map());
   // A selection arriving in the URL is brought into view on first paint, like a click.
   const [focus, setFocus] = useState<string | null>(state.selected);
   const [tab, setTab] = useState("overview");
@@ -65,11 +67,14 @@ export function GraphExplorer({
   // The grid at once, then ELK's layout when it answers, unless the view moved on meanwhile.
   useEffect(() => {
     setPositions(ExplorerLayout.grid(view));
+    setRoutes(new Map());
     if (!layout) return;
     let current = true;
     layout(ExplorerLayout.toElk(view))
       .then((laid) => {
-        if (current) setPositions(ExplorerLayout.positions(laid));
+        if (!current) return;
+        setPositions(ExplorerLayout.positions(laid));
+        setRoutes(ExplorerLayout.routes(laid));
       })
       .catch(() => undefined);
     return () => {
@@ -107,7 +112,7 @@ export function GraphExplorer({
   );
 
   return (
-    <div className="flex h-[calc(100dvh-7.5rem)] min-h-[480px] flex-col border-t border-border">
+    <div className="flex min-h-[520px] flex-1 flex-col border-border border-t">
       <PartialBanner document={document} />
       <ResizablePanels
         className="min-h-0 flex-1"
@@ -160,7 +165,7 @@ export function GraphExplorer({
         }
       >
         <div className="flex h-full min-w-0 flex-col">
-          <div className="flex flex-wrap items-center gap-2 border-b border-border p-2">
+          <div className="flex flex-wrap items-center gap-2 border-border border-b bg-surface px-3 py-2">
             <GraphSearch document={document} onSelect={select} />
             {toolbar}
           </div>
@@ -169,6 +174,7 @@ export function GraphExplorer({
               <GraphCanvas
                 view={view}
                 positions={positions}
+                routes={routes}
                 selected={state.selected}
                 onSelect={select}
                 onToggle={toggle}

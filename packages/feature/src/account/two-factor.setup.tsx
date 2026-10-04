@@ -1,3 +1,4 @@
+import { PasswordField } from "../auth/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
   type AccountClient,
@@ -63,9 +64,8 @@ export function TwoFactorSetup({ account, onEnabled }: TwoFactorSetupProps) {
           // locking the owner out permanently.
         }
         <Field label={t("account.twoFactorConfirmPassword")} htmlFor="enable-password">
-          <Input
+          <PasswordField
             id="enable-password"
-            type="password"
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}

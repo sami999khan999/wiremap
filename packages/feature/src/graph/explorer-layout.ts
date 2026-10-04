@@ -1,6 +1,11 @@
 import type { ElkExtendedEdge, ElkNode } from "../import.js";
 import type { ExplorerView } from "./explorer-model.js";
 
+export interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface Placed {
   readonly x: number;
   readonly y: number;
@@ -15,8 +20,8 @@ export type GraphLayouter = (graph: ElkNode) => Promise<ElkNode>;
 // The view as an ELK graph and back. An expanded folder is a parent whose children are its
 // files, laid out inside it; edges are listed at the root and routed across the hierarchy.
 export class ExplorerLayout {
-  public static readonly FOLDER = { width: 240, height: 72 } as const;
-  public static readonly FILE = { width: 220, height: 40 } as const;
+  public static readonly FOLDER = { width: 260, height: 80 } as const;
+  public static readonly FILE = { width: 240, height: 40 } as const;
 
   private constructor() {}
 
@@ -39,11 +44,16 @@ export class ExplorerLayout {
         "elk.algorithm": "layered",
         "elk.direction": "RIGHT",
         "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-        "elk.spacing.nodeNode": "28",
-        "elk.layered.spacing.nodeNodeBetweenLayers": "64",
-        // Long chains wrap into rows, so the canvas is closer to square than to a ribbon.
-        "elk.layered.wrapping.strategy": "MULTI_EDGE",
-        "elk.aspectRatio": "1.4",
+        "elk.spacing.nodeNode": "32",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "120",
+        // Every edge gets its own track and its own point on a node's side, so twenty edges
+        // into one node read as twenty lines rather than as one thick rope.
+        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.layered.mergeEdges": "false",
+        "elk.spacing.edgeEdge": "6",
+        "elk.layered.spacing.edgeEdgeBetweenLayers": "6",
+        "elk.layered.spacing.edgeNodeBetweenLayers": "20",
+        "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
       },
       children: view.nodes
         .filter((node) => node.kind === "folder")
@@ -76,6 +86,41 @@ export class ExplorerLayout {
     };
     visit(laid);
     return placed;
+  }
+
+  // Each edge's route in canvas coordinates. ELK gives a section relative to the node that
+  // contains the edge, so that node's absolute offset is added back.
+  public static routes(laid: ElkNode): Map<string, readonly Point[]> {
+    const offsets = new Map<string, Point>([["root", { x: 0, y: 0 }]]);
+    const place = (node: ElkNode, origin: Point) => {
+      for (const child of node.children ?? []) {
+        const at = { x: origin.x + (child.x ?? 0), y: origin.y + (child.y ?? 0) };
+        offsets.set(child.id, at);
+        place(child, at);
+      }
+    };
+    place(laid, { x: 0, y: 0 });
+
+    const routes = new Map<string, readonly Point[]>();
+    const collect = (node: ElkNode) => {
+      for (const edge of node.edges ?? []) {
+        const container = (edge as { container?: string }).container ?? node.id;
+        const origin = offsets.get(container) ?? { x: 0, y: 0 };
+        const points = (edge.sections ?? []).flatMap((section) => [
+          section.startPoint,
+          ...(section.bendPoints ?? []),
+          section.endPoint,
+        ]);
+        if (points.length >= 2)
+          routes.set(
+            edge.id,
+            points.map((point) => ({ x: origin.x + point.x, y: origin.y + point.y })),
+          );
+      }
+      for (const child of node.children ?? []) collect(child);
+    };
+    collect(laid);
+    return routes;
   }
 
   // A grid with expanded folders sized to their files: instant, used until ELK answers.

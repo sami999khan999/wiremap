@@ -1,3 +1,4 @@
+import { useCapabilities } from "../auth/index.js";
 import { useErrorMessage } from "../error/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
@@ -13,6 +14,7 @@ import {
   ProjectMutations,
   ProjectQueries,
   type ProjectRole,
+  ROUTES,
   Select,
   Textarea,
   useApiClient,
@@ -38,6 +40,7 @@ export function ProjectCreateForm({ githubResult, onCreated }: ProjectCreateForm
   const { t } = useMessages("project");
   const describe = useErrorMessage();
   const client = useApiClient();
+  const capabilities = useCapabilities();
   const github = useAppQuery(GithubQueries.status(client));
   const connected = (github.data?.installations.length ?? 0) > 0;
   const available = useAppQuery({ ...ProjectQueries.available(client), enabled: connected });
@@ -89,7 +92,17 @@ export function ProjectCreateForm({ githubResult, onCreated }: ProjectCreateForm
       <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
         <legend className="mb-2 text-sm font-semibold">{t("project.repositories")}</legend>
         {github.isPending ? null : github.data?.installUrl === null ? (
-          <Callout tone="info">{t("project.github.unconfigured")}</Callout>
+          <div className="flex flex-col items-start gap-3">
+            <Callout tone="info">{t("project.github.unconfigured")}</Callout>
+            {capabilities.can("platform.github.manage") ? (
+              <a
+                className={buttonClassName("primary", "no-underline")}
+                href={ROUTES.platform.github}
+              >
+                {t("project.github.setUp")}
+              </a>
+            ) : null}
+          </div>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             {github.data?.installations.map((installation) => (

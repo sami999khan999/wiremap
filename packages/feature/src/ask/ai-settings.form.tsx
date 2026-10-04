@@ -1,3 +1,4 @@
+import { PasswordField } from "../auth/index.js";
 import { useErrorMessage } from "../error/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
@@ -86,9 +87,8 @@ export function AiSettingsForm() {
         htmlFor="ai-key"
         hint={current.keyHint ? t("ai.key.hint", { hint: current.keyHint }) : t("ai.key.none")}
       >
-        <Input
+        <PasswordField
           id="ai-key"
-          type="password"
           autoComplete="off"
           value={key}
           onChange={(event) => setKey(event.target.value)}

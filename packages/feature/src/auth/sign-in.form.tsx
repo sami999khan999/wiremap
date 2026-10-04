@@ -11,6 +11,7 @@ import {
   SessionMutations,
   useState,
 } from "../import.js";
+import { PasswordField } from "./password-field.js";
 
 export interface SignInFormProps {
   // A prop, not a module import. The instance differs per environment, and a module
@@ -69,9 +70,8 @@ export function SignInForm({ auth, onSuccess, onNeedsTwoFactor }: SignInFormProp
       </Field>
 
       <Field label={t("auth.password")} htmlFor="sign-in-password">
-        <Input
+        <PasswordField
           id="sign-in-password"
-          type="password"
           autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}

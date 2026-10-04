@@ -16,6 +16,8 @@ export interface OrganizationMenuProps {
   // Callbacks, because `feature` may not import routing.
   readonly onCreate: () => void;
   readonly onSettings: () => void;
+  // `sidebar`: a full-width row at the foot of the app's sidebar, opening upwards.
+  readonly placement?: "bar" | "sidebar";
 }
 
 // The top bar's tenant control: the active organization's tile, name and a chevron, opening
@@ -25,6 +27,7 @@ export function OrganizationMenu({
   onSwitched,
   onCreate,
   onSettings,
+  placement = "bar",
 }: OrganizationMenuProps) {
   const { t } = useMessages("nav");
   const { user } = useSession();
@@ -65,12 +68,26 @@ export function OrganizationMenu({
       label={t("nav.organizationMenu")}
       entries={entries}
       header={<span className="text-xs text-fg-muted">{t("nav.organizations")}</span>}
+      {...(placement === "sidebar"
+        ? { side: "top" as const, align: "start" as const, className: "w-full px-2 py-1.5" }
+        : {})}
       trigger={
-        <>
-          <Avatar name={active?.name ?? "?"} size="sm" className="rounded-sm" />
-          <span className="max-w-40 truncate text-sm font-medium">{active?.name}</span>
-          <Icon name="chevron-up-down" size={14} className="text-fg-muted" />
-        </>
+        placement === "sidebar" ? (
+          <>
+            <Avatar name={active?.name ?? "?"} size="sm" className="rounded-md" />
+            <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
+              <span className="truncate text-sm font-semibold">{active?.name}</span>
+              <span className="truncate text-xs text-fg-muted">{active?.roleName}</span>
+            </span>
+            <Icon name="chevron-up-down" size={14} className="shrink-0 text-fg-muted" />
+          </>
+        ) : (
+          <>
+            <Avatar name={active?.name ?? "?"} size="sm" className="rounded-sm" />
+            <span className="max-w-40 truncate text-sm font-medium">{active?.name}</span>
+            <Icon name="chevron-up-down" size={14} className="text-fg-muted" />
+          </>
+        )
       }
     />
   );

@@ -1,3 +1,4 @@
+import { PasswordField } from "../auth/index.js";
 import { PasswordPair, passwordPairReady } from "../auth/password-pair.js";
 import { useMessages } from "../i18n/index.js";
 import {
@@ -7,7 +8,6 @@ import {
   Callout,
   Field,
   type FormEvent,
-  Input,
   useState,
 } from "../import.js";
 
@@ -45,9 +45,8 @@ export function ChangePasswordForm({ account }: ChangePasswordFormProps) {
   return (
     <form onSubmit={submit} noValidate>
       <Field label={t("account.currentPassword")} htmlFor="current-password">
-        <Input
+        <PasswordField
           id="current-password"
-          type="password"
           autoComplete="current-password"
           value={current}
           onChange={(event) => setCurrent(event.target.value)}

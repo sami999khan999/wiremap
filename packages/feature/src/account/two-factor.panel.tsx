@@ -1,3 +1,4 @@
+import { PasswordField } from "../auth/index.js";
 import { useMessages } from "../i18n/index.js";
 import {
   type AccountClient,
@@ -7,7 +8,6 @@ import {
   CodeList,
   Field,
   type FormEvent,
-  Input,
   useState,
 } from "../import.js";
 
@@ -48,9 +48,8 @@ export function TwoFactorPanel({ account }: TwoFactorPanelProps) {
       <Callout tone="success">{t("account.twoFactorOn")}</Callout>
 
       <Field label={t("account.twoFactorConfirmPassword")} htmlFor="disable-password">
-        <Input
+        <PasswordField
           id="disable-password"
-          type="password"
           autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}

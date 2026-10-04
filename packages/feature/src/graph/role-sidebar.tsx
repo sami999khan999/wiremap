@@ -30,7 +30,7 @@ export function RoleSidebar({ document, view, state, onState }: RoleSidebarProps
   const repositories = document.meta.repositories.map((repository) => repository.name);
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-3">
+    <div className="flex h-full flex-col gap-4 overflow-y-auto bg-surface p-4">
       <section>
         <h2 className="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-fg-muted">
           {backend

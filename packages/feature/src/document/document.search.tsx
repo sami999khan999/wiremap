@@ -59,7 +59,7 @@ export function DocumentSearch() {
         <EmptyState title={t("document.search.empty")} />
       ) : null}
 
-      <ul>
+      <ul className="ui-list">
         {hits.map((hit) => (
           <li key={hit.id}>
             <p>{hit.content}</p>

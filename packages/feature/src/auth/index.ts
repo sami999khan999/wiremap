@@ -1,4 +1,5 @@
 export { ForgotPasswordForm, type ForgotPasswordFormProps } from "./forgot-password.form.js";
+export { PasswordField } from "./password-field.js";
 export {
   PasswordPair,
   type PasswordPairProps,

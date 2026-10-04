@@ -1,5 +1,6 @@
 import { useMessages } from "../i18n/index.js";
-import { Field, Input, Password } from "../import.js";
+import { Field, Password } from "../import.js";
+import { PasswordField } from "./password-field.js";
 
 export interface PasswordPairProps {
   // Prefixes both ids and both `htmlFor`s, so two of these on one page stay distinct.
@@ -36,9 +37,8 @@ export function PasswordPair({
         htmlFor={`${idPrefix}-password`}
         error={tooShort ? t("auth.passwordTooShort") : undefined}
       >
-        <Input
+        <PasswordField
           id={`${idPrefix}-password`}
-          type="password"
           // `new-password`, not `current-password`: it tells a password manager to offer
           // to generate one rather than fill the old one in.
           autoComplete="new-password"
@@ -55,9 +55,8 @@ export function PasswordPair({
         htmlFor={`${idPrefix}-confirmation`}
         error={mismatch ? t("auth.passwordMismatch") : undefined}
       >
-        <Input
+        <PasswordField
           id={`${idPrefix}-confirmation`}
-          type="password"
           autoComplete="new-password"
           value={confirmation}
           onChange={(event) => onConfirmationChange(event.target.value)}
