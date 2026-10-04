@@ -243,6 +243,38 @@ export class PlatformContract {
   public static readonly deleteRequested = z.object({
     jobId: z.string().min(1),
   });
+
+  // The deployment's GitHub App. `environment` wins over one made on this screen, and the
+  // screen can then only show it. Never a key or a secret: those stay on the server.
+  public static readonly githubApp = z.object({
+    source: z.enum(["none", "environment", "stored"]),
+    slug: z.string().nullable(),
+    htmlUrl: z.string().nullable(),
+    ownerLogin: z.string().nullable(),
+    // The address the App is made for: its callbacks and homepage point here.
+    publicUrl: z.string(),
+    // GitHub cannot deliver to localhost or a private address, so the App gets no webhook.
+    webhooks: z.boolean(),
+    // False with no encryption key: the private key would have nowhere safe to be stored.
+    canCreate: z.boolean(),
+  });
+
+  // A GitHub organization to own the App, by its login; absent is the person's own account.
+  // `anyAccount` lets other GitHub accounts install it, for repositories owned elsewhere.
+  public static readonly githubAppStart = z.object({
+    organization: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/)
+      .optional(),
+    anyAccount: z.boolean().optional(),
+  });
+
+  // What the browser posts to GitHub: a form, because GitHub takes the manifest as a field.
+  public static readonly githubAppForm = z.object({
+    action: z.string(),
+    manifest: z.string(),
+  });
 }
 
 export type PlatformHealthDto = z.infer<typeof PlatformContract.health>;
@@ -277,3 +309,6 @@ export type ExportRequestedDto = z.infer<typeof PlatformContract.exportRequested
 export type TenantExportObjectDto = z.infer<typeof PlatformContract.tenantExportObject>;
 export type DeleteRequestedDto = z.infer<typeof PlatformContract.deleteRequested>;
 export type PlatformStatusDto = z.infer<typeof PlatformContract.status>;
+export type GithubAppDto = z.infer<typeof PlatformContract.githubApp>;
+export type GithubAppStartInput = z.infer<typeof PlatformContract.githubAppStart>;
+export type GithubAppFormDto = z.infer<typeof PlatformContract.githubAppForm>;

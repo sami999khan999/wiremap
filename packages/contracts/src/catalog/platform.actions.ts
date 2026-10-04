@@ -20,6 +20,9 @@ export const platformActions = {
   "flag.disabled": { label: "Flag switched off" },
   "flag.organization.added": { label: "Flag switched on for an organization" },
   "flag.organization.removed": { label: "Flag switched off for an organization" },
+  // The payload names the App's id and slug, never its key or secrets.
+  "github.app.created": { label: "GitHub App created" },
+  "github.app.removed": { label: "GitHub App removed" },
   "platform.restore.requested": { label: "Restore requested" },
   "platform.reproject.requested": { label: "Re-projection requested" },
   "tenant.retention.changed": { label: "Tenant retention changed" },

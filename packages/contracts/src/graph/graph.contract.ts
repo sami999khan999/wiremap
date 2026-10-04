@@ -63,6 +63,9 @@ export const HTTP_METHODS = [
   "OPTIONS",
   "HEAD",
   "ANY",
+  // A page a framework serves by file convention, such as Next's `page.tsx`. No call matches
+  // it, and it is never an unguarded API route.
+  "PAGE",
 ] as const;
 
 // Bounds that make a hostile upload expensive to refuse rather than expensive to accept.

@@ -12,6 +12,10 @@ export const platformProcedurePermissions = {
   "platform.listFlags": "platform.flag.read",
   "platform.updateFlag": "platform.flag.manage",
   "platform.updateFlagTarget": "platform.flag.manage",
+  // Manage alone: what the App is called and who owns it is only for whoever may replace it.
+  "platform.githubApp": "platform.github.manage",
+  "platform.startGithubApp": "platform.github.manage",
+  "platform.removeGithubApp": "platform.github.manage",
   "platform.listPlans": "platform.entitlement.read",
   "platform.savePlan": "platform.entitlement.manage",
   "platform.deletePlan": "platform.entitlement.manage",

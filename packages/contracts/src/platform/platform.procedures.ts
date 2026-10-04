@@ -30,6 +30,21 @@ export class PlatformProcedures {
     .input(PlatformContract.tenantExport)
     .output(z.array(PlatformContract.tenantExportObject).readonly());
 
+  // `start` returns a form rather than redirecting: GitHub takes the manifest as a POST
+  // field, so the browser has to submit it. Completing is `/api/github/manifest`.
+  public static readonly githubApp = oc
+    .route({ method: "GET", path: "/platform/github-app" })
+    .output(PlatformContract.githubApp);
+
+  public static readonly startGithubApp = oc
+    .route({ method: "POST", path: "/platform/github-app" })
+    .input(PlatformContract.githubAppStart)
+    .output(PlatformContract.githubAppForm);
+
+  public static readonly removeGithubApp = oc
+    .route({ method: "DELETE", path: "/platform/github-app" })
+    .output(Envelope.acknowledged);
+
   public static readonly updateReplicaSwitch = oc
     .route({ method: "PUT", path: "/platform/policy/replica" })
     .input(PlatformContract.replicaToggle)
@@ -135,6 +150,9 @@ export class PlatformProcedures {
     exportTenant: PlatformProcedures.exportTenant,
     listExports: PlatformProcedures.listExports,
     listFlags: PlatformProcedures.listFlags,
+    githubApp: PlatformProcedures.githubApp,
+    startGithubApp: PlatformProcedures.startGithubApp,
+    removeGithubApp: PlatformProcedures.removeGithubApp,
     updateFlag: PlatformProcedures.updateFlag,
     updateFlagTarget: PlatformProcedures.updateFlagTarget,
     listPlans: PlatformProcedures.listPlans,
