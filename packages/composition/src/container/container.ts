@@ -79,11 +79,13 @@ import {
   GetProjectUseCase,
   GithubActionsScanRunner,
   GithubAppProvider,
+  type GithubAppRepository,
   type GithubInstallationRepository,
   GrantPermissionOverrideUseCase,
   GrantPermissionUseCase,
   HandleGithubWebhookUseCase,
   HmacScanTokens,
+  HttpsGithubAppGateway,
   HttpsWebhookSender,
   IndexDocumentUseCase,
   InspectEffectivePermissionsUseCase,
@@ -124,6 +126,7 @@ import {
   type MaintenanceGateway,
   ManageAiSettingsUseCase,
   ManageCommentsUseCase,
+  ManageGithubAppUseCase,
   ManageProjectAccessUseCase,
   ManageProjectRepositoryUseCase,
   ManageViewsUseCase,
@@ -139,7 +142,6 @@ import {
   NodeAesGcmSecretCipher,
   NotificationSubscriber,
   NullMembershipEnroller,
-  NullRepositoryProvider,
   NullScanRunner,
   OpenAiEmbeddingProvider,
   OpenDocImageUseCase,
@@ -161,6 +163,7 @@ import {
   PgDocSpaceRepository,
   PgEntitlementRepository,
   PgFlagRepository,
+  PgGithubAppRepository,
   PgGithubInstallationRepository,
   PgGraphViewRepository,
   PgInvitationClaimer,
@@ -265,6 +268,7 @@ import {
   type StorageGateway,
   StorageGraphArchive,
   type StoragePolicyGateway,
+  StoredGithubAppProvider,
   SubscriberRegistry,
   SuspendAccountUseCase,
   SweepScansUseCase,
@@ -501,7 +505,7 @@ export class Container {
     readonly list: ListActivityUseCase;
     readonly project: ListProjectActivityUseCase;
   };
-  // The code host. `NullRepositoryProvider` when no App is configured.
+  // The code host: the environment's App, or the one made on the platform screen.
   public readonly repositoryProvider: RepositoryProvider;
   public readonly projects: {
     readonly list: ListProjectsUseCase;
@@ -546,6 +550,8 @@ export class Container {
   };
   public readonly github: {
     readonly status: GetGithubStatusUseCase;
+    // The deployment's App, made from the platform screen. See docs/infra/github-app.md.
+    readonly app: ManageGithubAppUseCase;
     readonly bind: BindGithubInstallationUseCase;
     readonly webhook: HandleGithubWebhookUseCase;
     // Read and written by the webhook route, which names an installation and no tenant.
@@ -1477,9 +1483,20 @@ export class Container {
       ),
     };
 
-    this.repositoryProvider = config.github
-      ? new GithubAppProvider(config.github)
-      : new NullRepositoryProvider();
+    const cipher = config.secrets
+      ? new NodeAesGcmSecretCipher(config.secrets.current, config.secrets.keys)
+      : new DisabledSecretCipher();
+    // A per-process secret when none is given: a `state` it signs verifies nowhere else.
+    const stateSecret = config.github?.stateSecret ?? crypto.randomUUID();
+    const githubApps: GithubAppRepository = new PgGithubAppRepository(
+      this.cluster,
+      this.transactions,
+      this.shards,
+    );
+    const environmentApp = config.github?.app;
+    this.repositoryProvider = environmentApp
+      ? new GithubAppProvider({ ...environmentApp, stateSecret })
+      : new StoredGithubAppProvider(githubApps, cipher, { stateSecret });
     const projectRepository = new PgProjectRepository(this.cluster, this.transactions, this.shards);
     const scanRepository = new PgScanRepository(this.cluster, this.transactions, this.shards);
     const viewRepository = new PgGraphViewRepository(this.cluster, this.transactions, this.shards);
@@ -1635,9 +1652,6 @@ export class Container {
       this.routedUnitOfWork,
       this.clock,
     );
-    const cipher = config.secrets
-      ? new NodeAesGcmSecretCipher(config.secrets.current, config.secrets.keys)
-      : new DisabledSecretCipher();
     const aiSettings = new PgAiSettingsRepository(this.cluster, this.transactions, this.shards);
     const chat = new GeminiChatProvider();
     this.ask = {
@@ -1685,6 +1699,20 @@ export class Container {
     };
     this.github = {
       status: new GetGithubStatusUseCase(this.authorizer, installations, this.repositoryProvider),
+      app: new ManageGithubAppUseCase(
+        this.authorizer,
+        githubApps,
+        new HttpsGithubAppGateway({ stateSecret }),
+        cipher,
+        this.activity,
+        this.catalogUnitOfWork,
+        this.clock,
+        {
+          publicUrl: config.email.baseUrl,
+          environment: environmentApp ? { slug: environmentApp.slug } : null,
+          encryption: config.secrets !== undefined,
+        },
+      ),
       bind: new BindGithubInstallationUseCase(
         this.authorizer,
         installations,

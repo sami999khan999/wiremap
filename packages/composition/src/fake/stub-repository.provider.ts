@@ -8,8 +8,6 @@ import {
 // A code host with a fixed list of repositories and files, never a network call. The
 // install `state` is the organization id itself, so a spec can forge one on purpose.
 export class StubRepositoryProvider extends RepositoryProvider {
-  public override readonly configured = true;
-
   public constructor(
     private readonly available: readonly ProviderRepository[] = [],
     private readonly files: Readonly<Record<string, string>> = {},
@@ -17,12 +15,18 @@ export class StubRepositoryProvider extends RepositoryProvider {
     super();
   }
 
-  public override installUrl(organizationId: OrganizationId): string {
-    return `https://github.test/apps/stub/installations/new?state=${organizationId}`;
+  public override isConfigured(): Promise<boolean> {
+    return Promise.resolve(true);
   }
 
-  public override organizationFromState(state: string): OrganizationId | null {
-    return state === "" ? null : (state as OrganizationId);
+  public override installUrl(organizationId: OrganizationId): Promise<string> {
+    return Promise.resolve(
+      `https://github.test/apps/stub/installations/new?state=${organizationId}`,
+    );
+  }
+
+  public override organizationFromState(state: string): Promise<OrganizationId | null> {
+    return Promise.resolve(state === "" ? null : (state as OrganizationId));
   }
 
   public override installation(installationId: number): Promise<ProviderInstallation | null> {
@@ -59,7 +63,7 @@ export class StubRepositoryProvider extends RepositoryProvider {
     return Promise.resolve(this.files[`${fullName}@${ref}:${path}`] ?? null);
   }
 
-  public override verifyWebhook(_body: string, signature: string | null): boolean {
-    return signature === "valid";
+  public override verifyWebhook(_body: string, signature: string | null): Promise<boolean> {
+    return Promise.resolve(signature === "valid");
   }
 }

@@ -78,16 +78,20 @@ export interface ContainerConfig {
     // bounds the rate; this bounds the total.
     readonly maxOwnedOrganizations: number;
   };
-  // The GitHub App that reads repositories. Absent leaves projects on uploads only; the
-  // install `state` is signed with `stateSecret`. See docs/infra/github-app.md.
+  // The GitHub App that reads repositories. See docs/infra/github-app.md.
   readonly github?: {
-    readonly appId: string;
-    readonly slug: string;
-    readonly privateKey: string;
-    readonly webhookSecret: string;
+    // An App given in the environment. It wins over one made on the platform screen, and
+    // with neither, projects take uploads only.
+    readonly app?: {
+      readonly appId: string;
+      readonly slug: string;
+      readonly privateKey: string;
+      readonly webhookSecret: string;
+      // The App's OAuth pair, which binding an installation requires.
+      readonly oauth?: { readonly clientId: string; readonly clientSecret: string };
+    };
+    // Signs the install and manifest `state`s. Only the web app issues them.
     readonly stateSecret: string;
-    // The App's OAuth pair, which binding an installation requires. See docs/infra/github-app.md.
-    readonly oauth?: { readonly clientId: string; readonly clientSecret: string };
     // Hourly branch polling for installations no webhook reaches. Absent is on.
     readonly polling?: boolean;
   };
