@@ -12,29 +12,32 @@ page holds where the work stopped, the state of the tree, and the traps that cos
 ## Where we left off (2026-10-04)
 
 **Both plans are built.** [`WIREMAP-PLAN.md`](WIREMAP-PLAN.md) is done through `WM12`, and
-[`SELF-HOSTED-PLAN.md`](SELF-HOSTED-PLAN.md) through `SH6`, except the two items below. The last
+[`SELF-HOSTED-PLAN.md`](SELF-HOSTED-PLAN.md) through `SH7`, except the items below. The last
 CI run on `main` passed every job: `verify`, `compose`, `audit`, and `container` on both amd64 and
 arm64.
 
-**How it is meant to run now: one Docker container on the owner's machine.** The free-tier cloud
+**How it is meant to run now: one public Docker image anyone pulls.** The free-tier cloud
 deploy stopped because the Cloudflare account had used all five free cron triggers on other
-Workers. The owner chose to self-host instead.
+Workers. The owner chose to self-host, then to publish the image as `prodigycorp/wiremap` under
+the AGPL-3.0 (`SH7`).
 
 ```bash
-docker build -f docker/wiremap/Dockerfile -t wiremap .
-docker run -d --name wiremap -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 -v wiremap-data:/data wiremap
+docker run -d --name wiremap -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 -v wiremap-data:/data prodigycorp/wiremap
 ```
 
-Everything about it is in [`docs/infra/self-hosted.md`](../infra/self-hosted.md).
+A platform admin then creates the GitHub App from **Platform → GitHub** in one click (GitHub's
+manifest flow), with no env file. Everything is in [`docs/infra/self-hosted.md`](../infra/self-hosted.md)
+and [`docs/infra/publishing.md`](../infra/publishing.md).
 
 **Open, in this order:**
 
-1. **`SH4.4`, owed by hand: a real scan inside the container.** It needs a GitHub App registered
-   for `localhost` ([`github-app.md`](../infra/github-app.md), "On your own machine"), whose keys
-   go in the container's env file. Then connect a repository, scan it, push, and watch the hourly
-   poll scan the push. Nothing has yet been scanned from a real GitHub repository. The other
-   by-hand checks are in [`TESTS.md`](TESTS.md), row `SH`: a Cloudflare Tunnel with live webhooks,
-   and an Apple Silicon Mac.
+1. **`SH7.5`, owed by hand: the first release.** Create `prodigycorp/wiremap` on Docker Hub as
+   public, add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` to the GitHub repository's Actions
+   secrets, and push a tag such as `v0.1.0`. Then, on a clean machine, pull it, click **Create
+   GitHub App**, connect a real repository, scan it, push, and watch the hourly poll scan the
+   push. This also covers `SH4.4`. Nothing has yet been scanned from a real GitHub repository,
+   and the manifest flow has run only against fakes. The other by-hand checks are in
+   [`TESTS.md`](TESTS.md), row `SH`.
 2. **`SH6.4`, the owner's decision: the cloud resources from the free-tier attempt.** They are
    live and cost nothing as they are. Keep them for a cloud deploy later, or delete them:
 
@@ -46,9 +49,9 @@ Everything about it is in [`docs/infra/self-hosted.md`](../infra/self-hosted.md)
 
    Their credentials and the generated production secrets are in `.env.production` at the repository
    root (gitignored, `0600`). The Upstash, B2 and SMTP lines in it are still `FILL`.
-3. **Publishing**, once the owner picks a licence: the CLI to npm (`pnpm --filter @loadbearing/cli
-   pack:npm`, then `npm publish` from `apps/cli/dist/npm`) and the VS Code extension
-   (`pnpm --filter wiremap-vscode package`). Both say `UNLICENSED` until then.
+3. **Publishing the CLI and the extension**, now that both declare `AGPL-3.0-only`: the CLI to
+   npm (`pnpm --filter @loadbearing/cli pack:npm`, then `npm publish` from `apps/cli/dist/npm`)
+   and the VS Code extension (`pnpm --filter wiremap-vscode package`).
 
 **State of this machine** (it does not travel with the repository):
 - The dev stack (`pnpm infra:up`, compose project `wiremap`) is running.

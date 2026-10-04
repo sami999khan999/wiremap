@@ -312,6 +312,45 @@ one port and one public hostname.
 - A push to the connected branch is scanned within the hour without a tunnel, and within a
   minute with one.
 
+### Phase 7 — The public image
+
+source: owner request 2026-10-04 ("a public docker image… anyone will pull from the dockerhub
+and run it… and they will be able connect their github"). Licence AGPL-3.0, image
+`prodigycorp/wiremap`.
+
+- [x] `SH7.1` **The licence.** `LICENSE` holds the AGPL-3.0 text. The CLI's npm package and the
+  VS Code extension declare `AGPL-3.0-only` and ship the file, and the image carries it at
+  `/app/LICENSE` with an OCI label.
+  - done: 2026-10-04.
+- [x] `SH7.2` **The GitHub App from the platform screen**, through GitHub's manifest flow. A
+  public image cannot carry an App: its key would read every user's repositories, and its
+  callbacks would name one address.
+  - `platform.github.manage` (platform scope), `/platform/github`, `GithubAppPanel`.
+  - `ManageGithubAppUseCase` (get, start, complete, remove); ports `GithubAppRepository` and
+    `GithubAppGateway`; `HttpsGithubAppGateway` signs the `state` for one person.
+  - `github_apps`, a one-row catalog table (migration `0013`), secrets encrypted with
+    `SECRET_ENCRYPTION_KEY`.
+  - `RepositoryProvider` is async throughout. `StoredGithubAppProvider` reads the row while
+    running, so no process needs a restart. An App in the environment still wins.
+  - done: 2026-10-04. Specs: application (7), the gateway (5), the provider (2), the repository
+    against Postgres (2).
+- [x] `SH7.3` **`.github/workflows/publish.yml`.** On a `v*` tag, it smokes the image on amd64
+  and arm64, then pushes both to Docker Hub with provenance and an SBOM, and copies the page.
+  - done: 2026-10-04, written. Not yet run: it needs the Docker Hub secrets.
+- [x] `SH7.4` **The Docker Hub page**, `docker/wiremap/README.md`, and
+  `docs/infra/publishing.md`.
+  - done: 2026-10-04.
+- [ ] `SH7.5` **Owed by hand.**
+  1. Create `prodigycorp/wiremap` on Docker Hub, public.
+  2. Add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` to the GitHub repository.
+  3. Push the first tag.
+  4. On a clean machine, pull the image and create an App through the screen.
+  5. Connect a real repository and scan it.
+  This covers `SH4.4` as well.
+
+**Exit.** A stranger runs one `docker run` from Docker Hub, clicks **Create GitHub App**, and
+scans a repository, with no env file and no step outside the browser but `wiremap-admin grant`.
+
 ---
 
 ## Verification — the whole plan
@@ -332,11 +371,10 @@ keeps the data, and an upgrade to a newer image that migrates.
 - Hosting it for other people on the public internet. That is the VPS guide in
   `docs/infra/self-hosted.md`, with a reverse proxy and TLS.
 - High availability, replicas, or more than one machine.
-- Automatic image publishing to a registry. The image is built locally or in CI until the owner
-  picks a registry.
 
 ## Changelog
 
 | Date | Who | Change |
 |---|---|---|
 | 2026-10-03 | @sami | Plan written after the free-tier deploy stopped on Cloudflare's per-account cron limit. |
+| 2026-10-04 | @sami | Phase 7: the public image on Docker Hub, AGPL-3.0, and the GitHub App created from the platform screen. |

@@ -13,11 +13,13 @@ Everything wiremap needs runs in one image, and its data lives on one volume:
 - the web app, the worker, and git with the CLI for scans.
 
 ```bash
-docker build -f docker/wiremap/Dockerfile -t wiremap .
 docker run -d --name wiremap --restart unless-stopped \
   -p 127.0.0.1:43000:43000 -p 127.0.0.1:48025:48025 \
-  -v wiremap-data:/data --env-file wiremap.env wiremap
+  -v wiremap-data:/data prodigycorp/wiremap
 ```
+
+That is the public image ([publishing](publishing.md)). To run one built from this checkout,
+`docker build -f docker/wiremap/Dockerfile -t wiremap .` and use `wiremap` as the image name.
 
 Open `http://localhost:43000` and sign up. The verification mail is in Mailpit at
 `http://localhost:48025`. To make yourself the platform admin:
@@ -26,17 +28,23 @@ Open `http://localhost:43000` and sign up. The verification mail is in Mailpit a
 docker exec wiremap wiremap-admin grant you@example.com
 ```
 
+Then open **Platform → GitHub** and click **Create GitHub App**. GitHub creates an App for this
+address in one click, and every organization can connect repositories from then on. See
+[github-app](github-app.md), "Create it from wiremap".
+
 **Ports are bound to `127.0.0.1`.** Only this machine reaches them: Docker's published ports
 skip a host firewall (see below). Leave out `-p …48025` once mail goes out through SMTP.
 
-**The env file** holds only what is yours. Every internal URL and setting is derived
+**An env file** (`--env-file wiremap.env`) holds only what is yours, and none is needed to
+start. Every internal URL and setting is derived
 inside the container. The secrets (`AUTH_SECRET`, the encryption key, the database and
 storage passwords) are generated on first start into `/data/secrets.env`, and anything you
 pass overrides them:
 
 | Key | When |
 |---|---|
-| `GITHUB_APP_ID`, `GITHUB_APP_SLUG`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | To connect repositories. Register the App as in [github-app](github-app.md), section "On your own machine" |
+| `WIREMAP_PUBLIC_URL` | The address people open wiremap at, when it is not `http://localhost:43000`. Set it before creating the GitHub App, which is made for that address |
+| `GITHUB_APP_ID`, `GITHUB_APP_SLUG`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Only for an App registered by hand ([github-app](github-app.md), "On your own machine"). They win over one created on the platform screen |
 | `SMTP_URL`, `EMAIL_FROM` | To send real mail. Without them, mail goes to Mailpit |
 | `CLOUDFLARE_TUNNEL_TOKEN`, `WIREMAP_PUBLIC_URL` | A public hostname, so GitHub webhooks arrive (optional) |
 | `AUTH_REQUIRE_EMAIL_VERIFICATION=false` | A single-person install with no mail at all |

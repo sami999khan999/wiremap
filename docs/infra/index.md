@@ -19,7 +19,8 @@ works, and how they connect.
 
 **Wiremap's production is [deployment](deployment.md)**: Vercel, Cloudflare, Neon, Upstash and B2, inside the budget in [free-tier](free-tier.md). **Running it on your own machine is [self-hosted](self-hosted.md)**: one Docker container or a
 compose file, then the same services on a VPS, and the order to move them to managed services in
-when one box stops fitting.
+when one box stops fitting. **The public image anyone pulls is [publishing](publishing.md)**:
+`prodigycorp/wiremap` on Docker Hub, and how a release gets there.
 
 ---
 

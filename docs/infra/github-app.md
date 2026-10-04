@@ -1,12 +1,13 @@
 ---
 title: GitHub App
-description: Registering the GitHub App wiremap reads repositories through — permissions, events, URLs, the four env keys — and what the server does with each token.
+description: The GitHub App wiremap reads repositories through — created from the platform screen in one click, or registered by hand with the env keys — and what the server does with each token.
 ---
 
 # GitHub App
 
-Wiremap reads repositories through **one GitHub App** that you register for your deployment. The
-App is free, and so is everything it does here.
+Wiremap reads repositories through **one GitHub App** that belongs to your deployment. The App
+is free, and so is everything it does here. **Create it from wiremap** in one click, or
+**register it by hand** and pass its keys in the environment. An App in the environment wins.
 
 **What the App is used for:**
 - the "connect repositories" picker, which lists the repositories each installation can see;
@@ -15,6 +16,36 @@ App is free, and so is everything it does here.
 
 **The App's private key never leaves the server.** Every token is minted per use, narrowed to one
 repository with `contents: read`, and never written anywhere.
+
+## Create it from wiremap
+
+A platform admin opens **Platform → GitHub** and clicks **Create GitHub App**. This uses
+GitHub's [App Manifest flow](https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest):
+
+1. `platform.startGithubApp` builds a manifest from `APP_BASE_URL`. It has the same URLs and
+   permissions as the table below. The webhook is included only when that address is public
+   `https`. The browser posts the manifest to `github.com/settings/apps/new`, or to an
+   organization's settings page when one is named.
+2. GitHub shows the App filled in. The person can rename it, then clicks **Create**.
+3. GitHub redirects to `/api/github/manifest` with a one-time `code`. The code is valid for an
+   hour. Wiremap exchanges it at `POST /app-manifests/{code}/conversions` for the App's id,
+   slug, private key, webhook secret and OAuth pair.
+4. All three secrets are stored encrypted in `github_apps`, a one-row catalog table. They are
+   encrypted with `SECRET_ENCRYPTION_KEY`, so the screen refuses to create an App without one.
+
+**The `state` is signed for the person who started it** (`HttpsGithubAppGateway`). A code that
+comes back under anyone else's state is refused before it is spent. Without that check, a link
+pasted to an admin could install an App that someone else owns on GitHub.
+
+**Every process picks it up without a restart.** `StoredGithubAppProvider` reads the row
+whenever it has none. Once it finds one, it keeps it for a minute. **Remove the App** on the
+same screen forgets it, and other processes stop using it within that minute. It stays on
+GitHub until its owner deletes it there. Repositories connected through it stop scanning until
+they are connected through a new App.
+
+GitHub sign-in (`/api/auth/callback/github`) still reads only `GITHUB_CLIENT_ID` and
+`GITHUB_CLIENT_SECRET` from the environment. An App created on the screen connects
+repositories. It does not add a "Sign in with GitHub" button.
 
 ## Register it
 
@@ -116,7 +147,9 @@ retry, so a 5xx would only fill its delivery log.
 ## On your own machine (the single container)
 
 The container runs at `http://localhost:43000`, and GitHub accepts `localhost` for an App's
-URLs. Register a separate App for it, because an App has one set of URLs:
+URLs. **Creating the App from wiremap does all of this for you**, for whatever address
+`WIREMAP_PUBLIC_URL` names. To register one by hand instead, register a separate App for the
+container, because an App has one set of URLs:
 
 | Field | Value |
 |---|---|
