@@ -6,7 +6,7 @@
   "private": true,
   "type": "module",
   "publisher": "wiremap",
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "https://github.com/sami999khan999/wiremap.git"
@@ -88,7 +88,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "package": "tsup && tsx pack.ts && cd dist/extension && vsce package --no-dependencies --skip-license --out ../wiremap.vsix",
+    "package": "tsup && tsx pack.ts && cd dist/extension && vsce package --no-dependencies --out ../wiremap.vsix",
     "clean": "rimraf dist"
   },
   "devDependencies": {

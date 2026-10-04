@@ -18,6 +18,7 @@ await rm(out, { recursive: true, force: true });
 await mkdir(join(out, "dist"), { recursive: true });
 await copyFile(join(here, "dist", "main.cjs"), join(out, "dist", "main.cjs"));
 await copyFile(join(here, "README.md"), join(out, "README.md"));
+await copyFile(join(here, "..", "..", "LICENSE"), join(out, "LICENSE"));
 await writeFile(join(out, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 await writeFile(join(out, ".vscodeignore"), "*.vsix\n");
 process.stdout.write(`staged ${out}\n`);
