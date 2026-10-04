@@ -10,9 +10,14 @@ const OUTPUT = "src/icon/sprite.svg";
 const REGISTRY = "src/icon/icon-registry.ts";
 const FONT_CSS = "src/font/font.css";
 
+// Sorted by name, not file name: `eye.svg` and `eye-off.svg` order the other way round.
 const files = readdirSync(SOURCE)
   .filter((file) => file.endsWith(".svg"))
-  .sort();
+  .sort((a, b) => {
+    const left = a.slice(0, -4);
+    const right = b.slice(0, -4);
+    return left < right ? -1 : left > right ? 1 : 0;
+  });
 
 const symbols = [];
 const names = [];
