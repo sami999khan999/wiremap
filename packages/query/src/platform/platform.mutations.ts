@@ -10,6 +10,8 @@ import type {
   ExportRequestedDto,
   FlagTargetToggleInput,
   FlagToggleInput,
+  GithubAppFormDto,
+  GithubAppStartInput,
   ModuleSwitchUpdateInput,
   PlanAssignInput,
   PlanRefInput,
@@ -48,6 +50,20 @@ export class PlatformMutations {
     return useAppMutation<{ ok: true }, ReplicaToggleInput>({
       mutationFn: (input) => client.platform.updateReplicaSwitch(input),
       invalidates: [QueryKeys.platform.status()],
+    });
+  }
+
+  // Invalidates nothing: the App exists only once GitHub sends the person back.
+  public static useStartGithubApp(client: ApiClient) {
+    return useAppMutation<GithubAppFormDto, GithubAppStartInput>({
+      mutationFn: (input) => client.platform.startGithubApp(input),
+    });
+  }
+
+  public static useRemoveGithubApp(client: ApiClient) {
+    return useAppMutation<{ ok: true }, void>({
+      mutationFn: () => client.platform.removeGithubApp(),
+      invalidates: [QueryKeys.platform.githubApp()],
     });
   }
 

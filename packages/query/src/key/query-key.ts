@@ -60,6 +60,7 @@ export class QueryKeys {
     status: () => ["platform", "status"] as const,
     exports: (organizationId: string) => ["platform", "export", organizationId] as const,
     flags: () => ["platform", "flag", "list"] as const,
+    githubApp: () => ["platform", "githubApp"] as const,
     plans: () => ["platform", "plan", "list"] as const,
     // The prefix every org's entitlement shares, so a plan edit invalidates them all.
     entitlements: () => ["platform", "entitlement"] as const,

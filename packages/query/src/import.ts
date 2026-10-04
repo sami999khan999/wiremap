@@ -69,6 +69,8 @@ export type {
   ExportRequestedDto,
   FlagTargetToggleInput,
   FlagToggleInput,
+  GithubAppFormDto,
+  GithubAppStartInput,
   GrantOverrideInput,
   GraphDocument,
   GraphViewDto,

@@ -35,6 +35,15 @@ export class PlatformQueries {
     });
   }
 
+  // Changes only through this screen, and every change invalidates it.
+  public static githubApp(client: ApiClient) {
+    return queryOptions({
+      queryKey: QueryKeys.platform.githubApp(),
+      queryFn: () => client.platform.githubApp(),
+      staleTime: 60_000,
+    });
+  }
+
   // A minute: plans change when somebody saves, and every save invalidates this key.
   public static plans(client: ApiClient) {
     return queryOptions({
